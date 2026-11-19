@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 384
+# PIXEL POWERTRAIN v0.8 build 385
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -185,7 +185,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
 - **Ten tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
   performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
-  it against other builds), **LIVE** (the engine running: cutaway, the
+  it against other builds), **CHAMP** (seasons by class with points and standings), **CHALLENGES**, **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
   scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while

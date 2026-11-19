@@ -103,6 +103,7 @@ function bindControls(){
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));
+  document.getElementById('tabChamp').addEventListener('click',()=>setTab('champ'));
   document.getElementById('tabChallenges').addEventListener('click',()=>setTab('challenges'));
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
@@ -357,6 +358,7 @@ initGuide();               // index, or the page you were last reading
 bindTrackZoom();
 bindRace();
 bindRacePage();
+bindChamp();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();

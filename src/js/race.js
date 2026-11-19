@@ -472,17 +472,19 @@ function racePlan(M,cfg,cc){
 // cfg: track, laps, seed, grid ('quali'|'reverse'), strategy ('auto'|'none': the default for every car),
 // warmers, air (C), weather ('dry'|'damp'|'wet'|'rain'|'drying'), cars: per-car settings in the models' order,
 // {stops:'auto'|0..3|'none', mode:'push'|'normal'|'save', wetCall:'auto'|'stay', start:'auto'|'own'|'inter'|'wet'}.
+// Championship hooks (named rules): durationSec (timed race), minStops, vsc (virtual safety car on).
 function raceInit(models,cfg){
-  cfg=Object.assign({air:RACE.air,weather:'dry',cars:[]},cfg);
+  cfg=Object.assign({air:RACE.air,weather:'dry',cars:[],durationSec:0,minStops:0,vsc:false},cfg);
   const rnd=mulberry32((cfg.seed>>>0)||1);
   const T0=buildTrack(cfg.track),pts=T0.pts,nC=pts.length;
   const Lc=pts[nC-1].s+pts[nC-1].ds;
   const width=T0.width||12;
-  const est=Math.max(...models.map(M=>M.lapNom))*cfg.laps;
+  const est=cfg.durationSec>0?cfg.durationSec:Math.max(...models.map(M=>M.lapNom))*cfg.laps;
   const R={cfg,models,rnd,t:0,done:false,Lc,cS:pts.map(q=>q.s),
     passMs:clamp(RACE.passKmh*(12/Math.max(6,width)),2.5,9)/3.6,
     wx:{kind:cfg.weather,tRain:est*(0.25+0.35*rnd()),tDry:est*(0.4+0.3*rnd())},
-    cars:[],events:[],rec:null,wetNow:0,raining:false};
+    cars:[],events:[],rec:null,wetNow:0,raining:false,
+    vsc:null,mistakeN:0,leaderLaps:0};
   const air=cfg.air,w0=raceWetAt(R,0);
   for(const M of models){M.brakeTh=Object.assign({},M.brakeTh,{amb:air});}
   // grid: by qualifying, a hot lap each on an empty tank (the solver's lap, at full grip); or reversed
@@ -501,7 +503,7 @@ function raceInit(models,cfg){
     R.cars.push({id:k,M,cc,grid:pos+1,i,f,lapsDone:-1,v:0,ax:0,ty,T:[tw,tw,tw,tw],W:[0,0,0,0],BT:{F:air,R:air},
       fuelKg:plan.startKg,plan,stopsDone:0,pit:null,launch:{d:0},mistake:null,pace:1,blue:0,passing:-1,
       state:'run',finishT:null,lapStart:0,laps:[],best:null,fuelUsed:0,sTot:0,lastLapKg:plan.startKg,
-      stints:[{tyre:tyKey,from:1}],react:rnd()<0.5?1:0,wantFor:0,
+      stints:[{tyre:tyKey,from:1}],react:rnd()<0.5?1:0,wantFor:0,timePenalty:0,blueIgnore:0,
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
     if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
@@ -594,6 +596,7 @@ function raceStepOnce(R){
     if(c.dive){vt*=c.dive.d<60?1.06:0.98;}
     if(c.yieldT>0)vt*=0.94;   // squeezed off the line by a car alongside on the inside
     if(c.blue>0)vt*=0.97;
+    if(R.vsc)vt*=(typeof CHAMP!=='undefined'?CHAMP.vscPace:0.6);   // virtual safety car: a named pace rule
     // the driver in the rain: up to 1.5% either side of the average in a properly wet race
     if(w>0.02)vt*=1+0.03*(c.cc.drv.wet-0.5)*Math.min(1,w/RACE.wetFull);
     if(c.defendT>0&&lim==='corner')vt*=RACE.defendCost;   // on the inside line, the exit is slower
@@ -620,12 +623,12 @@ function raceStepOnce(R){
     if(racing&&c._gap<RACE.follow*1.8&&ah.defendT<=-8&&ah.passing<0&&c._lim==='power'&&c._vt>ah.v*1.003&&rnd()<dt*(0.1+0.6*ah.cc.drv.aggr)){
       ah.defendT=6;raceEvent(R,ah,'defend',{from:c.id});
     }
-    if(ah&&c._gap<RACE.follow&&v>ah.v){
+    if(ah&&c._gap<RACE.follow&&v>ah.v&&!R.vsc){   // no overtaking under VSC
       const lapping=c.sTot-ah.sTot>Lc/2, drv=c.cc.drv;
       // the pace needed to get by: less for an aggressive driver and straight after being passed (the switchback),
       // more past a car that is defending
       const need=passMs*(1.3-0.6*drv.aggr)*(c.switchT>0?0.5:1)+(ah.defendT>0?RACE.defendKmh/3.6*(0.5+ah.cc.drv.aggr):0);
-      if(lapping){ if(ah.blue<=0)raceEvent(R,ah,'blue',{by:c.id}); ah.blue=2; raceSetPassing(R,c,ah.id,pos); }
+      if(lapping){ if(ah.blue<=0)raceEvent(R,ah,'blue',{by:c.id}); ah.blue=2; ah._blueBy=c.id; raceSetPassing(R,c,ah.id,pos); }
       else if(c.passing===ah.id||ah.passing===c.id){/* alongside: neither gives way */}
       else if(v-ah.v>need&&(c._lim==='power'||c._lim==='brake')&&rnd()<dt*3*(0.5+drv.aggr))raceSetPassing(R,c,ah.id,pos);
       // a late-braking move (build 147): held up into a braking zone, close enough, once a zone. Whether it sticks is
@@ -680,7 +683,19 @@ function raceStepOnce(R){
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
     if(M.hy)hybRaceSpend(M,c,c.v*dt);
-    if(c.blue>0)c.blue-=dt;
+    if(c.blue>0){
+      const prev=c.blue;c.blue-=dt;
+      // ignore blue (championship P5): still blocking a faster car as the flag expires
+      if(prev>0&&c.blue<=0&&c._blueBy!=null){
+        const by=cars.find(x=>x.id===c._blueBy);
+        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&c._gap<RACE.follow*2){
+          const pen=typeof CHAMP!=='undefined'?CHAMP.blueIgnorePen:5;
+          c.timePenalty=(c.timePenalty||0)+pen;c.blueIgnore=(c.blueIgnore||0)+1;
+          raceEvent(R,c,'blue_ignore',{by:c._blueBy,pen});
+        }
+        c._blueBy=null;
+      }
+    }
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
     if(c.mistake&&c.mistake.d!=null){c.mistake.d+=adv;if(c.mistake.d>120)c.mistake=null;}
@@ -688,11 +703,22 @@ function raceStepOnce(R){
       const L=M.cum[c.i+1]-M.cum[c.i],rem=(1-c.f)*L;
       if(adv<rem){c.f+=adv/L;adv=0;break;}
       adv-=rem;c.i=(c.i+1)%M.n;c.f=0;
-      if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){c.mistake.d=0;raceEvent(R,c,'mistake');}
+      if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){
+        c.mistake.d=0;raceEvent(R,c,'mistake');R.mistakeN=(R.mistakeN||0)+1;
+        // VSC (championship P5): enough mistakes open a virtual safety car for a named number of leader laps
+        if(cfg.vsc&&!R.vsc&&!R.chequered&&R.mistakeN>=(typeof CHAMP!=='undefined'?CHAMP.vscMistakes:3)){
+          R.vsc={fromLap:R.leaderLaps||0,left:typeof CHAMP!=='undefined'?CHAMP.vscLaps:1};
+          raceEvent(R,null,'vsc');
+        }
+      }
       if(c.i===0){raceCross(R,c);if(c.state!=='run')break;}
     }
     if(c.fuelKg<=0&&c.state==='run'){c.fuelKg=0;c.state='dnf';c.v=0;raceEvent(R,c,'dnf',{why:M.ev?'OUT OF CHARGE':'OUT OF FUEL'});}
     c.sTot=raceDist(R,c);
+  }
+  // timed race (championship P8): chequered when the clock hits durationSec
+  if(cfg.durationSec>0&&!R.chequered&&R.t>=cfg.durationSec){
+    R.chequered=true;raceEvent(R,null,'chequered');
   }
   // the pit lane: the car sits in its box while the rotors cool
   for(const c of cars){
@@ -734,9 +760,25 @@ function raceCross(R,c){
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
+    // leader lap counter for VSC duration (championship P5)
+    if(pos===1){
+      R.leaderLaps=(R.leaderLaps||0)+1;
+      if(R.vsc&&R.leaderLaps>=R.vsc.fromLap+R.vsc.left){R.vsc=null;raceEvent(R,null,'vsc_end');}
+    }
   }
-  // the flag: the leader at the full distance, then every car the next time it reaches the line
-  if(c.lapsDone>=cfg.laps||(R.chequered&&c.lapsDone>=1)){R.chequered=true;c.state='fin';c.finishT=R.t;c.v=0;raceEvent(R,c,'finish',{pos:R.cars.filter(x=>x.state==='fin').length});return;}
+  // the flag: the leader at the full distance (or timed chequered), then every car the next time it reaches the line
+  const distDone=cfg.durationSec>0?!!R.chequered:c.lapsDone>=cfg.laps;
+  if(distDone||(R.chequered&&c.lapsDone>=1)){
+    if(!cfg.durationSec)R.chequered=true;
+    // mandatory stops (championship P8): shortfall becomes a time penalty, not a silent finish
+    if(cfg.minStops>0&&c.stopsDone<cfg.minStops){
+      const miss=cfg.minStops-c.stopsDone;
+      c.timePenalty=(c.timePenalty||0)+miss*30;
+      raceEvent(R,c,'min_stops',{miss,pen:miss*30});
+    }
+    c.state='fin';c.finishT=R.t+(c.timePenalty||0);c.v=0;
+    raceEvent(R,c,'finish',{pos:R.cars.filter(x=>x.state==='fin').length});return;
+  }
   const mode=c.cc.mode;
   const drv=c.cc.drv;
   c.pace=1-R.rnd()*RACE.pace*(mode==='push'?0.5:1)*(1.6-1.2*drv.cons);
@@ -806,6 +848,7 @@ function raceResults(R){
     lapsDown:lead.lapsDone-Math.max(0,c.lapsDone),best:c.best,stops:c.stopsDone,fuelL:c.fuelUsed/c.M.fuelRho,
     state:c.state,grid:c.grid,stints:c.stints,mode:c.cc.mode,driver:c.cc.drv.label||'',
     brakeMax:Math.max(0,...c.laps.map(l=>l.brake||0)),
+    timePenalty:c.timePenalty||0,blueIgnore:c.blueIgnore||0,
     why:(R.events.find(e=>e.type==='dnf'&&e.car===c.id)||{}).why||'',
     ...(c.M.ev?{unit:'kWh',packMax:c.evPeak.b,windingMax:c.evPeak.w}:{})}));
 }

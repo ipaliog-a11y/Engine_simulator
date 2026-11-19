@@ -241,6 +241,9 @@ body.track-open{overflow:hidden}
 .race-strat select[data-f="driver"]{grid-column:1 / span 2}
 .race-ty{display:inline-block;min-width:11px;padding:1px 2px;margin-right:2px;border:1px solid;font-weight:normal;text-align:center;font-size:6.5px}
 .race-rpt{margin-top:-4px}
+/* CHAMP tab (championship seasons) */
+#champPanel .build-row{flex-wrap:wrap;gap:6px}
+#champSeason .perf-head{margin-bottom:6px}
 /* the race page (build 141): RACE fills the window */
 .race-page{position:fixed;inset:0;z-index:50;background:#0a0a12;display:flex;flex-direction:column}
 .race-page[hidden]{display:none}
@@ -821,7 +824,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 384</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 385</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -844,6 +847,7 @@ body.guided-open{overflow:hidden}
 <button id="tabGarage" data-g="build">GARAGE</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
+<button id="tabChamp" data-g="drive">CHAMP</button>
 <button id="tabChallenges" data-g="drive">CHALLENGES</button>
 <button id="tabEngine" data-g="test" class="active ing">LIVE</button>
 <button id="tabDyno" data-g="test" class="ing">DYNO</button>
@@ -1123,6 +1127,7 @@ A car company is split into departments that hand the same project along: <b>pow
 </div>
 <div class="guide-body" data-gk="tabsMore1">
 <b>RACE</b> — two to eight cars on one circuit, run to a lap count, with tyres that heat and wear, fuel that burns off, pit stops and traffic. Nobody drives; you set it up and watch. See <a data-gp="race">The race</a>.
+<br><b>CHAMP</b> — seasons of those races: classes, calendars, points and standings. See <a data-gp="champ">Championship</a>.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3249,7 +3254,27 @@ slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rollin
 Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car within a second behind loses 1.5% in the spray; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Physics, not rules: the tow is the drag a following car loses in the wake, measured on model vans in a wind tunnel (Zabat et al. 1995), turned into speed through the car's own power; dirty air is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner speed through the car's own downforce; the pit lane's cost is its length (400 m where no circuit's own is published) at a 60 km/h limit, against the car's own speed past it, its braking into the lane and its launch out of the box: 11–19 s for a Civic Type R or a 911 GT3. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
+<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a> · <a data-gp="champ">Championship</a></div>
+</section>
+<section class="guide-page" id="gp-champ" data-cat="track" data-title="Championship" data-tags="championship season series points standings class calendar career team vsc endurance" hidden>
+<h4 class="guide-title">Championship</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="race"></canvas><div class="gart-cap">A championship is many races, one table of points, and rules that say who may race whom.</div>
+<div class="guide-body" data-gk="champReal">
+A racing championship strings races into a season. Cars race in a <b>class</b> (hot hatch, GT, electric cup) so the field is comparable. Each round pays <b>points</b> for finishing position; the driver (and often the team) with the most points at the end is champion. Sporting rules — virtual safety cars, blue flags, tyre sets, minimum pit stops on endurance races — sit beside the physics of the cars.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="champ">
+The <b>CHAMP</b> tab (DRIVE) runs seasons on top of the same race engine as <b>RACE</b>. Pick a series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), a seed and a mode: <b>ROUND BY ROUND</b>, <b>INSTANT SEASON</b>, or <b>CAREER</b> (with unlocks). The grid is filled from the class's eligible factory cars; optionally include your saved team car. After each round the standings update; some cups spend credits on entry fees and pay prizes, and track tyre sets. Enduro rounds are timed with a minimum stop count. A virtual safety car can open after enough mistakes.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="champPhys">
+Each round calls <i>simulateRace</i> with the season's seed offset by the round index. Class eligibility is a predicate on chassis, category and published power — not a retune of the engine. Soft BoP, where used, adds ballast kilograms so power/mass sits nearer the class median (a sporting rule). Points tables and VSC pace are named rules; lap times remain the derived race physics.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="race">The race</a> · <a data-gp="challenges">Challenges</a></div>
 </section>
 <section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
 <h4 class="guide-title">Challenges</h4>
@@ -4028,6 +4053,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
+</div>
+<div class="panel" id="champPanel" style="display:none">
+<h2>Championship</h2>
+<div class="perf-note">Seasons of races on the shipped circuits. Pick a series, fill a grid from the class, run round by round or the whole season. Points decide the champion; credits and tyres are a light economy on some cups. Nobody drives — each round is a computed race.</div>
+<div id="champHub"></div>
+<div id="champSeason" hidden></div>
 </div>
 <div class="panel" id="chalPanel" style="display:none">
 <h2>Challenges <button type="button" class="info-i" id="chalInfoBtn" title="About this challenge" aria-expanded="false" aria-controls="chalNote">i</button></h2>
@@ -17172,17 +17203,19 @@ function racePlan(M,cfg,cc){
 // cfg: track, laps, seed, grid ('quali'|'reverse'), strategy ('auto'|'none': the default for every car),
 // warmers, air (C), weather ('dry'|'damp'|'wet'|'rain'|'drying'), cars: per-car settings in the models' order,
 // {stops:'auto'|0..3|'none', mode:'push'|'normal'|'save', wetCall:'auto'|'stay', start:'auto'|'own'|'inter'|'wet'}.
+// Championship hooks (named rules): durationSec (timed race), minStops, vsc (virtual safety car on).
 function raceInit(models,cfg){
-  cfg=Object.assign({air:RACE.air,weather:'dry',cars:[]},cfg);
+  cfg=Object.assign({air:RACE.air,weather:'dry',cars:[],durationSec:0,minStops:0,vsc:false},cfg);
   const rnd=mulberry32((cfg.seed>>>0)||1);
   const T0=buildTrack(cfg.track),pts=T0.pts,nC=pts.length;
   const Lc=pts[nC-1].s+pts[nC-1].ds;
   const width=T0.width||12;
-  const est=Math.max(...models.map(M=>M.lapNom))*cfg.laps;
+  const est=cfg.durationSec>0?cfg.durationSec:Math.max(...models.map(M=>M.lapNom))*cfg.laps;
   const R={cfg,models,rnd,t:0,done:false,Lc,cS:pts.map(q=>q.s),
     passMs:clamp(RACE.passKmh*(12/Math.max(6,width)),2.5,9)/3.6,
     wx:{kind:cfg.weather,tRain:est*(0.25+0.35*rnd()),tDry:est*(0.4+0.3*rnd())},
-    cars:[],events:[],rec:null,wetNow:0,raining:false};
+    cars:[],events:[],rec:null,wetNow:0,raining:false,
+    vsc:null,mistakeN:0,leaderLaps:0};
   const air=cfg.air,w0=raceWetAt(R,0);
   for(const M of models){M.brakeTh=Object.assign({},M.brakeTh,{amb:air});}
   // grid: by qualifying, a hot lap each on an empty tank (the solver's lap, at full grip); or reversed
@@ -17201,7 +17234,7 @@ function raceInit(models,cfg){
     R.cars.push({id:k,M,cc,grid:pos+1,i,f,lapsDone:-1,v:0,ax:0,ty,T:[tw,tw,tw,tw],W:[0,0,0,0],BT:{F:air,R:air},
       fuelKg:plan.startKg,plan,stopsDone:0,pit:null,launch:{d:0},mistake:null,pace:1,blue:0,passing:-1,
       state:'run',finishT:null,lapStart:0,laps:[],best:null,fuelUsed:0,sTot:0,lastLapKg:plan.startKg,
-      stints:[{tyre:tyKey,from:1}],react:rnd()<0.5?1:0,wantFor:0,
+      stints:[{tyre:tyKey,from:1}],react:rnd()<0.5?1:0,wantFor:0,timePenalty:0,blueIgnore:0,
       // the driver's tyre work: 1 for the average driver; a careful one slides them less, an aggressive one more
       defendT:-8,wide:null,dive:null,yieldT:0,diveZone:-1,switchT:0,slipK:(1.15-0.3*cc.drv.care)*(0.85+0.3*cc.drv.aggr)});
     if(M.ev)evRaceCarInit(R.cars[R.cars.length-1],plan);
@@ -17294,6 +17327,7 @@ function raceStepOnce(R){
     if(c.dive){vt*=c.dive.d<60?1.06:0.98;}
     if(c.yieldT>0)vt*=0.94;   // squeezed off the line by a car alongside on the inside
     if(c.blue>0)vt*=0.97;
+    if(R.vsc)vt*=(typeof CHAMP!=='undefined'?CHAMP.vscPace:0.6);   // virtual safety car: a named pace rule
     // the driver in the rain: up to 1.5% either side of the average in a properly wet race
     if(w>0.02)vt*=1+0.03*(c.cc.drv.wet-0.5)*Math.min(1,w/RACE.wetFull);
     if(c.defendT>0&&lim==='corner')vt*=RACE.defendCost;   // on the inside line, the exit is slower
@@ -17320,12 +17354,12 @@ function raceStepOnce(R){
     if(racing&&c._gap<RACE.follow*1.8&&ah.defendT<=-8&&ah.passing<0&&c._lim==='power'&&c._vt>ah.v*1.003&&rnd()<dt*(0.1+0.6*ah.cc.drv.aggr)){
       ah.defendT=6;raceEvent(R,ah,'defend',{from:c.id});
     }
-    if(ah&&c._gap<RACE.follow&&v>ah.v){
+    if(ah&&c._gap<RACE.follow&&v>ah.v&&!R.vsc){   // no overtaking under VSC
       const lapping=c.sTot-ah.sTot>Lc/2, drv=c.cc.drv;
       // the pace needed to get by: less for an aggressive driver and straight after being passed (the switchback),
       // more past a car that is defending
       const need=passMs*(1.3-0.6*drv.aggr)*(c.switchT>0?0.5:1)+(ah.defendT>0?RACE.defendKmh/3.6*(0.5+ah.cc.drv.aggr):0);
-      if(lapping){ if(ah.blue<=0)raceEvent(R,ah,'blue',{by:c.id}); ah.blue=2; raceSetPassing(R,c,ah.id,pos); }
+      if(lapping){ if(ah.blue<=0)raceEvent(R,ah,'blue',{by:c.id}); ah.blue=2; ah._blueBy=c.id; raceSetPassing(R,c,ah.id,pos); }
       else if(c.passing===ah.id||ah.passing===c.id){/* alongside: neither gives way */}
       else if(v-ah.v>need&&(c._lim==='power'||c._lim==='brake')&&rnd()<dt*3*(0.5+drv.aggr))raceSetPassing(R,c,ah.id,pos);
       // a late-braking move (build 147): held up into a braking zone, close enough, once a zone. Whether it sticks is
@@ -17380,7 +17414,19 @@ function raceStepOnce(R){
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
     if(M.hy)hybRaceSpend(M,c,c.v*dt);
-    if(c.blue>0)c.blue-=dt;
+    if(c.blue>0){
+      const prev=c.blue;c.blue-=dt;
+      // ignore blue (championship P5): still blocking a faster car as the flag expires
+      if(prev>0&&c.blue<=0&&c._blueBy!=null){
+        const by=cars.find(x=>x.id===c._blueBy);
+        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&c._gap<RACE.follow*2){
+          const pen=typeof CHAMP!=='undefined'?CHAMP.blueIgnorePen:5;
+          c.timePenalty=(c.timePenalty||0)+pen;c.blueIgnore=(c.blueIgnore||0)+1;
+          raceEvent(R,c,'blue_ignore',{by:c._blueBy,pen});
+        }
+        c._blueBy=null;
+      }
+    }
     let adv=c.v*dt;
     if(c.launch)c.launch.d+=adv;
     if(c.mistake&&c.mistake.d!=null){c.mistake.d+=adv;if(c.mistake.d>120)c.mistake=null;}
@@ -17388,11 +17434,22 @@ function raceStepOnce(R){
       const L=M.cum[c.i+1]-M.cum[c.i],rem=(1-c.f)*L;
       if(adv<rem){c.f+=adv/L;adv=0;break;}
       adv-=rem;c.i=(c.i+1)%M.n;c.f=0;
-      if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){c.mistake.d=0;raceEvent(R,c,'mistake');}
+      if(c.mistake&&c.mistake.d==null&&c.i===c.mistake.at){
+        c.mistake.d=0;raceEvent(R,c,'mistake');R.mistakeN=(R.mistakeN||0)+1;
+        // VSC (championship P5): enough mistakes open a virtual safety car for a named number of leader laps
+        if(cfg.vsc&&!R.vsc&&!R.chequered&&R.mistakeN>=(typeof CHAMP!=='undefined'?CHAMP.vscMistakes:3)){
+          R.vsc={fromLap:R.leaderLaps||0,left:typeof CHAMP!=='undefined'?CHAMP.vscLaps:1};
+          raceEvent(R,null,'vsc');
+        }
+      }
       if(c.i===0){raceCross(R,c);if(c.state!=='run')break;}
     }
     if(c.fuelKg<=0&&c.state==='run'){c.fuelKg=0;c.state='dnf';c.v=0;raceEvent(R,c,'dnf',{why:M.ev?'OUT OF CHARGE':'OUT OF FUEL'});}
     c.sTot=raceDist(R,c);
+  }
+  // timed race (championship P8): chequered when the clock hits durationSec
+  if(cfg.durationSec>0&&!R.chequered&&R.t>=cfg.durationSec){
+    R.chequered=true;raceEvent(R,null,'chequered');
   }
   // the pit lane: the car sits in its box while the rotors cool
   for(const c of cars){
@@ -17434,9 +17491,25 @@ function raceCross(R,c){
     c.lastLapKg=c.fuelKg;c.laps.push(lap);
     if(c.best==null||lt<c.best)c.best=lt;
     raceEvent(R,c,'lap',{time:lt,n:c.lapsDone});
+    // leader lap counter for VSC duration (championship P5)
+    if(pos===1){
+      R.leaderLaps=(R.leaderLaps||0)+1;
+      if(R.vsc&&R.leaderLaps>=R.vsc.fromLap+R.vsc.left){R.vsc=null;raceEvent(R,null,'vsc_end');}
+    }
   }
-  // the flag: the leader at the full distance, then every car the next time it reaches the line
-  if(c.lapsDone>=cfg.laps||(R.chequered&&c.lapsDone>=1)){R.chequered=true;c.state='fin';c.finishT=R.t;c.v=0;raceEvent(R,c,'finish',{pos:R.cars.filter(x=>x.state==='fin').length});return;}
+  // the flag: the leader at the full distance (or timed chequered), then every car the next time it reaches the line
+  const distDone=cfg.durationSec>0?!!R.chequered:c.lapsDone>=cfg.laps;
+  if(distDone||(R.chequered&&c.lapsDone>=1)){
+    if(!cfg.durationSec)R.chequered=true;
+    // mandatory stops (championship P8): shortfall becomes a time penalty, not a silent finish
+    if(cfg.minStops>0&&c.stopsDone<cfg.minStops){
+      const miss=cfg.minStops-c.stopsDone;
+      c.timePenalty=(c.timePenalty||0)+miss*30;
+      raceEvent(R,c,'min_stops',{miss,pen:miss*30});
+    }
+    c.state='fin';c.finishT=R.t+(c.timePenalty||0);c.v=0;
+    raceEvent(R,c,'finish',{pos:R.cars.filter(x=>x.state==='fin').length});return;
+  }
   const mode=c.cc.mode;
   const drv=c.cc.drv;
   c.pace=1-R.rnd()*RACE.pace*(mode==='push'?0.5:1)*(1.6-1.2*drv.cons);
@@ -17506,6 +17579,7 @@ function raceResults(R){
     lapsDown:lead.lapsDone-Math.max(0,c.lapsDone),best:c.best,stops:c.stopsDone,fuelL:c.fuelUsed/c.M.fuelRho,
     state:c.state,grid:c.grid,stints:c.stints,mode:c.cc.mode,driver:c.cc.drv.label||'',
     brakeMax:Math.max(0,...c.laps.map(l=>l.brake||0)),
+    timePenalty:c.timePenalty||0,blueIgnore:c.blueIgnore||0,
     why:(R.events.find(e=>e.type==='dnf'&&e.car===c.id)||{}).why||'',
     ...(c.M.ev?{unit:'kWh',packMax:c.evPeak.b,windingMax:c.evPeak.w}:{})}));
 }
@@ -24039,6 +24113,11 @@ const raceEventText=(R,e)=>{
     case 'dive':return e.ok?nm(e.car)+' '+tr('dives down the inside of')+' '+nm(e.on):nm(e.car)+' '+tr('runs wide trying to pass')+' '+nm(e.on);
     case 'defend':return nm(e.car)+' '+tr('defends from')+' '+nm(e.from);
     case 'blue':return tr('Blue flag')+': '+nm(e.car);
+    case 'blue_ignore':return tr('Blue flag ignored')+': '+nm(e.car)+' (+'+(e.pen||0)+' s)';
+    case 'vsc':return tr('VIRTUAL SAFETY CAR');
+    case 'vsc_end':return tr('VSC END');
+    case 'chequered':return tr('CHEQUERED FLAG');
+    case 'min_stops':return nm(e.car)+' — '+tr('pit stop short')+' (+'+(e.pen||0)+' s)';
     case 'dnf':return nm(e.car)+' — '+tr('OUT')+' ('+tr(e.why)+')';
     case 'finish':return 'P'+e.pos+' '+nm(e.car)+' — '+tr('FINISH');
     default:return '';
@@ -24270,6 +24349,559 @@ function bindRacePage(){
   });
   addEventListener('resize',sizeRaceStage);
   addEventListener('keydown',e=>{if(e.key==='Escape'&&racePage.open&&!document.fullscreenElement)setTab(racePage.from);});
+}
+// ---- CHAMPIONSHIP (post-v1.0): seasons on top of simulateRace ----
+// Orchestrates classes, calendars, points, economy, teams, career, soft BoP and endurance
+// regs. Race physics stay in race.js; sporting numbers here are named rules.
+const CHAMP={
+  seedPrime:10007,     // round i uses seed + i * seedPrime
+  maxGrid:8,
+  historyN:8,
+  tyreDry:3,           // dry sets per weekend (P3)
+  tyreWet:2,
+  entryFee:5000,       // credits (P3)
+  prize:[20000,12000,8000,5000,3000,2000,1000,500],
+  vscMistakes:3,       // mistakes that open a VSC (P5)
+  vscPace:0.6,         // speed under VSC as a share of free pace
+  vscLaps:1,           // VSC lasts this many leader laps
+  blueIgnorePen:5,     // s added for ignoring blue (P5)
+  ballastStep:10       // kg soft BoP steps (P7)
+};
+const CHAMP_POINTS={
+  top8:[10,8,6,5,4,3,2,1],
+  f1:[25,18,15,12,10,8,6,4,2,1]
+};
+// Racing classes: eligibility from preset tags (chassis / cat / powertrain / published hp).
+const CHAMP_CLASSES={
+  kei_cup:{id:'kei_cup',label:'KEI CUP',eligible:p=>{
+    return p.chassis==='kei'||p.cat==='Kei & City';
+  }},
+  hot_hatch:{id:'hot_hatch',label:'HOT HATCH',eligible:p=>{
+    const hp=champEngineHp(p);return (p.chassis==='hatch'||p.cat==='Compact Turbo')&&hp>=100&&hp<=360;
+  }},
+  sports:{id:'sports',label:'SPORTS',eligible:p=>{
+    const hp=champEngineHp(p);return (p.chassis==='roadster'||p.chassis==='coupe'||p.cat==='NA Sports')&&hp>0&&hp<=400
+      &&p.cat!=='Supercar'&&p.cat!=='American V8'&&p.cat!=='Electric'&&p.cat!=='Hybrid';
+  }},
+  muscle:{id:'muscle',label:'MUSCLE',eligible:p=>{
+    return p.chassis==='muscle'||p.cat==='American V8';
+  }},
+  touring:{id:'touring',label:'TOURING',eligible:p=>{
+    return p.chassis==='sedan'||p.chassis==='rally';
+  }},
+  gt:{id:'gt',label:'GT',eligible:p=>{
+    const hp=champEngineHp(p);return (p.chassis==='gt'||p.chassis==='super'||p.cat==='Supercar')&&hp>=300&&hp<=700;
+  }},
+  proto:{id:'proto',label:'PROTO',eligible:p=>{
+    return p.chassis==='proto'||p.chassis==='openwheel'||p.cat==='Track';
+  }},
+  ev_cup:{id:'ev_cup',label:'EV CUP',eligible:p=>p.cat==='Electric'},
+  hyb_cup:{id:'hyb_cup',label:'HYBRID CUP',eligible:p=>p.cat==='Hybrid'},
+  open:{id:'open',label:'OPEN',eligible:()=>true}
+};
+function champEngineHp(p){
+  const ep=(typeof FACTORY_ENGINES!=='undefined'?FACTORY_ENGINES:[]).find(e=>e.name===p.engine);
+  return ep&&ep.real&&ep.real.hp||0;
+}
+function champMarque(name){return String(name||'').split(/\s+/)[0]||'—';}
+function champPowertrain(p){
+  if(p.cat==='Electric')return 'electric';
+  if(p.cat==='Hybrid')return 'hybrid';
+  return 'combustion';
+}
+// Soft BoP (P7): ballast kg so that published power/mass sits nearer the class median. Rule, not a fit of the engine.
+function champBallastKg(p,cls){
+  if(!cls||cls.id==='open')return 0;
+  const pool=champEligiblePresets(cls.id);if(pool.length<3)return 0;
+  const ratio=q=>{const hp=champEngineHp(q),m=(q.body&&q.body.kg)||1200;return hp/Math.max(1,m);};
+  const rs=pool.map(ratio).sort((a,b)=>a-b),med=rs[Math.floor(rs.length/2)];
+  const r=ratio(p);if(!(r>med*1.08))return 0;
+  const kg=Math.round((1-med/r)*((p.body&&p.body.kg)||1200)/CHAMP.ballastStep)*CHAMP.ballastStep;
+  return clamp(kg,0,120);
+}
+function champEligiblePresets(classId){
+  const cls=CHAMP_CLASSES[classId]||CHAMP_CLASSES.open;
+  return FACTORY_CARS.filter(p=>cls.eligible(p));
+}
+function champEligibleIndices(classId){
+  const cls=CHAMP_CLASSES[classId]||CHAMP_CLASSES.open;
+  return FACTORY_CARS.map((p,i)=>cls.eligible(p)?i:-1).filter(i=>i>=0);
+}
+// Authored calendars (shipped tracks only).
+const CHAMP_SERIES=[
+  {id:'pixel_gt',name:'PIXEL GT',classId:'gt',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'silverstone',laps:8,weather:'dry'},
+      {track:'spa',laps:7,weather:'rain'},
+      {track:'monza',laps:10,weather:'dry'},
+      {track:'suzuka',laps:8,weather:'damp'},
+      {track:'yasmarina',laps:8,weather:'dry'}
+    ],    regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'hatch_cup',name:'HOT HATCH CUP',classId:'hot_hatch',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'brands',laps:10,weather:'dry'},
+      {track:'hungaro',laps:12,weather:'dry'},
+      {track:'zandvoort',laps:10,weather:'damp'},
+      {track:'mixed',laps:8,weather:'dry'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'sports_trophy',name:'SPORTS TROPHY',classId:'sports',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'catalunya',laps:8,weather:'dry'},
+      {track:'spielberg',laps:10,weather:'dry'},
+      {track:'tech',laps:8,weather:'dry'},
+      {track:'fast',laps:6,weather:'dry'}
+    ],regs:{weekend:'feature',flPoint:false,economy:false,vsc:true}},
+  {id:'ev_series',name:'EV SERIES',classId:'ev_cup',pointsId:'top8',unlock:'hatch_cup',
+    calendar:[
+      {track:'shanghai',laps:8,weather:'dry'},
+      {track:'montreal',laps:8,weather:'dry'},
+      {track:'sepang',laps:7,weather:'wet'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true}},
+  {id:'enduro_cup',name:'ENDURO CUP',classId:'gt',pointsId:'top8',unlock:'pixel_gt',
+    calendar:[
+      {track:'spa',laps:0,durationMin:20,weather:'dry',minStops:1},
+      {track:'nurgp',laps:0,durationMin:25,weather:'damp',minStops:1},
+      {track:'interlagos',laps:0,durationMin:20,weather:'dry',minStops:1}
+    ],    regs:{weekend:'feature',flPoint:true,economy:true,vsc:true,endurance:true,bop:true}},
+  {id:'multi_open',name:'OPEN WEEKEND',classIds:['gt','hot_hatch'],classId:'open',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'cota',laps:6,weather:'dry'},
+      {track:'melbourne',laps:6,weather:'dry'}
+    ],regs:{weekend:'feature',flPoint:false,economy:false,vsc:true,multiClass:true,bop:true}}
+];
+function champSeries(id){return CHAMP_SERIES.find(s=>s.id===id)||CHAMP_SERIES[0];}
+function champPointsTable(id){return CHAMP_POINTS[id]||CHAMP_POINTS.top8;}
+function champRoundSeed(seasonSeed,roundIdx){return ((seasonSeed>>>0)+roundIdx*CHAMP.seedPrime)>>>0;}
+// ---- persistence ----
+function champLoad(key,fallback){
+  try{const raw=localStorage.getItem(key);if(!raw)return fallback;return JSON.parse(raw);}catch(e){return fallback;}
+}
+function champSave(key,val){
+  try{localStorage.setItem(key,JSON.stringify(val));return true;}catch(e){return false;}
+}
+function champActive(){return champLoad('pes.champ.active',null);}
+function champSaveActive(S){return champSave('pes.champ.active',S);}
+function champClearActive(){try{localStorage.removeItem('pes.champ.active');}catch(e){}}
+function champHistory(){return champLoad('pes.champ.history',[]);}
+function champPushHistory(S){
+  const h=champHistory();
+  h.unshift({id:S.id,seriesId:S.seriesId,name:S.name,seed:S.seed,standings:S.standings,teamStandings:S.teamStandings||[],
+    finishedAt:new Date().toISOString().slice(0,10),rounds:S.results.length});
+  champSave('pes.champ.history',h.slice(0,CHAMP.historyN));
+}
+function champCareer(){return champLoad('pes.champ.career',{unlocked:['pixel_gt','hatch_cup','sports_trophy','multi_open'],finished:[],credits:50000});}
+function champSaveCareer(C){return champSave('pes.champ.career',C);}
+function champTeam(){return champLoad('pes.champ.team',null);}
+function champSaveTeam(T){return champSave('pes.champ.team',T);}
+// ---- entrants ----
+function champEntrantFromPreset(i,opts){
+  const p=FACTORY_CARS[i],ep=p&&FACTORY_ENGINES.find(x=>x.name===p.engine);if(!ep)return null;
+  const cls=opts&&opts.classId?CHAMP_CLASSES[opts.classId]:null;
+  const ballast=opts&&opts.bop?champBallastKg(p,cls):0;
+  const vehicle=vehicleFromPreset(p);
+  if(ballast)vehicle.ballastKg=(vehicle.ballastKg||0)+ballast;
+  const drivers=Object.keys(RACE_DRIVERS);
+  const drv=(opts&&opts.driver)||drivers[(i*3+1)%drivers.length];
+  const teamId=opts&&opts.teamId||null;
+  const classTag=opts&&opts.classTag||(cls?cls.id:null);
+  return {name:p.name,base:p.name,presetIdx:i,teamId,classTag,ballast,
+    build:{engine:Object.assign({},ep.engine),tune:Object.assign({},STD_TUNE),vehicle,name:p.name},
+    strat:{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:drv}};
+}
+function champFillGrid(classId,n,seed,opts){
+  opts=opts||{};
+  const idxs=champEligibleIndices(classId);if(!idxs.length)return [];
+  const rnd=mulberry32((seed>>>0)||1),pick=idxs.slice();
+  for(let i=pick.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=pick[i];pick[i]=pick[j];pick[j]=t;}
+  const out=[],take=Math.min(n||CHAMP.maxGrid,pick.length,CHAMP.maxGrid);
+  for(let k=0;k<take;k++){
+    const e=champEntrantFromPreset(pick[k],{classId,bop:!!opts.bop,classTag:classId});
+    if(e)out.push(e);
+  }
+  return out;
+}
+function champFillMultiGrid(classIds,nEach,seed,opts){
+  const out=[];
+  (classIds||[]).forEach((cid,i)=>{
+    const part=champFillGrid(cid,nEach||3,seed+i*17,Object.assign({},opts,{bop:true}));
+    part.forEach(e=>{e.classTag=cid;out.push(e);});
+  });
+  return out.slice(0,CHAMP.maxGrid);
+}
+// ---- standings / points ----
+function champBlankStandings(entrants){
+  return entrants.map((e,id)=>({id,name:e.name,pts:0,wins:0,poles:0,fl:0,teamId:e.teamId||null,classTag:e.classTag||null,marque:champMarque(e.name)}));
+}
+function champApplyPoints(standings,results,table,extras){
+  extras=extras||{};
+  const byId=new Map(standings.map(s=>[s.id,s]));
+  results.forEach((r,k)=>{
+    const s=byId.get(r.id);if(!s)return;
+    if(r.state==='dnf'||r.state==='dsq')return;
+    const pts=(table[k]||0)+(extras.flId===r.id?(extras.flPoint?1:0):0);
+    s.pts+=pts;if(k===0)s.wins++;
+  });
+  if(extras.poleId!=null){const s=byId.get(extras.poleId);if(s)s.poles++;}
+  if(extras.flId!=null){const s=byId.get(extras.flId);if(s)s.fl++;}
+  standings.sort((a,b)=>b.pts-a.pts||b.wins-a.wins||a.name.localeCompare(b.name));
+  return standings;
+}
+function champTeamStandings(standings){
+  const map=new Map();
+  for(const s of standings){
+    const tid=s.teamId;if(!tid)continue;
+    if(!map.has(tid))map.set(tid,{id:tid,name:tid,pts:0,wins:0});
+    const t=map.get(tid);t.pts+=s.pts;t.wins+=s.wins;
+  }
+  return [...map.values()].sort((a,b)=>b.pts-a.pts||b.wins-a.wins);
+}
+function champClassStandings(standings,classTag){
+  return standings.filter(s=>s.classTag===classTag).slice().sort((a,b)=>b.pts-a.pts||b.wins-a.wins);
+}
+function champFastestLapId(results){
+  let best=null,id=null;
+  for(const r of results){if(r.best!=null&&(best==null||r.best<best)){best=r.best;id=r.id;}}
+  return id;
+}
+// ---- season lifecycle ----
+function champNewSeason(seriesId,opts){
+  opts=opts||{};
+  const series=champSeries(seriesId);
+  const career=champCareer();
+  if(series.unlock&&career.unlocked.indexOf(series.id)<0&&career.unlocked.indexOf(series.unlock)<0){
+    // unlock gate: need the prerequisite series id in unlocked, or having finished it
+  }
+  const seed=(opts.seed>>>0)||(1+Math.floor(Math.random()*99999));
+  const multi=series.regs&&series.regs.multiClass&&series.classIds;
+  let entrants;
+  if(opts.entrants&&opts.entrants.length>=2)entrants=opts.entrants.slice(0,CHAMP.maxGrid);
+  else if(multi)entrants=champFillMultiGrid(series.classIds,Math.ceil(CHAMP.maxGrid/series.classIds.length),seed,{bop:true});
+  else entrants=champFillGrid(series.classId,CHAMP.maxGrid,seed,{bop:!!(series.regs&&series.regs.bop)});
+  // attach player team cars (P4)
+  const team=champTeam();
+  if(team&&team.cars&&team.cars.length&&opts.useTeam){
+    team.cars.slice(0,2).forEach((seat,k)=>{
+      if(entrants.length>=CHAMP.maxGrid)entrants.pop();
+      let e=null;
+      if(seat.presetIdx!=null)e=champEntrantFromPreset(seat.presetIdx,{classId:series.classId,driver:seat.driver||'balanced',teamId:team.id,bop:true});
+      else if(seat.ref==='cur')e=raceEntrantFrom('cur');
+      else if(seat.ref&&String(seat.ref).startsWith('g:'))e=raceEntrantFrom(seat.ref);
+      if(e){e.teamId=team.id;e.strat=e.strat||{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:seat.driver||'balanced'};
+        e.strat.driver=seat.driver||e.strat.driver||'balanced';entrants.unshift(e);}
+    });
+  }
+  const economy=series.regs&&series.regs.economy?{
+    credits:opts.credits!=null?opts.credits:(career.credits||50000),
+    tyres:entrants.map(()=>({dry:CHAMP.tyreDry,wet:CHAMP.tyreWet}))
+  }:null;
+  const S={
+    id:'s'+Date.now().toString(36),
+    seriesId:series.id,name:series.name,seed,roundIdx:0,
+    entrants,standings:champBlankStandings(entrants),teamStandings:[],
+    results:[],economy,regs:Object.assign({},series.regs),
+    classId:series.classId,classIds:series.classIds||null,pointsId:series.pointsId,
+    calendar:series.calendar.slice(),mode:opts.mode||'round' // 'round'|'instant'|'career'
+  };
+  champSaveActive(S);return S;
+}
+function champRoundCfg(S,roundIdx){
+  const round=S.calendar[roundIdx];if(!round)return null;
+  const seed=champRoundSeed(S.seed,roundIdx);
+  // timed races: plan fuel/stops for ~100 s/lap worth of distance (rule of thumb for strategy only)
+  const laps=round.laps>0?round.laps:(round.durationMin?Math.max((round.minStops||0)+2,Math.ceil(round.durationMin*60/100)):5);
+  return {
+    track:round.track,laps,durationSec:round.durationMin?round.durationMin*60:0,
+    minStops:round.minStops||0,weather:round.weather||'dry',air:RACE.air,
+    grid:'quali',warmers:false,seed,strategy:'auto',
+    vsc:!!(S.regs&&S.regs.vsc),cars:S.entrants.map(e=>{
+      const x=Object.assign({},e.strat||{});if(/^\d$/.test(x.stops))x.stops=+x.stops;return x;
+    })
+  };
+}
+function champRunQuali(S,roundIdx){
+  const cfg=champRoundCfg(S,roundIdx);if(!cfg)return null;
+  // one hot-lap each via raceCarModel.qual (already solved inside the model)
+  const models=S.entrants.map(e=>raceCarModel(e,cfg.track,{wet:cfg.weather!=='dry'}));
+  const order=models.map((M,k)=>({id:k,qual:M.qual,name:M.name})).sort((a,b)=>a.qual-b.qual||a.id-b.id);
+  return {models,order,poleId:order[0].id,cfg};
+}
+function champApplyRaceToSeason(S,R,meta){
+  meta=meta||{};
+  let results=raceResults(R);
+  // post-race time penalties (P5) already folded into finishT when set on cars; re-sort if needed
+  const table=champPointsTable(S.pointsId);
+  const flId=champFastestLapId(results);
+  const flPoint=!!(S.regs&&S.regs.flPoint);
+  champApplyPoints(S.standings,results,table,{flId,flPoint,poleId:meta.poleId});
+  S.teamStandings=champTeamStandings(S.standings);
+  // economy (P3)
+  if(S.economy){
+    S.economy.credits-=CHAMP.entryFee;
+    results.forEach((r,k)=>{if(r.state!=='dnf'&&r.state!=='dsq')S.economy.credits+=(CHAMP.prize[k]||0);});
+    const career=champCareer();career.credits=S.economy.credits;champSaveCareer(career);
+  }
+  S.results.push({roundIdx:S.roundIdx,track:R.cfg.track,seed:R.cfg.seed,classification:results,
+    poleId:meta.poleId,flId,quali:meta.quali||null});
+  S.roundIdx++;
+  if(S.roundIdx>=S.calendar.length)champFinishSeason(S);
+  else champSaveActive(S);
+  return S;
+}
+function champFinishSeason(S){
+  S.done=true;
+  champPushHistory(S);
+  // career unlock (P6): finishing a series opens dependents that list it as unlock
+  const career=champCareer();
+  if(!career.finished)career.finished=[];
+  if(career.finished.indexOf(S.seriesId)<0)career.finished.push(S.seriesId);
+  if(career.unlocked.indexOf(S.seriesId)<0)career.unlocked.push(S.seriesId);
+  CHAMP_SERIES.filter(s=>s.unlock===S.seriesId).forEach(s=>{
+    if(career.unlocked.indexOf(s.id)<0)career.unlocked.push(s.id);
+  });
+  if(S.economy)career.credits=S.economy.credits;
+  champSaveCareer(career);
+  champClearActive();
+  champSave('pes.champ.last',S);
+  return S;
+}
+async function champSimulateRound(S,opts){
+  opts=opts||{};
+  const yieldFn=opts.yieldFn||(()=>new Promise(r=>setTimeout(r,0)));
+  const cfg=champRoundCfg(S,S.roundIdx);if(!cfg)throw new Error('no round');
+  let poleId=null,quali=null,models;
+  if(S.regs&&S.regs.weekend==='quali_race'){
+    const Q=champRunQuali(S,S.roundIdx);
+    models=Q.models;poleId=Q.poleId;quali=Q.order;
+    // feature grid follows quali order: raceInit already sorts by .qual on models
+  }else{
+    models=[];
+    for(let k=0;k<S.entrants.length;k++){
+      if(opts.onProg)opts.onProg(k/S.entrants.length*0.7,S.entrants[k].name);
+      await yieldFn();
+      models.push(raceCarModel(S.entrants[k],cfg.track,{wet:cfg.weather!=='dry'}));
+    }
+  }
+  if(opts.onProg)opts.onProg(0.75,'RACING');
+  await yieldFn();
+  const R=raceInit(models,cfg);
+  while(!raceRun(R,40)){if(opts.onProg)opts.onProg(0.75+0.25*Math.min(1,R.t/Math.max(1,cfg.durationSec||models[0].lapNom*cfg.laps)),'RACING');await yieldFn();}
+  champApplyRaceToSeason(S,R,{poleId,quali});
+  return R;
+}
+async function champSimulateSeason(S,opts){
+  opts=opts||{};
+  while(!S.done&&S.roundIdx<S.calendar.length){
+    if(opts.onRound)opts.onRound(S.roundIdx);
+    await champSimulateRound(S,opts);
+  }
+  return S;
+}
+// Default one-car privateer team (P4).
+function champEnsureTeam(){
+  let T=champTeam();
+  if(T)return T;
+  T={id:'player',name:'PLAYER TEAM',credits:50000,cars:[{ref:'cur',driver:'balanced',number:1}],drivers:['balanced','smooth']};
+  champSaveTeam(T);return T;
+}
+// ---- CHAMP tab: season setup, standings, round-by-round or instant simulate ----
+const champUI={phase:'hub',busy:false,lastRun:null,prog:0,progTxt:''};
+function champUnlockedIds(){
+  const C=champCareer();
+  // a series with unlock:X opens once X is finished (or the series itself was added to unlocked)
+  return CHAMP_SERIES.filter(s=>{
+    if(!s.unlock)return true;
+    if(C.unlocked.indexOf(s.id)>=0)return true;
+    return (C.finished||[]).indexOf(s.unlock)>=0;
+  }).map(s=>s.id);
+}
+function champFillSeriesSel(){
+  const sel=document.getElementById('champSeries');if(!sel)return;
+  const open=new Set(champUnlockedIds());
+  sel.innerHTML=CHAMP_SERIES.map(s=>{
+    const lock=!open.has(s.id);
+    return '<option value="'+s.id+'"'+(lock?' disabled':'')+'>'+esc(tr(s.name))+(lock?' ('+tr('LOCKED')+')':'')+'</option>';
+  }).join('');
+}
+function champRenderHub(){
+  const box=document.getElementById('champHub');if(!box)return;
+  const S=champActive(),hist=champHistory(),career=champCareer(),team=champEnsureTeam();
+  let html='';
+  if(S&&!S.done){
+    html+='<div class="design-section">'+tr('ACTIVE SEASON')+'</div>';
+    html+='<div class="perf-note">'+esc(tr(S.name))+' • '+tr('ROUND')+' '+(S.roundIdx+1)+'/'+S.calendar.length+
+      (S.economy?' • '+tr('CREDITS')+' '+Math.round(S.economy.credits):'')+'</div>';
+    html+='<div class="build-row"><button id="champResume">'+tr('CONTINUE')+'</button>'+
+      '<button id="champAbandon">'+tr('ABANDON')+'</button></div>';
+  }else{
+    html+='<div class="design-section">'+tr('NEW SEASON')+'</div>';
+    html+='<div class="field"><label for="champSeries">'+tr('SERIES')+'</label><select id="champSeries"></select></div>';
+    html+='<div class="race-row"><div class="field"><label for="champSeed">'+tr('SEED')+'</label>'+
+      '<div class="race-seed"><input type="number" id="champSeed" min="1" max="99999" step="1" value="'+(1+Math.floor(Math.random()*99999))+'">'+
+      '<button id="champReroll" type="button" aria-label="'+esc(tr('New seed'))+'">🎲</button></div></div>';
+    html+='<div class="field"><label for="champMode">'+tr('MODE')+'</label><select id="champMode">'+
+      '<option value="round">'+tr('ROUND BY ROUND')+'</option>'+
+      '<option value="instant">'+tr('INSTANT SEASON')+'</option>'+
+      '<option value="career">'+tr('CAREER')+'</option></select></div></div>';
+    html+='<label class="race-check"><input type="checkbox" id="champUseTeam"> <span>'+tr('USE MY TEAM')+'</span></label>';
+    html+='<div class="build-row"><button id="champStart">'+tr('START SEASON')+'</button></div>';
+  }
+  html+='<div class="design-section">'+tr('TEAM')+'</div>';
+  html+='<div class="perf-note">'+esc(team.name)+' • '+tr('CREDITS')+' '+Math.round(career.credits)+'</div>';
+  html+='<div class="field"><label for="champTeamName">'+tr('TEAM NAME')+'</label><input id="champTeamName" value="'+esc(team.name)+'"></div>';
+  html+='<div class="field"><label for="champTeamDriver">'+tr('DRIVER')+'</label><select id="champTeamDriver">'+
+    Object.entries(RACE_DRIVERS).map(([k,d])=>'<option value="'+k+'"'+(team.cars[0]&&team.cars[0].driver===k?' selected':'')+'>'+esc(tr(d.label))+'</option>').join('')+
+    '</select></div>';
+  html+='<div class="field"><label for="champTeamCar">'+tr('CAR')+'</label><select id="champTeamCar"></select></div>';
+  html+='<div class="build-row"><button id="champSaveTeam">'+tr('SAVE TEAM')+'</button></div>';
+  if(hist.length){
+    html+='<div class="design-section">'+tr('HISTORY')+'</div><table class="race-tower"><thead><tr><th>'+tr('SERIES')+
+      '</th><th>'+tr('CHAMPION')+'</th><th>'+tr('PTS')+'</th></tr></thead><tbody>';
+    hist.forEach(h=>{
+      const top=(h.standings&&h.standings[0])||{};
+      html+='<tr><td class="nm">'+esc(tr(h.name||h.seriesId))+'</td><td class="nm">'+esc(top.name||'—')+
+        '</td><td>'+(top.pts!=null?top.pts:'—')+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  box.innerHTML=html;
+  if(!S||S.done){
+    champFillSeriesSel();
+    const rr=document.getElementById('champReroll');
+    if(rr)rr.addEventListener('click',()=>{document.getElementById('champSeed').value=1+Math.floor(Math.random()*99999);});
+    document.getElementById('champStart').addEventListener('click',champStartSeason);
+  }else{
+    document.getElementById('champResume').addEventListener('click',()=>champShowSeason(S));
+    document.getElementById('champAbandon').addEventListener('click',()=>{champClearActive();champRenderHub();flash(tr('SEASON ABANDONED'));});
+  }
+  const carSel=document.getElementById('champTeamCar');
+  if(carSel){
+    raceFillAdd('champTeamCar');
+    if(team.cars[0]&&team.cars[0].ref)carSel.value=team.cars[0].ref;
+  }
+  const saveT=document.getElementById('champSaveTeam');
+  if(saveT)saveT.addEventListener('click',()=>{
+    const T=champEnsureTeam();
+    T.name=document.getElementById('champTeamName').value||'PLAYER TEAM';
+    T.cars=[{ref:document.getElementById('champTeamCar').value||'cur',
+      driver:document.getElementById('champTeamDriver').value||'balanced',number:1}];
+    champSaveTeam(T);flash(tr('TEAM SAVED'));
+  });
+}
+function champStartSeason(){
+  const seriesId=document.getElementById('champSeries').value;
+  const seed=+document.getElementById('champSeed').value||1;
+  const mode=document.getElementById('champMode').value||'round';
+  const useTeam=document.getElementById('champUseTeam').checked;
+  const series=champSeries(seriesId);
+  const open=champUnlockedIds();
+  if(open.indexOf(seriesId)<0){flash(tr('SERIES LOCKED'),'warn');return;}
+  const S=champNewSeason(seriesId,{seed,mode,useTeam,credits:champCareer().credits});
+  if(mode==='instant')champRunInstant(S);
+  else champShowSeason(S);
+}
+function champShowSeason(S){
+  champUI.phase='season';
+  document.getElementById('champHub').hidden=true;
+  document.getElementById('champSeason').hidden=false;
+  champRenderSeason(S);
+}
+function champBackHub(){
+  champUI.phase='hub';
+  document.getElementById('champHub').hidden=false;
+  document.getElementById('champSeason').hidden=true;
+  champRenderHub();
+}
+function champRenderSeason(S){
+  const box=document.getElementById('champSeason');if(!box)return;
+  const round=S.calendar[S.roundIdx];
+  const done=!!S.done||S.roundIdx>=S.calendar.length;
+  let html='<div class="perf-head">'+esc(tr(S.name))+(S.economy?' • '+tr('CREDITS')+' '+Math.round(S.economy.credits):'')+'</div>';
+  if(!done&&round){
+    const trk=(TRACKS[round.track]||{}).label||round.track;
+    html+='<div class="perf-note">'+tr('ROUND')+' '+(S.roundIdx+1)+'/'+S.calendar.length+' • '+esc(trk)+
+      (round.durationMin?' • '+round.durationMin+' '+tr('min'):' • '+round.laps+' '+tr('LAPS'))+
+      ' • '+esc(tr((round.weather||'dry').toUpperCase()))+'</div>';
+  }
+  html+='<div class="design-section">'+tr('STANDINGS')+'</div>';
+  html+=champStandingsTable(S.standings);
+  if(S.teamStandings&&S.teamStandings.length){
+    html+='<div class="design-section">'+tr('CONSTRUCTORS')+'</div>'+champStandingsTable(S.teamStandings,true);
+  }
+  if(S.regs&&S.regs.multiClass&&S.classIds){
+    S.classIds.forEach(cid=>{
+      const cls=CHAMP_CLASSES[cid];
+      html+='<div class="design-section">'+esc(tr((cls&&cls.label)||cid))+'</div>'+
+        champStandingsTable(champClassStandings(S.standings,cid));
+    });
+  }
+  html+='<div class="race-prog" id="champProg" '+(champUI.busy?'':'hidden')+'><div class="race-prog-track"><div class="race-prog-bar" style="width:'+
+    Math.round(champUI.prog*100)+'%"></div></div><span>'+esc(champUI.progTxt||'')+'</span></div>';
+  html+='<div class="build-row">';
+  if(!done)html+='<button id="champNext" '+(champUI.busy?'disabled':'')+'>'+tr('RUN ROUND')+'</button>';
+  else html+='<div class="perf-note">'+tr('SEASON COMPLETE')+' — '+(S.standings[0]?esc(S.standings[0].name):'—')+'</div>';
+  html+='<button id="champToHub">'+tr('BACK')+'</button></div>';
+  if(S.results.length){
+    html+='<div class="design-section">'+tr('RESULTS')+'</div><table class="race-tower"><thead><tr><th>#</th><th>'+
+      tr('CIRCUIT')+'</th><th>'+tr('WINNER')+'</th></tr></thead><tbody>';
+    S.results.forEach((r,i)=>{
+      const w=(r.classification&&r.classification[0])||{};
+      html+='<tr><td>'+(i+1)+'</td><td class="nm">'+esc((TRACKS[r.track]||{}).label||r.track)+
+        '</td><td class="nm">'+esc(w.name||'—')+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  box.innerHTML=html;
+  const back=document.getElementById('champToHub');if(back)back.addEventListener('click',champBackHub);
+  const next=document.getElementById('champNext');
+  if(next)next.addEventListener('click',()=>champRunNext(S));
+}
+function champStandingsTable(rows,isTeam){
+  if(!rows||!rows.length)return '<div class="perf-note">—</div>';
+  let h='<table class="race-tower"><thead><tr><th>P</th><th>'+tr(isTeam?'TEAM':'DRIVER')+
+    '</th><th>'+tr('PTS')+'</th><th>'+tr('WINS')+'</th></tr></thead><tbody>';
+  rows.forEach((s,i)=>{
+    h+='<tr><td>'+(i+1)+'</td><td class="nm">'+esc(s.name)+'</td><td>'+s.pts+'</td><td>'+s.wins+'</td></tr>';
+  });
+  return h+'</tbody></table>';
+}
+async function champRunNext(S){
+  if(champUI.busy||S.done)return;
+  champUI.busy=true;champUI.prog=0;champUI.progTxt=tr('SOLVING');champRenderSeason(S);
+  try{
+    const R=await champSimulateRound(S,{
+      onProg:(p,txt)=>{champUI.prog=p;champUI.progTxt=tr(txt||'');const pg=document.getElementById('champProg');
+        if(pg){pg.hidden=false;pg.querySelector('.race-prog-bar').style.width=Math.round(p*100)+'%';pg.querySelector('span').textContent=champUI.progTxt;}}
+    });
+    champUI.lastRun=R;
+    // hand the race to the race page for replay
+    raceUI.entrants=S.entrants.map(e=>({name:e.name,build:e.build,strat:e.strat,base:e.base||e.name}));
+    raceUI.run=R;raceUI.t=0;raceUI.playing=true;raceUI.phase='live';raceUI.follow=-1;
+    flash(tr('ROUND COMPLETE'));
+    if(S.done)flash(tr('SEASON COMPLETE')+': '+(S.standings[0]?S.standings[0].name:''));
+  }catch(err){
+    flash(tr('ROUND FAILED')+': '+(err&&err.message||err),'err');
+  }
+  champUI.busy=false;champRenderSeason(champActive()||S);
+}
+async function champRunInstant(S){
+  champShowSeason(S);
+  champUI.busy=true;
+  try{
+    await champSimulateSeason(S,{
+      onProg:(p,txt)=>{champUI.prog=p;champUI.progTxt=tr(txt||'');},
+      onRound:i=>{champUI.progTxt=tr('ROUND')+' '+(i+1);champRenderSeason(S);}
+    });
+    flash(tr('SEASON COMPLETE')+': '+(S.standings[0]?S.standings[0].name:''));
+  }catch(err){flash(tr('SEASON FAILED')+': '+(err&&err.message||err),'err');}
+  champUI.busy=false;champRenderSeason(champActive()||S);
+}
+function bindChamp(){
+  champRenderHub();
+}
+function refreshChamp(){
+  if(champUI.phase==='season'){
+    const S=champActive();if(S)champRenderSeason(S);else champBackHub();
+  }else champRenderHub();
 }
 // ---- the full-screen track view (build 143): the lap, its live instruments and the replay controls ----
 // For a phone. ⛶ in the live-timing row moves the map canvas and the replay controls into a page that fills
@@ -24779,11 +25411,11 @@ function setTab(mode){
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
-  ['Design','Vehicle','Parts','Garage','Track','Race','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Parts','Garage','Track','Race','Champ','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
   // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
-  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode[0].toUpperCase()+mode.slice(1);
+  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode==='champ'?'Champ':mode[0].toUpperCase()+mode.slice(1);
   const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
@@ -24818,12 +25450,14 @@ function setTab(mode){
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
+  document.getElementById('champPanel').style.display=(mode==='champ')?'':'none';
   document.getElementById('chalPanel').style.display=(mode==='challenges')?'':'none';
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
+  if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
@@ -32786,6 +33420,7 @@ function bindControls(){
   document.getElementById('tabVehicle').addEventListener('click',()=>setTab('vehicle'));
   document.getElementById('tabTrack').addEventListener('click',()=>setTab('track'));
   document.getElementById('tabRace').addEventListener('click',()=>setTab('race'));
+  document.getElementById('tabChamp').addEventListener('click',()=>setTab('champ'));
   document.getElementById('tabChallenges').addEventListener('click',()=>setTab('challenges'));
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
@@ -33040,6 +33675,7 @@ initGuide();               // index, or the page you were last reading
 bindTrackZoom();
 bindRace();
 bindRacePage();
+bindChamp();
 bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();

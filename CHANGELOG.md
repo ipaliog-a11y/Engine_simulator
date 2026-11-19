@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Championship seasons on top of RACE (build 385)
+
+Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
+- **CHAMP tab**: series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), round-by-round or instant season, career unlocks, standings and history in `pes.champ.*`.
+- **Classes** filter factory cars by chassis / category / published power; optional soft BoP ballast (kg steps toward class median power/mass).
+- **Points** Top-8 table with optional fastest-lap point; constructor table when a team is entered; multi-class standings on Open Weekend.
+- **Economy** (selected cups): entry fee and finish prizes in credits; tyre-set counters per entrant.
+- **Race hooks**: virtual safety car after enough mistakes, blue-flag ignore time penalty, timed races with minimum pit stops (Enduro Cup).
+- `test234` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
 Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decisions.
