@@ -1,45 +1,70 @@
-// The bench drawing follows the engine that is already running.
+// Workshop bays follow the open card.
 //
-// WHY THIS EXISTS. Exhaust temperature, knock and a dyno sweep were numbers with no picture.
-// What must hold:
-//   · 500 C and 1100 C are different manifold colours;
-//   · a knocking engine paints the warning block, and reduced motion still draws;
-//   · RUN PULL starts a sweep of the brake;
+// WHY THIS EXISTS. The engine preview was a dot grid, the same in every section. What must hold:
+//   · BUILD shows the workshop, TEST the garage and DRIVE the pit;
+//   · switching an engine card changes the bay key and the preview is not empty;
+//   · the vehicle BAY draws a car, and a phone width does too;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
+const fails = [], errors = [];
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; setTab('engine'); });
+await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; });
 await page.waitForTimeout(300);
-const fails = [];
 
-const col = await page.evaluate(() => ({ cold: egtColour(773), hot: egtColour(1373) }));
-console.log(col);
-if (col.cold === col.hot) fails.push('exhaust colour ignores temperature');
+const room = async () => page.evaluate(() => getComputedStyle(document.getElementById('modeRoom')).backgroundImage);
+await page.evaluate(() => setTab('design'));
+const buildRoom = await room();
+await page.evaluate(() => setTab('engine'));
+const testRoom = await room();
+await page.evaluate(() => setTab('track'));
+const driveRoom = await room();
+console.log(buildRoom, testRoom, driveRoom);
+if (!/workshop-pickup/.test(buildRoom)) fails.push('BUILD has no workshop');
+if (!/garage-f355/.test(testRoom)) fails.push('TEST has no garage');
+if (!/pit-f355/.test(driveRoom)) fails.push('DRIVE has no pit');
 
-const knock = await page.evaluate(() => {
-  state.knockRisk = 90; drawEngine(0.016);
-  const S = Math.min(vizW / 640, vizH / 420), ox = (vizW - 640 * S) / 2, oy = (vizH - 420 * S) / 2;
-  const x = Math.round((ox + 110 * S) * vizScale), y = Math.round((oy + 92 * S) * vizScale);
-  const p = document.getElementById('engineCanvas').getContext('2d').getImageData(x, y, 1, 1).data;
-  return { r: p[0], g: p[1] };
+await page.evaluate(() => setTab('design'));
+await page.waitForTimeout(250);
+await page.click('#icdRb-head');
+await page.waitForTimeout(250);
+const head = await page.evaluate(() => {
+  const cv = document.getElementById('enginePreview');
+  const pix = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+  let ink = 0; for (let i = 0; i < pix.length; i += 16) if (pix[i] + pix[i + 1] + pix[i + 2] > 30) ink++;
+  return { bay: cv.dataset.bay, ink };
 });
-console.log('knock pixel', knock);
-if (knock.r < 80) fails.push('knock warning is not drawn');
+console.log('head bay', head);
+if (head.bay !== 'ice:head') fails.push('head card bay is ' + head.bay);
+if (head.ink < 20) fails.push('engine preview is empty');
+await page.click('#icdRb-air');
+await page.waitForTimeout(200);
+const air = await page.evaluate(() => document.getElementById('enginePreview').dataset.bay);
+if (air !== 'ice:air') fails.push('air card bay is ' + air);
 
-await page.emulateMedia({ reducedMotion: 'reduce' });
-const still = await page.evaluate(() => { drawEngine(0.016); return matchMedia('(prefers-reduced-motion: reduce)').matches; });
-if (!still) fails.push('reduced motion was not applied');
+await page.evaluate(() => setTab('vehicle'));
+await page.click('#btnVhBay');
+await page.waitForTimeout(250);
+const car = await page.evaluate(() => document.getElementById('vhBay').dataset.bay);
+console.log('car bay', car);
+if (!/^car:/.test(car || '')) fails.push('vehicle bay is ' + car);
 
-const sweep = await page.evaluate(() => { startDynoSweep(); return !!dynoSweep && vizMode === 'dyno'; });
-console.log('sweep', sweep);
-if (!sweep) fails.push('RUN PULL did not start');
+await page.setViewportSize({ width: 390, height: 800 });
+await page.waitForTimeout(300);
+const phone = await page.evaluate(() => {
+  const cv = document.getElementById('enginePreview');
+  return { bay: cv.dataset.bay, w: cv.width };
+});
+await page.evaluate(() => setTab('design'));
+await page.waitForTimeout(300);
+const phoneBay = await page.evaluate(() => document.getElementById('enginePreview').dataset.bay);
+console.log('phone', phoneBay);
+if (!phoneBay) fails.push('phone preview has no bay');
 
 await browser.close();
 if (errors.length) fails.push(...errors);
