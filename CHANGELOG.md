@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Next 100 factory cars shortlisted (research batch 2)
+
+- `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).
+- `queue.json` + `validate.mjs` + `tests/test234.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
+- Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
+- Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
+
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
 Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decisions.
