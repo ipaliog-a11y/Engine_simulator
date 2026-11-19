@@ -815,7 +815,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 364</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 366</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -9202,12 +9202,16 @@ function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_O
 //     beams 100-150: Wang et al., K&C of a torsion beam suspension, VEHITS 2019); a solid axle's Panhard rod, Watt's
 //     link or leaf springs locate it at its own wheel centre (rc null: the rolling radius).
 //   front:false — a twist beam cannot steer. cost — fitting it where the car did not have it.
+//   bump, droop (m, build 364) — the wheel's travel from its static ride height up to the bump rubber and down to full
+//     droop (the damper's rebound stop). Passenger cars run ~70-100 mm each way at the wheel; a strut's travel is
+//     bounded by its own length, so the least, and a solid axle's beam needs the most (Reimpell et al., The Automotive
+//     Chassis, ch. 5, spring travel: PROBABLE by type, no maker publishes each car's).
 const SUSP_GEO={
-  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500},
-  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500},
-  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500},
-  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500},
-  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000}
+  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080},
+  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090},
+  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090},
+  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095},
+  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110}
 };
 // The real cars' suspension (front, rear) and front and rear track (m). Sources: maker sheets where found
 // (BMW media 2012, Porsche US 2021, GM, Nissan heritage), spec databases (carsales/Redbook, carexpert, conceptcarz,
@@ -14433,16 +14437,27 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   The wheel hop is sqrt((ks + kt) / mu), 10-15 Hz: at the 1 ms step that is 0.06-0.1 rad a step, and the damper is
 //   taken implicitly in the wheel's own speed, so no smaller step is needed (test205 halves the step: the same).
 //   s.zu, s.heave (m, up), s.rr (each axle's roll on its springs, which the camber's recovery and the roll steer go by).
-//   Left out, named: bump stops and the droop limit (the springs are linear without end), the tyre's own damping,
-//   the dampers' bound and rebound apart, anti-dive and anti-squat, jacking, camber and toe by heave and pitch.
+//   ends   (build 364) each corner's travel c (up on the body, from static) by the axle's type (SUSP_GEO bump, droop).
+//          Past bump the bump rubber: a progressive spring, F = kb x / (1 - x/xb), kb the wheel rate at first touch,
+//          rising as the rubber squashes and without end at xb, its solid height (jounce bumpers of polyurethane foam
+//          stiffen ~20x over their stroke: Reimpell, ch. 5, auxiliary springs; xb 25 mm and kb = ks PROBABLE). At
+//          c = bump + xb, and at full droop, the wheel is stopped on the body: its speed on the body there is held at
+//          zero, and what that takes passes to the body (at droop the wheel hangs from it, off the road if need be).
+//   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
+//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
+//          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
+//   Left out, named: the tyre's own damping, the damper's blow-off, anti-dive and anti-squat, jacking, camber and toe
+//   by heave and pitch, and travel by the kit (a lowered car keeps its type's).
+const DRIVE_BUMP_RUBBER=0.025,DAMPER_RB=3;
 function driveBody(v,a,b){
+  const gF=SUSP_GEO[v.suspFront]||SUSP_GEO.strut,gR=SUSP_GEO[v.suspRear]||SUSP_GEO.multilink;
   const qF=quarterCar(v,'F'),qR=quarterCar(v,'R'),tF=v.trackF||v.track,tR=v.trackR||v.track,fw=v.fWt;
   const zF=v.rcF||0,zR=v.rcR||0,zAx=fw*zF+(1-fw)*zR,arm=Math.max(0,v.cg-zAx),kx=0.39*(tF+tR)/2;
   const K=v.rollK||(()=>{const k=rollStiffness(v);return k.F+k.R;})(),KF=v.rollKF==null?0.5:v.rollKF;
   const kz=q=>2*q.ks*q.kt/(q.ks+q.kt),L=a+b;      // an axle's vertical rate, its springs on its tyres
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
     pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR))};
 }
 // THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
@@ -15067,11 +15082,17 @@ function stepCar(car,s,u,dt){
     for(let q=0;q<2;q++){const i=q*2,j=i+1,f=q===0,t=f?car.tF:car.tR,ks=f?car.ksF:car.ksR,cs=f?car.cdF:car.cdR,mu=f?car.unsF:car.unsR,W0=f?W0F:W0R;
       const zb=s.heave+s.pitch*xw[i],zbV=s.heaveV+s.pitchV*xw[i],rl=s.roll*t/2,rlV=s.rollV*t/2;
       const cL=s.zu[i]-zb-rl,cR=s.zu[j]-zb+rl,e=ks*(cL+cR)/2,pr=(cR-cL)/t,bar=(f?car.KaF:car.KaR)*pr/t,D=car.m*ay*(f?car.rcGF:car.rcGR)/t;
-      // the damper taken implicitly in the wheel's own speed
-      const kd=1+h*cs/mu,vL=(s.zuV[i]+h*(Fz[i]-W0-e+bar+D+cs*(zbV+rlV)-mu*dg)/mu)/kd,vR=(s.zuV[j]+h*(Fz[j]-W0-e-bar-D+cs*(zbV-rlV)-mu*dg)/mu)/kd;
-      const SL=e-bar+cs*(vL-zbV-rlV),SR=e+bar+cs*(vR-zbV+rlV);              // what each corner's spring, bar and damper carry
-      SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;
-      s.zuV[i]=vL;s.zuV[j]=vR;s.zu[i]+=h*vL;s.zu[j]+=h*vR;}
+      // each wheel: its spring, bar, bump rubber and damper (bound or rebound by its direction, taken implicitly in
+      // the wheel's own speed on the body), then its two stops; what the corner passes to the body is what changed
+      // the wheel's momentum other than the tyre, the links and its weight
+      const up=f?car.bumpF:car.bumpR,dn=f?car.droopF:car.droopR,top=up+DRIVE_BUMP_RUBBER,cb=2*cs/(1+DAMPER_RB),cr=cb*DAMPER_RB;
+      const wheel=(w,cc,vb,Fs,Fl)=>{const x=Math.min(cc-up,0.95*DRIVE_BUMP_RUBBER),rub=x>0?ks*x/(1-x/DRIVE_BUMP_RUBBER):0;
+        const A=s.zuV[w]+h*(Fz[w]-W0-Fs-rub+Fl-mu*dg)/mu-vb;               // the wheel's speed on the body, undamped
+        let vr=A/(1+h*(A>0?cb:cr)/mu);                                      // the damper's sign is A's, whichever c
+        const cn=cc+h*vr;if(cn>top)vr=(top-cc)/h;else if(cn<-dn)vr=(-dn-cc)/h;
+        const vw=vb+vr,S=Fz[w]-W0+Fl-mu*dg-mu*(vw-s.zuV[w])/h;s.zuV[w]=vw;s.zu[w]+=h*vw;return S;};
+      const SL=wheel(i,cL,zbV+rlV,e-bar,D),SR=wheel(j,cR,zbV-rlV,e+bar,-D);
+      SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;}
     s.heaveV+=h*(SS-car.mS*dg-down)/car.mS;s.heave+=h*s.heaveV;
     s.rollV+=h*(car.m*ay*car.rollArm-MR)/car.rollI;s.roll+=h*s.rollV;
     s.pitchV+=h*(car.m*ax*car.h+MP-down*(car.aeroBal*car.a-(1-car.aeroBal)*car.b))/car.pitchI;s.pitch+=h*s.pitchV;

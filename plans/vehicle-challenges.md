@@ -40,7 +40,7 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
   cap hitting the target; the cheapest is kept.
 - Stage kind: `stage-*` entries, one set time per road (Golf GTI Mk7 min-time +2%, rounded up to 5 s); slower is DNF.
 
-## Regen power against measured EVs (build 364, research)
+## Regen power against measured EVs (build 366, research)
 
 What `evRegenTable` gives: the motor's peak torque, capped by the pack's charge power (`cCharge` × kWh), times the
 setting's k. Regen alone (no drag), HIGH, test mass + inertias:
