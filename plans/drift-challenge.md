@@ -29,7 +29,7 @@ the car’s drive layout, not a missing DOF.
 | **Clutch kick** | Clutch in, rev, dump | `u.clutch` exists |
 | **Scandinavian flick / feint** | Steer away, then into the turn to unload the rear | Steer only |
 | **Lift-off** | Trail brake / lift to transfer load forward | Pedals |
-| **Handbrake** | Lock rears briefly | **Not modelled** (named gap) |
+| **Handbrake** | Lock rears briefly | `u.handbrake` (build 382) |
 
 v1 uses **power-over** (and a short clutch kick if power-over alone fails on a low-power car).
 FWD needs handbrake or feint (Velenis CDC 2011); leave FWD/AWD as named gaps or FAIL_LAYOUT.
@@ -78,9 +78,10 @@ First CLEAR wins (FWD stops at NO_SLIDE).
   car was put in gear 2, which it lacks, and STALLed: fixed (Model Y now CLEAR, Model 3 RWD CLEAR). The viscous,
   rear-driven cars (993 Turbo, Diablo VT, Murciélago) stay NO_SLIDE: the coupling sends torque forward as the rear slips.
   Left open: the Plaid goes OFF (too much power for R 18–22 m at the searched speeds); the Qashqai e-POWER (FWD) STALLs.
-- **Next: handbrake.** Needs `u.handbrake` in `stepCar` (rear-only torque the ABS does not ease, with a sourced lever-brake
-  capacity), then `'handbrake'` in `DRIFT_INITS` / `DRIFT_METHODS` for RWD and FWD (Velenis CDC 2011). Waits for the
-  stability-control build in `drive-model.js` to merge.
+- **Handbrake — done (build 382).** `u.handbrake` in `stepCar`: rear-only, outside the ABS, capacity the rear service
+  brake's (PROBABLE) with the R13-H 20%-grade floor. `'handbrake'` in `DRIFT_INITS` / `DRIFT_METHODS` for RWD and FWD,
+  searched last. The Civic Type R CLEARs by it. Left open: AWD handbrake (centre disconnect not modelled; falls back to
+  power-over) and the screech for a lever-locked rear.
 
 ## Sources
 

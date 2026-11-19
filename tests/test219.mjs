@@ -5,7 +5,9 @@
 // and named failure modes. What must hold:
 //   · both RWD cars (MX-5 and Mustang) finish CLEAR: both corners past the rear peak with body slip;
 //   · (build 359) the course is continuous: no gap over 1 m between line points;
-//   · a FWD car (Civic Type R) finishes NO_SLIDE (handbrake not modelled — power-over alone does not initiate);
+//   · a FWD car (Civic Type R) finishes NO_SLIDE on POWER-OVER (power alone does not initiate), and (build 382) CLEARs on
+//     AUTO by the handbrake, the last method tried; an AWD car on HANDBRAKE falls back to power-over;
+//   · (build 382) stepCar's u.handbrake locks the rear wheels with the ABS on, where the pedal alone is eased by the ABS;
 //   · outcomes are only CLEAR / FADE / NO_SLIDE / STALL / OFF / SPIN;
 //   · (build 360) each METHOD runs its own initiation on the MX-5 (power, kick, flick), a fixed ENTRY is the
 //     entry speed, FWD with FLICK runs a flick plan, and the i button shows and hides the explanation;
@@ -36,10 +38,16 @@ const r = await page.evaluate(() => {
   out.mustang = { outcome: mu.outcome, drive: mu.drive, b1: mu.beta1, b2: mu.beta2 };
   load('Civic Type R (FK8');
   const ci = simulateDriftChallenge();
-  out.civic = { outcome: ci.outcome, drive: ci.drive, past1: ci.past1, past2: ci.past2, fin: ci.samples && ci.samples.length > 10 };
+  out.civic = { outcome: ci.outcome, init: ci.init, drive: ci.drive, past1: ci.past1, past2: ci.past2, fin: ci.samples && ci.samples.length > 10 };
+  chalDriftMethod = 'power'; out.civicPower = simulateDriftChallenge().outcome; chalDriftMethod = 'auto';
+  { const car = driveCar(); car.abs = true; const run = hb => { const s = driveState(car); s.vx = 20; s.w = s.w.map(() => 20 / car.r);
+      for (let k = 0; k < 60; k++) stepCar(car, s, { steer: 0, throttle: 0, brake: hb ? 0 : 1, handbrake: hb, gear: s.gear }, 0.01);
+      return Math.min(s.w[2], s.w[3]); };
+    out.lever = { hb: run(1), pedal: run(0) }; }
+  load('Tesla Model Y'); chalDriftMethod = 'handbrake'; out.awdHb = simulateDriftChallenge().init; chalDriftMethod = 'auto';
   out.methods = {};
   load('MX-5');
-  for (const m of ['power', 'kick', 'flick']) { chalDriftMethod = m; chalDriftEntry = 40; const R = simulateDriftChallenge(); out.methods[m] = { init: R.init, kmh: R.speedKmh, out: R.outcome }; }
+  for (const m of ['power', 'kick', 'flick', 'handbrake']) { chalDriftMethod = m; chalDriftEntry = 40; const R = simulateDriftChallenge(); out.methods[m] = { init: R.init, kmh: R.speedKmh, out: R.outcome, hb: R.samples.some(q => q.hb > 0) }; }
   load('Civic Type R (FK8'); chalDriftMethod = 'flick'; chalDriftEntry = 40; out.civicFlick = simulateDriftChallenge().init;
   chalDriftMethod = 'auto'; chalDriftEntry = 0; load('MX-5');
   setTab('challenges');
@@ -72,13 +80,17 @@ if (r.mx5.outcome !== 'CLEAR' || r.mustang.outcome !== 'CLEAR') fails.push('RWD 
 if (!(r.gap < 1)) fails.push('course gap ' + r.gap + ' m');
 for (const k of OK) if (!r.outcomes.includes(k)) fails.push('DRIFT_RANK missing ' + k);
 if (r.civic.drive !== 'fwd') fails.push('Civic not FWD');
-if (r.civic.outcome !== 'NO_SLIDE') fails.push('Civic expected NO_SLIDE, got ' + r.civic.outcome);
+if (r.civicPower !== 'NO_SLIDE') fails.push('Civic POWER-OVER expected NO_SLIDE, got ' + r.civicPower);
+if (r.civic.outcome !== 'CLEAR' || r.civic.init !== 'handbrake') fails.push('Civic AUTO expected CLEAR by handbrake, got ' + r.civic.outcome + ' ' + r.civic.init);
+console.log('lever vs pedal, slowest rear wheel (rad/s)', r.lever, 'AWD handbrake ran', r.awdHb);
+if (!(r.lever.hb === 0 && r.lever.pedal > 0)) fails.push('lever should lock the rears past the ABS: ' + JSON.stringify(r.lever));
+if (r.awdHb !== 'power') fails.push('AWD HANDBRAKE ran ' + r.awdHb);
 if (!r.mx5.dash) fails.push('replay samples lack dashboard fields');
 if (!(r.mx5.n > 20)) fails.push('MX-5 replay samples missing');
 if (!/POWERSLIDE|CLEAR|NO_SLIDE|FADE|OFF|SPIN/i.test(r.head || '')) fails.push('UI head missing outcome: ' + r.head);
 if (!r.rateShown) fails.push('replay rate hidden on drift');
 console.log('methods', r.methods, 'civic flick', r.civicFlick, 'info', r.info);
-for (const m of ['power', 'kick', 'flick']) { const x = r.methods[m]; if (x.init !== m || x.kmh !== 40 || !OK.has(x.out)) fails.push('method ' + m + ': ' + JSON.stringify(x)); }
+for (const m of ['power', 'kick', 'flick', 'handbrake']) { const x = r.methods[m]; if (x.init !== m || x.kmh !== 40 || !OK.has(x.out) || x.hb !== (m === 'handbrake')) fails.push('method ' + m + ': ' + JSON.stringify(x)); }
 if (r.civicFlick !== 'flick') fails.push('Civic FLICK ran ' + r.civicFlick);
 if (r.info.join() !== 'true,false,true,true') fails.push('i button: ' + r.info.join());
 if (!r.driftFields) fails.push('drift ENTRY/METHOD hidden');

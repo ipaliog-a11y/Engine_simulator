@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 381
+# PIXEL POWERTRAIN v0.8 build 382
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -319,12 +319,12 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
   - **S-Route Powerslide** — straight, left 90°, short straight, right 90°, straight on a 24 m pad, ESP and TC off.
     The driver holds body slip with throttle and countersteer. **METHOD** picks how the slide starts: power-over,
-    clutch kick or a **flick** (lift and steer away, then sharply in, each phase half the body's natural period);
-    AUTO tries them in turn. **ENTRY** fixes the entry speed (30–50 km/h) or searches the best. A run ends
-    **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car without a
-    handbrake), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. An AWD car powers over as far
+    clutch kick, a **flick** (lift and steer away, then sharply in, each phase half the body's natural period) or the
+    **handbrake** (rear wheels only, outside the ABS; RWD and FWD); AUTO tries them in turn, the handbrake last. **ENTRY** fixes the entry speed (30–50 km/h) or searches the best. A run ends
+    **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car on
+    power-over), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. An AWD car powers over as far
     as its centre coupling lets the rear spin faster than the front (DRIVE shows the coupling and split); a clutch
-    or viscous coupling sends torque forward as the rear slips. Handbrake and loose surfaces are not modelled.
+    or viscous coupling sends torque forward as the rear slips. Loose surfaces are not modelled.
   - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
     magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
   - **RANK CARS** runs several cars (this build, garage builds, factory cars) through the selected challenge
