@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The stability control judges a spin by the yaw rate (build 379)
+### The stability control judges a spin by the yaw rate (build 380)
 
 - Plan small-physics step 5. `stepCar`'s ESP now compares the yaw rate with the steady single-track reference, lagged
   by the model's equivalent delay B/C − m v a/(Cr L) (Abe, *Vehicle Handling Dynamics*, ch. 3; van Zanten, SAE
@@ -34,6 +34,18 @@ they are accurate about *what* shipped but not about the day it shipped.
   (since build 354's tyres). The card now runs the final run (`driveSineDwell` with no multiple), where ESP off spins
   and ESP on passes.
 - Fingerprint identical (stepCar only). Left open: the limit reading the surface (step 7); MSR for engine cars.
+
+### AWD power-over on the S-route powerslide (build 379)
+
+- AWD cars take the RWD power-over path. Whether the rear slides depends on the centre coupling `stepCar` already models.
+  The result and the DRIVE cell now show the coupling and its front:rear split (e.g. AWD · CLUTCH 50:50). The info note,
+  guide and README say why a coupling can stop power-over.
+- Fixed: a single-speed car (an EV) was put in gear 2, which it lacks, and never drove (STALL, β 0°). Now the Model Y
+  CLEARs (β 10°/10°) and the Model 3 RWD CLEARs (15°/13°).
+- The viscous, rear-driven cars (993 Turbo, Diablo VT, Murciélago) stay NO_SLIDE: the coupling sends torque forward as
+  the rear slips.
+- Left open: the Model S Plaid goes OFF; the Qashqai e-POWER (FWD) STALLs; the handbrake waits for a `stepCar` input
+  (next, after the stability-control build). Fingerprint identical; drift results are not in it.
 
 ### A sourced regen cap per maker (build 378)
 
