@@ -90,7 +90,7 @@ console.log('back-compat: clutch LSD traction factor =', backCompat.tr, '(1.0 â†
 if (backCompat.tr !== 1) fails.push('clutch LSD must be traction-neutral for back-compat');
 
 // 6. UI + Greek
-await page.click('#tabVehicle'); await page.waitForTimeout(150);
+await page.evaluate(() => document.getElementById('tabVehicle').click()); await page.waitForTimeout(150);
 await page.selectOption('#vhDiff', 'open'); await page.waitForTimeout(120);
 const sum = await page.evaluate(() => document.getElementById('vehicleSummary').textContent);
 console.log('summary has diff line:', /puts down 78% of axle grip/.test(sum));

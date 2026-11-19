@@ -235,7 +235,7 @@ await page.evaluate(() => {
     cylinders: 4, bore_mm: 86, stroke_mm: 86 }));
   buildEngine();
 });
-await page.click('#tabDesign'); await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('tabDesign').click()); await page.waitForTimeout(300);
 const ui = await page.evaluate(() => (document.getElementById('designSummary') || {}).textContent || '');
 console.log('\ndesign summary:', ui.replace(/\s+/g, ' ').match(/TURBO[^•]*/) ? ui.replace(/\s+/g, ' ').match(/.{0,150}50% boost.{0,60}/)[0] : ui.slice(0, 120));
 if (!/50% boost @/.test(ui)) fails.push('design summary no longer reports the spool point');

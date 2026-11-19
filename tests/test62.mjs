@@ -69,7 +69,7 @@ for (const r of rec) {
 
 // ---- 2. the controls ----
 await page.evaluate(() => loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name === 'Mazda MX-5 1.6 (NA, 1989)')));
-await page.click('#tabTrack'); await page.waitForTimeout(600);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(600);
 const t0 = await page.evaluate(() => lapReplay.t);
 await page.waitForTimeout(1000);
 const t1 = await page.evaluate(() => lapReplay.t);

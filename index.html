@@ -16,29 +16,33 @@
    which at the same pixel size renders far smaller than this font and was unreadable. */
 @font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-greek.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
-body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
+body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh;--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="build"]{--mode-accent:#ffcc00;--mode-surface:#1a1404;--mode-border:#aa8800}
+body[data-group="test"]{--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="drive"]{--mode-accent:#00ccff;--mode-surface:#04141c;--mode-border:#0088aa}
+body[data-group="more"]{--mode-accent:#c8c8d8;--mode-surface:#14141c;--mode-border:#666}
 /* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
    2560 one, 1460. Nothing here wants to be narrow — the tabs are tables, charts and maps. */
 .container{max-width:min(1600px,96vw);margin:0 auto;padding:8px}
-header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
+header{text-align:center;padding:12px 8px;border-bottom:4px solid var(--mode-border);background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
 header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
 header .subtitle{font-size:8px;color:#888;margin-top:6px}
 /* align-items:start matters more than it looks. Grid rows stretch every column to the height of
    the tallest, and the right column (ENGINE CONTROLS) is far taller than the canvas — so the left
    panel was padding itself out with 400px of empty background under the dyno chart and the track
    map. It read as a layout bug because it was one. */
-.main{display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start}
-@media(max-width:800px){.main{grid-template-columns:1fr}}
-/* Portrait (phones & tablets held upright): stack to one column and use the full width so the
-   sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
-@media(orientation:portrait){
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+@media(min-width:1400px){.main{grid-template-columns:minmax(0,1fr) minmax(340px,400px)}}
+@media(max-width:900px),(max-height:520px){.main{grid-template-columns:1fr}}
+/* A short or narrow window, including a phone on its side: one column, larger type, no inner form scroll. */
+@media(max-width:900px),(max-height:520px){
   .container{max-width:100%;padding:10px}
   .main{grid-template-columns:1fr;gap:14px}
   body{font-size:12px}
   header h1{font-size:18px}
   header .subtitle{font-size:10px}
   .viz-tabs button{font-size:10px;padding:12px 4px}
-  .design-panel{max-height:none}          /* let the form flow with the page, no inner scrollbar */
+  .design-panel{max-height:none}
   .panel h2{font-size:11px}
   .stat{min-width:28%;flex:1}
   .stat .value{font-size:16px}
@@ -49,7 +53,7 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
   .field input,.field select{font-size:10px;padding:9px}
 }
 /* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
-@media(orientation:portrait) and (min-width:700px){
+@media(min-width:700px) and (max-width:900px) and (min-height:700px){
   body{font-size:14px}
   .viz-tabs button{font-size:12px}
   .design-section{font-size:11px}
@@ -101,7 +105,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 /* ---- Engine Design tab ---- */
 /* Was a flat 600px, so the design form scrolled inside a box inside a viewport that had room to
    spare, and the last row was always cut in half. Tie it to the window instead. */
-.design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
+.design-panel{display:none;padding:12px;background:#0d0d18}
 .design-panel.active{display:block}
 /* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
 #designPanel:not(.ev):not(.hy) [data-ev]{display:none!important}
@@ -161,9 +165,13 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .build-strip button:hover{border-color:#ffcc00;color:#ffcc00}
 .build-strip .k{color:#667}
-/* Phones: two to a row (this has to follow the rules above to win over them). Eight tabs do not fit
-   one row on a phone and pushed the whole panel wider than the screen; they wrap to two rows of four. */
-@media(orientation:portrait){
+.file-wrap{position:relative;display:inline-flex}
+.file-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;display:flex;flex-direction:column;gap:6px;min-width:160px;padding:8px;background:#0a0a12;border:3px solid var(--mode-accent)}
+.file-pop[hidden]{display:none}
+.file-pop button{width:100%}
+.mode-chips{font-size:8px;color:var(--mode-accent);letter-spacing:0}
+/* A narrow window keeps two fields to a row. The open mode's tabs stay one strip. */
+@media(max-width:900px),(max-height:520px){
   .viz-tabs{flex-wrap:wrap}
   .viz-tabs button{flex:1 0 25%;border-bottom:2px solid #333}
   .design-grid,.pick-row{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -314,7 +322,7 @@ body.race-open{overflow:hidden}
 .dyno-result{padding:14px 18px 18px;background:#0d0d18;border:4px solid #444;grid-column:1}
 /* The side column spans both rows, so the result panel sits directly under the chart instead of
    below the (taller) control column. One-column layouts are unaffected. */
-@media(min-width:801px) and (orientation:landscape){.side-panel{grid-column:2;grid-row:1 / span 2}}
+@media(min-width:901px) and (min-height:521px){.side-panel{grid-column:2;grid-row:1 / span 2}}
 .dyno-result h4{font-size:12px;color:#ffcc00;margin:0 0 12px}
 .dr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
 .dr-card{background:#12121c;border:2px solid #2a2a3e;padding:10px 12px}
@@ -764,34 +772,71 @@ body.guided-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
 
-/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
-   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
-.viz-groups{display:none}
-.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
-@media(orientation:portrait){
+/* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
+   (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
+.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
+body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
+body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
+body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
+body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
+body[data-group="more"] .mode-room{display:none}
+.vh-view{display:flex;gap:6px;margin:0 0 8px}
+.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
+.viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
+.viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
+.viz-groups button[data-g="more"]{flex:0.72}
+.viz-groups button:last-child{border-right:none}
+.viz-groups svg{width:16px;height:16px;fill:currentColor}
+.viz-groups button.active{background:var(--mode-surface);color:var(--mode-accent);box-shadow:inset 0 -3px 0 var(--mode-accent)}
+.viz-tabs button:not(.ing){display:none}
+.viz-tabs button.active{background:var(--mode-surface);color:var(--mode-accent);border-bottom:3px solid var(--mode-accent);margin-bottom:-3px}
+.viz-panel>#engineCanvas{display:block;width:min(100%,calc(min(62vh,560px)*640/420));max-height:min(62vh,560px);height:auto;margin-inline:auto}
+#modeCurtain{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,var(--mode-accent) 0 4px,transparent 4px 8px)}
+#modeCurtain.go{animation:modeCurtain 180ms steps(4) forwards}
+@keyframes modeCurtain{0%{opacity:.4;clip-path:inset(0 0 100% 0)}100%{opacity:0;clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){#modeCurtain.go{animation:none}}
+.ecu{margin-top:8px;background:#101018;border:4px solid #3a3a4a}
+.ecu-bezel{padding:8px}
+.ecu-top,.ecu-keys{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.ecu-top b{color:var(--mode-accent);font-weight:normal}
+.ecu-led{display:inline-flex;gap:4px;align-items:center;font-size:7px;color:#667}
+.ecu-led i{width:8px;height:8px;background:#222;border:1px solid #444}
+.ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
+.ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
+.ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
+.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+.ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
+[data-ecu-hide]{display:none!important}
+#btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
+@media(max-width:900px),(max-height:520px){
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+}
+@media(pointer:coarse){
+  .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
+}
+@media(max-width:900px),(max-height:520px){
   header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
-  header h1{font-size:9px;letter-spacing:0}
+  header h1{font-size:11px;letter-spacing:0}
   header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
   .build-strip button{font-size:8px;padding:6px 8px}
+  .mode-chips{display:none}
   .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
   .viz-tabs::-webkit-scrollbar{display:none}
-  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
-  .viz-tabs button{flex:0 0 25%;border-left:none!important}
-  .viz-tabs button:not(.ing){opacity:.55}
+  .viz-panel{min-width:0}
+  .viz-tabs button.ing{flex:1 1 0;min-width:0;border-left:none;overflow:hidden;text-overflow:ellipsis}
   body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
   .evd-side{max-height:calc(75vh - 58px)}
   body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
-  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
-  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
-  .viz-groups button:last-child{border-right:none}
-  .viz-groups svg{width:20px;height:20px;fill:currentColor}
-  .viz-groups button.active{background:#004422;color:#00ff88}
-  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+  .viz-groups{position:fixed;left:0;right:0;bottom:0;z-index:25;margin:0;border:none;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex-direction:column;gap:5px;padding:8px 2px 7px;font-size:8px}
+  .viz-groups svg{width:20px;height:20px}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}
 }
 </style>
 </head>
-<body>
+<body data-group="test">
 <div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading" hidden>
 <div class="title-dock">
 <div class="title-brand">
@@ -824,12 +869,23 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 399</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
 <span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+<span class="file-wrap"><button id="btnFile" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="filePop">FILE</button>
+<span id="filePop" class="file-pop" hidden>
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
+<button id="btnExport">SAVE FILE</button>
+<button id="btnImport">OPEN FILE</button>
+<button id="btnShare">SHARE</button>
+</span></span>
+<button id="btnStripGuide" type="button">GUIDE</button>
+<button id="btnStripOptions" type="button">OPTIONS</button>
+<span id="modeChips" class="mode-chips"></span>
 <button id="btnMenu" type="button">MENU</button>
 </div>
 <nav class="viz-groups" id="vizGroups" aria-label="Sections">
@@ -838,6 +894,7 @@ body.guided-open{overflow:hidden}
 <button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
 <button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
 </nav>
+<div class="mode-room" id="modeRoom" aria-hidden="true"></div>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
@@ -845,16 +902,52 @@ body.guided-open{overflow:hidden}
 <button id="tabVehicle" data-g="build">VEHICLE</button>
 <button id="tabParts" data-g="build">PARTS</button>
 <button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
 <button id="tabChamp" data-g="drive">CHAMP</button>
 <button id="tabChallenges" data-g="drive">CHALLENGES</button>
-<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
-<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabGuide" data-g="more">GUIDE</button>
 <button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
 <canvas id="engineCanvas" width="640" height="420" role="img" aria-label="Engine test-bench schematic with live values"></canvas>
+<section id="ecuComputer" class="ecu" hidden>
+<div class="ecu-bezel">
+<div class="ecu-top"><b>ECU</b>
+<span class="ecu-led" id="ecuLedLink"><i></i>LINK</span>
+<span class="ecu-led" id="ecuLedLoop"><i></i>CLSD LOOP</span>
+<span class="ecu-led" id="ecuLedKnock"><i></i>KNOCK</span>
+<span class="ecu-led" id="ecuLedEgt"><i></i>EGT ENRICH</span>
+<span class="ecu-led" id="ecuLedMil"><i></i>MIL</span>
+</div>
+<div class="ecu-keys">
+<button type="button" data-ecu="scope">F1 SCOPE</button>
+<button type="button" data-ecu="maps">F2 MAPS</button>
+<button type="button" data-ecu="diag">F3 OBD</button>
+<button type="button" data-ecu="delta">F4 DELTA</button>
+</div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="maps" hidden>
+<div class="ecu-keys">
+<button type="button" data-ecu-map="fuel">FUEL</button>
+<button type="button" data-ecu-map="spark">SPARK</button>
+<button type="button" data-ecu-map="ve">VE</button>
+</div>
+<div id="ecuMapHost"></div>
+<div class="ecu-keys">
+<button type="button" id="ecuN5">−5</button>
+<button type="button" id="ecuN1">−1</button>
+<button type="button" id="ecuP1">+1</button>
+<button type="button" id="ecuP5">+5</button>
+<button type="button" id="ecuHold">HOLD CELL</button>
+</div>
+</div>
+<div class="ecu-screen" data-ecu-screen="diag" hidden><div id="ecuDiag"></div></div>
+<div class="ecu-screen" data-ecu-screen="delta" hidden><div id="ecuDelta" class="ecu-read"></div></div>
+</div>
+</section>
+<button type="button" id="btnEcu" hidden>ECU</button>
 <div class="design-panel" id="designPanel">
 <h3>ENGINE DESIGN</h3>
 <canvas id="enginePreview" class="pix-preview eng" role="img" aria-label="Pixel-art view of the engine as configured"></canvas>
@@ -942,6 +1035,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
 <div class="field"><label for="edAfrMode">FUEL MIXTURE</label><select id="edAfrMode"><option value="fixed">MANUAL (FIXED AFR)</option><option value="auto">AUTO (ECU MAP)</option></select></div>
+<button type="button" id="btnOpenEcu" class="ice-only">OPEN ECU MAPS</button>
 </div></section>
 <section class="evd-card" id="icdCard-cool" data-card="cool"><div class="evd-fields">
 <div class="field"><label for="edRadiator">RADIATOR</label><select id="edRadiator"><option value="small">SMALL</option><option value="stock">STOCK</option><option value="large">LARGE</option></select><input type="hidden" id="edRadHp" value="0"></div>
@@ -954,6 +1048,7 @@ body.guided-open{overflow:hidden}
 <aside class="evd-side" id="icdSide"></aside>
 </div>
 
+<div id="ecuMapHome">
 <div class="design-section" id="fuelMapHdr">ECU Fuel Map (target AFR)</div>
 <div class="fuelmap-wrap" id="fuelMapBox"></div>
 <div class="fuelmap-edit" id="fuelMapEdit" style="display:none"><span id="fmSelInfo"></span><span class="fm-btns"><button type="button" id="fmLean">− LEAN</button><button type="button" id="fmRich">+ RICH</button><button type="button" id="fmReset">RESET MAP</button></span></div>
@@ -963,6 +1058,7 @@ body.guided-open{overflow:hidden}
 <div class="design-section" id="veMapHdr">ECU VE Table (the ECU's estimate, %)</div>
 <div class="fuelmap-wrap" id="veMapBox"></div>
 <div class="fuelmap-edit" id="veMapEdit" style="display:none"><span id="veSelInfo"></span><span class="fm-btns"><button type="button" id="veDown">− VE</button><button type="button" id="veUp">+ VE</button><button type="button" id="veReset">RESET MAP</button></span></div>
+</div>
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
@@ -1229,7 +1325,7 @@ Cut a real engine in half and you can watch the parts that make it work: the pis
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="live">
-<b>The LIVE tab is a cutaway</b> of the engine you just designed. Everything on it moves
+<b>The LIVE tab is a cutaway</b> of the engine you just designed. The manifold colour follows the exhaust temperature, and the ECU laptop under the picture is where the fuel map is tuned while the engine runs. Everything on it moves
 because the simulation moved it. It is deliberately <b>not</b> drawn in real time: a crank at
 5000&nbsp;rpm turns 83 times a <i>second</i>, which at 60&nbsp;fps is a strobe rather than a
 picture — you could not watch a valve open. So the cycle runs at a pace you can read, between
@@ -3573,7 +3669,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
+<div class="vh-view"><button type="button" id="btnVhPhoto" class="on">SHOWROOM</button><button type="button" id="btnVhBay">BAY</button></div>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
+<canvas id="vhBay" class="pix-preview" hidden role="img" aria-label="The car on the workshop lift"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -4005,18 +4103,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="btn-row">
 <button id="btnLogPull">LOG PULL</button>
+<button id="btnDynoSweep" type="button">RUN PULL</button>
 <button id="btnClearPulls">CLR PULLS</button>
 </div>
 <div class="btn-row">
 <button id="btnReportPng" title="Save the dyno report as an image">REPORT PNG</button>
 <button id="btnReportPdf" title="Save the dyno report as a PDF">REPORT PDF</button>
-</div>
-<div class="btn-row" style="border-top:2px solid #26263a;padding-top:8px">
-<button id="btnSave">SAVE</button>
-<button id="btnLoad">LOAD</button>
-<button id="btnExport">SAVE FILE</button>
-<button id="btnImport">OPEN FILE</button>
-<button id="btnShare">SHARE</button>
 </div>
 </div>
 </div>
@@ -8202,7 +8294,7 @@ function applyLang(lang){
   currentLang=(lang==='el')?'el':'en';
   try{localStorage.setItem('pes.lang',currentLang);}catch(e){}
   document.documentElement.lang=currentLang;
-  const sel='.viz-tabs button, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, #btnCopyFrom';
+  const sel='.viz-tabs button, .viz-groups button span, .design-panel h3, .design-section, .guide-title, .gtier-h, .hint, .panel h2, .stat .label, .opt-note, .opt-row>div>b, .ctl-lbl, .field>label, .build-row button, #btnGearRatios, #btnGG, #btnSusp, #controlsPanel .btn-row button, #filePop button, #btnFile, #btnStripGuide, #btnStripOptions, .fuelmap-edit button, .garage-row button, #partsPanel button[id], #livePanel h2>span, #btnMore, #btnReplayRestart, .gart-cap, #btnMenu, .title-brand p, .title-menu button, .title-hint, #btnCopyFrom';
   document.querySelectorAll(sel).forEach(el=>{
     if(el.children.length>0)return;                       // skip nodes with child elements
     if(el.dataset.en===undefined)el.dataset.en=el.textContent.trim();
@@ -18645,7 +18737,7 @@ function trackSoundState(st){
   // line at the power it gives, and stopped off the power (build 297; until then on the full-load line, idling off it)
   if(isDirectHybrid()&&R&&st.i!=null){
     const g=psEngineSoundAt(lapResult,st.i,st.t);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
-    // spun up or running down (build 394): turned by MG1, unfuelled
+    // spun up or running down (build 399): turned by MG1, unfuelled
     if(g.spin)return {rpm:g.rpm,map:1,throttle:0,afr:e.stoichAFR||14.7,boostActual:0,shaftE:0,fuelCut:true,coolant:90,knockRisk:0,blown:false};
     st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
   }
@@ -20778,12 +20870,21 @@ function fitPixCanvas(cv,gw,gh){
   return {g,k,ox:Math.floor((bw-gw*k)/2),oy:0,bw,bh};
 }
 // The backdrop both previews share: the app's navy, a dot grid like a workshop floor.
-function pixBackdrop(g,bw,bh,k,ox,floorY){
+// A lamp and a prop in the corner, one colour per development card, so the bay reads at a glance.
+const BAY_LAMP={block:'#ffcc00',head:'#00ccff',air:'#ff8800',flow:'#ff4444',fuel:'#00ff88',cool:'#4488ff',ev:'#ff6600',
+  chassis:'#ffcc00',dims:'#00ccff',gearbox:'#ff8800',tyres:'#00ff88',aero:'#66ddff',brakes:'#ff4444',susp:'#aa88ff',aids:'#ffaa00',cell:'#00ff88',pit:'#ff4444'};
+function pixBackdrop(g,bw,bh,k,ox,floorY,bay){
   g.fillStyle='#0a0a10';g.fillRect(0,0,bw,bh);
   g.fillStyle='#161624';
   for(let y=4;y*k<bh;y+=8)for(let x=4;ox+x*k<bw;x+=8)g.fillRect(ox+x*k,y*k,k,k);
   if(floorY!=null){g.fillStyle='#12121c';g.fillRect(0,floorY*k,bw,bh-floorY*k);
     g.fillStyle='#26263a';g.fillRect(0,floorY*k,bw,k);}
+  if(!bay)return;
+  const card=String(bay).split(':').pop();
+  const lamp=BAY_LAMP[card]||'#ffcc00';
+  g.fillStyle='#2a2a38';g.fillRect(ox+2*k,2*k,14*k,10*k);
+  g.fillStyle=lamp;g.fillRect(ox+4*k,4*k,4*k,4*k);
+  g.fillStyle='#3a3a4a';g.fillRect(ox+2*k,(floorY!=null?floorY-8:70)*k,8*k,6*k);
 }
 
 // The name on the left, the figures on the right; a long name is cut short rather than run into them.
@@ -21155,7 +21256,8 @@ function paintEngine(cv,e,opts){
   const gh=opts.caption?ENG_GH+12:ENG_GH;
   const F=fitPixCanvas(cv,ENG_GW,gh);if(!F)return false;
   const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,null);
+  pixBackdrop(g,bw,bh,k,ox,null,opts.bay||null);
+  if(cv)cv.dataset.bay=opts.bay||'';
   const buf=new PixBuf(ENG_GW,ENG_GH);
   drawEngineSprite(buf,e,opts.t||0);
   g.drawImage(buf.canvas(),ox,0,ENG_GW*k,ENG_GH*k);
@@ -21172,11 +21274,25 @@ const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: re
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  const card=(typeof ICD!=='undefined'&&ICD.st&&ICD.st.card)||'block';
+  const pt=e.type==='electric'?'ev':'ice';
+  paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+}
+function paintVehicleBay(){
+  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
+  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
+  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
+  const {g,k,ox,bw,bh}=F;
+  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
+  const buf=new PixBuf(CAR_GW,CAR_GH);
+  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
+  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
+  cv.dataset.bay='car:'+card;
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
+  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -21193,6 +21309,12 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
+}
+{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
+  if(photo&&bayBtn&&cv){
+    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
+    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
+  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;
@@ -21261,6 +21383,11 @@ function valveLift(deg,open,close){
   if(d>span)return 0;
   return Math.sin(Math.PI*d/span);
 }
+// Blackbody-ish ramp for the manifold, from dull red at 500 C to yellow-white at 1100 C.
+function egtColour(k){
+  const t=clamp(((k-273)-500)/600,0,1);
+  return 'rgb('+Math.round(80+175*Math.min(1,t*1.4))+','+Math.round(20+180*Math.max(0,t-0.3))+','+Math.round(24+90*Math.max(0,t-0.7))+')';
+}
 function drawEngine(dt){
   if(isElectric())return drawMotorView(dt);
   const W=vizW,H=vizH;
@@ -21317,8 +21444,21 @@ function drawEngine(dt){
   const rf=clamp(rpm/rl,0,1);
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
+  const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const twist=still?0:clamp((state.torque||0)/Math.max(1,e.loadRefTq||1),-1,1)*0.04;
+  const lope=still?0:Math.sin(crankAngle*2)*clamp((e.overlap||0)/90,0,1)*0.02;
+  ctx.save();
+  ctx.translate(px(280),py(200));ctx.rotate(twist+lope);ctx.translate(-px(280),-py(200));
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
+  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
+  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
+  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
+  ctx.restore();
+  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
+    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
+    ctx.fillRect(px(100),py(86),28*S,14*S);
+  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -21610,8 +21750,8 @@ function drawSupercharger(px,py,S,F,LW,m,portYc,crank){
 }
 function drawExhaustSide(px,py,S,F,LW,m,portYc,exX){
   const e=engine;
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  const gasCol=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  const egtK0=egtAt(state.rpm,m);
+  const gasCol=state.blown?'#444':(state.powerHP>1?egtColour(egtK0):'#5a4038');
   const egtK=egtAt(state.rpm,m),egt=Math.round(state.powerHP>1?egtK-273:state.coolant);
   ctx.fillStyle=C.exhaust;ctx.font=F(6.5);
   if(e.intake==='turbo'){
@@ -22212,8 +22352,7 @@ function drawRotaryCutaway(px,py,S,F,LW,dt,m){
   ctx.strokeStyle=C.intake;ctx.lineWidth=LW(8);
   ctx.beginPath();ctx.moveTo(px(inX),py(portYc));ctx.lineTo(px(inX),py(topW+4));ctx.stroke();
   drawExhaustSide(px,py,S,F,LW,m,portYc,exX);
-  const exHot=clamp(state.powerHP/Math.max(60,engine.score?engine.score.peakHP:200),0,1);
-  ctx.strokeStyle=state.blown?'#444':`rgb(${Math.round(120+120*exHot)},${Math.round(60+30*exHot)},40)`;
+  ctx.strokeStyle=state.blown?'#444':(state.powerHP>1?egtColour(egtAt(state.rpm,m)):'#5a4038');
   ctx.lineWidth=LW(7);
   ctx.beginPath();ctx.moveTo(px(exX),py(portYc));ctx.lineTo(px(exX),py(topW+4));ctx.stroke();
   // where each phase happens — fixed in the housing, unlike a piston engine
@@ -23754,6 +23893,15 @@ function powerReadout(st,L){
   const hp=st.pwr/1000/0.7457,peak=Math.max(1,L&&L.pwrPeak?L.pwrPeak/745.7:(engine.score?engine.score.peakHP:1));
   return {hp,kW:st.pwr/1000,frac:clamp(hp/peak,0,1)};
 }
+function drawShiftLights(x,y,rpm,redline){
+  const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const f=clamp((rpm||0)/Math.max(1,redline||1),0,1);
+  for(let i=0;i<8;i++){
+    const on=f>(i+1)/9;
+    ctx.fillStyle=!on?'#1a1a22':i>=6?(still||Math.floor(performance.now()/120)%2?'#ff4444':'#00e8ff'):i>=4?'#ffcc00':'#00ff88';
+    ctx.fillRect(x+i*12,y,10,6);
+  }
+}
 function drawReplayHud(L,st,W,y0){
   const w=REPLAY_HUD_W,h=232,x0=W-w-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
@@ -23766,6 +23914,8 @@ function drawReplayHud(L,st,W,y0){
   const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
   ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
   ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
+  drawShiftLights(x0+10,y0+64,st.rpm,engine.redline);
+  if((st.tF||0)>450||(st.tR||0)>450){ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+64,8,8);}
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
@@ -25384,9 +25534,11 @@ function updateDashLamps(){
   if(po){po.disabled=false;po.title=car?tr('Switch the whole car off'):tr('Switch the engine off');}
 }
 function updateUI(){
+  if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
-  if(vizMode==='design')updateFuelMapMarker();
+  if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
   document.getElementById('valLoad').textContent=Math.round(state.load*100);
   document.getElementById('valElec').textContent=Math.round(state.elecLoad*100);
@@ -25454,6 +25606,15 @@ function updateUI(){
   else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
+  const chips=document.getElementById('modeChips');
+  if(chips&&engine){
+    const bits=[];
+    if(engine.displacement_L)bits.push(engine.displacement_L.toFixed(1)+'L');
+    if(engine.score&&engine.score.peakHP)bits.push(Math.round(engine.score.peakHP)+' HP');
+    if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
+    chips.textContent=bits.join(' · ');
+  }
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
@@ -25470,6 +25631,11 @@ function setTab(mode){
   const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode==='champ'?'Champ':mode[0].toUpperCase()+mode.slice(1);
   const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
+  if(document.body.dataset.group!==grp){
+    document.body.dataset.group=grp;
+    const curtain=document.getElementById('modeCurtain');
+    if(curtain){curtain.classList.remove('go');void curtain.offsetWidth;curtain.classList.add('go');}
+  }
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
   document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
   {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}
@@ -25511,6 +25677,7 @@ function setTab(mode){
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
+  if(typeof ecuSync==='function')ecuSync();
   updateUI();
 }
 
@@ -28655,7 +28822,7 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  // a power-split's or series hybrid's engine stops off the power and starts on it (build 394): each start draws its crank
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 399): each start draws its crank
   // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
   // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
   let ssJ=0,starts=0;
@@ -28688,10 +28855,10 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 394) do not scale with the share
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 399) do not scale with the share
       k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
     }
-    // not settled in twelve (build 394: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not settled in twelve (build 399: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
     // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
     if(E.deployKJ>B&&E.deployKJ>=1e-6){
       let lo=0,hi=used,ok=null;
@@ -28931,7 +29098,7 @@ function psFuelRate(){
 }
 // What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
-// t (build 394): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
+// t (build 399): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
 // idle, as hybStartStop integrates it, before the engine runs on its line; a stop runs down from the speed it ran at.
 // Both are {spin:true}: heard, with the fuel cut. The lap's fuel and time still have it fire at once (named gap).
 function psEngineSoundAt(L,i,t){
@@ -28945,7 +29112,7 @@ function psEngineSoundAt(L,i,t){
   const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
   return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
-// Per replay point (build 394): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
+// Per replay point (build 399): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
 // before the lap's start when it was the last lap's) and its speed then (r0: where the run-down had it, or the speed it ran at).
 function psStartStopTimes(L,c){
   if(L._psSS)return L._psSS;
@@ -29159,7 +29326,7 @@ function stepHybridBench(dt){
     else hybSpin(H,dt);
     H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
-    // at the step's mean speed: the pack pays for the start and takes the stop back (build 394)
+    // at the step's mean speed: the pack pays for the start and takes the stop back (build 399)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
     P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
   }
@@ -29172,7 +29339,7 @@ function stepHybridBench(dt){
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor cranks through its slipping clutch what it is not giving the
-  // shaft, paid at the faster side's speed (build 394)
+  // shaft, paid at the faster side's speed (build 399)
   const Tcancel=ps&&!run?(H.Tspin||0)*hybGear(hy,H.ne,H.n).kr:0;Tm+=Tcancel;
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,motorMaxTorque(m,Math.max(H.n,1),V,60)-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
@@ -29221,7 +29388,7 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
 // what it is not giving the shaft. Stopping, MG1 or the generator, fixed to the crank, brakes it at the same full torque;
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
-// closes there). Build 394: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
+// closes there). Build 399: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
 const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
@@ -29237,7 +29404,7 @@ function hybSpin(H,dt){
   // MG1 pushes only for the part of the step before it reaches the firing speed (or rest): the pack pays that share
   const wEnd=state.rpm*Math.PI/30;if(H.Tspin&&wu!==w0&&wEnd!==wu)H.Tspin*=clamp((wEnd-w0)/(wu-w0),0,1);
 }
-// A power-split's or a series hybrid's start and stop off the bench (build 394), for the lap's pack and its replay's sound:
+// A power-split's or a series hybrid's start and stop off the bench (build 399), for the lap's pack and its replay's sound:
 // hybSpin's law integrated once (2 ms steps), the engine warm, its manifold at the air, the ring held. Starting, MG1 at its
 // full torque spins it from rest to idle; stopping, it brakes it from the redline to rest. The pack's power is MG1's
 // T w plus its losses, and MG2's losses holding the ring's reaction; with the ring turning MG2's T w adds, but the two
@@ -33479,6 +33646,171 @@ function bindGuided(){
     gbBack();e.preventDefault();e.stopPropagation();
   },true);
 }
+// The bench laptop: a scope, the fuel/spark/VE tables, the fault list and a pull or lap delta.
+// It reads the running state. It does not change the engine model.
+const ECU_N=600;
+const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
+function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
+function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
+function ecuSync(){
+  const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');
+  const want=ecuWants(),narrow=ecuNarrow();
+  if(btn)btn.hidden=!(want&&narrow);
+  if(!el)return;
+  el.hidden=!(want&&(!narrow||el.classList.contains('open')));
+  ecuPlaceMaps();
+  if(ecu.screen==='diag'&&!el.hidden)ecuRenderDiag();
+  if(ecu.screen==='delta'&&!el.hidden)ecuRenderDelta();
+}
+function ecuScreen(name){
+  ecu.screen=name;
+  document.querySelectorAll('[data-ecu-screen]').forEach(s=>s.hidden=s.dataset.ecuScreen!==name);
+  document.querySelectorAll('[data-ecu]').forEach(b=>b.classList.toggle('on',b.dataset.ecu===name));
+  ecuSync();
+}
+function ecuPlaceMaps(){
+  const home=document.getElementById('ecuMapHome'),host=document.getElementById('ecuMapHost');
+  const el=document.getElementById('ecuComputer');
+  if(!home||!host||!el)return;
+  const docked=!el.hidden&&ecu.screen==='maps';
+  const to=docked?host:home,from=docked?home:host;
+  while(from.firstChild)to.appendChild(from.firstChild);
+  ['fuel','spark','ve'].forEach(k=>{
+    ['MapHdr','MapBox','MapEdit'].forEach(suf=>{
+      const n=document.getElementById(k+'Map'+suf.slice(3));
+      if(!n)return;
+      if(!docked||k===ecu.map)delete n.dataset.ecuHide;else n.dataset.ecuHide='1';
+    });
+  });
+}
+function ecuSel(){return ecu.map==='spark'?skSel:ecu.map==='ve'?veSel:fmSel;}
+function ecuNudge(steps){
+  if(!ecuSel()){flash(tr('Tap a cell to select'));return;}
+  if(ecu.map==='fuel')adjustFmCell((engine.ci?0.08:0.02)*steps);
+  else if(ecu.map==='spark')adjustSkCell(steps);
+  else adjustVeCell(steps);
+}
+function ecuHold(){
+  const sel=ecuSel();
+  if(!sel||!engine){flash(tr('Tap a cell to select'));return;}
+  const rpm=fmRpmAt(sel.c),aim=Math.min(rpm,0.99*engine.redline);
+  state.load=loadForRpm(aim);
+  state.throttle=clamp(fmMapAtRC(sel.r,sel.c)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine')setTab('engine');
+  flash(tr('HOLD CELL')+' • '+Math.round(rpm)+' rpm');
+}
+function ecuSample(){
+  if(ecu.freeze||!engine)return;
+  const ev=typeof isElectric==='function'&&isElectric();
+  const row=ev
+    ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
+    :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
+  ecu.buf.push(row);
+  if(ecu.buf.length>ECU_N)ecu.buf.shift();
+}
+function ecuDrawScope(){
+  const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
+  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  g.fillStyle='#04140c';g.fillRect(0,0,w,h);
+  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
+  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
+  for(let ch=0;ch<4;ch++){
+    let lo=Infinity,hi=-Infinity;
+    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    if(!(hi>lo)){lo-=1;hi+=1;}
+    g.strokeStyle=cols[ch];g.beginPath();
+    src.forEach((row,i)=>{
+      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
+      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
+      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+    });
+    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
+    g.stroke();
+  }
+}
+function ecuLeds(){
+  const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};
+  if(!engine)return;
+  set('ecuLedLink',state.firing||state.ignOn);
+  set('ecuLedLoop',engine.afrMode==='auto'&&state.coolant>70);
+  set('ecuLedKnock',state.knockRisk>40);
+  let base=state.afr;
+  try{base=mappedAFR(state.rpm,state.map);}catch(e){}
+  set('ecuLedEgt',engine.intake==='turbo'&&state.afr<base-0.2);
+  const mil=typeof obdLamp==='function'?obdLamp():'';
+  set('ecuLedMil',mil==='on'||mil==='flash');
+}
+function ecuRenderDiag(){
+  const box=document.getElementById('ecuDiag');if(!box)return;
+  const d=typeof diagnoseEngine==='function'?diagnoseEngine():{findings:[]};
+  let h='';
+  (d.findings||[]).forEach(f=>{h+='<p class="ecu-find"><b>'+f.title+'</b><br>'+f.detail+'</p>';});
+  const keys=typeof obd!=='undefined'&&obd.codes?Object.keys(obd.codes):[];
+  if(!keys.length)h+='<p>'+tr('No codes stored.')+'</p>';
+  keys.forEach(k=>{h+='<p class="ecu-find"><b>'+k+'</b> <button type="button" data-ff="'+k+'">'+tr('REPRODUCE FREEZE FRAME')+'</button></p>';});
+  box.innerHTML=h;
+}
+function ecuReproduce(k){
+  const f=obd.codes[k]&&obd.codes[k].ff;if(!f||!engine)return;
+  state.load=loadForRpm(Math.min(f.rpm,0.99*engine.redline));
+  state.coolant=f.coolant;
+  if(engine.afrMode!=='auto')state.afr=f.lam*(engine.stoichAFR||14.7);
+  state.throttle=clamp((f.map||1)/Math.max(0.4,engine.mapMax||1),0.08,1);
+  if(typeof syncSliders==='function')syncSliders();
+  if(vizMode!=='engine'&&vizMode!=='dyno')setTab('engine');
+  flash(tr('FREEZE FRAME')+' • '+k);
+}
+function ecuRenderDelta(){
+  const box=document.getElementById('ecuDelta');if(!box)return;
+  if((vizMode==='track'||vizMode==='challenges')&&lapResult&&typeof replayAt==='function'){
+    const s=replayAt(lapResult,(typeof lapReplay!=='undefined'&&lapReplay.t)||0);
+    box.textContent=Math.round(s.v)+' km/h • '+Math.round(s.rpm)+' rpm • G'+s.gear+' • '+s.gLat.toFixed(2)+' g';
+    return;
+  }
+  const pull=dynoPulls&&dynoPulls[0];
+  if(!pull){box.textContent=tr('Log a pull to compare.');return;}
+  const pts=pull.pts,rpm=state.rpm;let i=0;while(i<pts.length-1&&pts[i+1].rpm<rpm)i++;
+  const a=pts[i],b=pts[Math.min(pts.length-1,i+1)],f=b.rpm===a.rpm?0:(rpm-a.rpm)/(b.rpm-a.rpm);
+  const hp=a.powerHP+(b.powerHP-a.powerHP)*f,tq=a.torque+(b.torque-a.torque)*f;
+  box.textContent='dHP '+(state.powerHP-hp).toFixed(1)+' • dNm '+(state.torque-tq).toFixed(1);
+}
+function ecuTick(){
+  const el=document.getElementById('ecuComputer');
+  if(!el||el.hidden)return;
+  ecuSample();ecuLeds();
+  if(ecu.screen==='scope')ecuDrawScope();
+  if(ecu.screen==='maps'&&typeof updateFuelMapMarker==='function')updateFuelMapMarker();
+}
+function bindEcu(){
+  const el=document.getElementById('ecuComputer');if(!el)return;
+  el.addEventListener('click',e=>{
+    const scr=e.target.closest('[data-ecu]');if(scr){ecuScreen(scr.dataset.ecu);return;}
+    const mp=e.target.closest('[data-ecu-map]');if(mp){ecu.map=mp.dataset.ecuMap;ecuPlaceMaps();return;}
+    const ff=e.target.closest('[data-ff]');if(ff)ecuReproduce(ff.dataset.ff);
+  });
+  document.getElementById('ecuFreeze').addEventListener('click',()=>{ecu.freeze=!ecu.freeze;document.getElementById('ecuFreeze').classList.toggle('on',ecu.freeze);});
+  document.getElementById('ecuN5').addEventListener('click',()=>ecuNudge(-5));
+  document.getElementById('ecuN1').addEventListener('click',()=>ecuNudge(-1));
+  document.getElementById('ecuP1').addEventListener('click',()=>ecuNudge(1));
+  document.getElementById('ecuP5').addEventListener('click',()=>ecuNudge(5));
+  document.getElementById('ecuHold').addEventListener('click',ecuHold);
+  const open=document.getElementById('btnOpenEcu');
+  if(open)open.addEventListener('click',()=>{setTab('engine');ecuScreen('maps');});
+  const tog=document.getElementById('btnEcu');
+  if(tog)tog.addEventListener('click',()=>{el.classList.toggle('open');ecuSync();});
+  document.addEventListener('keydown',e=>{
+    if(!ecuMapsOn()||e.target.closest('input,select,textarea'))return;
+    const sel=ecuSel();if(!sel)return;
+    const move={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]}[e.key];
+    if(!move)return;
+    e.preventDefault();
+    const c=sel.c+move[0],r=sel.r+move[1];
+    if(ecu.map==='spark')selectSkCell(c,r);else if(ecu.map==='ve')selectVeCell(c,r);else selectFmCell(c,r);
+  });
+  ecuScreen('scope');
+}
 function bindControls(){
   // Throttle & load are fractions (0..1); AFR/temps are direct values.
   document.getElementById('throttle').addEventListener('input',e=>state.throttle=(+e.target.value)/100);
@@ -33571,6 +33903,7 @@ function bindControls(){
   document.getElementById('btnImport').addEventListener('click',openFileDialog);
   document.getElementById('btnShare').addEventListener('click',shareBuild);
   document.getElementById('btnLogPull').addEventListener('click',logPull);
+  document.getElementById('btnDynoSweep').addEventListener('click',startDynoSweep);
   document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
   document.getElementById('btnReportPng').addEventListener('click',exportDynoPNG);
   document.getElementById('btnReportPdf').addEventListener('click',exportDynoPDF);
@@ -33651,6 +33984,14 @@ function bindControls(){
     menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
     document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  {const fb=document.getElementById('btnFile'),pop=document.getElementById('filePop');
+    const set=o=>{pop.hidden=!o;fb.setAttribute('aria-expanded',String(!!o));};
+    fb.addEventListener('click',e=>{e.stopPropagation();set(pop.hidden);});
+    pop.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>set(false),0);});
+    document.addEventListener('click',e=>{if(!pop.hidden&&!e.target.closest('.file-wrap'))set(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){set(false);fb.focus();}});}
+  document.getElementById('btnStripGuide').addEventListener('click',()=>setTab('guide'));
+  document.getElementById('btnStripOptions').addEventListener('click',()=>setTab('options'));
   // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
   document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
   // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
@@ -33799,6 +34140,13 @@ function bindControls(){
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(isElectric()?tr('DRIVE BUILT')+' • '+engine.score.peakKW+' kW':tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
+let dynoSweep=null;
+function startDynoSweep(){
+  if(vizMode!=='dyno')setTab('dyno');
+  state.throttle=1;dynoSweep={t:0,dur:5};
+  syncSliders();
+  flash(tr('RUN PULL'));
+}
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);
   document.getElementById('load').value=Math.round(state.load*100);
@@ -33816,6 +34164,14 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   obdStep(dt);
+  if(dynoSweep&&engine){
+    dynoSweep.t+=dt;
+    const f=clamp(dynoSweep.t/dynoSweep.dur,0,1);
+    state.throttle=1;
+    state.load=loadForRpm(lerp(engine.idleRpmEff||800,engine.redline*0.99,f));
+    if(f>=1)dynoSweep=null;
+    syncSliders();
+  }
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
@@ -33831,7 +34187,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
-bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+bindControls();bindEcu();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)
@@ -33852,5 +34208,6 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 </script>
+<div id="modeCurtain" aria-hidden="true"></div>
 </body>
 </html>

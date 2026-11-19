@@ -88,7 +88,7 @@ reporting its range. Sourcing is batched apart from physics.
 11. **A hybrid's engine start and stop, stepped.** The ~1 kJ to crank comes from the pack and comes back on the stop,
     the spin-up and run-down come from the engine's and motor's inertias, and MG2 cancels MG1's reaction on the ring.
     Bench, sound and lap replay.
-    *Build 394:* the bench's pack pays each start (MG1's or a P2 motor's crank power, with losses) and takes each stop
+    *Build 399:* the bench's pack pays each start (MG1's or a P2 motor's crank power, with losses) and takes each stop
     back; a power-split's MG2 cancels the ring's reaction (kr of MG1's crank torque). `hybStartStop` integrates both
     (Prius: 1.14 kJ in 0.17 s, 0.72 kJ back from idle); the lap charges each power-split's or series hybrid's start less
     the stop from idle (Prius tech lap +0.71%: its deploy no longer balances near 5% of share, so the lap's new bisection settles it at 0), and the replay's sound spins up and runs down. Left open:
