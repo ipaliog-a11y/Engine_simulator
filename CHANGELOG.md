@@ -34,6 +34,12 @@ Step 9 of `plans/small-physics.md`.
   published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
 - Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
 - Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
+### Spiral skid pad and a figure 8 (build 399)
+
+- **Spiral Skid Pad** (`spiral`): one counter-clockwise turn of an Archimedean spiral, from 12 m out to the skid pad's own radius (30.48 m). The line's speed is sqrt(ay × ρ), with ρ the local radius of curvature, so the car is asked to go faster as the bend opens. ay is searched. On an MX-5 the held run is 36 → 58 km/h, 0.86 g at the exit; 1 km/h faster it runs wide.
+- **Figure 8** (`fig8`): Bernoulli's lemniscate, one loop each way. Curvature is zero at the crossing and tightest at the outer bends, set to half the skid pad's radius (15.24 m). The score is the highest constant speed that stays in the 1 m lane. An MX-5 holds 43 km/h (0.95 g at the bend, 0.55 g averaged over the whole figure, because the crossing is straight).
+- Same driver and the same 1 m lane as the skid pad. The speed loop still sits a little under a rising target, so the spiral's exit g is under the g it was asked. TIGHT is left of the line (toward the centre on the spiral); WIDE is right.
+
 ### The lap instruments show the shift and the brakes (build 398)
 
 - The track replay draws eight shift lights over the rev counter: green, then amber, then red and cyan at the last two as the engine nears the redline. Reduced motion keeps the last two red.
@@ -95,6 +101,7 @@ Step 9 of `plans/small-physics.md`.
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
+
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.
