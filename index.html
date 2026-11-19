@@ -3265,7 +3265,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
-<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
+<b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD and FWD only); AUTO tries them all, the handbrake last. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
 <b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
 <b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
 </div>
@@ -4057,6 +4057,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <option value="power">POWER-OVER</option>
 <option value="kick">CLUTCH KICK</option>
 <option value="flick">FLICK</option>
+<option value="handbrake">HANDBRAKE</option>
 </select></div>
 <div class="field" style="display:none"><label for="chalMooseRate">REPLAY</label><select id="chalMooseRate" title="Replay speed">
 <option value="1">1×</option>
@@ -14691,6 +14692,11 @@ function driveCar(){
     // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
     launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
+    // The lever brake (build 382): rear wheels only, outside the ABS (a cable to the rear calipers or a drum-in-hat).
+    // Its force at the road (N, both wheels): the rear service brake's, as if the lever reached its full line force
+    // (PROBABLE: no maker publishes a lever-brake torque), and never under the floor UN ECE R13-H (parking brake) and FMVSS 135 S7.12
+    // set, holding the laden car on a 20% grade, m g sin(atan 0.2) = 0.196 m g.
+    hbCap:Math.max(brakeForceCap(v)*(1-v.brakeFrontShare),v.mass*DRIVE_G*Math.sin(Math.atan(0.2))),
     steerLock:8.5/(v.steerRatio||15),       // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
     // the steering's feel (build 323, phase G2): the front tyres' vertical rate for their contact length, and the caster trail
     steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,ktR:quarterCar(v,'R').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180),scrub:v.scrubRadius==null?DRIVE_SCRUB:v.scrubRadius,
@@ -15092,7 +15098,7 @@ function stepCar(car,s,u,dt){
   // the share of the drive torque each wheel gets: equal, unless a centre differential splits it unequally (build 320)
   const CD=nd===4&&car.centre&&car.centre.type!=='lock'?car.centre:null,sg=CD?[CD.f/2,CD.f/2,(1-CD.f)/2,(1-CD.f)/2]:null;
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
-  const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
+  const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
@@ -15250,7 +15256,8 @@ function stepCar(car,s,u,dt){
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
-        const cap=car.brakeF*share/2*car.r,Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
         const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
@@ -29625,13 +29632,16 @@ const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single 
 const DRIFT_MID=34;      // short straight between the two corners (m)
 // Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick of 10 or 20 steps, or a flick),
 // corner radius R (m). Mild β first — Velenis's expert data was ~32° on dirt; dry asphalt here holds ~12–30°.
-const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0}];
+// Build 382: the handbrake (Velenis et al., CDC 2011, handbrake cornering), RWD and FWD. Its plans are searched last, so a car
+// that CLEARed before still CLEARs on the same plan.
+const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0},{init:'handbrake',kick:0}];
 const DRIFT_PLANS=[];
 for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
   DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
+DRIFT_PLANS.sort((p,q)=>(p.init==='handbrake')-(q.init==='handbrake'));   // stable: the others keep their order
 // Driver settings (build 360, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
 let chalDriftEntry=0,chalDriftMethod='auto';
-const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick'];
+const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick','handbrake'];
 function driftSCourse(R,halfW,mid){
   const line=[],zones=[],ds=0.5;
   const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
@@ -29647,8 +29657,8 @@ function driftSCourse(R,halfW,mid){
   for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
   return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),i2:zones.indexOf('c2')};
 }
-// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
-// on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
+// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD on power-over
+// stays on the grip path: NO_SLIDE is the honest result; a FWD car slides by the flick or the handbrake.
 // AWD (build 379) takes the RWD path: power-over works as far as the centre coupling lets the rear axle turn faster than the
 // front. stepCar models the coupling (centreCoupling, build 320): a clutch closed on the first slip or a viscous coupling
 // sends torque forward as the rear slips, so a car like the 993 Turbo (viscous, rear driven) gets NO_SLIDE honestly.
@@ -29673,8 +29683,16 @@ function driftDriver(car,s,C,d,plan){
   if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
   const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
   // A FWD car after a flick: power pulls the nose straight, so it is the brake on the slide; lifting keeps it rotating.
-  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,over=Math.abs(beta)>plan.betaT;
-    return{steer:Math.max(-1,Math.min(1,base.steer-(over?0.12*dirF:0))),throttle:over?0.6:0,brake:0,gear:s.gear};}
+  // Handbrake cornering (Velenis CDC 2011): the lever holds the rears sliding while β is short of the target, steering
+  // in by the front's peak slip until the rear passes its peak, with throttle as the path asks (at least 0.3); past the
+  // target the lever drops and power pulls the nose straight. (At throttle 0.3 alone the Civic stopped in the corner.)
+  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,absB=Math.abs(beta),over=absB>plan.betaT,pk=z==='c1'?'seen1':'seen2';
+    if(Math.abs((s.alpha[2]+s.alpha[3])/2)>Math.atan(3*car.mu/car.cc))d[pk]=true;
+    const pull=plan.init==='handbrake'&&absB<plan.betaT;
+    const stF=base.steer+(pull&&!d[pk]?dirF*(car.pkF||0.1)/car.steerLock:over?-0.12*dirF:0);
+    const uF={steer:Math.max(-1,Math.min(1,stF)),throttle:pull?Math.max(0.3,base.throttle||0):over?0.6:0,brake:0,gear:s.gear};
+    if(pull)uF.handbrake=1;
+    return uF;}
   const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
   // dir: +1 left corner, −1 right (steer is left-positive). A left drift has β<0 (velocity right of the nose).
   const dir=z==='c1'?1:-1,absB=Math.abs(beta),absT=plan.betaT;
@@ -29690,11 +29708,17 @@ function driftDriver(car,s,C,d,plan){
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
   if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
+  // Handbrake (RWD, build 382): clutch down and lever up until the rear passes its peak or β nears the target, then the
+  // lever drops and the clutch closes, and power holds the slide as on power-over.
+  let hb=0;
+  if(plan.init==='handbrake'&&!d[pastKey]&&absB<0.65*absT){hb=1;thr=0;clutch=1;d.hbing=true;}
+  else if(d.hbing){clutch=0;d.hbing=false;}
   // Countersteer (build 359: the sign had steered into the slide): past the target, steer out of the corner.
   let st=base.steer;
   if(absB>absT)st-=0.12*dir;else st+=0.06*dir;
   const u={steer:Math.max(-1,Math.min(1,st)),throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:s.gear};
   if(clutch!=null)u.clutch=clutch;
+  if(hb)u.handbrake=hb;
   return u;
 }
 function driftCornerOk(past,beta,ctr){
@@ -29705,7 +29729,7 @@ function driftCornerOk(past,beta,ctr){
 function driftReach(D,dh){const c=Math.abs(Math.cos(dh)),sn=Math.abs(Math.sin(dh));return D.w/2*c+Math.max(D.f,D.r)*sn;}
 function driftRun(car,plan,sample,D){
   D=D||{w:(car.tF+car.tR)/2+0.3,f:1.35*car.a,r:1.35*car.b};
-  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick');
+  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick'&&plan.init!=='handbrake');
   const C=driftSCourse(plan.R,plan.halfW||DRIFT_HALF_W,plan.mid||DRIFT_MID);
   for(const p of C.line)p.v=plan.v;
   const s=driveState(car),L0=C.line[0];
@@ -29724,7 +29748,9 @@ function driftRun(car,plan,sample,D){
   while(s.t<tMax){
     const u=driftDriver(car,s,C,d,pl);
     stepCar(car,s,u,dt);
-    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx)),aR=(s.alpha[2]+s.alpha[3])/2;
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+    // the rear is past its peak by slip angle, or (build 382) locked by the lever: past the peak of its combined slip
+    const aR=u.handbrake>0&&Math.min(s.kappa[2],s.kappa[3])<-car.slipOpt?Math.PI/2:(s.alpha[2]+s.alpha[3])/2;
     o.peakBeta=Math.max(o.peakBeta,Math.abs(beta));
     o.eMax=Math.max(o.eMax,Math.abs(d.e||0));o.maxI=Math.max(o.maxI,d.i||0);
     const p0=C.line[d.i],p1=C.line[Math.min(C.line.length-1,d.i+1)];
@@ -29741,7 +29767,7 @@ function driftRun(car,plan,sample,D){
     if(sample&&s.t>=nextT){
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,
         thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice(),
-        brk:u.brake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
+        brk:u.brake||0,hb:u.handbrake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
       nextT=s.t+0.04;
     }
     if(o.spin||o.off)break;
@@ -29753,13 +29779,16 @@ function driftRun(car,plan,sample,D){
   return o;
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
-// FWD: no kick, and one target β (the grip path ignores it; it only sets when a flicked FWD lifts) — 24 plans.
+// FWD: no kick, and one target β for power and flick (the grip path ignores it; it only sets when a flicked FWD
+// lifts); the handbrake keeps all three. AWD: no handbrake (the lever on a coupled centre brakes the fronts too: a
+// rally car's hydraulic lever opens the centre first, not modelled), so it falls back to power-over.
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
   if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if(car.drive==='awd'){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
-  if(car.drive==='fwd')P=P.filter(p=>(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
+  if(car.drive==='fwd')P=P.filter(p=>p.init==='handbrake'||(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
   return P;
 }
 function driftBest(car,sample,D,entryKmh,method){
@@ -30018,7 +30047,7 @@ function renderChallenge(){
     head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
     grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
       cell('ENTRY',R.speedKmh+' km/h'+(R.entryMode==='best'?' ('+tr('BEST')+')':''))+
-      cell('METHOD',tr(({power:'POWER-OVER',kick:'CLUTCH KICK',flick:'FLICK'})[R.init]||'—')+(R.method==='auto'?' ('+tr('AUTO')+')':''))+
+      cell('METHOD',tr(({power:'POWER-OVER',kick:'CLUTCH KICK',flick:'FLICK',handbrake:'HANDBRAKE'})[R.init]||'—')+(R.method==='auto'?' ('+tr('AUTO')+')':''))+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
       cell('CORNER 2 β',R.beta2.toFixed(1)+'°')+
@@ -30027,7 +30056,7 @@ function renderChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate). AUTO tries them in that order. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD without a handbrake), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front: a clutch or viscous coupling sends torque forward as the rear slips (DRIVE shows the coupling and its front:rear split). Handbrake and loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries them in that order; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD on power-over), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front: a clutch or viscous coupling sends torque forward as the rear slips (DRIVE shows the coupling and its front:rear split). Loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){

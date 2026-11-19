@@ -15,13 +15,16 @@ const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single 
 const DRIFT_MID=34;      // short straight between the two corners (m)
 // Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick of 10 or 20 steps, or a flick),
 // corner radius R (m). Mild β first — Velenis's expert data was ~32° on dirt; dry asphalt here holds ~12–30°.
-const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0}];
+// Build 382: the handbrake (Velenis et al., CDC 2011, handbrake cornering), RWD and FWD. Its plans are searched last, so a car
+// that CLEARed before still CLEARs on the same plan.
+const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0},{init:'handbrake',kick:0}];
 const DRIFT_PLANS=[];
 for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
   DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
+DRIFT_PLANS.sort((p,q)=>(p.init==='handbrake')-(q.init==='handbrake'));   // stable: the others keep their order
 // Driver settings (build 360, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
 let chalDriftEntry=0,chalDriftMethod='auto';
-const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick'];
+const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick','handbrake'];
 function driftSCourse(R,halfW,mid){
   const line=[],zones=[],ds=0.5;
   const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
@@ -37,8 +40,8 @@ function driftSCourse(R,halfW,mid){
   for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
   return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),i2:zones.indexOf('c2')};
 }
-// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
-// on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
+// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD on power-over
+// stays on the grip path: NO_SLIDE is the honest result; a FWD car slides by the flick or the handbrake.
 // AWD (build 379) takes the RWD path: power-over works as far as the centre coupling lets the rear axle turn faster than the
 // front. stepCar models the coupling (centreCoupling, build 320): a clutch closed on the first slip or a viscous coupling
 // sends torque forward as the rear slips, so a car like the 993 Turbo (viscous, rear driven) gets NO_SLIDE honestly.
@@ -63,8 +66,16 @@ function driftDriver(car,s,C,d,plan){
   if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
   const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
   // A FWD car after a flick: power pulls the nose straight, so it is the brake on the slide; lifting keeps it rotating.
-  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,over=Math.abs(beta)>plan.betaT;
-    return{steer:Math.max(-1,Math.min(1,base.steer-(over?0.12*dirF:0))),throttle:over?0.6:0,brake:0,gear:s.gear};}
+  // Handbrake cornering (Velenis CDC 2011): the lever holds the rears sliding while β is short of the target, steering
+  // in by the front's peak slip until the rear passes its peak, with throttle as the path asks (at least 0.3); past the
+  // target the lever drops and power pulls the nose straight. (At throttle 0.3 alone the Civic stopped in the corner.)
+  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,absB=Math.abs(beta),over=absB>plan.betaT,pk=z==='c1'?'seen1':'seen2';
+    if(Math.abs((s.alpha[2]+s.alpha[3])/2)>Math.atan(3*car.mu/car.cc))d[pk]=true;
+    const pull=plan.init==='handbrake'&&absB<plan.betaT;
+    const stF=base.steer+(pull&&!d[pk]?dirF*(car.pkF||0.1)/car.steerLock:over?-0.12*dirF:0);
+    const uF={steer:Math.max(-1,Math.min(1,stF)),throttle:pull?Math.max(0.3,base.throttle||0):over?0.6:0,brake:0,gear:s.gear};
+    if(pull)uF.handbrake=1;
+    return uF;}
   const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
   // dir: +1 left corner, −1 right (steer is left-positive). A left drift has β<0 (velocity right of the nose).
   const dir=z==='c1'?1:-1,absB=Math.abs(beta),absT=plan.betaT;
@@ -80,11 +91,17 @@ function driftDriver(car,s,C,d,plan){
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
   if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
+  // Handbrake (RWD, build 382): clutch down and lever up until the rear passes its peak or β nears the target, then the
+  // lever drops and the clutch closes, and power holds the slide as on power-over.
+  let hb=0;
+  if(plan.init==='handbrake'&&!d[pastKey]&&absB<0.65*absT){hb=1;thr=0;clutch=1;d.hbing=true;}
+  else if(d.hbing){clutch=0;d.hbing=false;}
   // Countersteer (build 359: the sign had steered into the slide): past the target, steer out of the corner.
   let st=base.steer;
   if(absB>absT)st-=0.12*dir;else st+=0.06*dir;
   const u={steer:Math.max(-1,Math.min(1,st)),throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:s.gear};
   if(clutch!=null)u.clutch=clutch;
+  if(hb)u.handbrake=hb;
   return u;
 }
 function driftCornerOk(past,beta,ctr){
@@ -95,7 +112,7 @@ function driftCornerOk(past,beta,ctr){
 function driftReach(D,dh){const c=Math.abs(Math.cos(dh)),sn=Math.abs(Math.sin(dh));return D.w/2*c+Math.max(D.f,D.r)*sn;}
 function driftRun(car,plan,sample,D){
   D=D||{w:(car.tF+car.tR)/2+0.3,f:1.35*car.a,r:1.35*car.b};
-  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick');
+  const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick'&&plan.init!=='handbrake');
   const C=driftSCourse(plan.R,plan.halfW||DRIFT_HALF_W,plan.mid||DRIFT_MID);
   for(const p of C.line)p.v=plan.v;
   const s=driveState(car),L0=C.line[0];
@@ -114,7 +131,9 @@ function driftRun(car,plan,sample,D){
   while(s.t<tMax){
     const u=driftDriver(car,s,C,d,pl);
     stepCar(car,s,u,dt);
-    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx)),aR=(s.alpha[2]+s.alpha[3])/2;
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+    // the rear is past its peak by slip angle, or (build 382) locked by the lever: past the peak of its combined slip
+    const aR=u.handbrake>0&&Math.min(s.kappa[2],s.kappa[3])<-car.slipOpt?Math.PI/2:(s.alpha[2]+s.alpha[3])/2;
     o.peakBeta=Math.max(o.peakBeta,Math.abs(beta));
     o.eMax=Math.max(o.eMax,Math.abs(d.e||0));o.maxI=Math.max(o.maxI,d.i||0);
     const p0=C.line[d.i],p1=C.line[Math.min(C.line.length-1,d.i+1)];
@@ -131,7 +150,7 @@ function driftRun(car,plan,sample,D){
     if(sample&&s.t>=nextT){
       o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,
         thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice(),
-        brk:u.brake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
+        brk:u.brake||0,hb:u.handbrake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
       nextT=s.t+0.04;
     }
     if(o.spin||o.off)break;
@@ -143,13 +162,16 @@ function driftRun(car,plan,sample,D){
   return o;
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
-// FWD: no kick, and one target β (the grip path ignores it; it only sets when a flicked FWD lifts) — 24 plans.
+// FWD: no kick, and one target β for power and flick (the grip path ignores it; it only sets when a flicked FWD
+// lifts); the handbrake keeps all three. AWD: no handbrake (the lever on a coupled centre brakes the fronts too: a
+// rally car's hydraulic lever opens the centre first, not modelled), so it falls back to power-over.
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
   if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if(car.drive==='awd'){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
-  if(car.drive==='fwd')P=P.filter(p=>(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
+  if(car.drive==='fwd')P=P.filter(p=>p.init==='handbrake'||(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
   return P;
 }
 function driftBest(car,sample,D,entryKmh,method){

@@ -224,6 +224,11 @@ function driveCar(){
     // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
     launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
+    // The lever brake (build 382): rear wheels only, outside the ABS (a cable to the rear calipers or a drum-in-hat).
+    // Its force at the road (N, both wheels): the rear service brake's, as if the lever reached its full line force
+    // (PROBABLE: no maker publishes a lever-brake torque), and never under the floor UN ECE R13-H (parking brake) and FMVSS 135 S7.12
+    // set, holding the laden car on a 20% grade, m g sin(atan 0.2) = 0.196 m g.
+    hbCap:Math.max(brakeForceCap(v)*(1-v.brakeFrontShare),v.mass*DRIVE_G*Math.sin(Math.atan(0.2))),
     steerLock:8.5/(v.steerRatio||15),       // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
     // the steering's feel (build 323, phase G2): the front tyres' vertical rate for their contact length, and the caster trail
     steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,ktR:quarterCar(v,'R').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180),scrub:v.scrubRadius==null?DRIVE_SCRUB:v.scrubRadius,
@@ -625,7 +630,7 @@ function stepCar(car,s,u,dt){
   // the share of the drive torque each wheel gets: equal, unless a centre differential splits it unequally (build 320)
   const CD=nd===4&&car.centre&&car.centre.type!=='lock'?car.centre:null,sg=CD?[CD.f/2,CD.f/2,(1-CD.f)/2,(1-CD.f)/2]:null;
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
-  const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
+  const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
@@ -783,7 +788,8 @@ function stepCar(car,s,u,dt){
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
-        const cap=car.brakeF*share/2*car.r,Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
         const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
