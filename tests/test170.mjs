@@ -67,7 +67,10 @@ await browser.close();
 // 5.0 m (4.0 and 3.9 before); the GT3's loaded rears toe out of the turn by the fleet's oversteer compliance. Same cure.
 // Build 333 (phase G6): with each wheel on its own tyre and spring the FK8 strays 4.5 m (4.3 before) and the GT3 4.7 m
 // (5.0 before): one widened by 0.2 m, for the owner to approve, the other narrowed by 0.3 m. Same cure.
-const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.8, 'Porsche 911 GT3 (991.2, 2017)': 4.9 };   // build 367: anti-dive and anti-squat moved them 0.2 m (owner's decision)
+// Build 367 raised both by ~0.2 m (4.6, 4.8 before), with the owner's approval: the test driver follows the lap's
+// planned speeds and does not judge the car's own grip, and the links' pitch share (anti-dive, anti-squat) moves the
+// load in transients.
+const OFF_KNOWN = { 'Honda Civic Type R (FK8, 2017)': 4.8, 'Porsche 911 GT3 (991.2, 2017)': 4.9 };
 console.log('car                        flying lap / solver       furthest off the line   most sideways');
 for (const c of R.cars) {
   const e = 100 * (c.lap / c.solver - 1);
