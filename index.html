@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 371</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 374</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3525,7 +3525,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hint">Simulator preferences. These don't change the engine build.</div>
 
 <div class="design-section">Audio</div>
-<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.</div></div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, on the S-route powerslide and moose replays, with tyre screech while the tyres slide (on the lap replay, where they run at their grip limit).</div></div>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
 <div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.</div></div>
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
@@ -5261,7 +5261,7 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   for(let i=0;i<40;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
-// A compound's manifold at boost mapBar (build 371): the split that balances both shafts (compoundSplit), then the HP
+// A compound's manifold at boost mapBar (build 374): the split that balances both shafts (compoundSplit), then the HP
 // turbine's share of the exhaust that supplies its compressor (the gate bypasses the rest).
 function compoundManifoldPR(mAir,mEx,mapBar,T3,compEta,flowFrac){
   const e=engine, pr=Math.max(1,mapBar), ff=flowFrac>0?flowFrac:mAir/Math.max(1e-9,e.chokeFlow_kgs);
@@ -5447,7 +5447,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
-// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 371) ----
+// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 374) ----
 // A large low-pressure (LP) turbo feeds a small high-pressure (HP) one; the frame the build chose is the HP stage, and
 // the exhaust runs through the HP turbine, then the LP turbine. It was one frame with 2.30 of its flow.
 // SIZING. A two-stage system is matched with the pressure ratio split equally between the stages (Watson & Janota,
@@ -5456,7 +5456,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
 // inlet is the LP stage's outlet (s, T1), so
 //     D_LP / D_HP = (s / sqrt(T1/T0))^(1/2),   T1/T0 = 1 + (s^0.286 - 1)/eta,  eta the island's peak.
 // The LP turbine and its housing scale with its wheel as a frame's do (A/R is a length, so the throat goes as D^2).
-// OFF THE DESIGN POINT (build 371). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
+// OFF THE DESIGN POINT (build 374). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
 // the HP one at the LP outlet's pressure and temperature, so its corrected flow is m sqrt(T1)/p1) and each turbine on
 // its own nozzle (the HP one first, the LP one on what the HP one left). The LP shaft is the state; the HP shaft, about
 // a third of its inertia (D^5), is taken as settled at its own balance at every point, turbine against compressor.
@@ -6503,7 +6503,7 @@ const I18N={
   'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
   'ENGINE SOUND MODEL':{el:'ΜΟΝΤΕΛΟ ΗΧΟΥ'},
   'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU). Οι τετράχρονοι, οι δίχρονοι και οι περιστροφικοί έχουν ο καθένας το δικό του μοντέλο αερίου.'},
-  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
+  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, on the S-route powerslide and moose replays, with tyre screech while the tyres slide (on the lap replay, where they run at their grip limit).':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},
   'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/valve float damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/πλεύση βαλβίδων κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
@@ -12784,7 +12784,7 @@ function packBuild(s){
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
 // own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
-// (packDraw's tC); the bench and the lap's torque curve still read 25 °C.
+// (packDraw's tC); since build 373 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
@@ -16074,7 +16074,7 @@ function simulateLapCore(key,opts){
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare<1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
+    const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
     const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
@@ -17132,7 +17132,7 @@ function raceStepOnce(R){
     let i=c.i,f=c.f,ahead=c.v*dt/2;
     while(ahead>0){const L=M.cum[i+1]-M.cum[i],rem=(1-f)*L;if(ahead<rem){f+=ahead/L;ahead=0;}else{ahead-=rem;i=(i+1)%M.n;f=0;}}
     const P=racePaceAt(M,i,f,g,ff,c.hyX),lim=M.lim[i];
-    if(M.ev)c._tq=evRaceTqAt(M,i,f,clamp(g,M.grips[0],1),ff);
+    if(M.ev){const gc=clamp(g,M.grips[0],1);c._tq=evRaceTqAt(M,i,f,gc,ff);c._fh=evRaceTqAt(M,i,f,gc,ff,'fh');}
     let vLim=P.v;
     // the brakes as they are now against the brakes the lap was solved with: a braking zone to the speed
     // it brakes down to, v^2 = apex^2 + (fade now / fade solved) (v^2 - apex^2)
@@ -18442,8 +18442,41 @@ function driftSlide(R,s){
   let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
   return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
 }
+// The moose test and the lap replay screech too (build 371), through the same voice.
+// Moose: stepCar's samples carry the four slip angles, so the drift's own test runs on them, with the same rear peak
+// atan(3 mu / C) (drive-model's pkR, from the result's mu and the tyre's cornering coefficient).
+// Lap: the lap solver records no slip angle (it is quasi-steady: a speed profile at the grip limit, no yaw state), so
+// the closest derived quantity is each axle's use of its grip. Where the limit binds (lim 'corner' or 'traction',
+// or a brake point whose recorded useF/useR reaches 1) the tyre runs at the peak of its force curve; in the brush
+// model that sets the drift test's boundary, alpha = atan(3 mu / C), so it slides at v sin of that. Below the limit
+// (lim 'power', light braking) it grips and stays silent. Nothing here is ever past the peak, as the lap never is.
+const SCREECH_AT_PEAK=0.999;   // use of grip counted as at the peak (round-off only: the limit binds at exactly 1)
+let screechPkFor=null,screechPk=0;
+function screechPeak(mu,key){
+  if(screechPkFor!==key){screechPkFor=key;screechPk=Math.atan(3*mu/(vehicle.tyreCC||tyreCC(vehicle.tireType)));}
+  return screechPk;
+}
+function lapGripUse(L,i){
+  const lim=L.lim&&L.lim[i],R=L.replay;
+  if(lim==='corner'||lim==='traction')return 1;
+  if(lim==='brake')return Math.max(R.useF?R.useF[i]:0,R.useR?R.useR[i]:0);
+  return 0;
+}
+function lapSlide(L,q){
+  if(!q||lapGripUse(L,q.i)<SCREECH_AT_PEAK)return 0;
+  return q.v/3.6*Math.sin(screechPeak(tyreMu(vehicle.FzRef,vehicle.FzRef),L));
+}
+function screechSlide(){
+  if(!Sound.on)return 0;
+  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return lapSlide(lapResult,replayAt(lapResult,lapReplay.t));
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  if(vizMode!=='challenges'||!R||!R.ok)return 0;
+  if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
+  if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  return 0;
+}
 function updateScreech(t){
-  const s=Sound.on?driftSoundSample():null,vs=s?driftSlide(chalResult,s):0;
+  const vs=screechSlide();
   if(!vs&&!Sound.screechGain)return;
   if(!Sound.screechGain)initScreech();
   const k=clamp(vs/SCREECH_REF_MS,0,1);
@@ -27193,13 +27226,31 @@ function evRefPower(e){
   e._pRef={score:e.score,P};return P;
 }
 // driveMaxTorque without the bench's live health and charge: the motor's envelope cut to the pack's power at half charge
-// (or to Pcap, if lower).
-function driveTorqueRated(e,rpm,V,temp,Pcap){
-  const m=e.motor,w=rpm*Math.PI/30,Pb=Math.min(packMaxPower(e.pack,0.5),Pcap==null?Infinity:Pcap);
+// (or to Pcap, if lower). tC: the cells' temperature (°C) for the pack's power (packR); omitted, 25 °C, the rated curve.
+function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
+  const m=e.motor,w=rpm*Math.PI/30,Pb=Math.min(packMaxPower(e.pack,0.5,tC),Pcap==null?Infinity:Pcap);
   let T=motorMaxTorque(m,rpm,V,temp.r);
   const need=t=>t*w+motorLosses(m,t,rpm,V,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
+}
+// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 373). The lap's
+// curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
+// the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
+// and every 5 °C from 25 to 60, straight between; cached per build and power cap.
+const EV_GAIN_T0=25,EV_GAIN_DT=5,EV_GAIN_NT=8;
+function evPackGain(e,rpm,tB){
+  const cap=evPowerCap;let g=e._gain;
+  if(!g||g.score!==e.score||g.cap!==cap){
+    const base=evCurve(e),V=motorRatedV(e),tc=e.motor.cool.tCool,cool={w:tc,c:tc,r:60},Pcap=cap<1?cap*evRefPower(e):Infinity;
+    const rows=[];
+    for(let k=0;k<EV_GAIN_NT;k++)rows.push(base.map(q=>q.tq>0?driveTorqueRated(e,Math.max(q.rpm,1),V,cool,Pcap,EV_GAIN_T0+k*EV_GAIN_DT)/q.tq:1));
+    g=e._gain={score:e.score,cap,rpms:base.map(q=>q.rpm),rows};
+  }
+  const x=clamp((tB-EV_GAIN_T0)/EV_GAIN_DT,0,EV_GAIN_NT-1),k=Math.min(EV_GAIN_NT-2,Math.floor(x)),fk=x-k;
+  const R=g.rpms,n=R.length,r=clamp(rpm,0,R[n-1]);let j=0;while(j<n-2&&r>R[j+1])j++;
+  const fj=R[j+1]>R[j]?(r-R[j])/(R[j+1]-R[j]):0,at=row=>row[j]+(row[j+1]-row[j])*fj;
+  return at(g.rows[k])*(1-fk)+at(g.rows[k+1])*fk;
 }
 // The torque grid the runs read (gridTorque): one row, no boost axis.
 function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};}
@@ -27229,13 +27280,13 @@ function evLapHeat(e,prof){
     if(lap===1&&i===0)tb.b=PACK_COOLANT;
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
-    const now=motorDerate(e,t)*packDerate(tb.b);
-    const rpm=prof.rpm[i],T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
+    // and, since build 373, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
+    const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
     const d=packDraw(b,0.5,P,tb.b)||{heat:0,I:0};   // at the pack's temperature (build 346)
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
-    if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
+    if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
   }
   return {share,tW,tR,tB,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
@@ -27312,14 +27363,16 @@ function evRaceModel(key,line,grips){
     try{return withRaceTrim(grip,0,()=>simulateLap(key,Object.assign({line,evRace:true},o)));}finally{evPowerCap=1;}
   };
   // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
+  // fh: the cells' share of it, at 25 °C and half charge; the race swaps it for the cells' heat at the pack's own
+  // temperature and charge as it goes (evRaceHeatStep, build 373)
   const price=L=>{
-    const O=L.evOp,fr=new Float32Array(n);
+    const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
       const rpm=Math.max(1,O.rpm[i]),T=O.tq[i],P=T*rpm*Math.PI/30+motorLosses(e.motor,Math.abs(T),rpm,V,cool).total;
       const d=packDraw(e.pack,0.5,P);
-      fr[i]=(P+(d?d.heat:0))/3600;
+      fh[i]=(d?d.heat:0)/3600;fr[i]=P/3600+fh[i];
     }
-    return {v:Float32Array.from(L.v),fr,tq:Float32Array.from(O.tq),lap:L.lap};
+    return {v:Float32Array.from(L.v),fr,fh,tq:Float32Array.from(O.tq),lap:L.lap};
   };
   const kWhLap=q=>{let E=0;for(let i=0;i<n;i++){const j=(i+1)%n;E+=q.fr[i]*line[i].ds3/Math.max(2,(q.v[i]+q.v[j])/2);}return E/1000;};
   const nom=solve(1,0),prof=[];
@@ -27373,12 +27426,12 @@ function evRaceFFNow(M,c){
   return evRaceFF(cap);
 }
 // The motor's torque (Nm, negative regenerating) the pace grid gives at a fractional point, as racePaceAt gives speed.
-function evRaceTqAt(M,i,f,g,ff){
+function evRaceTqAt(M,i,f,g,ff,key='tq'){
   const tq=k=>{
     const GR=M.grips,NG=GR.length,NF=RACE_FUEL.length;
     let a=0;while(a<NG-2&&g>GR[a+1])a++;
     const fa=clamp((g-GR[a])/(GR[a+1]-GR[a]),0,1),b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]),P=M.prof;
-    return (P[a*NF+b].tq[k]*(1-fb)+P[a*NF+b+1].tq[k]*fb)*(1-fa)+(P[(a+1)*NF+b].tq[k]*(1-fb)+P[(a+1)*NF+b+1].tq[k]*fb)*fa;
+    return (P[a*NF+b][key][k]*(1-fb)+P[a*NF+b+1][key][k]*fb)*(1-fa)+(P[(a+1)*NF+b][key][k]*(1-fb)+P[(a+1)*NF+b+1][key][k]*fb)*fa;
   };
   const x=tq(i);return x+(tq((i+1)%M.n)-x)*f;
 }
@@ -27386,9 +27439,12 @@ function evRaceTqAt(M,i,f,g,ff){
 // losses at the speed and the torque it is running at (both scaled, as the race's burn is, by how close to the solved
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
-  const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 346)
-  packHeatStep(X.pack,t,d?d.heat:0,dt);
+  // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
+  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 373)
+  const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
+  packHeatStep(X.pack,t,heat,dt);
+  const dE=(heat-h0)*dt/3.6e6;c.fuelKg-=dE;c.fuelUsed+=dE;
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
   motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);
   c.evPeak.w=Math.max(c.evPeak.w,t.w);c.evPeak.b=Math.max(c.evPeak.b,t.b);

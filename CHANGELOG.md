@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A compound turbo's split off its design point (build 371)
+### A compound turbo's split off its design point (build 374)
 
 - Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its
   own turbine supplies its compressor (at the LP outlet's pressure and temperature), and above target the gate leaves
@@ -28,11 +28,46 @@ they are accurate about *what* shipped but not about the day it shipped.
   at 4000 rpm and 54-63% at 6000 rpm to the redline; the target holds once reached. The exhaust pressure solve uses the
   same split, with the LP wheel held to its tip limit.
 - A compound now comes on boost as the frame alone does (1502 rpm on the Golf at 2.5 bar, was 1719): the HP stage no
-  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test225 checks the split.
+  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test227 checks the split.
 - Fingerprint identical (no preset is a compound).
 - Open: the HP shaft's own inertia and bearing drag (it settles at once), an LP gate, and the LP turbine's sizing
   (scaled by D^2 from the HP housing, it can make the whole ratio itself at high flow). The guide's Greek for the
   changed limit line is stale (Greek paused).
+
+### The lap's torque and the race's energy price at the pack's own temperature (build 373)
+
+Step 10 of `plans/small-physics.md`, build 346's follow-up.
+- **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
+  pack's power at its temperature over 25 °C (`evPackGain`). Warmer cells have less resistance, so where the pack's
+  power is the limit the drive gives a little more: a Model Y up to +1.4% at 45 °C.
+- **The race:** the pace grid keeps the cells' heat (at 25 °C, half charge) apart in its price; each step the race
+  swaps it for the heat at the pack's own temperature and charge. 150 kW from a Model Y at 45 °C: 0.4% less energy.
+- Fingerprint against `main`: only the three Teslas' lap times move, by −0.003 to +0.001% (Model Y 77.859 → 77.857 s).
+  No top speed, ICE car or hybrid moves. `test226` (new) checks it.
+- Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
+  and the motor bench stay at 25 °C.
+
+### test174: ESP is judged at FMVSS 126's final run, where the Model 3 still spins (build 372)
+
+- test174 failed since build 354: on its premium touring tyres the Model 3 no longer spins at 6.5 times the 0.3 g
+  steering (116 deg of hand wheel) without ESP (yaw 0.01 of its peak 1 s on), so ESP had nothing to correct. That is
+  the car changing as intended, not a bug.
+- The ESP off/on comparison now runs at the rule's own final run (FMVSS 126 S7.9.4: the greater of 6.5 times or 270 deg).
+  There ESP off spins (yaw 0.91 of its peak, 83 deg sideways) and ESP on holds it to 0.46 and 36 deg. The test now also
+  asks that ESP off spins there. The pass checks at 5 and 6.5 times are unchanged.
+- Left open: at 270 deg, ESP on still has yaw 0.46 of its peak 1 s on, past the rule's 0.35. The ESP is not tuned to
+  pass there. That needs its own build.
+
+### Tyre screech on the lap replay and the moose replay (build 371)
+
+- The moose replay now screeches (with SOUND ON) by the powerslide's own test: while either axle is past the rear
+  tyre's peak slip angle, atan(3μ/C), louder with v·sin α. On the MX-5 it sounds for 45 of 355 samples, never at the start.
+- The lap replay records no slip angle (the lap solver is a quasi-steady speed profile with no yaw state), so it uses the
+  closest derived quantity, each axle's use of its grip: where the limit binds (corner, traction, or a brake point at
+  full use) the tyre sits at its peak, and the screech is v·sin α_peak; below the limit it is silent. On the MX-5
+  it sounds on 275 of 442 points, all 223 corner points, no power points.
+- Same synth path as build 362; no physics changed; fingerprint identical.
+- Left open: the lap never goes past the peak, so the track screech marks the limit, not a slide; Greek paused.
 
 ### Rank several cars on a challenge (build 370)
 
@@ -56,6 +91,7 @@ Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is i
 - **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test223`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
 - **Known gap, approved by the owner:** `test170`'s `OFF_KNOWN` caps raised, Civic Type R FK8 4.6 → 4.8 m and 911 GT3 (991.2) 4.8 → 4.9 m. The stepped lap's furthest off the line moved ~0.2 m (4.6 → 4.8, 4.7 → 4.9): its driver follows the lap's planned speeds without judging the car's own grip, and the links' pitch share moves the load in transients.
 - **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
+
 ### Skid pad challenge on the CHALLENGES page (build 368)
 
 - New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft

@@ -1,62 +1,53 @@
-// A compound turbo's split off its design point (build 371).
+// Tyre screech on the lap replay and the moose replay (build 371).
 //
-// WHY THIS EXISTS. Since build 294 a compound's two stages held their equal design split at every point, the HP shaft
-// tied to the LP one. Each shaft now balances on its own map (compoundNet, compoundSplit). On a designed compound (the
-// Golf GTI's frame, large, 2.5 bar) what must hold:
-//   · below the target, at the LP shaft's own balance, the LP stage makes well under half the ratio (in log terms),
-//     and less at low flow than where the target is held at high flow;
-//   · the engine holds its target from where it first reaches it to the redline (the total holds);
-//   · at the design ratio and the redline's flow, the steady split makes the design total with both wheels inside
-//     their tip limits.
+// WHY THIS EXISTS. Build 362 gave the S-route powerslide a tyre screech; this build adds it to the lap replay and
+// the moose test through the same voice. What must hold:
+//   · lap: the screech is on only where the lap solver's grip limit binds (corner, traction, a brake point at full
+//     use of grip), never on a 'power' point, louder with speed;
+//   · moose: the drift's test on stepCar's slip angles (past the rear peak), off at the replay's start;
+//   · nothing sounds while SOUND is off; no page errors.
 import { chromium } from './pw.mjs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage();
-const errors = [];
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(300);
-const fails = [];
 
 const r = await page.evaluate(() => {
-  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('Golf GTI (Mk7')));
-  applyEngineToForm(Object.assign({}, engine, { turboConfig: 'compound', boost_bar: 2.5, turboSize: 'large' })); buildEngine();
-  const e = engine, rows = [];
-  for (const rpm of [1000, 1500, 2500, 4000, 5000, 6000, e.redline]) {
-    const b = steadyBoost(rpm), tgt = boostTarget(rpm), T3 = exhaustGasT(1, rpm), m = airFlowAt(rpm, 1 + b), row = { rpm, b, tgt };
-    if (b < tgt - 1e-3) {                    // spooling: the LP shaft where its own net is zero
-      let lo = 0, hi = e.shaftMax;
-      for (let i = 0; i < 40; i++) { const n = (lo + hi) / 2; if (shaftNetPower(n, m, T3, 313, rpm).net > 0) lo = n; else hi = n; }
-      const q = shaftNetPower(lo, m, T3, 313, rpm); row.sL = q.sLP; row.sH = q.sHP;
-    } else { const sp = compoundSplit(m, m * 1.06, 1 + b, T3, 298, compFlowFrac(rpm, m)); row.sL = sp.sL; row.sH = sp.sH; }
-    rows.push(row);
-  }
-  const red = e.redline, m = airFlowAt(red, 3.5), ff = compFlowFrac(red, m), T3 = exhaustGasT(1, red);
-  const sp = compoundSplit(m, m * 1.06, 3.5, T3, 298, ff);
-  const T1 = 298 * (1 + (Math.pow(sp.sL, 0.286) - 1) / compIslandEff(ff, sp.sL));
-  return { rows, d: { sL: sp.sL, sH: sp.sH, lpMax: compressorPR(e.lpExd, e.shaftMax, ff, 298).pr,
-    hpMax: compressorPR(e.compExd, maxShaftRpm(e.compExd), compoundHpFrac(ff, sp.sL, T1, 298), T1).pr } };
+  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('MX-5')));
+  setTab('track');
+  const L = lapResult, n = L.lim.length, out = {};
+  const sl = L.lim.map((_, i) => lapSlide(L, { i, v: L.v[i] * 3.6 }));
+  out.lap = { n, on: sl.filter(v => v > 0).length, power: L.lim.filter((l, i) => l === 'power' && sl[i] > 0).length,
+    corner: L.lim.filter((l, i) => l === 'corner' && sl[i] > 0).length, cornerN: L.lim.filter(l => l === 'corner').length };
+  const iFast = L.lim.reduce((b, l, i) => l === 'corner' && L.v[i] > L.v[b] ? i : b, L.lim.indexOf('corner'));
+  const iSlow = L.lim.reduce((b, l, i) => l === 'corner' && L.v[i] < L.v[b] ? i : b, L.lim.indexOf('corner'));
+  out.lap.louder = sl[iFast] > sl[iSlow];
+  lapReplay.playing = true; lapReplay.t = L.replay.tAt[iFast];
+  Sound.on = false; out.offTrack = screechSlide();
+  Sound.on = true; out.onTrack = screechSlide();
+  setTab('challenges');
+  const sel = document.getElementById('chalSel'); sel.value = 'moose'; sel.dispatchEvent(new Event('change'));
+  const R = chalResult, pk = screechPeak(R.mu, R), ms = R.samples.map(q => driftSlide({ pkR: pk }, q));
+  out.moose = { ok: R.ok, kind: R.kind, n: ms.length, on: ms.filter(v => v > 0).length, first: ms[0], src: screechSlide() >= 0 };
+  Sound.on = false; out.offMoose = screechSlide();
+  return out;
 });
 await browser.close();
 
-const share = x => Math.log(x.sL) / Math.log(x.sL * x.sH);
-for (const x of r.rows) console.log(`${String(x.rpm).padStart(5)} rpm: boost ${x.b.toFixed(3)} of ${x.tgt.toFixed(3)} bar, LP ${x.sL.toFixed(3)} x HP ${x.sH.toFixed(3)}, LP share ${(share(x) * 100).toFixed(0)}%`);
-const below = r.rows.filter(x => x.b < x.tgt - 1e-3), held = r.rows.filter(x => x.b >= x.tgt - 1e-3);
-if (below.length < 2 || !held.length) fails.push('the sweep does not cover both spooling and held points');
-const top = held[held.length - 1];
-for (const x of below) {
-  if (!(share(x) < 0.4)) fails.push(`${x.rpm} rpm: the LP stage makes ${(share(x) * 100).toFixed(0)}% of the ratio while spooling`);
-  if (top && !(share(x) < share(top))) fails.push(`${x.rpm} rpm: the LP share is not below the one at ${top.rpm} rpm`);
-}
-const first = r.rows.findIndex(x => x.b >= x.tgt - 1e-3);
-if (first >= 0 && r.rows.slice(first).some(x => x.b < x.tgt - 1e-3)) fails.push('the target is not held to the redline once reached');
-console.log(`design ratio 3.5 at the redline: LP ${r.d.sL.toFixed(3)} (limit ${r.d.lpMax.toFixed(3)}) x HP ${r.d.sH.toFixed(3)} (limit ${r.d.hpMax.toFixed(3)})`);
-if (Math.abs(r.d.sL * r.d.sH / 3.5 - 1) > 1e-6) fails.push('the steady split does not make the design total');
-if (r.d.sL > r.d.lpMax + 1e-9 || r.d.sH > r.d.hpMax + 1e-9) fails.push('a wheel passes its tip limit at the design point');
-
-if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
-if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: the LP stage lags the HP one off the design point, and the total holds.');
-process.exit(fails.length || errors.length ? 1 : 0);
+console.log('lap', r.lap, 'track off/on', r.offTrack, r.onTrack);
+console.log('moose', r.moose, 'off', r.offMoose);
+if (r.lap.power) fails.push('screech on ' + r.lap.power + ' power points');
+if (r.lap.corner !== r.lap.cornerN || !r.lap.cornerN) fails.push('screech missing on corner points');
+if (!r.lap.louder) fails.push('screech not louder at the faster corner');
+if (r.offTrack !== 0 || !(r.onTrack > 0)) fails.push('track screech not gated by SOUND');
+if (!r.moose.ok || r.moose.kind !== 'moose') fails.push('moose run failed');
+if (r.moose.first !== 0 || !(r.moose.on > 0) || r.moose.on >= r.moose.n) fails.push('moose screech not tied to the slide: ' + JSON.stringify(r.moose));
+if (r.offMoose !== 0) fails.push('moose screech while SOUND off');
+for (const e of errors) fails.push(e);
+if (fails.length) { console.error('FAIL', fails); process.exit(1); }
+console.log('PASS');
+process.exit(0);

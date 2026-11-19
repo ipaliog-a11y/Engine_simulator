@@ -64,6 +64,10 @@ reporting its range. Sourcing is batched apart from physics.
 
 10. **The lap's torque curve and the race's pace-grid price read the pack's own temperature**, not 25 °C (build
     346's follow-up). Moves EV and hybrid laps; report.
+    *Build 373:* the lap scales the drive by the pack's power at its walked temperature over 25 °C (`evPackGain`, up to
+    +1.4% on a Model Y at 45 °C); the race prices the cells' heat at the pack's temperature and charge each step. Tesla
+    laps move ≤0.003%. Left open: the hybrid lap and race walk no pack temperature, so they do not move; the race's
+    pace grid (speeds) and the motor bench stay at 25 °C.
 11. **A hybrid's engine start and stop, stepped.** The ~1 kJ to crank comes from the pack and comes back on the stop,
     the spin-up and run-down come from the engine's and motor's inertias, and MG2 cancels MG1's reaction on the ring.
     Bench, sound and lap replay.
@@ -82,7 +86,7 @@ reporting its range. Sourcing is batched apart from physics.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
-    *Build 371:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
+    *Build 374:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
     Open: the HP shaft's inertia and bearings, an LP gate, the LP turbine's sizing.
 
 ## Sourcing batch (apart from physics)
