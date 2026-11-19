@@ -14573,10 +14573,32 @@ function driveBody(v,a,b){
 //   n   the caster trail, r tan(caster), the steering axis through the wheel's centre (no caster offset). vehicle.caster
 //       (degrees) from a maker's alignment sheet where a preset has one; none does yet, so every car takes DRIVE_CASTER:
 //       road cars run about 3-7 degrees (Reimpell et al., The Automotive Chassis, ch. 3: PROBABLE as one value).
-//   Left out, named: the power assistance (s.steerTorque is the column's load before any assist), the steering's
-//   friction, the drive force's moment on the scrub radius and the torque steer of unequal driveshafts (no preset
-//   gives scrub radius or shaft angles), and the moment of Fx on the tread's sideways deflection.
-const DRIVE_CASTER=5;
+//   rs  the scrub radius (build 376, plan small-physics step 4): each front tyre's longitudinal force (drive or brake)
+//       acts rs outboard of the steering axis's ground point, Mz = -Fx rs on the left wheel, +Fx rs on the right; equal
+//       forces cancel. vehicle.scrubRadius (m) where a preset has one; none does, so every car takes DRIVE_SCRUB:
+//       passenger cars run -20 to +20 mm (Reimpell et al., The Automotive Chassis, ch. 3: PROBABLE as one value; a
+//       value by suspension type is left open, no source gives one per type).
+//   s.steerTorque is the column's load before any assist. s.handTorque (build 376) is what the driver holds at the hand
+//   wheel, positive with the steer: see DRIVE_ASSIST. Nothing reads it yet (for force feedback later).
+//   Left out, named: the torque steer of unequal driveshafts (no preset gives shaft angles), the moment of Fx on the
+//   tread's sideways deflection, and a hydraulic or EPS curve per car (one curve serves every car).
+const DRIVE_CASTER=5,DRIVE_SCRUB=0.010;
+// THE POWER ASSISTANCE AND THE STEERING'S FRICTION (build 376). A boost curve gives the assist from the driver's own
+// torque and the speed, as EPS and hydraulic systems are tuned (Pfeffer & Harrer, Steering Handbook, 2017, ch. 6-7:
+// a threshold before any assist, a gain that falls with speed, a motor's ceiling). Every number PROBABLE:
+//   assist = K(v) (|Th| - T0) above T0, at most Amax (Nm at the column), K(v) = Kv + (K0 - Kv) e^(-v/vK),
+//   so Th = (|L| + K T0)/(1 + K) for a load L above T0: about 1/(1+K) of the load at speed, less when parking.
+// The friction Tf (Coulomb, as felt at the hand wheel; PROBABLE) adds against a turning wheel; on a held wheel it
+// takes up to Tf of the load, so the wheel holds itself near the centre (a dead band).
+const DRIVE_ASSIST={T0:1,K0:8,Kv:1.5,vK:15,Amax:60,Tf:1.5};
+function driveHandTorque(L,v,rate){
+  const A=DRIVE_ASSIST,K=A.Kv+(A.K0-A.Kv)*Math.exp(-v/A.vK),aL=Math.abs(L);
+  let th=aL<=A.T0?aL:(aL+K*A.T0)/(1+K);
+  if(aL-th>A.Amax)th=aL-A.Amax;                       // the motor at its ceiling: the driver takes the rest
+  th*=Math.sign(L);
+  if(Math.abs(rate)>1e-4)return th+A.Tf*Math.sign(rate);
+  return Math.sign(th)*Math.max(0,Math.abs(th)-A.Tf);
+}
 function driveCar(){
   const v=vehicle,pt=powertrain(),L=v.wb,a=L*(1-v.fWt),b=L*v.fWt;
   const curve=pt.torqueCurve(),rl=pt.maxRpm(),peak=curve.reduce((m,p)=>Math.max(m,p.tq),0);
@@ -14614,7 +14636,7 @@ function driveCar(){
     brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
     steerLock:8.5/(v.steerRatio||15),       // 2.7 turns of the hand wheel lock to lock (probable), through the ratio
     // the steering's feel (build 323, phase G2): the front tyres' vertical rate for their contact length, and the caster trail
-    steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,ktR:quarterCar(v,'R').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180),
+    steerRatio:v.steerRatio||15,ktF:quarterCar(v,'F').kt,ktR:quarterCar(v,'R').kt,casterTrail:v.rTire*Math.tan((v.caster==null?DRIVE_CASTER:v.caster)*Math.PI/180),scrub:v.scrubRadius==null?DRIVE_SCRUB:v.scrubRadius,
     // the camber (phase G4): static (rad) and the share of the roll recovered, each axle; see THE CAMBER
     camF:(v.camberF!=null?v.camberF:v.camber||0)*Math.PI/180,camR:(v.camberR!=null?v.camberR:v.camber||0)*Math.PI/180,
     recF:v.camRecF!=null?v.camRecF:CAMBER_RECOVERY,recR:v.camRecR!=null?v.camRecR:CAMBER_RECOVERY
@@ -14624,7 +14646,7 @@ function driveCar(){
 function driveState(car){
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],espF:1,clF:1,pull:false,firing:true,
-    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0};
+    ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0,handTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
 // The full-load curve the car carries is already the engine's and the motor's together at the pack's rated charge, and
@@ -15013,6 +15035,7 @@ function stepCar(car,s,u,dt){
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
     // ---- gearbox
@@ -15062,9 +15085,10 @@ function stepCar(car,s,u,dt){
       const fx=T[0]*cw-T[1]*sw,fy=T[0]*sw+T[1]*cw;
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
       if(front&&car.ktF){const q=T[2];   // the steering torque: see DRIVE_CASTER
-        MK-=T[1]*((q<1?ah*(1-q)*(1-q)*(1-q)/(3-3*q+q*q):0)+car.casterTrail);}
+        MK+=-T[1]*((q<1?ah*(1-q)*(1-q)*(1-q)/(3-3*q+q*q):0)+car.casterTrail)+sd*T[0]*car.scrub;}
     }
     s.steerTorque=MK/car.steerRatio;
+    s.handTorque=driveHandTorque(-s.steerTorque,v,sRate);   // see DRIVE_ASSIST
     // ---- engine, clutch, driveline
     const wd=wMean();
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
