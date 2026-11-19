@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A sourced regen cap per maker (build 377)
+### A sourced regen cap per maker (build 378)
 
 Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
 - **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
@@ -34,6 +34,14 @@ Step 12b of `plans/small-physics.md`, the owner's decision on build 366's findin
   map (0.87 → 0.81 g with the cap); it now holds speed closed-loop (PI), where main and this build both give 0.86 g.
   Band unchanged (0.83–0.90).
 - Left open: a garage-built EV takes the default; E-GMP and MEB have no preset to check against.
+### Import-vehicle skill for researching real-car presets (build 377)
+
+- New Cursor skill at `.cursor/skills/import-vehicle/`: when asked to import a real car (e.g. Ferrari F50),
+  research sourced body/engine numbers, write presets, run accuracy bands (±25% power, ±35% matched 0–100 and top),
+  fix honest input errors only, and report unachievable gaps with suggested actions.
+- Includes schema/checklist/gap-report references, a JSON template, `validate-research.mjs`, and
+  `check-accuracy.mjs`. Derive-do-not-fit is hard-coded; physics constants are never tuned to pass.
+- `test230` checks the skill files and runs both scripts against the existing Ferrari F40.
 
 ### Power assistance, steering friction and the scrub radius in the stepped car (build 376)
 

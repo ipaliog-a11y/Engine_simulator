@@ -21,7 +21,7 @@ const r = await page.evaluate(() => {
   const P = TIRE_TYPE.premium, tyre = n => FACTORY_CARS.find(p => p.name.includes(n)).fit.tire;
   const cls = Object.fromEntries(['Model 3', 'Model Y', 'Qashqai', 'F-150 Raptor'].map(n => [n, tyre(n)]));
   loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('Model 3'))); const car = driveCar();
-  // The speed hold is closed-loop (PI). Until build 377 the throttle was a fixed +0.15 bias on the speed error, which
+  // The speed hold is closed-loop (PI). Until build 378 the throttle was a fixed +0.15 bias on the speed error, which
   // assumed the old regen strength in an EV's one-pedal map (T = thr·wot − (1−thr)·regen): when the maker's regen cap
   // (step 12b) made lift-off ~4× weaker, the same pedal drove harder and the peak moved 0.87 → 0.81 g. The integral
   // gain is the point where the peak stops depending on it (ki 16 and 32 give 0.862 and 0.863 g), and there main's
