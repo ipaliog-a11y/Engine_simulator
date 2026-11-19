@@ -33,6 +33,9 @@ reporting its range. Sourcing is batched apart from physics.
    brakes on presets, arms by the kit.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
    moment as the body leans. Both the ESP's understeer reference and its roll-steer share then read the full roll.
+   *Build 374:* done (camber 1/fvsa and toe rs/(t/2) by each wheel's travel, none on solid or twist axles; ESP's roll
+   steer by the full roll with the tyres' give; `test228`). Left open (owner): the weight's roll moment m g h sin φ
+   (+9–10 % roll, pushed `test170` past its caps), to land with the lap's `rollGrad`; curves' change with travel.
 
 ## 2. Steering and stability control (`stepCar` only)
 

@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Camber and toe by heave and pitch in the stepped car (build 374)
+
+Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE (`test228`, new).
+- **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
+- **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
+- **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
 ### The lap's torque and the race's energy price at the pack's own temperature (build 373)
 
 Step 10 of `plans/small-physics.md`, build 346's follow-up.

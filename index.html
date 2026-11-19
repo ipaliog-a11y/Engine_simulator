@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 373</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 374</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -14388,7 +14388,7 @@ function simulateAccelRun(){
 //   Aids      the ECU's calibration of ABS, traction control and stability control, as a tune (build 281). See DRIVE_AIDS.
 //   Aero      drag and downforce on the square of the speed; rolling resistance by the load.
 //   Steering  the torque the front tyres put on the hand wheel, s.steerTorque (phase G2): see DRIVE_CASTER.
-//   Camber    each wheel's lean on the road, from its static camber and the body's roll less what the linkage recovers,
+//   Camber    each wheel's lean on the road, from its static camber, the body's roll and its own travel by the linkage,
 //             s.camber (phase G4), and its camber thrust. See THE CAMBER.
 //   Toe       each wheel steers a little by the body's roll and by its own side force, s.toe (phase G5). See THE TOE.
 //
@@ -14442,8 +14442,8 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          quarterCar; since phase G6 through each wheel's own travel, THE WHEELS). The transfer is m ax h / L when
 //          steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5:
 //          road cars 0.8-1.2). Since build 369 the links carry the anti-dive and anti-squat share (THE LINKS).
-//   Left out: the weight's own roll moment as the body leans (m g arm phi, a few per cent: the lap's rollGrad leaves
-//   it out too), and the unsprung masses' share of the transfer (it is counted with the body's).
+//   Left out: the weight's own roll moment as the body leans (m g arm sin phi, 9-10% more roll; it pushed test170 past
+//   its caps, so it lands with the lap's rollGrad, which leaves it out too), and the unsprung masses' share of the transfer.
 // THE WHEELS (phase G6). Each wheel moves up and down on its own, between its tyre and its spring: a quarter car at
 // each corner (quarterCar: the unsprung mass from its parts, the wheel rate, the damper, the tyre's vertical rate),
 // under a body that heaves as well as rolls and pitches (the sprung mass, the car's less its four wheels').
@@ -14475,7 +14475,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          rear when braking (Milliken & Milliken, RCVD, ch. 17). J is a force between wheel and body: the body gets it
 //          at the corner, the wheel its reaction, so the springs carry the transfer less J, and their sum heaves the
 //          body (jacking). Brakes are outboard unless the car says v.inboardF / v.inboardR (no preset does).
-//   Left out, named: the tyre's own damping, the damper's blow-off, camber and toe by heave and pitch, the arm's change
+//   Left out, named: the tyre's own damping, the damper's blow-off, the arm's change
 //   with travel, and travel by the kit (a lowered car keeps its type's).
 const DRIVE_BUMP_RUBBER=0.025,DAMPER_RB=3;
 function driveBody(v,a,b){
@@ -14484,11 +14484,18 @@ function driveBody(v,a,b){
   const zF=v.rcF||0,zR=v.rcR||0,zAx=fw*zF+(1-fw)*zR,arm=Math.max(0,v.cg-zAx),kx=0.39*(tF+tR)/2;
   const K=v.rollK||(()=>{const k=rollStiffness(v);return k.F+k.R;})(),KF=v.rollKF==null?0.5:v.rollKF;
   const kz=q=>2*q.ks*q.kt/(q.ks+q.kt),L=a+b;      // an axle's vertical rate, its springs on its tyres
+  // the full steady roll per unit ay (small-physics step 3): each axle's springs (K) on its tyres (kt t^2 / 2), the
+  // tyres also carrying what goes through the roll centre. Phi (rad s^2/m) and each axle's roll on its springs, which
+  // the roll steer goes by (THE TOE). The weight's own moment is left out, as in the roll above.
+  const KF0=K*KF,KR0=K*(1-KF),TF=qF.kt*tF*tF/2,TR=qR.kt*tR*tR/2,cF=1/(1/KF0+1/TF),cR=1/(1/KR0+1/TR),gF0=fw*zF,gR0=(1-fw)*zR;
+  const phi=v.mass*(arm+cF*gF0/TF+cR*gR0/TR)/(cF+cR);
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
     ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
     liveF:v.suspFront==='solid',liveR:v.suspRear==='solid',inbF:!!v.inboardF,inbR:!!v.inboardR,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
-    pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR))};
+    pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR)),
+    rollFull:phi,rrAyF:cF*(phi-v.mass*gF0/TF)/KF0,rrAyR:cR*(phi-v.mass*gR0/TR)/KR0,
+    indF:v.suspFront!=='solid',indR:v.suspRear!=='solid'&&v.suspRear!=='twist'};
 }
 // THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
 // back: Mz = -Fy (t + n) about the axis, and the hand wheel feels the two fronts' sum through the steering ratio.
@@ -14516,9 +14523,10 @@ function driveCar(){
   const Kus=v.mass/(L*L)*(b/Cax(v.mass*DRIVE_G*b/L,v.FzRefF||v.FzRef)-a/Cax(v.mass*DRIVE_G*a/L,v.FzRef));
   if(aids.espBeta==null)aids.espBeta=(aids.espSlide||1)*Math.atan(3*muR/cc);
   const body=driveBody(v,a,b),toe=driveToe(v);
-  // the toe's steady share of the understeer gradient (THE TOE), to the same K: roll steer by the roll per ay, and
-  // compliance steer by each wheel's share of the side force, m (b, a) / (2 L) per unit ay
-  const Ktoe=((toe.rsF+toe.rsR)*v.mass*body.rollArm/body.rollK+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
+  // the toe's steady share of the understeer gradient (THE TOE), to the same K: roll steer by each axle's roll on its
+  // springs per ay, the full roll (with the tyres' give), and compliance steer by each
+  // wheel's share of the side force, m (b, a) / (2 L) per unit ay
+  const Ktoe=(toe.rsF*body.rrAyF+toe.rsR*body.rrAyR+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
   return {
     aids,esp:!!aids.esp,Kus:Kus+Ktoe,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
@@ -14746,7 +14754,11 @@ function driveLerp(xs,ys,x){
 // Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
 // outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
 // left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
-// car's own grip. Also camber by heave and pitch (no heave state), and the camber's own aligning moment.
+// car's own grip, and the camber's own aligning moment.
+//   heave  (small-physics step 3) each wheel's own travel on the body moves its camber too, not only the axle's roll: the same
+//          swing arm, 1/fvsa a metre of travel (2 rec / t), the top inwards in bump, so heave and pitch camber the
+//          wheels as well (Reimpell, The Automotive Chassis, ch. 3, camber change over travel: PROBABLE as the roll's
+//          own curve). A solid axle or twist beam keeps its wheels' camber in parallel travel (their recovery is roll only).
 // THE TOE (phase G5). Each wheel steers by the body's roll (roll steer) and by its own side force (lateral force
 // compliance steer: the bushes give). Both in the understeer sense positive: a front wheel steers out of the turn, a
 // rear one into it. The figures are a fleet's, not each suspension type's: no figure by type was found published. Each is
@@ -14756,6 +14768,10 @@ function driveLerp(xs,ys,x){
 //   compliance steer   front 0.60 us to 0.22 os deg/kN: 0.19; rear 0.02 us to 0.22 os: -0.10 (oversteer)
 // The same summary's understeer gradients, 0.7-8.2 deg/g, are what they add to. vehicle.rollSteerF/R (deg/deg) and
 // compSteerF/R (deg/kN) override them. The side force is the wheel's own of the step before, so its toe lags a step.
+// Bump steer (small-physics step 3): roll steer is each wheel's toe change with its own travel, so a wheel in heave or pitch toes
+// by the same curve, rs / (t/2) a metre, out in bump at the front for an understeering rs (Reimpell, ch. 3, toe change
+// over travel: PROBABLE as the roll's own). In pure heave the two wheels toe equal and opposite. Not on a solid axle
+// or twist beam, whose roll steer is the axle's own yaw.
 // Left out, named: the aligning-torque compliance steer (front 0.4-1.6 deg/100 Nm us in the same summary), bump steer
 // in heave, and a figure per suspension type.
 const DRIVE_TOE={rollSteerF:0.05,rollSteerR:0.035,compSteerF:0.19,compSteerR:-0.10};
@@ -14962,15 +14978,18 @@ function stepCar(car,s,u,dt){
     if(!s.toe){s.toe=[0,0,0,0];s.Fyw=[0,0,0,0];}
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
+      // the axle's mean travel on the body (heave and pitch), and the wheel's side, right +1 (THE CAMBER, THE TOE)
+      const q0=front?0:2,ind=front?car.indF!==false:car.indR!==false,sd=i%2?1:-1,tw=front?car.tF:car.tR;
+      const cm=ind?(s.zu[q0]+s.zu[q0+1])/2-s.heave-s.pitch*xw[i]:0;
       // the toe (THE TOE): out of the turn at the front, into it at the rear, for understeer figures
-      const tq=car.rsF==null?0:front?-car.rsF*s.rr[0]-car.csF*s.Fyw[i]:car.rsR*s.rr[1]+car.csR*s.Fyw[i];s.toe[i]=tq;
+      const tq=car.rsF==null?0:front?-car.rsF*(s.rr[0]+sd*2*cm/tw)-car.csF*s.Fyw[i]:car.rsR*(s.rr[1]+sd*2*cm/tw)+car.csR*s.Fyw[i];s.toe[i]=tq;
       const dw=(front?delta:0)+tq,cw=Math.cos(dw),sw=Math.sin(dw);
       const vl=vxw*cw+vyw*sw,vt=-vxw*sw+vyw*cw,den=Math.max(Math.abs(vl),3);
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
       const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0;
-      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF*s.rr[0]:car.recR*s.rr[1]);
+      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF:car.recR)*((front?s.rr[0]:s.rr[1])+sd*2*cm/tw);
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
       const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gr?gr[i]:1);
