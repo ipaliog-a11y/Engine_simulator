@@ -18,15 +18,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Camber and toe by heave and pitch, and the weight's own roll moment (build NNN)
+### Camber and toe by heave and pitch in the stepped car (build NNN)
 
 Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
 
-- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE.
-- **The body's weight, leaning, adds m g h_arm sin φ to the roll moment.** Steady roll rises 9–10 % (M3 E46 5.73°/g, MX-5 6.06°/g, AE86 5.50°/g), matching a full roll worked out apart (springs on tyres, roll centres, weight) within 0.2 % (`test224`, new).
-- **The ESP's understeer reference reads the full roll**: its roll-steer share now goes by each axle's roll on its springs with the tyres' give and the weight's moment, not the springs alone.
-- **The lap should follow**: its `rollGrad` leaves the weight's moment out too (~10 % less roll); not changed here, as it moves every lap.
-- **Left open:** the curves' own change with travel (linear here), bump steer apart from roll steer by the kit.
+- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE (`test228`, new).
+- **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
+- **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
+- **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
+### Rank several cars on a challenge (build 370)
+
+- The CHALLENGES tab gets **RANK CARS**: add cars (this build, garage builds, factory cars; 12 at most) and press
+  RANK. Each runs the selected challenge with the settings on screen, through that challenge's own solver, and the
+  table lists them passes first, then by the challenge's own score: economy by energy drawn (fuel L × density × LHV
+  from `FUELS`, or pack kWh × 3.6, in MJ, so engine cars and EVs share one scale), stage by time, moose by clear
+  speed, skid pad by steady g, powerslide by peak β.
+- Cars run one at a time; the page yields between cars, with a progress bar and CANCEL (heard before the next car).
+- A challenge registers its score in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry), so a new challenge
+  needs no change to the ranking. No solver changed: the fingerprint is identical.
+- Open: one car's solve still blocks the page while it runs (up to ~3 s for the powerslide's search); moving it off
+  the main thread would need the solvers split into a Worker.
+
 ### Anti-dive and anti-squat in the stepped car (build 369)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.

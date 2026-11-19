@@ -3,7 +3,8 @@
 // WHY THIS EXISTS. stepCar's tyres stood upright whatever the body did. Each wheel now leans by its static camber and
 // the body's roll less what its linkage recovers, and pushes towards its lean by the brush model's camber thrust (THE
 // CAMBER in drive-model.js). The grip by camber is left out, a named gap. What must hold:
-//   · steady on a skidpad, the outside front leans by camberF + the body's roll less camRecF of its roll on the springs,
+//   · steady on a skidpad, the outside front leans by camberF + the body's roll less camRecF of its roll on the springs
+//     and of its heave (small-physics step 3),
 //     within 2% (build 333: the body's roll less the axle's tilt on its tyres, the load difference over kt t), and by
 //     more than the lap's camberF + rollGrad ay/g (1 - camRecF), which has no tyre give;
 //   · a cambered tyre at no slip pushes towards its lean by C a/(3R) per radian, within 2%;
@@ -30,7 +31,9 @@ const R = await page.evaluate(() => {
       // build 333: the tyres give too. The axle tilts by its load difference over the tyres' rate and the track, the
       // body rolls on top of that, and the linkage recovers its share of the roll on the springs only.
       want: (() => { const tilt = Math.abs(s.Fz[1] - s.Fz[0]) / (car.ktF * car.tF), roll = Math.abs(s.roll);
-        return vehicle.camberF + (roll - vehicle.camRecF * (roll - tilt)) * 180 / Math.PI; })(),
+        // small-physics step 3: the wheel's own heave on the body cambers it by the same curve, the top inwards in bump
+        const cm = (s.zu[0] + s.zu[1]) / 2 - s.heave - s.pitch * car.a;
+        return vehicle.camberF + (roll - vehicle.camRecF * (roll - tilt) - vehicle.camRecF * 2 * cm / car.tF) * 180 / Math.PI; })(),
       lap: vehicle.camberF + vehicle.rollGrad * Math.abs(s.ay) / 9.81 * (1 - vehicle.camRecF) });
   }
   // camber thrust at no slip

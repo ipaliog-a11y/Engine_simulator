@@ -1,67 +1,84 @@
-// Camber and toe by heave and pitch, and the weight's own roll moment (build 370, plans/small-physics.md step 3).
+// Challenges: rank several cars on one challenge (build 370).
 //
-// WHY THIS EXISTS. Each wheel's camber and toe followed the axle's roll only, and the body's weight leaning added
-// nothing to the roll. What must hold in the stepped car (M3 E46: strut / multi-link; MX-5: wishbones; AE86: strut /
-// solid axle):
-//   · in pure heave (each wheel 20 mm up on the body) an independent wheel's camber moves by its type's curve, 1/fvsa
-//     a metre of travel, the top inwards, and its toe by the roll steer's own, rs / (t/2), out at the front;
-//   · a solid axle's wheels neither camber nor toe in heave;
-//   · cornering steadily, the body's roll per ay and each axle's roll on its springs match the full roll worked out
-//     apart (springs on tyres, the roll centres, and m g arm phi), so the weight raises the roll by its share.
+// WHY THIS EXISTS. The CHALLENGES tab solved one car at a time. The ranking runs a list of cars through the
+// selected challenge with its own solver and score. What must hold:
+//   · every registered kind has a score (RUN_CHALLENGE_SCORES), so the ranking needs no per-challenge code;
+//   · a ranked row's score equals the one-car solve of that car (same physics, same settings);
+//   · the table is sorted: passes first, then by the challenge's own score direction;
+//   · the page yields between cars: the progress bar shows while it runs, and CANCEL stops before the next car;
+//   · the loaded car and its challenge result are the same after a ranking as before;
+//   · no horizontal scroll at phone width, no page errors.
 import { chromium } from './pw.mjs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = fileURLToPath(new URL('..', import.meta.url));
+const shot = process.env.SHOT;
 const browser = await chromium.launch();
-const page = await browser.newPage();
-const errors = [];
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: shot ? 2 : 1 });
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const fails = [];
-const R = await page.evaluate(() => {
-  const out = [];
-  for (const n of ['BMW M3 (E46', 'Mazda MX-5', 'Toyota Corolla Levin']) {
-    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
-    const v = vehicle, car = driveCar(); car.clA = 0;
-    const o = { name: n, geo: [v.suspFront, v.suspRear] };
-    // heave: every wheel 20 mm up on the body, one tiny step
-    const s = driveRolling(car, 60), d = 0.02; s.zu = [d, d, d, d];
-    stepCar(car, s, { steer: 0, throttle: 0, brake: 0 }, 1e-7);
-    o.heave = [0, 1, 2, 3].map(i => {
-      const f = i < 2, g = SUSP_GEO[f ? v.suspFront : v.suspRear], t = f ? car.tF : car.tR, sd = i % 2 ? 1 : -1;
-      const st = (i % 2 ? -1 : 1) * (f ? car.camF : car.camR), ind = g.fvsa != null;
-      const rs = f ? -car.rsF : car.rsR;
-      return { cam: s.camber[i] - st, camRef: ind ? sd * d / g.fvsa : 0, toe: s.toe[i], toeRef: ind ? sd * rs * d / (t / 2) : 0 };
-    });
-    // a steady turn, a small steer at 80 km/h; the links off, so a limited-slip's unequal drive does not roll the body
-    const c = driveCar(); c.clA = 0; c.svF = [0, 1e9]; c.svR = [0, 1e9]; const r = driveRolling(c, 80);
-    let N = 0, roll = 0, ay = 0, rF = 0, rR = 0;
-    for (let k = 0; k < 6000; k++) {
-      stepCar(c, r, { steer: 0.06, throttle: 0.2, brake: 0 }, 0.001);
-      if (k >= 4000) { N++; roll += r.roll; ay += r.ay; rF += r.rr[0]; rR += r.rr[1]; }
-    }
-    roll /= N; ay /= N; rF /= N; rR /= N;
-    const cs = (K, kt, t) => 1 / (1 / K + 2 / (kt * t * t)), C = cs(c.KaF, c.ktF, c.tF) + cs(c.KaR, c.ktR, c.tR);
-    o.corner = { wshare: C / (C - c.m * 9.81 * c.rollArm) - 1, ay, roll: roll / ay, ref: c.rollFull, rF: rF / ay, rFref: c.rrAyF, rR: rR / ay, rRref: c.rrAyR };
-    out.push(o);
-  }
+
+const r = await page.evaluate(async () => {
+  const idx = n => FACTORY_CARS.findIndex(p => p.name.includes(n));
+  const out = {};
+  out.unscored = [...new Set(RUN_CHALLENGES.map(c => c.kind))].filter(k => !RUN_CHALLENGE_SCORES[k]);
+  loadVehiclePreset(FACTORY_CARS[idx('MX-5')]);
+  setTab('challenges');
+  const sel = document.getElementById('chalSel');
+  sel.value = 'stage-alpine'; sel.dispatchEvent(new Event('change'));
+  const before = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
+  const add = v => { const s = document.getElementById('chalRankAddSel'); s.value = v; document.getElementById('chalRankAddBtn').click(); };
+  const picks = ['MX-5', 'Golf GTI', 'Model 3'].map(idx);
+  out.picks = picks;
+  for (const i of picks) add('p:' + i);
+  // one-car reference scores
+  const ch = runChallengeById('stage-alpine');
+  out.ref = picks.map(i => withBuild(raceEntrantFrom('p:' + i).build, () => runChallengeScore(ch, solveRunChallenge(ch.id))));
+  const run = chalRankRun();
+  await new Promise(r => setTimeout(r, 0));
+  out.progShown = !document.getElementById('chalRankProg').hidden && !document.getElementById('chalRankStop').hidden;
+  await run;
+  out.rows = chalRank.rows.map(x => ({ name: x.name, s: x.s }));
+  out.table = document.querySelectorAll('#chalRankOut tbody tr').length;
+  out.after = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
+  out.before = before;
+  // cancel: stop after the first car
+  const run2 = chalRankRun();
+  await new Promise(r => setTimeout(r, 0));
+  document.getElementById('chalRankStop').click();
+  await run2;
+  out.cancelled = chalRank.rows.length;
+  // moose kind ranks too (higher is better)
+  sel.value = 'moose'; sel.dispatchEvent(new Event('change'));
+  chalRank.cars.splice(2, 1);
+  await chalRankRun();
+  out.moose = chalRank.rows.map(x => x.s && { v: x.s.v, pass: x.s.pass, higher: x.s.higher });
+  out.scrollW = document.documentElement.scrollWidth, out.w = window.innerWidth;
+  document.getElementById('chalRankOut').scrollIntoView();
   return out;
 });
+if (shot) await page.screenshot({ path: shot, fullPage: false });
 await browser.close();
-const deg = x => (x * 180 / Math.PI).toFixed(3);
-for (const o of R) {
-  console.log(`${o.name} (${o.geo.join(' / ')}), 20 mm heave:`);
-  o.heave.forEach((w, i) => {
-    console.log(`  wheel ${i}: camber ${deg(w.cam)} deg (curve ${deg(w.camRef)}), toe ${deg(w.toe)} deg (curve ${deg(w.toeRef)})`);
-    if (!(Math.abs(w.cam - w.camRef) < 1e-6 && Math.abs(w.toe - w.toeRef) < 1e-6)) fails.push(`${o.name} wheel ${i}: heave camber or toe off its type's curve`);
-  });
-  const k = o.corner;
-  console.log(`  steady turn at ${(k.ay / 9.81).toFixed(2)} g: roll ${deg(k.roll * 9.81)} deg/g (worked out ${deg(k.ref * 9.81)}), ` +
-    `springs front ${deg(k.rF * 9.81)} (${deg(k.rFref * 9.81)}), rear ${deg(k.rR * 9.81)} (${deg(k.rRref * 9.81)}); the weight's share +${(k.wshare * 100).toFixed(1)} %`);
-  for (const [a, b, w] of [[k.roll, k.ref, 'roll'], [k.rF, k.rFref, 'front springs\' roll'], [k.rR, k.rRref, 'rear springs\' roll']])
-    if (!(Math.abs(a / b - 1) < 0.01)) fails.push(`${o.name}: steady ${w} off the full roll by more than 1 %`);
-  if (!(k.wshare > 0.02 && k.wshare < 0.15)) fails.push(`${o.name}: the weight's share of the roll outside 2-15 %`);
+
+const ok = (c, m) => { if (!c) fails.push(m); };
+ok(r.unscored.length === 0, 'kinds without a score: ' + r.unscored);
+ok(r.picks.every(i => i >= 0), 'presets not found');
+ok(r.progShown, 'progress/cancel not shown while running');
+ok(r.table === 3 && r.rows.length === 3, 'table rows ' + r.table);
+for (let k = 0; k < r.ref.length; k++) {
+  const row = r.rows.find(x => x.s && Math.abs(x.s.v - r.ref[k].v) < 1e-9 && x.s.pass === r.ref[k].pass);
+  ok(row, 'ranked score differs from the one-car solve: ' + JSON.stringify(r.ref[k]));
 }
+const sorted = rows => rows.every((x, i) => i === 0 || !x || !rows[i - 1] || (rows[i - 1].pass && !x.pass) ||
+  (rows[i - 1].pass === x.pass && (x.higher ? rows[i - 1].v >= x.v : rows[i - 1].v <= x.v)));
+ok(sorted(r.rows.map(x => x.s)), 'stage rows not sorted');
+ok(r.moose.length === 2 && r.moose.every(x => x && x.higher) && sorted(r.moose), 'moose rows ' + JSON.stringify(r.moose));
+ok(r.cancelled < 3, 'cancel did not stop: ' + r.cancelled + ' rows');
+ok(r.after.mass === r.before.mass && r.after.time === r.before.time && r.after.name === r.before.name, 'car changed: ' + JSON.stringify([r.before, r.after]));
+ok(r.scrollW <= r.w, 'horizontal scroll ' + r.scrollW + ' > ' + r.w);
+console.log('stage-alpine ranking:'); for (const x of r.rows) console.log('  ' + x.name.padEnd(36) + (x.s ? x.s.text + (x.s.pass ? ' PASS' : ' FAIL') : '—'));
+console.log('moose:', JSON.stringify(r.moose), ' cancelled after', r.cancelled, 'car(s)');
 for (const e of errors) fails.push(e);
-if (fails.length) { console.log('\nFAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('\nPASS');
+if (fails.length) { console.log('FAIL\n  ' + fails.join('\n  ')); process.exit(1); }
+console.log('PASS');
