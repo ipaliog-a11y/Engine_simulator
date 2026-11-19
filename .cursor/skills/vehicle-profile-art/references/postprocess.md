@@ -36,7 +36,8 @@ Options:
 - `--webp-quality 82` — default 82 (matches `assets/cars/README.md`)
 - `--dry-run` — print the ffmpeg graph and output paths only
 
-Needs `ffmpeg` and `ffprobe` on PATH.
+Needs `ffmpeg` and `ffprobe` on PATH (agent VMs have them; GitHub Actions CI does not —
+`validate-art.mjs` / `dims.mjs` read sizes without ffmpeg so CI can still check wiring).
 
 ## Do not
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Check one factory car's showroom art is wired and sized correctly.
 // Usage: node validate-art.mjs "Exact Preset Name"
-import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readDims } from './dims.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const name = process.argv[2];
@@ -14,21 +14,8 @@ if (!name) {
 }
 
 const fails = [];
-function probe(file) {
-  try {
-    const out = execFileSync('ffprobe', [
-      '-v', 'error', '-select_streams', 'v:0',
-      '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file,
-    ], { encoding: 'utf8' }).trim();
-    const [w, h] = out.split(',').map(Number);
-    return { w, h };
-  } catch (e) {
-    return { w: 0, h: 0, err: String(e.message || e) };
-  }
-}
 
-// Load CAR_ART from built index via a tiny vm-less eval of the source map is awkward
-// (classic script). Read car-art.js with a regex instead — enough for the skill check.
+// Read CAR_ART from source with a regex — classic script, no module export.
 const artSrc = fs.readFileSync(path.join(repo, 'src/js/car-art.js'), 'utf8');
 const artBlock = artSrc.match(/const CAR_ART=\{([\s\S]*?)\n\};/);
 if (!artBlock) fails.push('could not parse CAR_ART from src/js/car-art.js');
@@ -44,11 +31,11 @@ if (slug && !fs.existsSync(webp)) fails.push('missing WebP: ' + webp);
 if (slug && !fs.existsSync(png)) fails.push('missing PNG: ' + png);
 
 if (slug && fs.existsSync(webp)) {
-  const s = probe(webp);
+  const s = readDims(webp);
   if (s.w !== 960 || s.h !== 640) fails.push(`WebP is ${s.w}x${s.h}, want 960x640`);
 }
 if (slug && fs.existsSync(png)) {
-  const s = probe(png);
+  const s = readDims(png);
   if (s.w !== 960 || s.h !== 640) fails.push(`PNG is ${s.w}x${s.h}, want 960x640`);
 }
 
