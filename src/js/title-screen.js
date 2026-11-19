@@ -1,27 +1,33 @@
 // ====== TITLE SCREEN ======
 // The sim used to open on the live bench, which is the right place once you are building and the wrong
-// place the first time you arrive. This is the front door: four ways in, over four workshops, and the car
+// place the first time you arrive. This is the front door: four ways in, over a run of workshops, and the car
 // showcase (build 237, src/js/showcase.js).
 //
-// Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
-// in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
-// drive unit on a dolly, and the F355 in a race pit (build 230). They are pictures the owner generated
-// (assets/landing/README.md), with the makers' and sponsors' logos pixelated out; until build 229 they were
-// drafts drawn in code. Each is shown as an <img>, not drawn on a canvas, so the page can open from file://
-// without tainting anything, and smoothly scaled: they are detailed pictures, not a cell grid.
+// Rooms cycle behind the menu, five seconds each, with a slow left-to-right pan. The first four are the
+// original workshops (build 230): a pickup on the hoist, an F355 on stands, an electric car's service bay,
+// and the F355 in a race pit. Fifty more (assets/landing/README.md) are other cars and places in that same
+// pixel style. Each is an <img>, not a canvas, so the page can open from file:// without tainting anything.
+// Only the room on view, the next one, and — while a fade is running — the room before keep a picture
+// decoded. The rest stay unloaded, so the long run does not sit in memory all at once.
 //
 // The automated tests drive the bench directly and never ask for this screen, so it stays down when the
 // browser reports itself as automated. ?title=1 forces it (the test for this screen) and ?title=0
 // suppresses it. A shared build in the hash opens on the bench too: the link is the destination.
-const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355'].map(n=>'assets/landing/'+n+'.webp');
+const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355',
+  'bay-miata','desert-mustang','snow-rally','alley-coupe','barn-roadster','harbour-suv','rooftop-hatch','forest-rally','hangar-supercar','underground-wedge',
+  'vineyard-berlinetta','foundry-coupe','autumn-hatch','mews-tourer','outback-pickup','ice-quattro','canyon-coupe','museum-wedge','diner-muscle','chalet-coupe',
+  'street-kei','scrap-coupe','wind-tunnel','dyno-cell','alignment-bay','primer-booth','battery-lab','atom-shed','quarry-suv','beach-convertible',
+  'station-wagon','lighthouse-coupe','observatory-night','campus-hoist','helipad-supercar','market-rain','salt-flat','castle-courtyard','container-port','volcano-overlook',
+  'greenhouse-city','tunnel-taxi','firehouse-classic','orchard-pickup','paddy-kei','lantern-street','ship-deck','old-town-sedan','aurora-ev','canyon-camp'
+].map(n=>'assets/landing/'+n+'.webp');
 // Each picture is shown 12% past covering the stage, so it always has room to pan. A room holds five seconds; the next
 // fades in over it for the last FADE_MS of its walk (build 237).
 const SCENE_MS=5000, FADE_MS=700, TITLE_ZOOM=1.12;
-let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false;
+let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false,titleBusy=false;
 // The smooth pan (build 237). Until then the menu moved one <img> by its `left`, rounded to a whole picture pixel and
 // then to a whole screen pixel, 20 times a second, and swapped its src at each room (a fresh decode of a 1920 px
 // picture, and a jump cut back to the start of the pan). Now:
-//   · all four rooms are their own <img>, stacked, each decoded once before it is first shown;
+//   · one <img> per room, stacked; its picture is decoded just before the room is shown, and dropped once it has faded;
 //   · each room's walk is a Web Animation of its transform, so the browser runs it on the compositor every frame,
 //     at sub-pixel positions, whatever the main thread is doing;
 //   · a room walks for SCENE_MS + FADE_MS at one speed, so it is still moving while the next one fades in over it;
@@ -30,7 +36,7 @@ let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=fal
 // The script still keeps the clock, so titleAdvance() can put any moment of the carousel on the stage for a test.
 const titleRooms=[];   // {im, anim, key, ready}
 const titleReduced=()=>!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-// The pictures load once, the first time the menu opens; a room not decoded yet stays out of the rotation's view and
+// The picture slots are created the first time the menu opens. A room with no picture yet stays out of view and
 // leaves the stage its plain colour.
 function titlePreload(){
   const stage=document.querySelector('#titleScreen .title-stage');
@@ -38,9 +44,23 @@ function titlePreload(){
   TITLE_ROOMS.forEach((src,i)=>{
     const im=document.createElement('img'),R={im,anim:null,key:'',ready:false};
     im.className='title-room';im.alt='';im.setAttribute('aria-hidden','true');im.decoding='async';im.draggable=false;im.dataset.room=i;
-    const ready=()=>{if(R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
-    im.addEventListener('load',()=>{if(im.decode)im.decode().then(ready,ready);else ready();});
-    im.src=src;stage.appendChild(im);titleRooms.push(R);
+    const ready=()=>{if(im.getAttribute('src')!==src||R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
+    im.addEventListener('load',()=>{if(im.getAttribute('src')!==src)return;if(im.decode)im.decode().then(ready,ready);else ready();});
+    stage.appendChild(im);titleRooms.push(R);
+  });
+}
+// Keep the visible room, the one about to fade in, and (only during the fade) the one underneath.
+// Clearing src drops the decoded bitmap. A load that finishes after the room was dropped is ignored above.
+function titleMount(idx,fading){
+  const n=TITLE_ROOMS.length,keep=new Set([idx,(idx+1)%n]);
+  if(fading)keep.add((idx+n-1)%n);
+  titleRooms.forEach((R,k)=>{
+    const want=keep.has(k)?TITLE_ROOMS[k]:'';
+    if((R.im.getAttribute('src')||'')===want)return;
+    R.ready=false;
+    if(R.anim){R.anim.cancel();R.anim=null;R.key='';}
+    if(want)R.im.src=want;
+    else{R.im.removeAttribute('src');R.im.classList.remove('on');}
   });
 }
 // The geometry of one frame, in the picture's own pixels: how wide the view onto it is, and how far the pan has walked.
@@ -104,11 +124,14 @@ function titleRoomAt(i,t){
 // Called on every animation frame while the menu is up, but it only does work when a room starts (or a picture has just
 // become ready, or the stage changed size): the walking itself is the browser's.
 function paintTitle(){
-  if(!titleRooms.length)return;
+  if(titleBusy||!titleRooms.length)return;
+  titleBusy=true;
+  try{
   const now=titleNow();
   if(!titleT0)titleT0=now;
   const st=titleSceneState(now),n=TITLE_ROOMS.length,prev=(st.idx+n-1)%n;
   const fading=!titleReduced()&&st.elapsed>=SCENE_MS&&st.local<FADE_MS;   // the room before is still under this one
+  titleMount(st.idx,fading);
   // a stage of another size (or motion preference): the rooms on view are laid out again and rejoin their walk
   const G0=titleGeom(st.idx,0),sk=[G0.bw,G0.bh,titleReduced()].join('|');
   if(sk!==titleStageKey){titleStageKey=sk;titleShown=-1;titleSeek=true;}
@@ -128,6 +151,7 @@ function paintTitle(){
     if(R.im.classList.contains('on')!==on)R.im.classList.toggle('on',on);
     if(R.im.style.zIndex!==z)R.im.style.zIndex=z;
   });
+  }finally{titleBusy=false;}
 }
 
 function titleButtons(){return [...document.querySelectorAll('#titleScreen .title-menu button')];}
@@ -135,6 +159,7 @@ function titleMark(){
   titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
 }
 function titleGo(mode){
+  if(mode==='film'){location.href='film.html';return;}   // the evolution film is its own page; the label is tr()'d with the menu
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)

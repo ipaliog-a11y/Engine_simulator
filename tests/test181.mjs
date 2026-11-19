@@ -3,7 +3,7 @@
 // WHY THIS EXISTS. Until build 293 the lap replay played a power-split's engine on its full-load line whenever the
 // throttle was open and at idle off it, while the lap's fuel had it on its best line at the power it gave, and stopped
 // off the power. What must hold, on the Prius's lap:
-//   · where the fuel burns nothing, trackSoundState says the engine is off (build 391: but while MG1 runs it down, or spins
+//   · where the fuel burns nothing, trackSoundState says the engine is off (build 393: but while MG1 runs it down, or spins
 //     it up where the fuel burns, it is heard at that speed with the fuel cut), and the engine's sound is muted there;
 //   · where it burns, the sound's engine speed is psOolAt's for the same power, and its manifold moves with the load
 //     (it was 1 bar flat);
@@ -32,7 +32,7 @@ const r = await page.evaluate(() => {
     const Ps = R.pwr[i] - Math.max(0, L.hy.pm[i]), old = Math.fround(Ps > 0 ? psOolAt(Ps / etaAt(R.rpm[i])).gs : 0);
     o.fuelErr = Math.max(o.fuelErr, Math.abs(fuel[i] - old));
     const s = trackSoundState(replayAt(L, R.tAt[i] + 1e-6)), Pe = psEnginePower(L, i, c);
-    // build 391: a start is spun up and a stop run down unfuelled by MG1 (psEngineSoundAt's spin), heard with the fuel cut
+    // build 393: a start is spun up and a stop run down unfuelled by MG1 (psEngineSoundAt's spin), heard with the fuel cut
     const sp = psEngineSoundAt(L, i, R.tAt[i] + 1e-6);
     if (sp && sp.spin) { o.spin++; if (s.off || !s.fuelCut || Math.abs(s.rpm - sp.rpm) > 1) o.spinBad++; continue; }
     if (fuel[i] > 0) {

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 390
+# PIXEL POWERTRAIN v0.8 build 393
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -488,10 +488,12 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   number is given once and never changes. **COPY FROM** takes a real car's body and parts by its number or
   name and keeps your engine: the result is a custom car, "Custom (from 012)".
 
-  The **title screen** (the menu the sim opens on, and MENU) cycles through four workshop pictures with a slow
-  pan (build 230, `assets/landing/`), with the makers' and sponsors' logos pixelated out. Since build 237 the pan is
-  a browser animation, smooth on every frame, each room fades into the next, and the bench behind the menu stops
-  drawing while it is covered. With "reduce motion" set, the pictures hold still.
+  The **title screen** (the menu the sim opens on, and MENU) cycles through workshop pictures with a slow
+  pan (build 230, `assets/landing/`). It starts with the original four rooms, then fifty more cars and places
+  (build 391): a coastal boathouse, a desert station, a snow shed, a night alley, and the rest listed beside
+  the files. Since build 237 the pan is a browser animation, smooth on every frame, each room fades into the
+  next, and the bench behind the menu stops drawing while it is covered. With "reduce motion" set, the pictures
+  hold still. Only the room on view, the next one, and during a fade the room before, are decoded.
 
   **CAR SHOWCASE** (build 237), the menu's fifth item, shows every factory car on one page: its showroom
   picture and number, in number order, filtered by family. Pick one to see it large with the figures its maker
@@ -501,6 +503,10 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   what matters most: the quickest, the lightest or the cheapest) give a real car, each of its parts explained, and
   **BUILD THIS CAR** loads it on the VEHICLE tab with every part open on its card. The budget is the sim's own build
   price, engine plus car, listed per car by `tools/car-prices.mjs` (`tests/test188.mjs` keeps it current).
+
+  **FILM** (build 392), the menu's seventh item, opens a short pixel film (`film.html`): car development from a
+  1961 drawing office to a modern racer leaving the pit. Eight scenes, each a few seconds, played as animation
+  rather than slides.
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

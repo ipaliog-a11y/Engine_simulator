@@ -479,7 +479,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .title-screen[hidden]{display:none!important}
 .title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
 .title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
-/* the four rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
+/* the rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
 .title-room{position:absolute;display:block;max-width:none;user-select:none;pointer-events:none;opacity:0;will-change:transform,opacity;backface-visibility:hidden}
 .title-room.on{opacity:1;transition:opacity .7s linear}
 @media(prefers-reduced-motion:reduce){.title-room.on{transition:none}}
@@ -805,6 +805,7 @@ body.guided-open{overflow:hidden}
 <button type="button" data-go="options">SETTINGS</button>
 <button type="button" data-go="showcase">CAR SHOWCASE</button>
 <button type="button" data-go="guided">GUIDED BUILD</button>
+<button type="button" data-go="film">FILM</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
@@ -824,7 +825,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 390</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 393</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -18645,7 +18646,7 @@ function trackSoundState(st){
   // line at the power it gives, and stopped off the power (build 297; until then on the full-load line, idling off it)
   if(isDirectHybrid()&&R&&st.i!=null){
     const g=psEngineSoundAt(lapResult,st.i,st.t);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
-    // spun up or running down (build 391): turned by MG1, unfuelled
+    // spun up or running down (build 393): turned by MG1, unfuelled
     if(g.spin)return {rpm:g.rpm,map:1,throttle:0,afr:e.stoichAFR||14.7,boostActual:0,shaftE:0,fuelCut:true,coolant:90,knockRisk:0,blown:false};
     st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
   }
@@ -28655,7 +28656,7 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  // a power-split's or series hybrid's engine stops off the power and starts on it (build 391): each start draws its crank
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 393): each start draws its crank
   // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
   // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
   let ssJ=0,starts=0;
@@ -28688,10 +28689,10 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 391) do not scale with the share
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 393) do not scale with the share
       k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
     }
-    // not settled in twelve (build 391: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not settled in twelve (build 393: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
     // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
     if(E.deployKJ>B&&E.deployKJ>=1e-6){
       let lo=0,hi=used,ok=null;
@@ -28931,7 +28932,7 @@ function psFuelRate(){
 }
 // What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
-// t (build 391): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
+// t (build 393): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
 // idle, as hybStartStop integrates it, before the engine runs on its line; a stop runs down from the speed it ran at.
 // Both are {spin:true}: heard, with the fuel cut. The lap's fuel and time still have it fire at once (named gap).
 function psEngineSoundAt(L,i,t){
@@ -28945,7 +28946,7 @@ function psEngineSoundAt(L,i,t){
   const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
   return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
-// Per replay point (build 391): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
+// Per replay point (build 393): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
 // before the lap's start when it was the last lap's) and its speed then (r0: where the run-down had it, or the speed it ran at).
 function psStartStopTimes(L,c){
   if(L._psSS)return L._psSS;
@@ -29159,7 +29160,7 @@ function stepHybridBench(dt){
     else hybSpin(H,dt);
     H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
-    // at the step's mean speed: the pack pays for the start and takes the stop back (build 391)
+    // at the step's mean speed: the pack pays for the start and takes the stop back (build 393)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
     P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
   }
@@ -29172,7 +29173,7 @@ function stepHybridBench(dt){
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor cranks through its slipping clutch what it is not giving the
-  // shaft, paid at the faster side's speed (build 391)
+  // shaft, paid at the faster side's speed (build 393)
   const Tcancel=ps&&!run?(H.Tspin||0)*hybGear(hy,H.ne,H.n).kr:0;Tm+=Tcancel;
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,motorMaxTorque(m,Math.max(H.n,1),V,60)-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
@@ -29221,7 +29222,7 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
 // what it is not giving the shaft. Stopping, MG1 or the generator, fixed to the crank, brakes it at the same full torque;
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
-// closes there). Build 391: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
+// closes there). Build 393: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
 const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
@@ -29237,7 +29238,7 @@ function hybSpin(H,dt){
   // MG1 pushes only for the part of the step before it reaches the firing speed (or rest): the pack pays that share
   const wEnd=state.rpm*Math.PI/30;if(H.Tspin&&wu!==w0&&wEnd!==wu)H.Tspin*=clamp((wEnd-w0)/(wu-w0),0,1);
 }
-// A power-split's or a series hybrid's start and stop off the bench (build 391), for the lap's pack and its replay's sound:
+// A power-split's or a series hybrid's start and stop off the bench (build 393), for the lap's pack and its replay's sound:
 // hybSpin's law integrated once (2 ms steps), the engine warm, its manifold at the air, the ring held. Starting, MG1 at its
 // full torque spins it from rest to idle; stopping, it brakes it from the redline to rest. The pack's power is MG1's
 // T w plus its losses, and MG2's losses holding the ring's reaction; with the ring turning MG2's T w adds, but the two
@@ -32871,28 +32872,34 @@ function vcdDrawTyre(dc,r){
 }
 // ====== TITLE SCREEN ======
 // The sim used to open on the live bench, which is the right place once you are building and the wrong
-// place the first time you arrive. This is the front door: four ways in, over four workshops, and the car
+// place the first time you arrive. This is the front door: four ways in, over a run of workshops, and the car
 // showcase (build 237, src/js/showcase.js).
 //
-// Four rooms cycle behind the menu, five seconds each, with a slow left-to-right pan: a pickup on the hoist
-// in a back-street workshop, an F355 on stands with its wheels off, an electric car's service bay with its
-// drive unit on a dolly, and the F355 in a race pit (build 230). They are pictures the owner generated
-// (assets/landing/README.md), with the makers' and sponsors' logos pixelated out; until build 229 they were
-// drafts drawn in code. Each is shown as an <img>, not drawn on a canvas, so the page can open from file://
-// without tainting anything, and smoothly scaled: they are detailed pictures, not a cell grid.
+// Rooms cycle behind the menu, five seconds each, with a slow left-to-right pan. The first four are the
+// original workshops (build 230): a pickup on the hoist, an F355 on stands, an electric car's service bay,
+// and the F355 in a race pit. Fifty more (assets/landing/README.md) are other cars and places in that same
+// pixel style. Each is an <img>, not a canvas, so the page can open from file:// without tainting anything.
+// Only the room on view, the next one, and — while a fade is running — the room before keep a picture
+// decoded. The rest stay unloaded, so the long run does not sit in memory all at once.
 //
 // The automated tests drive the bench directly and never ask for this screen, so it stays down when the
 // browser reports itself as automated. ?title=1 forces it (the test for this screen) and ?title=0
 // suppresses it. A shared build in the hash opens on the bench too: the link is the destination.
-const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355'].map(n=>'assets/landing/'+n+'.webp');
+const TITLE_ROOMS=['workshop-pickup','garage-f355','service-bay-ev','pit-f355',
+  'bay-miata','desert-mustang','snow-rally','alley-coupe','barn-roadster','harbour-suv','rooftop-hatch','forest-rally','hangar-supercar','underground-wedge',
+  'vineyard-berlinetta','foundry-coupe','autumn-hatch','mews-tourer','outback-pickup','ice-quattro','canyon-coupe','museum-wedge','diner-muscle','chalet-coupe',
+  'street-kei','scrap-coupe','wind-tunnel','dyno-cell','alignment-bay','primer-booth','battery-lab','atom-shed','quarry-suv','beach-convertible',
+  'station-wagon','lighthouse-coupe','observatory-night','campus-hoist','helipad-supercar','market-rain','salt-flat','castle-courtyard','container-port','volcano-overlook',
+  'greenhouse-city','tunnel-taxi','firehouse-classic','orchard-pickup','paddy-kei','lantern-street','ship-deck','old-town-sedan','aurora-ev','canyon-camp'
+].map(n=>'assets/landing/'+n+'.webp');
 // Each picture is shown 12% past covering the stage, so it always has room to pan. A room holds five seconds; the next
 // fades in over it for the last FADE_MS of its walk (build 237).
 const SCENE_MS=5000, FADE_MS=700, TITLE_ZOOM=1.12;
-let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false;
+let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=false,titleBusy=false;
 // The smooth pan (build 237). Until then the menu moved one <img> by its `left`, rounded to a whole picture pixel and
 // then to a whole screen pixel, 20 times a second, and swapped its src at each room (a fresh decode of a 1920 px
 // picture, and a jump cut back to the start of the pan). Now:
-//   · all four rooms are their own <img>, stacked, each decoded once before it is first shown;
+//   · one <img> per room, stacked; its picture is decoded just before the room is shown, and dropped once it has faded;
 //   · each room's walk is a Web Animation of its transform, so the browser runs it on the compositor every frame,
 //     at sub-pixel positions, whatever the main thread is doing;
 //   · a room walks for SCENE_MS + FADE_MS at one speed, so it is still moving while the next one fades in over it;
@@ -32901,7 +32908,7 @@ let titleRAF=0,titleSel=0,titleT0=0,titleShown=-1,titleStageKey='',titleSeek=fal
 // The script still keeps the clock, so titleAdvance() can put any moment of the carousel on the stage for a test.
 const titleRooms=[];   // {im, anim, key, ready}
 const titleReduced=()=>!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-// The pictures load once, the first time the menu opens; a room not decoded yet stays out of the rotation's view and
+// The picture slots are created the first time the menu opens. A room with no picture yet stays out of view and
 // leaves the stage its plain colour.
 function titlePreload(){
   const stage=document.querySelector('#titleScreen .title-stage');
@@ -32909,9 +32916,23 @@ function titlePreload(){
   TITLE_ROOMS.forEach((src,i)=>{
     const im=document.createElement('img'),R={im,anim:null,key:'',ready:false};
     im.className='title-room';im.alt='';im.setAttribute('aria-hidden','true');im.decoding='async';im.draggable=false;im.dataset.room=i;
-    const ready=()=>{if(R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
-    im.addEventListener('load',()=>{if(im.decode)im.decode().then(ready,ready);else ready();});
-    im.src=src;stage.appendChild(im);titleRooms.push(R);
+    const ready=()=>{if(im.getAttribute('src')!==src||R.ready)return;R.ready=true;if(i===titleShown)titleShown=-1;paintTitle();};
+    im.addEventListener('load',()=>{if(im.getAttribute('src')!==src)return;if(im.decode)im.decode().then(ready,ready);else ready();});
+    stage.appendChild(im);titleRooms.push(R);
+  });
+}
+// Keep the visible room, the one about to fade in, and (only during the fade) the one underneath.
+// Clearing src drops the decoded bitmap. A load that finishes after the room was dropped is ignored above.
+function titleMount(idx,fading){
+  const n=TITLE_ROOMS.length,keep=new Set([idx,(idx+1)%n]);
+  if(fading)keep.add((idx+n-1)%n);
+  titleRooms.forEach((R,k)=>{
+    const want=keep.has(k)?TITLE_ROOMS[k]:'';
+    if((R.im.getAttribute('src')||'')===want)return;
+    R.ready=false;
+    if(R.anim){R.anim.cancel();R.anim=null;R.key='';}
+    if(want)R.im.src=want;
+    else{R.im.removeAttribute('src');R.im.classList.remove('on');}
   });
 }
 // The geometry of one frame, in the picture's own pixels: how wide the view onto it is, and how far the pan has walked.
@@ -32975,11 +32996,14 @@ function titleRoomAt(i,t){
 // Called on every animation frame while the menu is up, but it only does work when a room starts (or a picture has just
 // become ready, or the stage changed size): the walking itself is the browser's.
 function paintTitle(){
-  if(!titleRooms.length)return;
+  if(titleBusy||!titleRooms.length)return;
+  titleBusy=true;
+  try{
   const now=titleNow();
   if(!titleT0)titleT0=now;
   const st=titleSceneState(now),n=TITLE_ROOMS.length,prev=(st.idx+n-1)%n;
   const fading=!titleReduced()&&st.elapsed>=SCENE_MS&&st.local<FADE_MS;   // the room before is still under this one
+  titleMount(st.idx,fading);
   // a stage of another size (or motion preference): the rooms on view are laid out again and rejoin their walk
   const G0=titleGeom(st.idx,0),sk=[G0.bw,G0.bh,titleReduced()].join('|');
   if(sk!==titleStageKey){titleStageKey=sk;titleShown=-1;titleSeek=true;}
@@ -32999,6 +33023,7 @@ function paintTitle(){
     if(R.im.classList.contains('on')!==on)R.im.classList.toggle('on',on);
     if(R.im.style.zIndex!==z)R.im.style.zIndex=z;
   });
+  }finally{titleBusy=false;}
 }
 
 function titleButtons(){return [...document.querySelectorAll('#titleScreen .title-menu button')];}
@@ -33006,6 +33031,7 @@ function titleMark(){
   titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
 }
 function titleGo(mode){
+  if(mode==='film'){location.href='film.html';return;}   // the evolution film is its own page; the label is tr()'d with the menu
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)

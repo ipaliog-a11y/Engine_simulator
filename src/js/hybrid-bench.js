@@ -153,7 +153,7 @@ function stepHybridBench(dt){
     else hybSpin(H,dt);
     H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
-    // at the step's mean speed: the pack pays for the start and takes the stop back (build 391)
+    // at the step's mean speed: the pack pays for the start and takes the stop back (build 393)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
     P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
   }
@@ -166,7 +166,7 @@ function stepHybridBench(dt){
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor cranks through its slipping clutch what it is not giving the
-  // shaft, paid at the faster side's speed (build 391)
+  // shaft, paid at the faster side's speed (build 393)
   const Tcancel=ps&&!run?(H.Tspin||0)*hybGear(hy,H.ne,H.n).kr:0;Tm+=Tcancel;
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,motorMaxTorque(m,Math.max(H.n,1),V,60)-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
@@ -215,7 +215,7 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
 // what it is not giving the shaft. Stopping, MG1 or the generator, fixed to the crank, brakes it at the same full torque;
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
-// closes there). Build 391: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
+// closes there). Build 393: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
 const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
@@ -231,7 +231,7 @@ function hybSpin(H,dt){
   // MG1 pushes only for the part of the step before it reaches the firing speed (or rest): the pack pays that share
   const wEnd=state.rpm*Math.PI/30;if(H.Tspin&&wu!==w0&&wEnd!==wu)H.Tspin*=clamp((wEnd-w0)/(wu-w0),0,1);
 }
-// A power-split's or a series hybrid's start and stop off the bench (build 391), for the lap's pack and its replay's sound:
+// A power-split's or a series hybrid's start and stop off the bench (build 393), for the lap's pack and its replay's sound:
 // hybSpin's law integrated once (2 ms steps), the engine warm, its manifold at the air, the ring held. Starting, MG1 at its
 // full torque spins it from rest to idle; stopping, it brakes it from the redline to rest. The pack's power is MG1's
 // T w plus its losses, and MG2's losses holding the ring's reaction; with the ring turning MG2's T w adds, but the two

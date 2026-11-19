@@ -195,7 +195,7 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  // a power-split's or series hybrid's engine stops off the power and starts on it (build 391): each start draws its crank
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 393): each start draws its crank
   // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
   // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
   let ssJ=0,starts=0;
@@ -228,10 +228,10 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 391) do not scale with the share
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 393) do not scale with the share
       k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
     }
-    // not settled in twelve (build 391: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not settled in twelve (build 393: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
     // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
     if(E.deployKJ>B&&E.deployKJ>=1e-6){
       let lo=0,hi=used,ok=null;

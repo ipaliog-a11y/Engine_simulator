@@ -169,7 +169,7 @@ function psFuelRate(){
 }
 // What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
-// t (build 391): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
+// t (build 393): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
 // idle, as hybStartStop integrates it, before the engine runs on its line; a stop runs down from the speed it ran at.
 // Both are {spin:true}: heard, with the fuel cut. The lap's fuel and time still have it fire at once (named gap).
 function psEngineSoundAt(L,i,t){
@@ -183,7 +183,7 @@ function psEngineSoundAt(L,i,t){
   const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
   return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
-// Per replay point (build 391): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
+// Per replay point (build 393): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
 // before the lap's start when it was the last lap's) and its speed then (r0: where the run-down had it, or the speed it ran at).
 function psStartStopTimes(L,c){
   if(L._psSS)return L._psSS;
