@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 377</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 378</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1013,7 +1013,7 @@ body.guided-open{overflow:hidden}
 <section class="evd-card" id="evdCard-inv" data-card="inv"><div class="evd-fields">
 <div class="field"><label for="evInverter">SWITCHES</label><select id="evInverter"><option value="igbt">SILICON IGBT</option><option value="sic">SiC MOSFET</option></select></div>
 <div class="field"><label for="evAmps">CURRENT RATING (A rms)</label><input type="number" id="evAmps" min="100" max="1600" step="10" value="950"></div>
-<div class="field" data-ev-only><label for="evRegen">REGENERATION</label><select id="evRegen"><option value="high">HIGH</option><option value="low">LOW</option><option value="off">OFF</option></select></div>
+<div class="field" data-ev-only><label for="evRegen">REGENERATION</label><select id="evRegen"><option value="high">HIGH</option><option value="low">LOW</option><option value="off">OFF</option></select><input type="hidden" id="evMaker" value=""></div>
 </div></section>
 <section class="evd-card" id="evdCard-more" data-card="more"><div class="evd-fields">
 <div class="field" data-ev-only><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
@@ -2299,7 +2299,7 @@ A battery's voltage falls as it empties. The car's computer draws more current t
 • <b>LIMP</b>: the battery is below 2%.<br>
 The bench never recharges by itself: set <b>BATTERY CHARGE</b> (under LOAD) to test the drive at any charge, or <b>BUILD &amp; DYNO</b> to start again at 90%.<br>
 <b>SOUND ON</b> plays the drive: the motor's whine (its torque ripple and its slotting, both rising with speed and louder with torque), the inverter's switching tone, and the gears of the reduction, each at the frequency the build gives it.<br>
-<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. <b>REGENERATION</b> is <b>HIGH</b> (everything the motor and the pack can take back), <b>LOW</b> (half) or <b>OFF</b>. HIGH is the default, and it is what the three Teslas run. Below about 500 rpm it fades out, whichever you pick. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
+<b>On the road.</b> GEARING on the VEHICLE tab sets the single reduction. <b>REGENERATION</b> is <b>HIGH</b> (the most the maker's calibration lets the motor and the pack take back; on a Tesla, about 0.2 g and 77 to 90 kW), <b>LOW</b> (half) or <b>OFF</b>. The friction brakes do the rest. HIGH is the default, and it is what the three Teslas run. Below about 500 rpm it fades out, whichever you pick. The VEHICLE tab gives the WLTP consumption in Wh/km, from the battery and at the socket, and the range. In a race the battery stands in for the fuel tank: there is no charging in the pit lane, an energy manager chooses the power that lasts the distance, and a car that empties its battery retires OUT OF CHARGE.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -2313,7 +2313,7 @@ The battery is an open-circuit voltage that follows its charge, behind an intern
 • <b>Magnet temperature:</b> it does the same over the last 20 °C below the magnet grade's limit.<br>
 • <b>Low charge:</b> below 15% the battery management allows a share of what the cells could give, falling straight to 30% at 2%.<br>
 • <b>Limp mode:</b> below 2% it holds the power to a tenth of the battery's rated power (its power at 50% charge).<br>
-Regeneration is that braking torque times 1, 0.5 or 0. The table still starts at 500 rpm, so the fade into a stop stays.<br>
+Regeneration is that braking torque, capped by the maker's rule (a deceleration, <span class="geq">T ≤ g<sub>max</sub> · m<sub>eff</sub> · r · η / i</span>, and a kW limit, each cited in the code; 0.3 g and the pack's limit where no maker is known), times 1, 0.5 or 0. The table still starts at 500 rpm, so the fade into a stop stays.<br>
 Damage the controller cannot prevent is permanent: magnets heated past their grade's limit lose flux, and a winding above 200 °C cooks its insulation.<br>
 The 0-100 and the lap run at 50% charge. A race starts at 95% and stops at 5%.
 </div>
@@ -12038,6 +12038,25 @@ const LAMINATION={'0.35':{mm:0.35,label:'0.35 mm',premium:0},'0.20':{mm:0.2,labe
 // REGENERATION uses: all the motor and the pack can take back, half of that, or none. The table still starts
 // at 500 rpm, so a stop fades out at any of the three.
 const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
+// The maker's calibration (build 378, step 12b): real EVs regenerate far less than the motor and the pack allow. Per maker,
+// named by the drive's evMaker (set on the factory drives; a hidden field, so it survives a rebuild and a save): g, the most regen alone slows the car (lift-off, or blended under the pedal where
+// the maker blends; friction brakes do the rest), and kW, its power limit (null: the pack's charge power only). HIGH is
+// the rule; LOW halves it (Tesla Low −0.11 g against Standard −0.21 g, SAE 2020-01-0883, so k = 0.5 holds).
+const EV_REGEN_RULES=[
+  // Tesla: lift-off is the only regen (the brake pedal is friction only: owners' reports, PROBABLE); −0.21 g steady on
+  // two Model 3s (Siddiqui et al., SAE 2020-01-0883). Plaid ~90 kW (evkx.net listing: PROBABLE).
+  {id:'tesla-plaid',maker:'Tesla',g:0.21,kW:90},
+  // Model 3 ~77 kW (InsideEVs, Taycan regen article, year not given: PROBABLE); the Model Y takes the Model 3's (PROBABLE).
+  {id:'tesla',maker:'Tesla',g:0.21,kW:77},
+  // Hyundai E-GMP: regen blended under the pedal to ~0.4 g, friction beyond (Hyundai engineer, The Brake Report,
+  // "Ioniq 5's sophisticated regen system"); no kW limit published.
+  {id:'egmp',maker:'Hyundai',g:0.4,kW:null},
+  // VW MEB: electric braking alone to ~0.3 g, "over 100 kW" (VW newsroom, "Brake energy recuperation"): no kW cap set.
+  {id:'meb',maker:'VW',g:0.3,kW:null}
+];
+// No source (a garage-built drive, or a maker not listed): MEB's 0.3 g, between Tesla's lift-off and E-GMP's blend.
+const EV_REGEN_DEFAULT={id:'',maker:'',g:0.3,kW:null};
+const evRegenRule=e=>EV_REGEN_RULES.find(r=>r.id===(e&&e.evMaker))||EV_REGEN_DEFAULT;
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
@@ -26676,7 +26695,7 @@ function initGuide(){
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evMaker:''};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -26706,7 +26725,7 @@ function readElectricFromForm(){
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontOD:num('evFrontOD',100,400),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:''};
 }
 function applyElectricToForm(e){
   // a design saved before build 314 names no stator: fill it as motorBuild does, from its own rotor
@@ -27298,13 +27317,15 @@ function evPackGain(e,rpm,tB){
 // The torque grid the runs read (gridTorque): one row, no boost axis.
 function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq:[c.map(p=>p.tq)],laggy:false};}
 // Regeneration as overrun torque (Nm, positive), on the engine's 500-rpm-up table: the motor's torque at that speed,
-// capped by the power the pack takes back. Below ~500 rpm a real car fades it out to stop smoothly; the table's floor
-// does the same.
-function evRegenTable(e,rl){
-  const out=[],V=motorRatedV(e),Pc=e.pack.pChargeMax,k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+// capped by the power the pack takes back, then by the maker's calibration (evRegenRule: a deceleration on car v, and a
+// regen kW limit). Below ~500 rpm a real car fades it out to stop smoothly; the table's floor does the same.
+function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null){
+  const out=[],V=motorRatedV(e),R=evRegenRule(e),Pc=Math.min(e.pack.pChargeMax,R.kW?R.kW*1000:Infinity),k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+  // the torque that slows car v (test mass and inertias) by g: the eco run's F = T·fd/(r·eff), turned round
+  const Tg=v&&v.rTire&&v.finalDrive?R.g*G*(v.mass+(v.wheelI||0)/(v.rTire*v.rTire)+e.motor.J*(v.finalDrive/v.rTire)**2)*v.rTire*(v.driveEff||1)/v.finalDrive:Infinity;
   for(let r=500;r<=rl+250;r+=250){
     const w=Math.min(r,rl)*Math.PI/30,T=motorMaxTorque(e.motor,Math.min(r,rl),V,60);
-    out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w))));
+    out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w),Tg)));
   }
   return out;
 }
@@ -27349,7 +27370,7 @@ function syncEvVehicleForm(ev){
 // The vehicle summary's driveline line for an electric car, in place of the ratios.
 function evDrivelineLine(v){
   return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
-    tr('regeneration up to')+' <b>'+Math.round(engine.pack.pChargeMax/1000*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
+    tr('regeneration up to')+' <b>'+Math.round(Math.min(engine.pack.pChargeMax/1000,evRegenRule(engine).kW||Infinity)*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
 }
 // The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
 // hottest, and the energy the lap drew and took back.
@@ -27648,7 +27669,7 @@ function evCycle(e,v){
   const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.wheelI,e.evRegen||'high'].join('|');
   if(e._cycle&&e._cycle.score===e.score&&e._cycle.key===key)return e._cycle.res;
   const C=EV_CYCLE,m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,V=motorRatedV(e),temp=Object.assign({},C.temp);
-  const meff=m+(v.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2,regen=evRegenTable(e,e.redline);
+  const meff=m+(v.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2,regen=evRegenTable(e,e.redline,v);
   let E=0,x=0,back=0,lost=0;
   for(let i=0;i<WLTC_3B.length-1;i++){
     const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;   // each second: its mean speed and its acceleration
@@ -30586,15 +30607,15 @@ function bindChalRank(){
 const EV_ENGINE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:850,evRearCount:1,evFront:'none',
-    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
+    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021,evMaker:'tesla'}},
   {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:640,evRearCount:1,
     evFront:'im',evFrontD:140,evFrontOD:210,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
-    evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
+    evChem:'nca',evSeries:96,evKWh:78,evYear:2022,evMaker:'tesla'}},
   {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:16,
     evMagnet:'ndfebDy',evRetention:'sleeve',evCooling:'spray',evMaxRpm:20000,evInverter:'sic',evAmps:900,evRearCount:2,
     evFront:'pm',evFrontD:150,evFrontOD:225,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
-    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021}}
+    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021,evMaker:'tesla-plaid'}}
 ];
 // real: the maker's 0-100 (s) and top speed (km/h, governed on all three). fit.fd is the published reduction (the owner's
 // manuals: 9.03 the Model 3 and Y, 7.56 on all three of the Plaid's units, each of its motors rated 295 kW).

@@ -82,6 +82,8 @@ reporting its range. Sourcing is batched apart from physics.
     *Build 366:* researched (`plans/vehicle-challenges.md`); the table is 1.2–1.7× the measured regen kW and ~3× the
     measured slowing at low speed, set by makers' calibration, not physics. Code unchanged; the fix (a sourced rule per
     maker, moving every EV) waits on the owner.
+    *Build 378:* the owner's rule made (`EV_REGEN_RULES`): Tesla 0.21 g, 77 kW (Plaid 90); E-GMP 0.4 g; MEB 0.3 g; default
+    0.3 g. All three Teslas within 4% of each sourced figure (`test221`).
 
 ## 6. Engine details
 

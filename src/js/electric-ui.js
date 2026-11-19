@@ -9,7 +9,7 @@
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evMaker:''};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -39,7 +39,7 @@ function readElectricFromForm(){
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontOD:num('evFrontOD',100,400),evFrontStack:num('evFrontStack',40,250),
     evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026))};
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:''};
 }
 function applyElectricToForm(e){
   // a design saved before build 314 names no stator: fill it as motorBuild does, from its own rotor

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 377
+# PIXEL POWERTRAIN v0.8 build 378
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -333,7 +333,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
     double-click to reset. Known gaps: the economy plan is a
     search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength
-    is the regen table's and has not yet been checked against measured EVs.
+    is the maker's sourced cap (build 378: ~0.21 g and 77–90 kW on the Teslas).
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you
   just designed, and everything on it moves because the simulation moved it:
