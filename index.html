@@ -805,7 +805,6 @@ body.guided-open{overflow:hidden}
 <button type="button" data-go="options">SETTINGS</button>
 <button type="button" data-go="showcase">CAR SHOWCASE</button>
 <button type="button" data-go="guided">GUIDED BUILD</button>
-<button type="button" data-go="film">FILM</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
@@ -825,7 +824,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 393</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -18646,7 +18645,7 @@ function trackSoundState(st){
   // line at the power it gives, and stopped off the power (build 297; until then on the full-load line, idling off it)
   if(isDirectHybrid()&&R&&st.i!=null){
     const g=psEngineSoundAt(lapResult,st.i,st.t);if(!g)return {off:true,rpm:0,map:1,throttle:0,afr:e.stoichAFR||14.7,fuelCut:true,blown:false};
-    // spun up or running down (build 393): turned by MG1, unfuelled
+    // spun up or running down (build 394): turned by MG1, unfuelled
     if(g.spin)return {rpm:g.rpm,map:1,throttle:0,afr:e.stoichAFR||14.7,boostActual:0,shaftE:0,fuelCut:true,coolant:90,knockRisk:0,blown:false};
     st=Object.assign({},st,{rpm:g.rpm,thr:g.thr,map:g.map});
   }
@@ -28656,7 +28655,7 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
-  // a power-split's or series hybrid's engine stops off the power and starts on it (build 393): each start draws its crank
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 394): each start draws its crank
   // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
   // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
   let ssJ=0,starts=0;
@@ -28689,10 +28688,10 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 393) do not scale with the share
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 394) do not scale with the share
       k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
     }
-    // not settled in twelve (build 393: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not settled in twelve (build 394: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
     // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
     if(E.deployKJ>B&&E.deployKJ>=1e-6){
       let lo=0,hi=used,ok=null;
@@ -28932,7 +28931,7 @@ function psFuelRate(){
 }
 // What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
-// t (build 393): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
+// t (build 394): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
 // idle, as hybStartStop integrates it, before the engine runs on its line; a stop runs down from the speed it ran at.
 // Both are {spin:true}: heard, with the fuel cut. The lap's fuel and time still have it fire at once (named gap).
 function psEngineSoundAt(L,i,t){
@@ -28946,7 +28945,7 @@ function psEngineSoundAt(L,i,t){
   const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
   return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
 }
-// Per replay point (build 393): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
+// Per replay point (build 394): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
 // before the lap's start when it was the last lap's) and its speed then (r0: where the run-down had it, or the speed it ran at).
 function psStartStopTimes(L,c){
   if(L._psSS)return L._psSS;
@@ -29160,7 +29159,7 @@ function stepHybridBench(dt){
     else hybSpin(H,dt);
     H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
-    // at the step's mean speed: the pack pays for the start and takes the stop back (build 393)
+    // at the step's mean speed: the pack pays for the start and takes the stop back (build 394)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
     P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
   }
@@ -29173,7 +29172,7 @@ function stepHybridBench(dt){
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor cranks through its slipping clutch what it is not giving the
-  // shaft, paid at the faster side's speed (build 393)
+  // shaft, paid at the faster side's speed (build 394)
   const Tcancel=ps&&!run?(H.Tspin||0)*hybGear(hy,H.ne,H.n).kr:0;Tm+=Tcancel;
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,motorMaxTorque(m,Math.max(H.n,1),V,60)-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
@@ -29222,7 +29221,7 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
 // what it is not giving the shaft. Stopping, MG1 or the generator, fixed to the crank, brakes it at the same full torque;
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
-// closes there). Build 393: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
+// closes there). Build 394: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
 const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
@@ -29238,7 +29237,7 @@ function hybSpin(H,dt){
   // MG1 pushes only for the part of the step before it reaches the firing speed (or rest): the pack pays that share
   const wEnd=state.rpm*Math.PI/30;if(H.Tspin&&wu!==w0&&wEnd!==wu)H.Tspin*=clamp((wEnd-w0)/(wu-w0),0,1);
 }
-// A power-split's or a series hybrid's start and stop off the bench (build 393), for the lap's pack and its replay's sound:
+// A power-split's or a series hybrid's start and stop off the bench (build 394), for the lap's pack and its replay's sound:
 // hybSpin's law integrated once (2 ms steps), the engine warm, its manifold at the air, the ring held. Starting, MG1 at its
 // full torque spins it from rest to idle; stopping, it brakes it from the redline to rest. The pack's power is MG1's
 // T w plus its losses, and MG2's losses holding the ring's reaction; with the ring turning MG2's T w adds, but the two
@@ -33031,7 +33030,6 @@ function titleMark(){
   titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
 }
 function titleGo(mode){
-  if(mode==='film'){location.href='film.html';return;}   // the evolution film is its own page; the label is tr()'d with the menu
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)

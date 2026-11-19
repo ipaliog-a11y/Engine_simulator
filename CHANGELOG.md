@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 393)
+### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 394)
 
 Step 11 of `plans/small-physics.md`.
 - **Bench:** a start's crank energy comes from the pack (MG1's, or a P2 motor's through its clutch, with losses) and a stop's comes back. On a power-split, MG2 cancels the ring's reaction to MG1 (kr of its crank torque), so the shaft feels none of it. Prius bench start draws 1.16 kJ, stop from 876 rpm returns 0.77 kJ (was 0 both).
@@ -27,11 +27,10 @@ Step 11 of `plans/small-physics.md`.
 - **Lap balance:** a lap whose deploy does not settle in twelve rounds now bisects the share between none and the last tried, keeping the largest that settles. The Prius's deploy over its share is not monotonic near 5%, and with its starts' ~8 kJ no share there balances; it settles at 0 (motor regenerating, not deploying). Laps that settled before are unchanged.
 - **Replay sound:** a start is spun up unfuelled from rest to idle, a stop runs down unfuelled from the speed it ran at; a restart before the run-down ends refires at once.
 - Left open: `hybridCycle` (WLTC, economy roads) has no start cost: its per-second choice has no memory of the engine's state, and ~0.4 kJ net a start is under its 0.5%-of-pack tolerance; WLTC and economy figures do not move. The lap's fuel and time still fire at once; its engine speeds above idle carry no inertia.
-### An 8-bit film of how the car changed (build 392)
 
-- **FILM** on the title menu opens `film.html`: eight scenes, 3–5 seconds each, from a 1961 drawing office to a racer leaving the pit. Cars, tools and crews move; the cut is an 8-pixel shutter.
-- Backgrounds are four pixel plates (coast, night street, workshop, pit) in the showroom and landing style. The moving parts are drawn on the canvas.
-- Left open: no sound. Greek for the new menu word is paused, same as GUIDED BUILD.
+### The extra title-menu page is gone (build 393)
+
+- The page added in the previous build, its pictures, its menu item and its test are removed.
 
 ### Fifty more title-screen rooms (build 391)
 
@@ -56,7 +55,6 @@ Step 11 of `plans/small-physics.md`.
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
-
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.
