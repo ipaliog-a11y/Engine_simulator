@@ -396,6 +396,14 @@ function updateUI(){
   else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
+  const chips=document.getElementById('modeChips');
+  if(chips&&engine){
+    const bits=[];
+    if(engine.displacement_L)bits.push(engine.displacement_L.toFixed(1)+'L');
+    if(engine.score&&engine.score.peakHP)bits.push(Math.round(engine.score.peakHP)+' HP');
+    if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
+    chips.textContent=bits.join(' · ');
+  }
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
@@ -412,6 +420,11 @@ function setTab(mode){
   const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode==='champ'?'Champ':mode[0].toUpperCase()+mode.slice(1);
   const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
+  if(document.body.dataset.group!==grp){
+    document.body.dataset.group=grp;
+    const curtain=document.getElementById('modeCurtain');
+    if(curtain){curtain.classList.remove('go');void curtain.offsetWidth;curtain.classList.add('go');}
+  }
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
   document.querySelectorAll('#vizGroups button').forEach(b=>b.classList.toggle('active',b.dataset.g===grp));
   {const strip=document.querySelector('.viz-tabs'),first=strip.querySelector('.ing');if(first&&strip.scrollWidth>strip.clientWidth)strip.scrollLeft=first.offsetLeft-strip.offsetLeft;}

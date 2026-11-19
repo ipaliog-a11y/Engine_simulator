@@ -13,7 +13,7 @@
 <!-- @include css/app.css -->
 </style>
 </head>
-<body>
+<body data-group="test">
 <div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading" hidden>
 <div class="title-dock">
 <div class="title-brand">
@@ -46,12 +46,23 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 393</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 394</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
 <span class="k" id="bsEngineK">ENGINE</span><button id="bsEngine" title="Go to the engine">—</button>
 <span class="k" id="bsCarK">CAR</span><button id="bsCar" title="Go to the car">—</button>
+<span class="file-wrap"><button id="btnFile" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="filePop">FILE</button>
+<span id="filePop" class="file-pop" hidden>
+<button id="btnSave">SAVE</button>
+<button id="btnLoad">LOAD</button>
+<button id="btnExport">SAVE FILE</button>
+<button id="btnImport">OPEN FILE</button>
+<button id="btnShare">SHARE</button>
+</span></span>
+<button id="btnStripGuide" type="button">GUIDE</button>
+<button id="btnStripOptions" type="button">OPTIONS</button>
+<span id="modeChips" class="mode-chips"></span>
 <button id="btnMenu" type="button">MENU</button>
 </div>
 <nav class="viz-groups" id="vizGroups" aria-label="Sections">
@@ -67,12 +78,12 @@
 <button id="tabVehicle" data-g="build">VEHICLE</button>
 <button id="tabParts" data-g="build">PARTS</button>
 <button id="tabGarage" data-g="build">GARAGE</button>
+<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
+<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
 <button id="tabChamp" data-g="drive">CHAMP</button>
 <button id="tabChallenges" data-g="drive">CHALLENGES</button>
-<button id="tabEngine" data-g="test" class="active ing">LIVE</button>
-<button id="tabDyno" data-g="test" class="ing">DYNO</button>
 <button id="tabGuide" data-g="more">GUIDE</button>
 <button id="tabOptions" data-g="more">OPTIONS</button>
 </div>
@@ -744,13 +755,6 @@
 <button id="btnReportPng" title="Save the dyno report as an image">REPORT PNG</button>
 <button id="btnReportPdf" title="Save the dyno report as a PDF">REPORT PDF</button>
 </div>
-<div class="btn-row" style="border-top:2px solid #26263a;padding-top:8px">
-<button id="btnSave">SAVE</button>
-<button id="btnLoad">LOAD</button>
-<button id="btnExport">SAVE FILE</button>
-<button id="btnImport">OPEN FILE</button>
-<button id="btnShare">SHARE</button>
-</div>
 </div>
 </div>
 <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
@@ -1024,5 +1028,6 @@
 <!-- @include js/guided-build.js -->
 <!-- @include js/controls-boot.js -->
 </script>
+<div id="modeCurtain" aria-hidden="true"></div>
 </body>
 </html>

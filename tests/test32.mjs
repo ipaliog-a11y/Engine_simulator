@@ -137,7 +137,7 @@ if (!(sp[1].t100 < sp[0].t100)) fails.push('spool no longer wins the standing st
 if (!(sp[1].lap > sp[0].lap)) fails.push('spool no longer loses on a lap');
 
 // 7. UI still renders
-await page.click('#tabTrack'); await page.waitForTimeout(400);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(400);
 const ui = await page.evaluate(() => ({ head: document.getElementById('lapHead').textContent, cells: document.querySelectorAll('#lapGrid .perf-cell').length }));
 console.log('\nUI:', ui.head.trim(), '|', ui.cells, 'cells');
 if (ui.cells !== 10) fails.push('lap grid broken');   // 8 + balance (build 157) + brake temperature

@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 394)
+
+- The tab bar followed BUILD, then DRIVE, then TEST. It now follows the work: BUILD (engine, vehicle, parts, garage), TEST (live, dyno), DRIVE (track, race, championship, challenges), then GUIDE and OPTIONS.
+- The four-section bar is on every screen. On a tall window it sits under the engine and car strip. On a short or narrow window, including a phone turned sideways, it stays fixed at the bottom with one row of that section's tabs.
+- SAVE, LOAD, SAVE FILE, OPEN FILE and SHARE moved to FILE on that strip. DYNO's MORE menu keeps the bench controls.
+- The engine form scrolls with the page. On a wide monitor the cutaway stops at 560px tall so the bench controls stay on screen.
+- A short pixel curtain marks a change of section. It stays still when the system asks for reduced motion.
+
 ### The extra title-menu page is gone (build 393)
 
 - The page added in the previous build, its pictures, its menu item and its test are removed.

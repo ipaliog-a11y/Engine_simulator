@@ -112,7 +112,7 @@ console.log('\nlap independent of live state:', det.same, '| health preserved:',
 if (!det.same) fails.push('lap time depends on live engine state');
 
 // 6. UI
-await page.click('#tabTrack'); await page.waitForTimeout(400);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(400);
 const ui = await page.evaluate(() => ({
   cells: [...document.querySelectorAll('#lapGrid .perf-cell .k')].map(e => e.textContent),
   head: document.getElementById('lapHead').textContent,

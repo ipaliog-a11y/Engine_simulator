@@ -170,6 +170,14 @@ function bindControls(){
     menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
     document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  {const fb=document.getElementById('btnFile'),pop=document.getElementById('filePop');
+    const set=o=>{pop.hidden=!o;fb.setAttribute('aria-expanded',String(!!o));};
+    fb.addEventListener('click',e=>{e.stopPropagation();set(pop.hidden);});
+    pop.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>set(false),0);});
+    document.addEventListener('click',e=>{if(!pop.hidden&&!e.target.closest('.file-wrap'))set(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){set(false);fb.focus();}});}
+  document.getElementById('btnStripGuide').addEventListener('click',()=>setTab('guide'));
+  document.getElementById('btnStripOptions').addEventListener('click',()=>setTab('options'));
   // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
   document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
   // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
