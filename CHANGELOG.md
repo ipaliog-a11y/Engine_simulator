@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### AWD power-over on the S-route powerslide (build 379)
+
+- AWD cars take the RWD power-over path. Whether the rear slides depends on the centre coupling `stepCar` already models.
+  The result and the DRIVE cell now show the coupling and its front:rear split (e.g. AWD · CLUTCH 50:50). The info note,
+  guide and README say why a coupling can stop power-over.
+- Fixed: a single-speed car (an EV) was put in gear 2, which it lacks, and never drove (STALL, β 0°). Now the Model Y
+  CLEARs (β 10°/10°) and the Model 3 RWD CLEARs (15°/13°).
+- The viscous, rear-driven cars (993 Turbo, Diablo VT, Murciélago) stay NO_SLIDE: the coupling sends torque forward as
+  the rear slips.
+- Left open: the Model S Plaid goes OFF; the Qashqai e-POWER (FWD) STALLs; the handbrake waits for a `stepCar` input
+  (next, after the stability-control build). Fingerprint identical; drift results are not in it.
+
 ### A sourced regen cap per maker (build 378)
 
 Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
