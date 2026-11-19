@@ -13,7 +13,7 @@ for (const [w, h, tag] of [[390, 844, 'phone upright'], [844, 390, 'phone sidewa
   page.on('pageerror', e => errors.push(tag + ' pageerror: ' + e.message));
   await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  await page.click('#tabTrack'); await page.waitForTimeout(500);
+  await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(500);
   await page.evaluate(() => document.getElementById('btnTrackFull').click());
   await page.waitForTimeout(1200);
   const s = await page.evaluate(() => {

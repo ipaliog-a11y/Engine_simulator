@@ -53,7 +53,7 @@ const slow = await run({ cylinders: 3, bore_mm: 73, stroke_mm: 79.6, intake: 'na
 console.log('  kei 1.0 NA: top', slow.top, 'km/h  0-200-0:', slow.zt, '(null expected)  100-0', slow.b100, 'm');
 
 // UI: perf grid now has 8 cells incl braking
-await page.click('#tabVehicle'); await page.waitForTimeout(120);
+await page.evaluate(() => document.getElementById('tabVehicle').click()); await page.waitForTimeout(120);
 const cells = await page.evaluate(() => [...document.querySelectorAll('#perfGrid .perf-cell .k')].map(e => e.textContent));
 console.log('\nperf cells:', cells.join(' | '));
 

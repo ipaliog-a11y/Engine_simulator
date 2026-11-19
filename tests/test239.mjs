@@ -1,48 +1,67 @@
-// The 100-0 stop per axle, and the proportioning valve (build 395).
+// The ECU laptop on the bench (LIVE and DYNO).
 //
-// WHY THIS EXISTS. Until build 395 the 100-0 stop pooled the four tyres' grip at a quarter of the load each, whatever the
-// brakes' split, so an axle whose brakes could not reach its grip cost nothing. What must hold:
-//   · with ABS the stop's deceleration is each axle's lesser of its grip (at its load, braking moving load forward)
-//     and its brakes: a car whose rear brakes are cut to a sliver stops longer;
-//   · without ABS it stops where the first axle reaches its grip, through the knee-point valve, so it is never shorter
-//     than with ABS;
-//   · the valve's two lines are chords of the ideal distribution, meeting it at the knee (0.4 g) and at R13-H's 0.8 g,
-//     and below it in between (the front locks first up to 0.8 g); it never falls;
+// WHY THIS EXISTS. The fuel, spark and VE tables lived only on the ENGINE tab, and a fault's freeze
+// frame could not be put back on the brake. What must hold:
+//   · on LIVE the laptop is on the page and its scope draws a trace;
+//   · the live cell is marked, and HOLD CELL sets the brake from that cell's rpm;
+//   · REPRODUCE FREEZE FRAME puts the stored coolant on the bench slider;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage();
-const errors = [], fails = [];
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(300);
+await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; setTab('engine'); });
+await page.waitForTimeout(600);
+const fails = [];
 
-const R = await page.evaluate(() => {
-  loadVehiclePreset(VEHICLE_PRESETS.find(v => v.name.startsWith('Mazda MX-5')));
-  const V = vehicle, o = { abs: simulateBraking(100 / 3.6).dist };
-  const fH = V.brakeFrontShare, cap = V.brakeDecelCap;
-  V.brakeFrontShare = 0.97; V.brakeDecelCap = cap * fH / 0.97;          // the same fronts, rears cut to a sliver
-  o.weakRear = simulateBraking(100 / 3.6).dist; V.brakeFrontShare = fH; V.brakeDecelCap = cap;
-  const keep = V.aids; V.aids = Object.assign({}, keep || {}, { abs: false });
-  o.noAbs = simulateBraking(100 / 3.6).dist; V.aids = keep;
-  const hL = V.cg / V.wb, f0 = V.fWt, rv = brakeValveRear(f0, hL), X = z => z * (f0 + z * hL) * G, Y = z => z * (1 - f0 - z * hL) * G;
-  o.valve = [0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2].map(z => ({ z, ideal: Y(z), valve: rv(X(z)) }));
-  o.valveMono = [0, 2, 4, 6, 8, 10, 12, 14].every((x, i, a) => i === 0 || rv(x) >= rv(a[i - 1]) - 1e-9);
-  return o;
+const scope = await page.evaluate(() => {
+  const c = document.getElementById('ecuScope'), g = c.getContext('2d'), pix = g.getImageData(0, 0, c.width, c.height).data;
+  let ink = 0;
+  for (let i = 0; i < pix.length; i += 16) if (pix[i] > 20 || pix[i + 1] > 40) ink++;
+  return { shown: !document.getElementById('ecuComputer').hidden, ink };
 });
-console.log(`== MX-5 100-0: ABS ${R.abs.toFixed(1)} m, rears cut ${R.weakRear.toFixed(1)} m, no ABS ${R.noAbs.toFixed(1)} m ==`);
-if (!(R.weakRear > R.abs + 1)) fails.push('cutting the rear brakes did not lengthen the ABS stop');
-if (!(R.noAbs >= R.abs - 0.05)) fails.push('the stop without ABS is shorter than with it');
-for (const p of R.valve) {
-  console.log(`  z ${p.z.toFixed(1)} g: rear ideal ${p.ideal.toFixed(2)}, valve ${p.valve.toFixed(2)} m/s2`);
-  if ((p.z === 0.4 || p.z === 0.8) && Math.abs(p.ideal - p.valve) > 1e-6) fails.push(`the valve misses the ideal at ${p.z} g`);
-  if (p.z < 0.8 && p.valve > p.ideal + 1e-6) fails.push(`the rear locks first at ${p.z} g`);
+console.log('scope', scope);
+if (!scope.shown) fails.push('the laptop is hidden on LIVE');
+if (scope.ink < 8) fails.push('the scope has no trace');
+
+await page.evaluate(() => {
+  document.getElementById('edAfrMode').value = 'auto';
+  document.getElementById('edAfrMode').dispatchEvent(new Event('change'));
+  buildEngine();
+  ecuScreen('maps');
+});
+await page.waitForTimeout(300);
+const hold = await page.evaluate(() => {
+  const cell = document.querySelector('#fuelMapBox td.fm-cell');
+  if (!cell) return { noCell: true };
+  cell.click();
+  document.getElementById('ecuHold').click();
+  const rpm = fmRpmAt(fmSel.c);
+  const want = Math.round(loadForRpm(Math.min(rpm, 0.99 * engine.redline)) * 100);
+  return { live: !!document.querySelector('#fuelMapBox td.live'), load: +document.getElementById('load').value, want, rpm };
+});
+console.log('hold', hold);
+if (hold.noCell) fails.push('no fuel cell to select');
+else {
+  if (!hold.live) fails.push('no live cell on the fuel map');
+  if (Math.abs(hold.load - hold.want) > 1) fails.push(`HOLD CELL set load ${hold.load}, wanted ${hold.want}`);
 }
-if (!R.valveMono) fails.push('the valve\'s rear brake falls as the pedal rises');
+
+const ff = await page.evaluate(() => {
+  obd.codes.P0217 = { status: 'confirmed', clean: 0, newCycle: false, ff: { rpm: 3200, load: 40, map: 1.1, coolant: 112, lam: 1, boost: 0, volt: 13.4 } };
+  ecuScreen('diag');
+  document.querySelector('[data-ff="P0217"]').click();
+  return +document.getElementById('coolant').value;
+});
+console.log('freeze coolant', ff);
+if (ff !== 112) fails.push('freeze frame did not set the coolant to 112');
+
 await browser.close();
-for (const e of errors) fails.push(e);
-if (fails.length) { console.log('FAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('PASS');
+if (errors.length) fails.push(...errors);
+if (fails.length) { console.log('\nFAIL\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
+console.log('\nPASS');

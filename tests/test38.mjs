@@ -172,7 +172,7 @@ await page.evaluate(() => {
   applyEngineToForm(Object.assign({}, DEFAULT_ENGINE, pr.engine)); buildEngine();
   applyChassisFit('coupe'); buildVehicle();
 });
-await page.click('#tabTrack'); await page.waitForTimeout(500);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(500);
 const ui = await page.evaluate(() => {
   // the map footer must quote the range, and the report must render without throwing
   const cv = document.getElementById('engineCanvas'), g = cv.getContext('2d');

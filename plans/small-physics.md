@@ -76,7 +76,7 @@ reporting its range. Sourcing is batched apart from physics.
 
 9. **The 100–0 stop reads the brake share per axle** (build 312's part), not the four tyres' pooled grip, with the
    road car's proportioning (knee-point) valve. Report each car's 100–0 change.
-   *Build 395:* `simulateBraking` brakes per axle (load transfer, aero balance, each axle's brakes and fade); ABS holds
+   *Build 399:* `simulateBraking` brakes per axle (load transfer, aero balance, each axle's brakes and fade); ABS holds
    each axle at its grip, without ABS the first axle to lock sets the stop through `brakeValveRear` (knee 0.4 g, meets
    R13-H's 0.8 g). Presets' 100–0 +0 to +4.5% (load sensitivity); E46 M3 35.7 → 36.6 m against ~38.6. Open: no
    preset carries a published 100–0; the knee is ours, not a maker's.

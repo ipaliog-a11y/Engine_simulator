@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 395)
+### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 399)
 
 Step 9 of `plans/small-physics.md`.
 - `simulateBraking` (the 100–0 and 0–200–0) now brakes each axle as the lap has since build 150: braking moves load
@@ -34,11 +34,45 @@ Step 9 of `plans/small-physics.md`.
   published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
 - Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
 - Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
+### The lap instruments show the shift and the brakes (build 398)
+
+- The track replay draws eight shift lights over the rev counter: green, then amber, then red and cyan at the last two as the engine nears the redline. Reduced motion keeps the last two red.
+- A rotor hotter than 450 C, which the lap already records, lights a mark beside those lights.
+- The guide's LIVE page and the README now describe the four sections and the ECU laptop.
+
+### The bench shows heat, knock and a pull (build 397)
+
+- The exhaust manifold colour follows the gas temperature already computed for that rpm and load: dull at low power, towards yellow as it climbs from 500 C to 1100 C.
+- The cutaway leans with torque and rocks a little with cam overlap. A knock or misfire warning flashes. A blow-off puff, a nitrous plume and soot are drawn from the same flags the sim already sets. Reduced motion holds the warning still and skips the lean.
+- RUN PULL on the dyno opens the throttle and walks the brake from idle to redline. The power curve itself is unchanged.
+
+### Each section and each card has its own bay (build 396)
+
+- BUILD shows the workshop, an electric build shows the service bay, TEST shows the garage and DRIVE shows the pit, as a strip under the section bar.
+- The engine preview's corner lamp follows the open card: block, head, air, flow, fuel, cooling, or the high-voltage bay.
+- VEHICLE can show the showroom photo or the car on a lift. The lift's lamp follows the open vehicle card.
+
+### An ECU laptop on the bench (build 399)
+
+- LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.
+- F2 puts the fuel, spark and VE tables on the bench. The running cell stays outlined. −5, −1, +1 and +5 step the selected cell, and HOLD CELL sets the dyno brake from that cell's rpm. OPEN ECU MAPS on the fuel card comes straight here. On BUILD the tables stay where they were.
+- F3 lists the same faults as the check-engine lamp, plus the engine diagnosis, and REPRODUCE FREEZE FRAME puts a stored code's coolant, load and throttle back on the sliders.
+- F4 shows the live torque and power against the logged pull, or the speed, rpm and lateral g of a recorded lap.
+- On a phone the laptop is a drawer opened with ECU, so the throttle and the brake stay on screen.
+
+### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 394)
+
+- The tab bar followed BUILD, then DRIVE, then TEST. It now follows the work: BUILD (engine, vehicle, parts, garage), TEST (live, dyno), DRIVE (track, race, championship, challenges), then GUIDE and OPTIONS.
+- The four-section bar is on every screen. On a tall window it sits under the engine and car strip. On a short or narrow window, including a phone turned sideways, it stays fixed at the bottom with one row of that section's tabs.
+- SAVE, LOAD, SAVE FILE, OPEN FILE and SHARE moved to FILE on that strip. DYNO's MORE menu keeps the bench controls.
+- The engine form scrolls with the page. On a wide monitor the cutaway stops at 560px tall so the bench controls stay on screen.
+- A short pixel curtain marks a change of section. It stays still when the system asks for reduced motion.
+
 ### The extra title-menu page is gone (build 393)
 
 - The page added in the previous build, its pictures, its menu item and its test are removed.
 
-### Fifty more title-screen rooms (build 395)
+### Fifty more title-screen rooms (build 399)
 
 - The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
 - Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
