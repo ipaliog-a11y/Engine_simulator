@@ -2,7 +2,7 @@
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
 // One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
-const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend } = (() => {
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
@@ -25,7 +25,7 @@ function sceneBind(src) {
     x: p.x, y: p.y, s: p.s || 0, ds: p.ds || 1,
     nx: p.nx || 0, ny: p.ny || 1, w: p.w || src.width || 10
   }));
-  const n = pts.length;
+  const n = pts.length, cv = sceneCurv(pts);
   for (let i = 0; i < n; i++) {
     const q = pts[(i + 1) % n];
     const ds = Math.hypot(q.x - pts[i].x, q.y - pts[i].y) || 1;
@@ -33,22 +33,36 @@ function sceneBind(src) {
     pts[i].tx = (q.x - pts[i].x) / ds;
     pts[i].ty = (q.y - pts[i].y) / ds;
     pts[i].hd = Math.atan2(pts[i].ty, pts[i].tx);
-  }
-  for (let i = 0; i < n; i++) {
-    const a = pts[(i - 1 + n) % n], b = pts[i];
-    let d = b.hd - a.hd;
-    while (d > Math.PI) d -= Math.PI * 2;
-    while (d < -Math.PI) d += Math.PI * 2;
-    b.curv = d / Math.max(0.5, b.ds);
-  }
-  for (let k = 0; k < 4; k++) {
-    const prev = pts.map(p => p.curv);
-    for (let i = 0; i < n; i++) pts[i].curv = (prev[(i - 1 + n) % n] + prev[i] * 2 + prev[(i + 1) % n]) / 4;
+    pts[i].curv = cv[i];
   }
   T = { label: src.label, pts, length: src.length || pts[n - 1].s + pts[n - 1].ds, wind: 1 };
   src._look = T;
   return T;
 }
+
+// The centreline's turning per metre at each point (closed loop), smoothed four times: what decides where the scene
+// draws a bend's gravel trap (SCENE_TRAP), and where the stepped car finds one (driveSurface).
+function sceneCurv(pts) {
+  const n = pts.length, hd = [], ds = [], cv = [];
+  for (let i = 0; i < n; i++) {
+    const q = pts[(i + 1) % n];
+    ds[i] = Math.hypot(q.x - pts[i].x, q.y - pts[i].y) || 1;
+    hd[i] = Math.atan2((q.y - pts[i].y) / ds[i], (q.x - pts[i].x) / ds[i]);
+  }
+  for (let i = 0; i < n; i++) {
+    let d = hd[i] - hd[(i - 1 + n) % n];
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    cv[i] = d / Math.max(0.5, ds[i]);
+  }
+  for (let k = 0; k < 4; k++) {
+    const prev = cv.slice();
+    for (let i = 0; i < n; i++) cv[i] = (prev[(i - 1 + n) % n] + prev[i] * 2 + prev[(i + 1) % n]) / 4;
+  }
+  return cv;
+}
+// A bend's gravel trap: on the outside of a bend that turns more than curv (1/m), from in to out metres past the edge.
+const SCENE_TRAP = { curv: 0.03, in: 3.15, out: 8.4 };
 
 function sceneNear(cam, x, y) {
   const dx = x - cam.ox, dy = y - cam.oy;
@@ -688,7 +702,7 @@ function drawStill(ctx, cam, opts) {
   ctx.restore();
 
   fillRibbonWorld(ctx, cam, TEX.gravel, 4.2, gravelHalf, "rgba(90,60,30,0.12)");
-  fillOutsideBand(ctx, cam, 0.03, p => p.w / 2 + 3.15, p => p.w / 2 + 8.4, {
+  fillOutsideBand(ctx, cam, SCENE_TRAP.curv, p => p.w / 2 + SCENE_TRAP.in, p => p.w / 2 + SCENE_TRAP.out, {
     pattern: TEX.gravel, meters: 4.2, tint: "rgba(36, 22, 12, 0.38)"
   });
   fillOutsideBand(ctx, cam, 0.028, p => p.w / 2 + 1.05, p => p.w / 2 + 2.7, { color: "#1a7340" });
@@ -1348,5 +1362,5 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend };
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP };
 })();
