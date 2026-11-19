@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The stability control judges a spin by the yaw rate (build BUILDNO)
+### The stability control judges a spin by the yaw rate (build 379)
 
 - Plan small-physics step 5. `stepCar`'s ESP now compares the yaw rate with the steady single-track reference, lagged
   by the model's equivalent delay B/C − m v a/(Cr L) (Abe, *Vehicle Handling Dynamics*, ch. 3; van Zanten, SAE
@@ -34,6 +34,31 @@ they are accurate about *what* shipped but not about the day it shipped.
   (since build 354's tyres). The card now runs the final run (`driveSineDwell` with no multiple), where ESP off spins
   and ESP on passes.
 - Fingerprint identical (stepCar only). Left open: the limit reading the surface (step 7); MSR for engine cars.
+
+### A sourced regen cap per maker (build 378)
+
+Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
+- **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
+  a deceleration and a regen kW limit per maker, named by the drive's `evMaker` (a hidden field, set on the factory drives). Tesla 0.21 g lift-off (SAE 2020-01-0883),
+  77 kW (Model 3, InsideEVs: probable; the Model Y takes it, probable) and 90 kW (Plaid, evkx.net: probable); Hyundai
+  E-GMP 0.4 g blended; VW MEB 0.3 g; no source: 0.3 g and the pack's limit. Friction brakes do the rest. LOW halves it
+  (Tesla Low −0.11 g, same source).
+- **Against the figures:** at 20 km/h 6.7 / 7.1 / 14.1 → 2.06 m/s² (Model 3 / Y / Plaid; measured 2.1); most regen
+  power 90 / 78 / 150 → 77 / 77 / 90 kW. `test221` now fails if any lands more than 10% off.
+- **What moved:** economy run (Alpine) energy +1.5% / +1.0% / +9.2% (Plaid's regen 6.31 → 3.05 kWh); lap time
+  −0.0000004% / +0.0009% / +0.000002%. WLTC, 0–100, top speed, ICE cars and hybrids (`hybRegenTable`) do not move.
+- `test216`'s skidpad held speed with a fixed +0.15 throttle bias that assumed the old regen in an EV's one-pedal
+  map (0.87 → 0.81 g with the cap); it now holds speed closed-loop (PI), where main and this build both give 0.86 g.
+  Band unchanged (0.83–0.90).
+- Left open: a garage-built EV takes the default; E-GMP and MEB have no preset to check against.
+### Import-vehicle skill for researching real-car presets (build 377)
+
+- New Cursor skill at `.cursor/skills/import-vehicle/`: when asked to import a real car (e.g. Ferrari F50),
+  research sourced body/engine numbers, write presets, run accuracy bands (±25% power, ±35% matched 0–100 and top),
+  fix honest input errors only, and report unachievable gaps with suggested actions.
+- Includes schema/checklist/gap-report references, a JSON template, `validate-research.mjs`, and
+  `check-accuracy.mjs`. Derive-do-not-fit is hard-coded; physics constants are never tuned to pass.
+- `test230` checks the skill files and runs both scripts against the existing Ferrari F40.
 
 ### Power assistance, steering friction and the scrub radius in the stepped car (build 376)
 

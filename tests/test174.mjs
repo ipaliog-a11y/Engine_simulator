@@ -14,7 +14,7 @@
 //     sideways and with less yaw 1 s after than ESP off. Since build 354 (premium touring tyres) it no longer spins at 6.5 x
 //     either, so that comparison is made at the rule's final run (S7.9.4: the greater of 6.5 x or 270 deg of hand wheel;
 //     6.5 x is 116 deg here). There ESP off spins and ESP on must hold it less sideways, with less yaw. It passes with it on
-//     at 5 and 6.5 x and at the final run (build 377: the spin judged by the yaw rate); a wider espBeta lets it slide further (since build 319 it need not recover: see below);
+//     at 5 and 6.5 x and at the final run (build 379: the spin judged by the yaw rate); a wider espBeta lets it slide further (since build 319 it need not recover: see below);
 //   · ESP, against a push: full power on a circle, a front-driver's front tyres slip less and it runs less wide with it on;
 //   · on a straight launch and a straight stop ESP does nothing;
 //   · no page errors.
@@ -88,7 +88,7 @@ if (!R.swd.fitted) fails.push('the Model 3 has no ESP');
 for (const [k, o] of [['off', R.swd.fin.off], ['on', R.swd.fin.on]]) console.log(`  final run (270 deg of hand wheel), ESP ${k}: yaw ${f2(o.r1)} / ${f2(o.r175)} of its peak after 1 / 1.75 s, ${f2(o.y)} m across, ${o.beta.toFixed(0)} deg sideways`);
 if (!(R.swd.fin.off.r1 > 0.35)) fails.push('at the final run the Model 3 does not spin with ESP off: the manoeuvre shows nothing');
 if (!(R.swd.fin.on.beta < R.swd.fin.off.beta - 1 && R.swd.fin.on.r1 < R.swd.fin.off.r1)) fails.push('at the final run ESP does not leave the Model 3 less sideways and with less yaw than without it');
-// Build 377: the ESP judges a spin by the yaw rate against a lagged reference, and the Model 3 meets the rule at its
+// Build 379: the ESP judges a spin by the yaw rate against a lagged reference, and the Model 3 meets the rule at its
 // final run too (yaw 0.46 of its peak 1 s on before).
 if (!pass(R.swd.fin.on)) fails.push('at the final run the Model 3 fails FMVSS 126 with ESP on');
 if (!R.swd.on.every(pass)) fails.push('the Model 3 fails FMVSS 126 with ESP on');

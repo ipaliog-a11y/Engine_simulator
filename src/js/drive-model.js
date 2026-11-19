@@ -66,7 +66,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             second for a slip twice the target.
 //   ESP       van Zanten, Erhardt and Pfaff, "VDC, the vehicle dynamics control system of Bosch" (SAE 950759):
 //             the controller holds the car's slip angle and its yaw rate by braking single wheels. A real one must
-//             estimate the slip from its sensors; the model knows it. Against a spin (build 377; van Zanten, "Bosch ESP
+//             estimate the slip from its sensors; the model knows it. Against a spin (build 379; van Zanten, "Bosch ESP
 //             systems: 5 years of experience", SAE 2000-01-1633): the yaw rate against the reference below, lagged
 //             as the car itself would follow it, by the single-track model's equivalent delay B/C - m v a/(Cr L)
 //             (Abe, Vehicle Handling Dynamics, ch. 3). Past it by espBand, the outer front wheel is braked for
