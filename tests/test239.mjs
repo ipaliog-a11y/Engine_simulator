@@ -1,6 +1,6 @@
-// The 100-0 stop per axle, and the proportioning valve (build 391).
+// The 100-0 stop per axle, and the proportioning valve (build 395).
 //
-// WHY THIS EXISTS. Until build 391 the 100-0 stop pooled the four tyres' grip at a quarter of the load each, whatever the
+// WHY THIS EXISTS. Until build 395 the 100-0 stop pooled the four tyres' grip at a quarter of the load each, whatever the
 // brakes' split, so an axle whose brakes could not reach its grip cost nothing. What must hold:
 //   · with ABS the stop's deceleration is each axle's lesser of its grip (at its load, braking moving load forward)
 //     and its brakes: a car whose rear brakes are cut to a sliver stops longer;

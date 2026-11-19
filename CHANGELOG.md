@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 391)
+### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 395)
 
 Step 9 of `plans/small-physics.md`.
 - `simulateBraking` (the 100–0 and 0–200–0) now brakes each axle as the lap has since build 150: braking moves load
@@ -34,6 +34,17 @@ Step 9 of `plans/small-physics.md`.
   published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
 - Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
 - Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
+### The extra title-menu page is gone (build 393)
+
+- The page added in the previous build, its pictures, its menu item and its test are removed.
+
+### Fifty more title-screen rooms (build 395)
+
+- The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
+- Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
+- Only the room on view, the next room, and during the fade the room before, keep a decoded picture. The others stay unloaded.
+- Left open: a few signs still carry a word the generator invented. Automatic cleanup also marked bodywork, so they were left. They are not maker logos. The original four still have their logos mosaicked by hand.
+
 ### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
 
 - The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
