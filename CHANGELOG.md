@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Power assistance, steering friction and the scrub radius in the stepped car (build N)
+### Power assistance, steering friction and the scrub radius in the stepped car (build 375)
 
 - Plan small-physics step 4. `stepCar` now gives `s.handTorque` (Nm), what the driver holds at the hand wheel: the
   column load `-s.steerTorque` through a boost curve (a 1 Nm threshold, then a gain of 8 parking falling to 1.5 at

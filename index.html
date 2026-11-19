@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 374</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 375</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -14508,17 +14508,17 @@ function driveBody(v,a,b){
 //   n   the caster trail, r tan(caster), the steering axis through the wheel's centre (no caster offset). vehicle.caster
 //       (degrees) from a maker's alignment sheet where a preset has one; none does yet, so every car takes DRIVE_CASTER:
 //       road cars run about 3-7 degrees (Reimpell et al., The Automotive Chassis, ch. 3: PROBABLE as one value).
-//   rs  the scrub radius (build N, plan small-physics step 4): each front tyre's longitudinal force (drive or brake)
+//   rs  the scrub radius (build 375, plan small-physics step 4): each front tyre's longitudinal force (drive or brake)
 //       acts rs outboard of the steering axis's ground point, Mz = -Fx rs on the left wheel, +Fx rs on the right; equal
 //       forces cancel. vehicle.scrubRadius (m) where a preset has one; none does, so every car takes DRIVE_SCRUB:
 //       passenger cars run -20 to +20 mm (Reimpell et al., The Automotive Chassis, ch. 3: PROBABLE as one value; a
 //       value by suspension type is left open, no source gives one per type).
-//   s.steerTorque is the column's load before any assist. s.handTorque (build N) is what the driver holds at the hand
+//   s.steerTorque is the column's load before any assist. s.handTorque (build 375) is what the driver holds at the hand
 //   wheel, positive with the steer: see DRIVE_ASSIST. Nothing reads it yet (for force feedback later).
 //   Left out, named: the torque steer of unequal driveshafts (no preset gives shaft angles), the moment of Fx on the
 //   tread's sideways deflection, and a hydraulic or EPS curve per car (one curve serves every car).
 const DRIVE_CASTER=5,DRIVE_SCRUB=0.010;
-// THE POWER ASSISTANCE AND THE STEERING'S FRICTION (build N). A boost curve gives the assist from the driver's own
+// THE POWER ASSISTANCE AND THE STEERING'S FRICTION (build 375). A boost curve gives the assist from the driver's own
 // torque and the speed, as EPS and hydraulic systems are tuned (Pfeffer & Harrer, Steering Handbook, 2017, ch. 6-7:
 // a threshold before any assist, a gain that falls with speed, a motor's ceiling). Every number PROBABLE:
 //   assist = K(v) (|Th| - T0) above T0, at most Amax (Nm at the column), K(v) = Kv + (K0 - Kv) e^(-v/vK),
