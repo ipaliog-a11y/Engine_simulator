@@ -135,7 +135,7 @@ if (ui.canvas !== '2480x3508') fails.push('report canvas wrong size');
 if (ui.climb < 5) fails.push('climb per lap not computed');
 if (ui.uphill < 1 || ui.downhill < 1) fails.push('corner grades look wrong (need both uphill and downhill)');
 
-await page.click('#tabTrack'); await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(300);
 const head = await page.evaluate(() => document.getElementById('lapHead').textContent);
 console.log('  lap head:', head.trim());
 if (!/m elevation/.test(head)) fails.push('TRACK panel does not show elevation');

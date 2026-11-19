@@ -41,7 +41,7 @@ const pick = re => page.evaluate(async re => {
 for (const [re, p, first, other] of [['Model 3 RWD drive', 'evd', 'size', 'batt'], ['EA888', 'icd', 'block', null]]) {
   const name = await pick(re);
   const shown = await page.evaluate(() => vizMode);
-  await page.click('#tabDesign'); await page.waitForTimeout(800);
+  await page.evaluate(() => document.getElementById('tabDesign').click()); await page.waitForTimeout(800);
   const viz = await lit('#' + p + 'Viz-' + first), curve = await lit('#' + p + 'Curve');
   console.log(`== ${name}: picked on ${shown}; back on ENGINE the ${first} picture has ${viz} lit pixels, the curve ${curve} ==`);
   if (shown !== 'dyno') fails.push(`picking ${name} should show the DYNO tab, it showed ${shown}`);

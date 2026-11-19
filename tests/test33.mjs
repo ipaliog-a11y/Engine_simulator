@@ -71,7 +71,7 @@ if (vr.length < 12) fails.push('vehicle table too short');
 if (/undefined|NaN|\[object/.test(vr.join(' | '))) fails.push('vehicle rows contain undefined/NaN');
 
 // 4. PDF + PNG exports
-await page.click('#tabTrack'); await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(300);
 const d1 = page.waitForEvent('download'); await page.click('#btnLapPdf'); const dl1 = await d1;
 const pdfPath = '/tmp/claude-0/-home-user-Engine-simulator/367f578e-6004-580f-ae9f-7158e9c4f5ba/scratchpad/lap.pdf';
 await dl1.saveAs(pdfPath);

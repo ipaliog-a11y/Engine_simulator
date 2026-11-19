@@ -101,9 +101,9 @@ const lit = sel => page.evaluate(s => {
   for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 200) n++;
   return n;
 }, sel);
-await page.click('#tabVehicle'); await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('tabVehicle').click()); await page.waitForTimeout(300);
 const carGone = await page.evaluate(() => !document.getElementById('carPreview') && !document.getElementById('vhBuildCap'));
-await page.click('#tabDesign'); await page.waitForTimeout(300);
+await page.evaluate(() => document.getElementById('tabDesign').click()); await page.waitForTimeout(300);
 const engLit = await lit('#enginePreview');
 // since build 239 the intake is on the AIR & BOOST card, which the menu opens
 await page.click('#icdRb-air'); await page.waitForTimeout(150);
@@ -132,7 +132,7 @@ console.log(`== garage: ${thumbs.n} thumbnails, the car its class picture and th
 if (thumbs.n < 2 || !thumbs.ok) fails.push('saved cars and engines do not all get a thumbnail');
 
 // ---- 5. the car on the track map is drawn where the replay puts it ----
-await page.click('#tabTrack'); await page.waitForTimeout(800);
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(800);
 const onMap = await page.evaluate(() => {
   const k = typeof topCarSprite === 'function' && Object.keys(topCarCache).length;
   return { cached: k };
