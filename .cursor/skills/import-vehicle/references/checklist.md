@@ -21,8 +21,8 @@ Work in `src/`, then `node tools/build.mjs`. Never hand-edit `index.html`.
 - [ ] `CAR_PROFILES[name]` in `src/js/car-profiles.js` (side silhouette)
 - [ ] `SUSP_REAL[name]` in `src/js/tyres-brakes-driveline.js` (`{f,r,tf,tr}`)
 - [ ] `body.h`, `body.tf`, `body.tr` on the vehicle preset
-- [ ] `CAR_ART[name]` + `assets/cars/<slug>.webp` (owner art; `test147`)
-- [ ] `assets/cars/manifest.json` entry if that file is maintained for new art
+- [ ] `CAR_ART[name]` + `assets/cars/<slug>.webp` via `vehicle-profile-art` skill (`test131` / `test147`)
+- [ ] `assets/car-profiles/<slug>.png` + both manifest rows (see that skill's `wiring.md`)
 - [ ] New `cat` → `PRESET_CATS` and vehicle picker cats
 - [ ] `node tools/class-medians.mjs` if class has ≥3 real cars (`test134`)
 - [ ] `node tools/car-prices.mjs` (rewrites `src/js/car-prices.js`)
