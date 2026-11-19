@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A green baseline: test136 re-locked, test145 passes (build 365)
+
+Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
+
+- **test136** (the Teslas' locked motor figures) was failing since build 314. Run at each build, the moves come from
+  three merged builds, each intended and each in its own entry: 314 (Model 3 stator 226 → 225 mm, MotorXP) moved the
+  torque, knee, motor mass and peak hold (Model 3 424 → 426 Nm, 6627 → 6604 rpm, 55.18 → 54.66 kg, 37 → 29 s);
+  315 (jacket cooling) the continuous power (Model 3 259 → 282 kW, Model Y 316 → 336, Plaid 708 → 750); 354
+  (premium touring tyres) the Model 3's 0-100 (6.18 → 5.90 s). Re-locked to today's values, with the builds named
+  in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
+- **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
+- Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
 ### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
 
 Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.

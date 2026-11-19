@@ -14,6 +14,8 @@ reporting its range. Sourcing is batched apart from physics.
   open, or fix it.
 - `test145` (engine wear and coolant at full load; ~6 min) was reported failing on `main` at build ~320. Rerun it, then
   treat it the same way.
+  *Build 365:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
+  test145 passes on `main` (fixed by builds 336-337). Nothing left open here.
 - Not physics, noted only: `test42` (3 untranslated starter messages, Greek paused), `test64` (the track map never
   draws the car sprite), `test125` (folded LIVE OUTPUT at 21%, not a third).
 
