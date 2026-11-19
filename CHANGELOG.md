@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A compound turbo's split off its design point (build 364)
+### A compound turbo's split off its design point (build 367)
 
 - Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its
   own turbine supplies its compressor (at the LP outlet's pressure and temperature), and above target the gate leaves
@@ -28,11 +28,43 @@ they are accurate about *what* shipped but not about the day it shipped.
   at 4000 rpm and 54-63% at 6000 rpm to the redline; the target holds once reached. The exhaust pressure solve uses the
   same split, with the LP wheel held to its tip limit.
 - A compound now comes on boost as the frame alone does (1502 rpm on the Golf at 2.5 bar, was 1719): the HP stage no
-  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test220 checks the split.
+  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test222 checks the split.
 - Fingerprint identical (no preset is a compound).
 - Open: the HP shaft's own inertia and bearing drag (it settles at once), an LP gate, and the LP turbine's sizing
   (scaled by D^2 from the HP housing, it can make the whole ratio itself at high flow). The guide's Greek for the
   changed limit line is stale (Greek paused).
+
+### Regen power against measured EVs, researched (build 366)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test221` prints the comparison and checks the gap stays named.
+
+### A green baseline: test136 re-locked, test145 passes (build 365)
+
+Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
+
+- **test136** (the Teslas' locked motor figures) was failing since build 314. Run at each build, the moves come from
+  three merged builds, each intended and each in its own entry: 314 (Model 3 stator 226 → 225 mm, MotorXP) moved the
+  torque, knee, motor mass and peak hold (Model 3 424 → 426 Nm, 6627 → 6604 rpm, 55.18 → 54.66 kg, 37 → 29 s);
+  315 (jacket cooling) the continuous power (Model 3 259 → 282 kW, Model Y 316 → 336, Plaid 708 → 750); 354
+  (premium touring tyres) the Model 3's 0-100 (6.18 → 5.90 s). Re-locked to today's values, with the builds named
+  in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
+- **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
+- Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
+### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
+
+Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's travel ends.** Up to the bump rubber and down to full droop by the axle's type (`SUSP_GEO`: strut 70/80 mm, wishbone and multi-link 80/90, twist beam 85/95, solid axle 100/110; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 5). Past bump a progressive rubber, F = kb x / (1 − x/25 mm), kb the wheel rate (PROBABLE); at its solid height and at full droop the wheel is stopped on the body, so a lifted wheel hangs from it.
+- **Bound and rebound apart:** rebound 3× bound (passenger dampers ~3:1, Dixon, *The Shock Absorber Handbook*; PROBABLE), their mean the kit's damper, so the lap's quarter car is unchanged.
+- **`test220`** (new): a 200 mm step reaches the rubber and stops at its travel (M3 95 mm, MX-5 105 mm); a 300 mm hole leaves the wheel hanging at full droop off the road for 140–160 ms, never past it.
+- **`test205` updated, in the open:** a wheel falling into a 60 mm dip now falls against the rebound damping, so it is off the road 49–53 ms (44–47 before); its reference quarter car now uses the rebound damping too (51–55 ms).
+- **Left open:** travel by the kit (a lowered car keeps its type's), the damper's blow-off, the tyre's own damping.
 
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 

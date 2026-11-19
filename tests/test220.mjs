@@ -1,13 +1,10 @@
-// A compound turbo's split off its design point (build 364).
+// Bump stops, droop and bound/rebound damping in the stepped car (build 364, plans/small-physics.md step 1).
 //
-// WHY THIS EXISTS. Since build 294 a compound's two stages held their equal design split at every point, the HP shaft
-// tied to the LP one. Each shaft now balances on its own map (compoundNet, compoundSplit). On a designed compound (the
-// Golf GTI's frame, large, 2.5 bar) what must hold:
-//   · below the target, at the LP shaft's own balance, the LP stage makes well under half the ratio (in log terms),
-//     and less at low flow than where the target is held at high flow;
-//   · the engine holds its target from where it first reaches it to the redline (the total holds);
-//   · at the design ratio and the redline's flow, the steady split makes the design total with both wheels inside
-//     their tip limits.
+// WHY THIS EXISTS. Each corner's spring was linear without end: a wheel could rise through the body or hang below
+// it. What must hold, on a strut-fronted car (M3 E46) and a wishbone-fronted one (MX-5):
+//   · a 200 mm step up under the left front reaches the bump rubber but never passes its travel (bump + rubber);
+//   · the road falling 300 mm away under it leaves the wheel hanging at full droop (over 20 ms, off the road), never past it;
+//   · rebound damping is DAMPER_RB times bound, their mean the kit's damper (the lap's quarter car unchanged).
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -17,46 +14,36 @@ const page = await browser.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-await page.waitForTimeout(300);
 const fails = [];
-
-const r = await page.evaluate(() => {
-  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('Golf GTI (Mk7')));
-  applyEngineToForm(Object.assign({}, engine, { turboConfig: 'compound', boost_bar: 2.5, turboSize: 'large' })); buildEngine();
-  const e = engine, rows = [];
-  for (const rpm of [1000, 1500, 2500, 4000, 5000, 6000, e.redline]) {
-    const b = steadyBoost(rpm), tgt = boostTarget(rpm), T3 = exhaustGasT(1, rpm), m = airFlowAt(rpm, 1 + b), row = { rpm, b, tgt };
-    if (b < tgt - 1e-3) {                    // spooling: the LP shaft where its own net is zero
-      let lo = 0, hi = e.shaftMax;
-      for (let i = 0; i < 40; i++) { const n = (lo + hi) / 2; if (shaftNetPower(n, m, T3, 313, rpm).net > 0) lo = n; else hi = n; }
-      const q = shaftNetPower(lo, m, T3, 313, rpm); row.sL = q.sLP; row.sH = q.sHP;
-    } else { const sp = compoundSplit(m, m * 1.06, 1 + b, T3, 298, compFlowFrac(rpm, m)); row.sL = sp.sL; row.sH = sp.sH; }
-    rows.push(row);
+const R = await page.evaluate(() => {
+  const out = [];
+  for (const n of ['BMW M3 (E46', 'Mazda MX-5']) {
+    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
+    const car = driveCar(), o = { name: n, up: car.bumpF, top: car.bumpF + DRIVE_BUMP_RUBBER, dn: car.droopF, rb: DAMPER_RB };
+    const trav = s => s.zu[0] - s.heave - s.pitch * car.a - s.roll * car.tF / 2;   // the left front's, up on the body
+    const run = z => { const s = driveRolling(car, 60); let hi = -1, lo = 1, hang = 0;
+      for (let t = 0; t < 2; t += 0.001) stepCar(car, s, { steer: 0, throttle: 0.12, brake: 0 }, 0.001);
+      for (let t = 0; t < 0.6; t += 0.001) { stepCar(car, s, { steer: 0, throttle: 0.12, brake: 0, road: { z: [z, 0, 0, 0] } }, 0.001);
+        const c = trav(s); hi = Math.max(hi, c); lo = Math.min(lo, c);
+        // hanging: the tyre off the road, the wheel at full droop (within 1 mm: the body moves after the wheels in a step)
+        if (s.Fz[0] === 0 && Math.abs(c + car.droopF) < 1e-3) hang += 0.001; }
+      return { hi, lo, hang }; };
+    o.bump = run(0.2); o.drop = run(-0.3);
+    out.push(o);
   }
-  const red = e.redline, m = airFlowAt(red, 3.5), ff = compFlowFrac(red, m), T3 = exhaustGasT(1, red);
-  const sp = compoundSplit(m, m * 1.06, 3.5, T3, 298, ff);
-  const T1 = 298 * (1 + (Math.pow(sp.sL, 0.286) - 1) / compIslandEff(ff, sp.sL));
-  return { rows, d: { sL: sp.sL, sH: sp.sH, lpMax: compressorPR(e.lpExd, e.shaftMax, ff, 298).pr,
-    hpMax: compressorPR(e.compExd, maxShaftRpm(e.compExd), compoundHpFrac(ff, sp.sL, T1, 298), T1).pr } };
+  return out;
 });
 await browser.close();
-
-const share = x => Math.log(x.sL) / Math.log(x.sL * x.sH);
-for (const x of r.rows) console.log(`${String(x.rpm).padStart(5)} rpm: boost ${x.b.toFixed(3)} of ${x.tgt.toFixed(3)} bar, LP ${x.sL.toFixed(3)} x HP ${x.sH.toFixed(3)}, LP share ${(share(x) * 100).toFixed(0)}%`);
-const below = r.rows.filter(x => x.b < x.tgt - 1e-3), held = r.rows.filter(x => x.b >= x.tgt - 1e-3);
-if (below.length < 2 || !held.length) fails.push('the sweep does not cover both spooling and held points');
-const top = held[held.length - 1];
-for (const x of below) {
-  if (!(share(x) < 0.4)) fails.push(`${x.rpm} rpm: the LP stage makes ${(share(x) * 100).toFixed(0)}% of the ratio while spooling`);
-  if (top && !(share(x) < share(top))) fails.push(`${x.rpm} rpm: the LP share is not below the one at ${top.rpm} rpm`);
+const mm = x => (x * 1000).toFixed(1);
+for (const o of R) {
+  console.log(`${o.name.padEnd(14)} 200 mm up: highest ${mm(o.bump.hi)} mm (rubber from ${mm(o.up)}, travel ${mm(o.top)}); ` +
+    `300 mm down: lowest ${mm(o.drop.lo)} mm (droop ${mm(o.dn)}), hanging there off the road ${mm(o.drop.hang)} ms`);
+  if (!(o.bump.hi > o.up)) fails.push(`${o.name}: the step up never reaches the bump rubber`);
+  if (!(o.bump.hi <= o.top + 1e-6)) fails.push(`${o.name}: the wheel passes its bump travel`);
+  if (!(o.drop.lo >= -o.dn - 1e-6)) fails.push(`${o.name}: the wheel hangs past full droop`);
+  if (!(o.drop.hang > 0.02)) fails.push(`${o.name}: the lifted wheel does not hang at full droop`);
+  if (!(o.rb > 1)) fails.push(`${o.name}: rebound is not stiffer than bound`);
 }
-const first = r.rows.findIndex(x => x.b >= x.tgt - 1e-3);
-if (first >= 0 && r.rows.slice(first).some(x => x.b < x.tgt - 1e-3)) fails.push('the target is not held to the redline once reached');
-console.log(`design ratio 3.5 at the redline: LP ${r.d.sL.toFixed(3)} (limit ${r.d.lpMax.toFixed(3)}) x HP ${r.d.sH.toFixed(3)} (limit ${r.d.hpMax.toFixed(3)})`);
-if (Math.abs(r.d.sL * r.d.sH / 3.5 - 1) > 1e-6) fails.push('the steady split does not make the design total');
-if (r.d.sL > r.d.lpMax + 1e-9 || r.d.sH > r.d.hpMax + 1e-9) fails.push('a wheel passes its tip limit at the design point');
-
-if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
-if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
-else console.log('\nOK: the LP stage lags the HP one off the design point, and the total holds.');
-process.exit(fails.length || errors.length ? 1 : 0);
+for (const e of errors) fails.push(e);
+if (fails.length) { console.log('\nFAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
+console.log('\nPASS');

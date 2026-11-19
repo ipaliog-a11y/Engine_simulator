@@ -14,6 +14,8 @@ reporting its range. Sourcing is batched apart from physics.
   open, or fix it.
 - `test145` (engine wear and coolant at full load; ~6 min) was reported failing on `main` at build ~320. Rerun it, then
   treat it the same way.
+  *Build 365:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
+  test145 passes on `main` (fixed by builds 336-337). Nothing left open here.
 - Not physics, noted only: `test42` (3 untranslated starter messages, Greek paused), `test64` (the track map never
   draws the car sprite), `test125` (folded LIVE OUTPUT at 21%, not a third).
 
@@ -22,6 +24,8 @@ reporting its range. Sourcing is batched apart from physics.
 1. **Bump stops and droop.** Travel by suspension type (Reimpell), a progressive bump rubber past it, and the wheel
    hanging free at full droop. Bound and rebound damping apart, from the damper part's ratio (typical about 1:3,
    PROBABLE; Dixon, *The Shock Absorber Handbook*).
+   *Build 364:* done (travel by `SUSP_GEO` type, rubber 25 mm, rebound 3× bound about the kit's mean; `test220`).
+   Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
@@ -60,6 +64,9 @@ reporting its range. Sourcing is batched apart from physics.
 12. **Regen power against measured EVs.** A research build: published regen kW limits (Tesla, E-GMP, MEB), the
     coast-down and one-pedal measurements (SAE 2023-01-0623), and the friction brakes blending in at low speed.
     `evRegenTable` changes only if it misses.
+    *Build 366:* researched (`plans/vehicle-challenges.md`); the table is 1.2–1.7× the measured regen kW and ~3× the
+    measured slowing at low speed, set by makers' calibration, not physics. Code unchanged; the fix (a sourced rule per
+    maker, moving every EV) waits on the owner.
 
 ## 6. Engine details
 
@@ -69,7 +76,7 @@ reporting its range. Sourcing is batched apart from physics.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
-    *Build 364:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
+    *Build 367:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
     Open: the HP shaft's inertia and bearings, an LP gate, the LP turbine's sizing.
 
 ## Sourcing batch (apart from physics)

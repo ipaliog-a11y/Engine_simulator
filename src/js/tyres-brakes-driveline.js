@@ -427,12 +427,16 @@ function trackRoad(key){const T=TRACKS[key];return T&&T.road?T.road:TRACK_ROAD_O
 //     beams 100-150: Wang et al., K&C of a torsion beam suspension, VEHITS 2019); a solid axle's Panhard rod, Watt's
 //     link or leaf springs locate it at its own wheel centre (rc null: the rolling radius).
 //   front:false — a twist beam cannot steer. cost — fitting it where the car did not have it.
+//   bump, droop (m, build 364) — the wheel's travel from its static ride height up to the bump rubber and down to full
+//     droop (the damper's rebound stop). Passenger cars run ~70-100 mm each way at the wheel; a strut's travel is
+//     bounded by its own length, so the least, and a solid axle's beam needs the most (Reimpell et al., The Automotive
+//     Chassis, ch. 5, spring travel: PROBABLE by type, no maker publishes each car's).
 const SUSP_GEO={
-  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500},
-  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500},
-  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500},
-  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500},
-  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000}
+  strut:    {label:'MACPHERSON STRUT',fvsa:3.0,rc:0.08, front:true, cost:2500,bump:0.070,droop:0.080},
+  wishbone: {label:'DOUBLE WISHBONE', fvsa:1.6,rc:0.06, front:true, cost:5500,bump:0.080,droop:0.090},
+  multilink:{label:'MULTI-LINK',      fvsa:2.0,rc:0.10, front:true, cost:4500,bump:0.080,droop:0.090},
+  twist:    {label:'TWIST BEAM',      recov:0.4,rc:0.125,front:false,cost:1500,bump:0.085,droop:0.095},
+  solid:    {label:'SOLID AXLE',      recov:1,  rc:null, front:true, cost:2000,bump:0.100,droop:0.110}
 };
 // The real cars' suspension (front, rear) and front and rear track (m). Sources: maker sheets where found
 // (BMW media 2012, Porsche US 2021, GM, Nissan heritage), spec databases (carsales/Redbook, carexpert, conceptcarz,

@@ -747,7 +747,7 @@ function manifoldPR(mAir,mEx,mapBar,T3,area,compEta,flowFrac){
   for(let i=0;i<40;i++){const m=(lo+hi)/2;if(tPower(m)<pComp)lo=m;else hi=m;}
   return hi;
 }
-// A compound's manifold at boost mapBar (build 364): the split that balances both shafts (compoundSplit), then the HP
+// A compound's manifold at boost mapBar (build 367): the split that balances both shafts (compoundSplit), then the HP
 // turbine's share of the exhaust that supplies its compressor (the gate bypasses the rest).
 function compoundManifoldPR(mAir,mEx,mapBar,T3,compEta,flowFrac){
   const e=engine, pr=Math.max(1,mapBar), ff=flowFrac>0?flowFrac:mAir/Math.max(1e-9,e.chokeFlow_kgs);
@@ -933,7 +933,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
   const Pc=compPowerAt(mA,prCap,T01,eta);
   return{net:Pt-Pc,pr:pMan,prRaw:pr-dp,eta,Pt,Pc,turbArea:area};
 }
-// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 364) ----
+// ---- COMPOUND: two stages in series (build 294; the split off its design point, build 367) ----
 // A large low-pressure (LP) turbo feeds a small high-pressure (HP) one; the frame the build chose is the HP stage, and
 // the exhaust runs through the HP turbine, then the LP turbine. It was one frame with 2.30 of its flow.
 // SIZING. A two-stage system is matched with the pressure ratio split equally between the stages (Watson & Janota,
@@ -942,7 +942,7 @@ function shaftNetPower(shaftRpm,mAir,T3,T01,rpm){
 // inlet is the LP stage's outlet (s, T1), so
 //     D_LP / D_HP = (s / sqrt(T1/T0))^(1/2),   T1/T0 = 1 + (s^0.286 - 1)/eta,  eta the island's peak.
 // The LP turbine and its housing scale with its wheel as a frame's do (A/R is a length, so the throat goes as D^2).
-// OFF THE DESIGN POINT (build 364). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
+// OFF THE DESIGN POINT (build 367). Each shaft is its own: each stage's compressor runs on its own map (compressorPR,
 // the HP one at the LP outlet's pressure and temperature, so its corrected flow is m sqrt(T1)/p1) and each turbine on
 // its own nozzle (the HP one first, the LP one on what the HP one left). The LP shaft is the state; the HP shaft, about
 // a third of its inertia (D^5), is taken as settled at its own balance at every point, turbine against compressor.
