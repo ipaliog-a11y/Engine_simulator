@@ -1,59 +1,62 @@
-// Rich mixtures cool the exhaust; the ECU holds the turbine's limit (plans/small-physics.md step 13).
+// Import-vehicle skill: research validator and accuracy helper (build 377).
 //
-// WHY THIS EXISTS. Until this build the exhaust rich of stoichiometric only lost the extra work, so enrichment barely
-// cooled it and the ECU never read it. What must hold:
-//   · exhaustGasT falls steadily from lambda 1 to 0.78, and the excess fuel's evaporation is part of it (a fuel with a
-//     larger heat of vaporization cools more rich, and not at all at lambda 1);
-//   · the gas at the turbine inlet is cooler than at the port, by the manifold's heat loss;
-//   · on the Golf GTI, the ECU enriches where its turbine inlet would pass TURB_T_LIMIT: at full load it holds the limit
-//     wherever its mixture is leaner than LAMBDA_KNOCK_MIN; on the 993 Turbo (hottest preset) it reaches LAMBDA_KNOCK_MIN;
-//   · the boost is never lowered for the exhaust (owner's decision: enrichment only until EGT's load factor is derived);
-//   · the guard is the ECU's only: a fixed mixture or an NA engine has none.
-import { chromium } from './pw.mjs';
-import { fileURLToPath, pathToFileURL } from 'url';
+// WHY THIS EXISTS. Agents import real cars via `.cursor/skills/import-vehicle/`. The skill's
+// validate-research script must accept a known-good research entry (batch-1 Ferrari F40), and
+// check-accuracy must load a shipped factory car and exit 0 inside the documented bands.
+// What must hold:
+//   · the skill's SKILL.md names the workflow and the hard rules;
+//   · validate-research.mjs exits 0 on the F40 research entry written to a temp file;
+//   · check-accuracy.mjs exits 0 on "Ferrari F40 (1987)" (already in the game, medium confidence).
+import { execFileSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 import path from 'path';
+import os from 'os';
+
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const browser = await chromium.launch();
-const page = await browser.newPage();
-const errors = [];
-page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const r = await page.evaluate(() => {
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /\(993,/.test(p.name)));
-  const e = engine, rpm = 0.8 * e.redline, lams = [1, 0.95, 0.9, 0.85, 0.8, 0.78];
-  const T = l => exhaustGasT(1, rpm, l, 0);
-  const curve = lams.map(T);
-  const h0 = e.fuelHfg; e.fuelHfg = 2 * h0;
-  const hot = { l1: T(1), l8: T(0.8) }; e.fuelHfg = h0;
-  const pull = () => { let maxT = 0, minL = 9, over = 0, inlet = 1;
-    for (let n = 1500; n <= e.redline; n += 250) {
-      const m = wotMapAt(n), l = curAFR(n, m) / e.stoichAFR, Tp = egtAt(n, m), Ti = turbineInletT(n, m, l, Tp);
-      maxT = Math.max(maxT, Ti); minL = Math.min(minL, l); inlet = Math.min(inlet, Tp - Ti);
-      if (Ti > TURB_T_LIMIT + 2 && l > LAMBDA_KNOCK_MIN + 0.002) over++;
-    } return { maxT, minL, over, inlet }; };
-  const turbo = pull();
-  const cut = e.knockLimTable ? e.knockLimTable.some(x => x.bar < e.maxBoost) : false;
-  const guarded = ecuGuardsTurbine();
-  e.afrMode = 'fixed'; const fixed = ecuGuardsTurbine(); e.afrMode = 'auto';
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /Golf GTI \(Mk7/.test(p.name)));
-  const golf = pull();
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /S2000/.test(p.name)));
-  return { curve, hot, l1: curve[0], l8: curve[4], turbo, golf, cut, guarded, fixed, na: ecuGuardsTurbine(), lim: TURB_T_LIMIT, lmin: LAMBDA_KNOCK_MIN };
-});
-await browser.close();
-const fails = [...errors], C = k => (k - 273.15).toFixed(0);
-console.log(`== 993 Turbo at 80% redline, EGT by lambda 1..0.78: ${r.curve.map(C).join(', ')} °C ==`);
-for (let i = 1; i < r.curve.length; i++) if (!(r.curve[i] < r.curve[i - 1])) fails.push(`EGT does not fall from lambda step ${i - 1} to ${i}`);
-console.log(`== twice the heat of vaporization: lambda 1 ${C(r.hot.l1)} (was ${C(r.l1)}), lambda 0.8 ${C(r.hot.l8)} (was ${C(r.l8)}) °C ==`);
-if (r.hot.l1 !== r.l1) fails.push('evaporation moves the exhaust at lambda 1');
-if (!(r.hot.l8 < r.l8 - 1)) fails.push('evaporation does not cool the rich exhaust');
-for (const [n, x] of [['993 Turbo', r.turbo], ['Golf GTI', r.golf]]) {
-  console.log(`== ${n} at full load: turbine inlet up to ${C(x.maxT)} °C (limit ${C(r.lim)}), richest λ ${x.minL.toFixed(3)}, manifold cools ≥ ${x.inlet.toFixed(0)} K ==`);
-  if (x.over) fails.push(`${n}: ${x.over} points pass the limit while the ECU could still enrich`);
-  if (!(x.inlet > 0)) fails.push(`${n}: the turbine inlet is not cooler than the port`);
+const fails = [];
+const skill = path.join(repo, '.cursor/skills/import-vehicle');
+const skillMd = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf8');
+if (!/^---\nname: import-vehicle\n/m.test(skillMd)) fails.push('SKILL.md missing name frontmatter');
+if (!/Derive, do not fit/i.test(skillMd)) fails.push('SKILL.md missing derive-do-not-fit rule');
+if (!/check-accuracy\.mjs/.test(skillMd)) fails.push('SKILL.md does not point at check-accuracy.mjs');
+
+const pack = JSON.parse(fs.readFileSync(path.join(repo, 'research/vehicles-batch-1/vehicles.json'), 'utf8'));
+const f40 = pack.vehicles.find(v => v.name === 'Ferrari F40 (1987)');
+if (!f40) fails.push('batch-1 has no Ferrari F40 to use as a validator fixture');
+else {
+  const tmp = path.join(os.tmpdir(), 'pes-import-vehicle-f40.json');
+  // The car already exists in presets; the validator would fail on duplicate name. Rename for the shape check.
+  // Keep the real engine name; mark existing so the validator does not demand a new PRESETS slot.
+  const sample = Object.assign({}, f40, {
+    name: 'IMPORT-VEHICLE-SKILL-FIXTURE F40',
+    id: 'import-vehicle-skill-fixture-f40',
+    engineStatus: 'existing',
+  });
+  delete sample.enginePreset;
+  fs.writeFileSync(tmp, JSON.stringify(sample));
+  try {
+    const out = execFileSync('node', [path.join(skill, 'scripts/validate-research.mjs'), tmp], { encoding: 'utf8' });
+    console.log('== validate: ' + out.trim() + ' ==');
+  } catch (e) {
+    fails.push('validate-research failed: ' + (e.stderr || e.stdout || e.message).toString().slice(0, 400));
+  } finally {
+    try { fs.unlinkSync(tmp); } catch (_) {}
+  }
 }
-if (!(r.turbo.minL <= r.lmin + 1e-6)) fails.push('the 993 Turbo is never enriched to the floor');
-if (r.cut) fails.push('the boost is lowered on the 993 Turbo');
-if (!r.guarded || r.fixed || r.na) fails.push(`guard: ECU ${r.guarded}, fixed mixture ${r.fixed}, NA ${r.na}`);
-console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
-process.exit(fails.length ? 1 : 0);
+
+try {
+  const out = execFileSync('node', [path.join(skill, 'scripts/check-accuracy.mjs'), 'Ferrari F40 (1987)'], {
+    encoding: 'utf8', timeout: 120000,
+  });
+  console.log(out.trim().split('\n').map(l => '== ' + l + ' ==').join('\n'));
+} catch (e) {
+  fails.push('check-accuracy F40 failed: ' + (e.stderr || e.stdout || e.message).toString().slice(0, 500));
+}
+
+if (fails.length) {
+  console.log('\nFAIL:\n  ' + fails.join('\n  '));
+  process.exit(1);
+}
+console.log('\nOK: import-vehicle skill scripts validate research and check a real car.');
+process.exit(0);

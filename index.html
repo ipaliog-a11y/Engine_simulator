@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 381</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 382</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4191,7 +4191,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 // diesel: Heywood Internal Combustion Engine Fundamentals, typical CH1.87 / CH1.80. Methanol is
 // CH3OH. E85: 85/15 by volume ethanol/gasoline, converted to a C-basis average (ethanol dens
 // 0.789, gasoline 0.745; ethanol C2H6O → hc 3, oc 0.5 per C).
-// hfg = heat of vaporization, kJ/kg (build 380; what fuel rich of stoichiometric takes from the exhaust): Heywood,
+// hfg = heat of vaporization, kJ/kg (build 382; what fuel rich of stoichiometric takes from the exhaust): Heywood,
 // Internal Combustion Engine Fundamentals, App. D, Table D.4: gasoline 350, methanol 1103, ethanol 840, light diesel
 // 270. Race gas taken as gasoline's, E85 as 0.83 ethanol by mass (PROBABLE).
 const FUELS={
@@ -4576,7 +4576,7 @@ function exhaustGasT(load,rpm,lambda,retard){
   // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
   // at one assumed mixture per load.
   // Per kg of air: the gas heated is the air AND all the fuel supplied (it was the air alone until build 101, and the
-  // fuel burned only until build 380), and the excess fuel's evaporation comes out of it (the burned share's is inside
+  // fuel burned only until build 382), and the excess fuel's evaporation comes out of it (the burned share's is inside
   // the LHV, a liquid fuel's). That is how a rich mixture cools the exhaust beyond the cap (Heywood, Internal
   // Combustion Engine Fundamentals, ch. 4 on rich products and ch. 14 on exhaust temperature); the rest of the cooling
   // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
@@ -4657,7 +4657,7 @@ function portLossShare(n,lam,f0){
   const q=h*Math.PI*D*L*nEx*(Tg-T_WALL)*open;                                       // W per cylinder
   return q/Math.max(1e-6,air/afr*(e.fuelLHV||44)*1e6);
 }
-// The gas at the turbine inlet (build 380): the port's gas cooled along the manifold runner to the turbine flange,
+// The gas at the turbine inlet (build 382): the port's gas cooled along the manifold runner to the turbine flange,
 // T = T_w + (T_port - T_w) exp(-h A / (m cp)), with h from the same Caton & Heywood correlation as the port (a runner is
 // the port's flow carried on; PROBABLE), the runner the port's bore and MANIFOLD_L long, its flow the port's while the
 // valve is open (portLossShare), at this manifold pressure. MANIFOLD_L 0.30 m: port face to turbine flange on a
@@ -5604,7 +5604,7 @@ function steadyBoost(rpm){
   // point — so the dyno and the bench spooled on different physics. What really does make low-rpm
   // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
   // A petrol engine's mixture is 1 here: rich of stoich cools it a little (exhaustGasT), which the shaft does not
-  // see yet (named open in build 380).
+  // see yet (named open in build 382).
   const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
   const nMax=e.shaftMax||maxShaftRpm(e.compExd);
   const canHold=pr=>{
@@ -10519,7 +10519,7 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 380), but only by
+// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 382), but only by
 // ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
@@ -10937,7 +10937,7 @@ function knockEnrichLambda(rpm,map,base){
   _knockCache.m.set(key,lam);
   return lam;
 }
-// ---- The turbine's temperature limit (build 380) ----
+// ---- The turbine's temperature limit (build 382) ----
 // A turbo petrol ECU models the exhaust at the turbine and protects it: it enriches (the excess fuel's evaporation and
 // mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN. TURB_T_LIMIT is the owner's 950 C, a
 // cast turbine housing's usual continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C),

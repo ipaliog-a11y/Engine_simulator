@@ -36,7 +36,7 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decis
   6.48 → 6.52%).
 - **Known-gap floors lowered** (owner's decision; the cooling is real physics, these engines already read too cool, a
   missing heat term): test46 1.6 Sport NA I4 815 → 805 °C and Renesis 840 → 830 °C; test47 Renesis 840 → 830 °C and
-  500cc 2-stroke 760 → 750 °C. `test230` (new) checks the cooling, the inlet and the enrichment.
+  500cc 2-stroke 760 → 750 °C. `test232` (new) checks the cooling, the inlet and the enrichment.
 - Left open: **the boost cut**. About 15 hot turbo presets stay over 950 °C at the turbine inlet at λ 0.78 (993 Turbo
   ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
   since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'

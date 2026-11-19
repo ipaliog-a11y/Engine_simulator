@@ -177,7 +177,7 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 380), but only by
+// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 382), but only by
 // ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
@@ -595,7 +595,7 @@ function knockEnrichLambda(rpm,map,base){
   _knockCache.m.set(key,lam);
   return lam;
 }
-// ---- The turbine's temperature limit (build 380) ----
+// ---- The turbine's temperature limit (build 382) ----
 // A turbo petrol ECU models the exhaust at the turbine and protects it: it enriches (the excess fuel's evaporation and
 // mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN. TURB_T_LIMIT is the owner's 950 C, a
 // cast turbine housing's usual continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C),

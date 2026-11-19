@@ -6,7 +6,7 @@
 // diesel: Heywood Internal Combustion Engine Fundamentals, typical CH1.87 / CH1.80. Methanol is
 // CH3OH. E85: 85/15 by volume ethanol/gasoline, converted to a C-basis average (ethanol dens
 // 0.789, gasoline 0.745; ethanol C2H6O → hc 3, oc 0.5 per C).
-// hfg = heat of vaporization, kJ/kg (build 380; what fuel rich of stoichiometric takes from the exhaust): Heywood,
+// hfg = heat of vaporization, kJ/kg (build 382; what fuel rich of stoichiometric takes from the exhaust): Heywood,
 // Internal Combustion Engine Fundamentals, App. D, Table D.4: gasoline 350, methanol 1103, ethanol 840, light diesel
 // 270. Race gas taken as gasoline's, E85 as 0.83 ethanol by mass (PROBABLE).
 const FUELS={
