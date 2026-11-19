@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### An ECU laptop on the bench (build 390)
+
+- LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.
+- F2 puts the fuel, spark and VE tables on the bench. The running cell stays outlined. −5, −1, +1 and +5 step the selected cell, and HOLD CELL sets the dyno brake from that cell's rpm. OPEN ECU MAPS on the fuel card comes straight here. On BUILD the tables stay where they were.
+- F3 lists the same faults as the check-engine lamp, plus the engine diagnosis, and REPRODUCE FREEZE FRAME puts a stored code's coolant, load and throttle back on the sliders.
+- F4 shows the live torque and power against the logged pull, or the speed, rpm and lateral g of a recorded lap.
+- On a phone the laptop is a drawer opened with ECU, so the throttle and the brake stay on screen.
+
 ### BUILD, TEST and DRIVE stay apart on a phone and a wide screen (build 389)
 
 - The tab bar followed BUILD, then DRIVE, then TEST. It now follows the work: BUILD (engine, vehicle, parts, garage), TEST (live, dyno), DRIVE (track, race, championship, challenges), then GUIDE and OPTIONS.

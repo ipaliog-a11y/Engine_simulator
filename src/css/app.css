@@ -775,6 +775,23 @@ body.guided-open{overflow:hidden}
 #modeCurtain.go{animation:modeCurtain 180ms steps(4) forwards}
 @keyframes modeCurtain{0%{opacity:.4;clip-path:inset(0 0 100% 0)}100%{opacity:0;clip-path:inset(0)}}
 @media(prefers-reduced-motion:reduce){#modeCurtain.go{animation:none}}
+.ecu{margin-top:8px;background:#101018;border:4px solid #3a3a4a}
+.ecu-bezel{padding:8px}
+.ecu-top,.ecu-keys{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.ecu-top b{color:var(--mode-accent);font-weight:normal}
+.ecu-led{display:inline-flex;gap:4px;align-items:center;font-size:7px;color:#667}
+.ecu-led i{width:8px;height:8px;background:#222;border:1px solid #444}
+.ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
+.ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
+.ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
+.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+.ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
+[data-ecu-hide]{display:none!important}
+#btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
+@media(max-width:900px),(max-height:520px){
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+}
 @media(pointer:coarse){
   .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
 }
