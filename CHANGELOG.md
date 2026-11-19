@@ -26,6 +26,19 @@ Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is i
 - **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
 - **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
 - **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
+### The lap's torque and the race's energy price at the pack's own temperature (build 373)
+
+Step 10 of `plans/small-physics.md`, build 346's follow-up.
+- **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
+  pack's power at its temperature over 25 °C (`evPackGain`). Warmer cells have less resistance, so where the pack's
+  power is the limit the drive gives a little more: a Model Y up to +1.4% at 45 °C.
+- **The race:** the pace grid keeps the cells' heat (at 25 °C, half charge) apart in its price; each step the race
+  swaps it for the heat at the pack's own temperature and charge. 150 kW from a Model Y at 45 °C: 0.4% less energy.
+- Fingerprint against `main`: only the three Teslas' lap times move, by −0.003 to +0.001% (Model Y 77.859 → 77.857 s).
+  No top speed, ICE car or hybrid moves. `test226` (new) checks it.
+- Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
+  and the motor bench stay at 25 °C.
+
 ### test174: ESP is judged at FMVSS 126's final run, where the Model 3 still spins (build 372)
 
 - test174 failed since build 354: on its premium touring tyres the Model 3 no longer spins at 6.5 times the 0.3 g
