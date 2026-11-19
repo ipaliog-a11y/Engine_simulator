@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 399)
+### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 401)
 
 Step 11 of `plans/small-physics.md`.
 - **Bench:** a start's crank energy comes from the pack (MG1's, or a P2 motor's through its clutch, with losses) and a stop's comes back. On a power-split, MG2 cancels the ring's reaction to MG1 (kr of its crank torque), so the shaft feels none of it. Prius bench start draws 1.16 kJ, stop from 876 rpm returns 0.77 kJ (was 0 both).
@@ -27,6 +27,38 @@ Step 11 of `plans/small-physics.md`.
 - **Lap balance:** a lap whose deploy does not settle in twelve rounds now bisects the share between none and the last tried, keeping the largest that settles. The Prius's deploy over its share is not monotonic near 5%, and with its starts' ~8 kJ no share there balances; it settles at 0 (motor regenerating, not deploying). Laps that settled before are unchanged.
 - **Replay sound:** a start is spun up unfuelled from rest to idle, a stop runs down unfuelled from the speed it ran at; a restart before the run-down ends refires at once.
 - Left open: `hybridCycle` (WLTC, economy roads) has no start cost: its per-second choice has no memory of the engine's state, and ~0.4 kJ net a start is under its 0.5%-of-pack tolerance; WLTC and economy figures do not move. The lap's fuel and time still fire at once; its engine speeds above idle carry no inertia.
+
+### The economy run plans its own speed: a distance DP, and honest fuel at full load (build 400)
+
+- Engine cars and EVs on the economy roads now get their speed plan from a dynamic programme over distance (`ecoDP`,
+  `eco-run.js`): ~50 m stages, speed on a 0.5 m/s grid, least fuel (or pack energy) + λ × time, λ bisected until the
+  finish meets the target, under the fastest run's speeds and with braking up to 4 m/s². It finds pulse-and-glide
+  where it pays: on a flat 5 km at 3 × its fastest time the MX-5 swings 67–76 km/h and uses 6% less than a steady
+  speed (Li, Li, Wang & Peng, ACC 2011); the Model 3 holds a steady speed and coasts to the line. The eco driver
+  (build 352) is now the fallback when the DP finds no plan for the target. Hybrids keep the eco driver (left open).
+- `ecoFuelKg` had two holes, closed here because the DP used them: a demand past the fuel map's full load cost
+  3 × idle fuel (the map has no fuel past its own full load), and every glide was free and drag-free. Now the first is
+  charged pro rata at full-load BSFC, and a glide gentler than the weakest engine braking is in neutral at idle fuel.
+  The old eco driver's Alpine climb priced at ~200% engine efficiency; it is now ~31%.
+- What moved (Alpine and the Dragon, 190 engine and EV runs): the pricing fix alone raises the eco driver's figures
+  by a median of 68%, and the DP then saves 9–32% (median 20%) against the eco driver on the same pricing. Across the
+  six roads and all 570 engine and EV runs, before → after: engine cars −28% to +211% (median +24%; the largest rises
+  are fast turbo cars on Alpine, e.g. GT-R 9.1 → 28.3 L/100 km); EVs −32% to −8% (median −25%). The 30 hybrid runs
+  are unchanged. Finish time is 99.3–100% of the target. Per car: the PR's table.
+- Solve time (uncontended, the slowest roads): engine cars are faster than before (MX-5 Napoléon 2.7 → 1.2 s,
+  Hellcat 3.4 → 1.4 s, because the four capped eco solves no longer run); EVs up to +0.6 s (Model 3 Highland
+  1.2 → 1.7 s). The slowest economy solves are still the hybrids' (build 383's path, unchanged here): the Qashqai e-POWER on
+  Napoléon takes ~32 s.
+- Left open: no DP for hybrids (the ECMS would make the state two-dimensional); nothing finer than a 50 m stage;
+  WLTC keeps its old full-load fallback and overrun rule (`fuel-cycle.js`), so the WLTC figures do not move.
+  Fingerprint identical (5208 values).
+
+
+### Spiral skid pad and a figure 8 (build 399)
+
+- **Spiral Skid Pad** (`spiral`): one counter-clockwise turn of an Archimedean spiral, from 12 m out to the skid pad's own radius (30.48 m). The line's speed is sqrt(ay × ρ), with ρ the local radius of curvature, so the car is asked to go faster as the bend opens. ay is searched. On an MX-5 the held run is 36 → 58 km/h, 0.86 g at the exit; 1 km/h faster it runs wide.
+- **Figure 8** (`fig8`): Bernoulli's lemniscate, one loop each way. Curvature is zero at the crossing and tightest at the outer bends, set to half the skid pad's radius (15.24 m). The score is the highest constant speed that stays in the 1 m lane. An MX-5 holds 43 km/h (0.95 g at the bend, 0.55 g averaged over the whole figure, because the crossing is straight).
+- Same driver and the same 1 m lane as the skid pad. The speed loop still sits a little under a rising target, so the spiral's exit g is under the g it was asked. TIGHT is left of the line (toward the centre on the spiral); WIDE is right.
 
 ### The lap instruments show the shift and the brakes (build 398)
 
@@ -89,6 +121,7 @@ Step 11 of `plans/small-physics.md`.
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
+
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 399
+# PIXEL POWERTRAIN v0.8 build 401
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -305,7 +305,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     accelerates at its engine's best-BSFC point, shifts up early and slows on engine braking in fuel cut; an
     EV accelerates at its motor's most efficient torque and slows on regen where it can; a hybrid's fuel comes
     from its WLTC energy manager on the road (pack out and back, engine-off time). A speed cap and a
-    blend toward the car's full grip and power (shown as ECO BLEND) make the time; the cheapest is kept.
+    blend toward the car's full grip and power (shown as ECO BLEND) make the time. Engine cars and EVs also get
+    a **distance DP**: an optimal speed plan over the whole road (least fuel or energy for the time), which can
+    pulse-and-glide and lift before climbs and corners (shown as ECO DRIVER DP); the eco driver is its fallback.
   - **Fixed-time stage** — the same set time for every car on each road (a Golf GTI Mk7's best plus 2%).
     The car's fastest run from a standing start either makes it or is a **DNF**.
   - **Moose avoidance** — the ISO 3888-2 double lane change, at the **best clear speed** (raised until a cone
@@ -328,6 +330,10 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     or viscous coupling sends torque forward as the rear slips. Loose surfaces are not modelled.
   - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
     magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
+  - **Spiral Skid Pad** — one turn from a 12 m bend out to that same radius. The target speed rises with the
+    bend's radius of curvature; the score is the exit speed. TIGHT is toward the centre, WIDE the outside.
+  - **Figure 8** — a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight.
+    The score is the highest speed held through both loops.
   - **RANK CARS** runs several cars (this build, garage builds, factory cars) through the selected challenge
     with the same settings, one car at a time with a progress bar and CANCEL, and lists them passes first,
     then by the challenge's own score (economy by tank or pack energy in MJ, so engine cars and EVs share a scale).
