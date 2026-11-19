@@ -89,6 +89,8 @@ reporting its range. Sourcing is batched apart from physics.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
+    *Build 375:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
+    Open: the HP shaft's inertia and bearings, an LP gate, the LP turbine's sizing.
 
 ## Sourcing batch (apart from physics)
 
