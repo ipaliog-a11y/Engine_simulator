@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 376</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 377</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -12038,7 +12038,7 @@ const LAMINATION={'0.35':{mm:0.35,label:'0.35 mm',premium:0},'0.20':{mm:0.2,labe
 // REGENERATION uses: all the motor and the pack can take back, half of that, or none. The table still starts
 // at 500 rpm, so a stop fades out at any of the three.
 const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
-// The maker's calibration (build 376, step 12b): real EVs regenerate far less than the motor and the pack allow. Per maker,
+// The maker's calibration (build 377, step 12b): real EVs regenerate far less than the motor and the pack allow. Per maker,
 // named by the drive's evMaker (set on the factory drives; a hidden field, so it survives a rebuild and a save): g, the most regen alone slows the car (lift-off, or blended under the pedal where
 // the maker blends; friction brakes do the rest), and kW, its power limit (null: the pack's charge power only). HIGH is
 // the rule; LOW halves it (Tesla Low −0.11 g against Standard −0.21 g, SAE 2020-01-0883, so k = 0.5 holds).

@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A sourced regen cap per maker (build 376)
+### A sourced regen cap per maker (build 377)
 
 Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
 - **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
