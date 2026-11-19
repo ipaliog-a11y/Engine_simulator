@@ -186,6 +186,11 @@ const raceEventText=(R,e)=>{
     case 'dive':return e.ok?nm(e.car)+' '+tr('dives down the inside of')+' '+nm(e.on):nm(e.car)+' '+tr('runs wide trying to pass')+' '+nm(e.on);
     case 'defend':return nm(e.car)+' '+tr('defends from')+' '+nm(e.from);
     case 'blue':return tr('Blue flag')+': '+nm(e.car);
+    case 'blue_ignore':return tr('Blue flag ignored')+': '+nm(e.car)+' (+'+(e.pen||0)+' s)';
+    case 'vsc':return tr('VIRTUAL SAFETY CAR');
+    case 'vsc_end':return tr('VSC END');
+    case 'chequered':return tr('CHEQUERED FLAG');
+    case 'min_stops':return nm(e.car)+' — '+tr('pit stop short')+' (+'+(e.pen||0)+' s)';
     case 'dnf':return nm(e.car)+' — '+tr('OUT')+' ('+tr(e.why)+')';
     case 'finish':return 'P'+e.pos+' '+nm(e.car)+' — '+tr('FINISH');
     default:return '';
