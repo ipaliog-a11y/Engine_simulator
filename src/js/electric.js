@@ -82,6 +82,25 @@ const LAMINATION={'0.35':{mm:0.35,label:'0.35 mm',premium:0},'0.20':{mm:0.2,labe
 // REGENERATION uses: all the motor and the pack can take back, half of that, or none. The table still starts
 // at 500 rpm, so a stop fades out at any of the three.
 const EV_REGEN={off:{label:'OFF',k:0},low:{label:'LOW',k:0.5},high:{label:'HIGH',k:1}};
+// The maker's calibration (build 378, step 12b): real EVs regenerate far less than the motor and the pack allow. Per maker,
+// named by the drive's evMaker (set on the factory drives; a hidden field, so it survives a rebuild and a save): g, the most regen alone slows the car (lift-off, or blended under the pedal where
+// the maker blends; friction brakes do the rest), and kW, its power limit (null: the pack's charge power only). HIGH is
+// the rule; LOW halves it (Tesla Low −0.11 g against Standard −0.21 g, SAE 2020-01-0883, so k = 0.5 holds).
+const EV_REGEN_RULES=[
+  // Tesla: lift-off is the only regen (the brake pedal is friction only: owners' reports, PROBABLE); −0.21 g steady on
+  // two Model 3s (Siddiqui et al., SAE 2020-01-0883). Plaid ~90 kW (evkx.net listing: PROBABLE).
+  {id:'tesla-plaid',maker:'Tesla',g:0.21,kW:90},
+  // Model 3 ~77 kW (InsideEVs, Taycan regen article, year not given: PROBABLE); the Model Y takes the Model 3's (PROBABLE).
+  {id:'tesla',maker:'Tesla',g:0.21,kW:77},
+  // Hyundai E-GMP: regen blended under the pedal to ~0.4 g, friction beyond (Hyundai engineer, The Brake Report,
+  // "Ioniq 5's sophisticated regen system"); no kW limit published.
+  {id:'egmp',maker:'Hyundai',g:0.4,kW:null},
+  // VW MEB: electric braking alone to ~0.3 g, "over 100 kW" (VW newsroom, "Brake energy recuperation"): no kW cap set.
+  {id:'meb',maker:'VW',g:0.3,kW:null}
+];
+// No source (a garage-built drive, or a maker not listed): MEB's 0.3 g, between Tesla's lift-off and E-GMP's blend.
+const EV_REGEN_DEFAULT={id:'',maker:'',g:0.3,kW:null};
+const evRegenRule=e=>EV_REGEN_RULES.find(r=>r.id===(e&&e.evMaker))||EV_REGEN_DEFAULT;
 const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.35'];
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.

@@ -38,6 +38,44 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up. Owner's decision: th
 - Left open: the turbine's shaft balance still reads the exhaust at λ 1 (now slightly hot when the ECU runs rich); no
   manifold cooling between port and turbine (the limit is read at the port, so it errs strict); rich products' higher
   cp is not counted (errs warm).
+### A sourced regen cap per maker (build 378)
+
+Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
+- **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
+  a deceleration and a regen kW limit per maker, named by the drive's `evMaker` (a hidden field, set on the factory drives). Tesla 0.21 g lift-off (SAE 2020-01-0883),
+  77 kW (Model 3, InsideEVs: probable; the Model Y takes it, probable) and 90 kW (Plaid, evkx.net: probable); Hyundai
+  E-GMP 0.4 g blended; VW MEB 0.3 g; no source: 0.3 g and the pack's limit. Friction brakes do the rest. LOW halves it
+  (Tesla Low −0.11 g, same source).
+- **Against the figures:** at 20 km/h 6.7 / 7.1 / 14.1 → 2.06 m/s² (Model 3 / Y / Plaid; measured 2.1); most regen
+  power 90 / 78 / 150 → 77 / 77 / 90 kW. `test221` now fails if any lands more than 10% off.
+- **What moved:** economy run (Alpine) energy +1.5% / +1.0% / +9.2% (Plaid's regen 6.31 → 3.05 kWh); lap time
+  −0.0000004% / +0.0009% / +0.000002%. WLTC, 0–100, top speed, ICE cars and hybrids (`hybRegenTable`) do not move.
+- `test216`'s skidpad held speed with a fixed +0.15 throttle bias that assumed the old regen in an EV's one-pedal
+  map (0.87 → 0.81 g with the cap); it now holds speed closed-loop (PI), where main and this build both give 0.86 g.
+  Band unchanged (0.83–0.90).
+- Left open: a garage-built EV takes the default; E-GMP and MEB have no preset to check against.
+### Import-vehicle skill for researching real-car presets (build 377)
+
+- New Cursor skill at `.cursor/skills/import-vehicle/`: when asked to import a real car (e.g. Ferrari F50),
+  research sourced body/engine numbers, write presets, run accuracy bands (±25% power, ±35% matched 0–100 and top),
+  fix honest input errors only, and report unachievable gaps with suggested actions.
+- Includes schema/checklist/gap-report references, a JSON template, `validate-research.mjs`, and
+  `check-accuracy.mjs`. Derive-do-not-fit is hard-coded; physics constants are never tuned to pass.
+- `test230` checks the skill files and runs both scripts against the existing Ferrari F40.
+
+### Power assistance, steering friction and the scrub radius in the stepped car (build 376)
+
+- Plan small-physics step 4. `stepCar` now gives `s.handTorque` (Nm), what the driver holds at the hand wheel: the
+  column load `-s.steerTorque` through a boost curve (a 1 Nm threshold, then a gain of 8 parking falling to 1.5 at
+  speed, a 60 Nm ceiling; the shape after Pfeffer & Harrer, *Steering Handbook*; every number PROBABLE), plus 1.5 Nm
+  of Coulomb friction (PROBABLE) against a turning wheel. A held wheel near the centre needs nothing: the dead band.
+- On an FK8 at 80 km/h the assist takes 58–70% of a 4–14 Nm load (test229); at a 20 Nm load it takes 84% parking.
+- The column load now includes each front tyre's longitudinal force on the scrub radius (equal forces cancel). No
+  preset gives one, so every car takes 10 mm (Reimpell: −20 to +20 mm on passenger cars; PROBABLE); `scrubRadius`
+  in a preset overrides it.
+- Nothing reads the hand torque yet (for force feedback later), so the fingerprint is identical.
+- Left open: a scrub radius by suspension type (no source gives one per type), a hydraulic or EPS curve per car, and
+  torque steer (no preset gives shaft angles).
 
 ### A compound turbo's split off its design point (build 375)
 

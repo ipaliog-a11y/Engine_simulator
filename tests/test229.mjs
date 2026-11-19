@@ -1,48 +1,54 @@
-// Rich mixtures cool the exhaust; the ECU holds the turbine's limit (plans/small-physics.md step 13).
+// The hand-wheel torque after power assistance and steering friction (plan small-physics step 4).
 //
-// WHY THIS EXISTS. Until this build the exhaust rich of stoichiometric only lost the extra work, so enrichment barely
-// cooled it and the ECU never read it. What must hold:
-//   · exhaustGasT falls steadily from lambda 1 to 0.78, and the excess fuel's evaporation is part of it (a fuel with a
-//     larger heat of vaporization cools more rich, and not at all at lambda 1);
-//   · on the 993 Turbo (hottest preset at best spark), the ECU's exhaust at full load holds TURB_T_LIMIT (+10 K for the
-//     boost table's interpolation) and its boost target is cut below the taper somewhere;
-//   · the guard is the ECU's only: a fixed mixture or an NA engine has none.
+// WHY THIS EXISTS. stepCar now gives s.handTorque: the column load -s.steerTorque through the boost curve and the
+// steering's Coulomb friction (DRIVE_ASSIST). What must hold:
+//   · on a wheel being turned, the hand torque is the load less the curve's share of assist, plus the friction;
+//   · the assist's share grows at parking speed (the gain falls with speed);
+//   · on a wheel held near the centre, the hand torque is nothing (friction's dead band), and further out it is the
+//     assisted load less the friction;
+//   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
 const page = await browser.newPage();
-const errors = [];
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const r = await page.evaluate(() => {
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /993/.test(p.name)));
-  const e = engine, rpm = 0.8 * e.redline, lams = [1, 0.95, 0.9, 0.85, 0.8, 0.78];
-  const T = l => exhaustGasT(1, rpm, l, 0);
-  const curve = lams.map(T);
-  const h0 = e.fuelHfg; e.fuelHfg = 2 * h0;
-  const hot = { l1: T(1), l8: T(0.8) }; e.fuelHfg = h0;
-  let maxT = 0, cut = false;
-  for (let n = 1500; n <= e.redline; n += 250) {
-    const m = wotMapAt(n); maxT = Math.max(maxT, egtAt(n, m));
-    if (boostTarget(n) < e.maxBoost * boostTaperFrac(n) - 0.01) cut = true;
+
+const R = await page.evaluate(() => {
+  const A = DRIVE_ASSIST, curve = (L, v) => {   // the boost curve, written out again from its constants
+    const K = A.Kv + (A.K0 - A.Kv) * Math.exp(-v / A.vK); return L <= A.T0 ? L : (L + K * A.T0) / (1 + K);
+  };
+  const P = FACTORY_CARS.find(x => x.name.startsWith('Honda Civic Type R (FK8'));
+  loadVehiclePreset(P); const car = driveCar(); car.esp = false; car.tc = false;
+  const s = driveRolling(car, 80), u = st => ({ steer: st, throttle: 0.2, brake: 0, gear: s.gear });
+  for (let i = 0; i < 100; i++) stepCar(car, s, u(0), 0.005);
+  const turning = [];
+  for (let k = 1; k <= 200; k++) {                // 1 s ramp to steer 0.1
+    stepCar(car, s, u(k / 2000), 0.005);
+    if (k % 50 === 0) { const L = -s.steerTorque, v = Math.hypot(s.vx, s.vy); turning.push({ L, h: s.handTorque, want: curve(L, v) + A.Tf, share: 1 - curve(L, v) / L }); }
   }
-  const guarded = ecuGuardsTurbine();
-  e.afrMode = 'fixed'; const fixed = ecuGuardsTurbine(); e.afrMode = 'auto';
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /S2000/.test(p.name)));
-  return { curve, hot, l1: curve[0], l8: curve[4], maxT, cut, guarded, fixed, na: ecuGuardsTurbine(), lim: TURB_T_LIMIT };
+  const hold = st => { for (let i = 0; i < 400; i++) stepCar(car, s, u(st), 0.005); const L = -s.steerTorque, v = Math.hypot(s.vx, s.vy); return { st, L, h: s.handTorque, want: Math.max(0, curve(L, v) - A.Tf) }; };
+  const held = [hold(0.1), hold(0.003)];
+  return { turning, held, park: 1 - curve(20, 0) / 20, fast: 1 - curve(20, 25) / 20 };
 });
 await browser.close();
-const fails = [...errors], C = k => (k - 273.15).toFixed(0);
-console.log(`== 993 Turbo at 80% redline, EGT by lambda 1..0.78: ${r.curve.map(C).join(', ')} °C ==`);
-for (let i = 1; i < r.curve.length; i++) if (!(r.curve[i] < r.curve[i - 1])) fails.push(`EGT does not fall from lambda step ${i - 1} to ${i}`);
-console.log(`== twice the heat of vaporization: lambda 1 ${C(r.hot.l1)} (was ${C(r.l1)}), lambda 0.8 ${C(r.hot.l8)} (was ${C(r.l8)}) °C ==`);
-if (r.hot.l1 !== r.l1) fails.push('evaporation moves the exhaust at lambda 1');
-if (!(r.hot.l8 < r.l8 - 1)) fails.push('evaporation does not cool the rich exhaust');
-console.log(`== full load: hottest ${C(r.maxT)} °C against ${C(r.lim)} °C, boost cut: ${r.cut} ==`);
-if (!(r.maxT <= r.lim + 10)) fails.push(`the ECU lets the exhaust reach ${C(r.maxT)} °C`);
-if (!r.cut) fails.push('the boost is never lowered for the exhaust');
-if (!r.guarded || r.fixed || r.na) fails.push(`guard: ECU ${r.guarded}, fixed mixture ${r.fixed}, NA ${r.na}`);
-console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
-process.exit(fails.length ? 1 : 0);
+
+for (const t of R.turning) {
+  console.log(`turning: load ${t.L.toFixed(2)} Nm, hand ${t.h.toFixed(2)} Nm (curve + friction ${t.want.toFixed(2)}), assist share ${(100 * t.share).toFixed(0)}%`);
+  if (Math.abs(t.h - t.want) > 1e-3) fails.push(`turning: hand ${t.h} Nm, not ${t.want}`);
+  if (t.L > 2 && !(t.share > 0 && t.h - 1.5 < t.L)) fails.push(`turning: the assist does not lower the hand torque`);
+}
+for (const t of R.held) {
+  console.log(`held at steer ${t.st}: load ${t.L.toFixed(2)} Nm, hand ${t.h.toFixed(2)} Nm (want ${t.want.toFixed(2)})`);
+  if (Math.abs(t.h - t.want) > 1e-3) fails.push(`held ${t.st}: hand ${t.h} Nm, not ${t.want}`);
+}
+if (!(R.held[1].L > 0.05 && R.held[1].h === 0)) fails.push('no dead band at the centre: a small held load still needs the driver');
+if (!(R.held[0].h > 0)) fails.push('held at 0.1: no hand torque at all');
+console.log(`assist share at a 20 Nm load: ${(100 * R.park).toFixed(0)}% parking, ${(100 * R.fast).toFixed(0)}% at 90 km/h`);
+if (!(R.park > R.fast)) fails.push('the assist does not grow at parking speed');
+if (errors.length) fails.push(...errors);
+if (fails.length) { console.log('\nFAIL\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
+console.log('\nPASS');

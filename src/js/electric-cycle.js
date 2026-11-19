@@ -84,7 +84,7 @@ function evCycle(e,v){
   const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.wheelI,e.evRegen||'high'].join('|');
   if(e._cycle&&e._cycle.score===e.score&&e._cycle.key===key)return e._cycle.res;
   const C=EV_CYCLE,m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,V=motorRatedV(e),temp=Object.assign({},C.temp);
-  const meff=m+(v.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2,regen=evRegenTable(e,e.redline);
+  const meff=m+(v.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2,regen=evRegenTable(e,e.redline,v);
   let E=0,x=0,back=0,lost=0;
   for(let i=0;i<WLTC_3B.length-1;i++){
     const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;   // each second: its mean speed and its acceleration

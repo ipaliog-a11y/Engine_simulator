@@ -1,0 +1,93 @@
+{
+  "id": "make-model-year",
+  "name": "Make Model (Year)",
+  "cat": "Supercar",
+  "era": "1990s",
+  "role": "short role",
+  "confidence": "medium",
+  "chassis": "super",
+  "chassisFit": "good",
+  "chassisNote": "Why this CHASSIS key; which fit fields override the archetype.",
+  "engineStatus": "new",
+  "engine": "Make Code (Model)",
+  "body": {
+    "kg": 0,
+    "cd": 0,
+    "area": 0,
+    "wb": 0,
+    "fWt": 0,
+    "h": 0
+  },
+  "fit": {
+    "drive": "rwd",
+    "tire": "sport",
+    "tw": 0,
+    "twF": 0,
+    "ta": 0,
+    "wheel": 0,
+    "brake": "slotted",
+    "rotor": 0,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": false,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "wishbone",
+    "geoR": "wishbone"
+  },
+  "real": {
+    "t100": 0,
+    "top": 0,
+    "limited": false,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": null,
+    "fd": null,
+    "src": "Say where ratios came from, or that they were not found."
+  },
+  "enginePreset": {
+    "cat": "Supercar",
+    "era": "1990s",
+    "name": "Make Code (Model)",
+    "displacement_cc": 0,
+    "real": {
+      "hp": 0,
+      "hpRpm": 0,
+      "tq": 0,
+      "tqRpm": 0,
+      "unit": "PS"
+    },
+    "unsure": [],
+    "note": "",
+    "engine": {
+      "cylinders": 8,
+      "layout": "v",
+      "bore_mm": 0,
+      "stroke_mm": 0,
+      "compression": 0,
+      "redline": 0,
+      "intake": "na",
+      "injector": "port",
+      "intakeSys": "efi",
+      "vvt": false,
+      "cam": "sport",
+      "exhaust": "sport",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true
+    }
+  },
+  "sources": {
+    "engine": "URL — what it gave",
+    "body": "URL — curb, Cd, dims",
+    "performance": "URL — 0-100 and top",
+    "gearset": "URL or not found",
+    "fit": "URL — tyres, brakes, box"
+  },
+  "unsure": [],
+  "note": "Curb vs dry; aero in Cd; market/catalyst; anything a later session must not rediscover."
+}

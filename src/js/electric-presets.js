@@ -22,15 +22,15 @@
 const EV_ENGINE_PRESETS=[
   {cat:'Electric',name:'Tesla Model 3 RWD drive (2021, LFP)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:850,evRearCount:1,evFront:'none',
-    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021}},
+    evChem:'lfp',evSeries:106,evKWh:60,evYear:2021,evMaker:'tesla'}},
   {cat:'Electric',name:'Tesla Model Y Long Range drive (2022, dual motor)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,
     evMagnet:'ndfeb',evRetention:'bridges',evCooling:'spray',evMaxRpm:18000,evInverter:'sic',evAmps:640,evRearCount:1,
     evFront:'im',evFrontD:140,evFrontOD:210,evFrontStack:110,evFrontPoles:4,evFrontTurns:20,evFrontAmps:520,
-    evChem:'nca',evSeries:96,evKWh:78,evYear:2022}},
+    evChem:'nca',evSeries:96,evKWh:78,evYear:2022,evMaker:'tesla'}},
   {cat:'Electric',name:'Tesla Model S Plaid drive (2021, three motors)',engine:{type:'electric',evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:16,
     evMagnet:'ndfebDy',evRetention:'sleeve',evCooling:'spray',evMaxRpm:20000,evInverter:'sic',evAmps:900,evRearCount:2,
     evFront:'pm',evFrontD:150,evFrontOD:225,evFrontStack:134,evFrontPoles:6,evFrontTurns:16,evFrontAmps:900,
-    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021}}
+    evChem:'ncaP',evSeries:110,evKWh:100,evYear:2021,evMaker:'tesla-plaid'}}
 ];
 // real: the maker's 0-100 (s) and top speed (km/h, governed on all three). fit.fd is the published reduction (the owner's
 // manuals: 9.03 the Model 3 and Y, 7.56 on all three of the Plaid's units, each of its motors rated 295 kW).
