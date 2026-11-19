@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
+
+- The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
+  a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
+  gravel (PROBABLE: no Bekker values for gravel were found). An M3's wheel sinks 86 mm and rolls against 0.27 of its
+  load, against 0.30 measured for car tyres on sand (Wong, Table 1.1). Grass: 0.08 (Wong, medium-hard soil).
+- `driveSurface` puts gravel where the circuit's picture draws a trap: outside a bend sharper than 33 m radius,
+  3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
+  gravel's (0.35/0.65), as before.
+- The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 389:
+  89%, so the ESP did nothing). With ESP off: 98%.
+- Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
+  of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
+- Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
+  own rolling resistance, and a tyre's stiffness on soft ground.
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.
@@ -38,6 +54,7 @@ Step 14 of `plans/small-physics.md`.
 - Cache bumped to `v6` (activate drops the stale store). That file is network-first like the
   page; fonts and icons stay cache-first. `test237` locks it.
 - Immediate workaround without this build: hard-refresh the Pages site, or clear site data for it.
+
 
 ### Championship seasons on top of RACE (build 387)
 
@@ -97,6 +114,7 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decis
   ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
   since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'
   higher cp is not counted (errs warm).
+
 ### Hybrids on the economy roads run their own energy manager (build 383)
 
 - A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
