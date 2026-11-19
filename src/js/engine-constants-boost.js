@@ -118,7 +118,7 @@ function buildTorqueLimit(){
   e.afrMode=savedAfrMode;Object.assign(state,sv);
   e.tqLimTable=tb;
 }
-// The knock limit on boost (build 307), and the turbine's (build 376): where the end gas knocks at the ECU's furthest retard and richest mixture
+// The knock limit on boost (build 307): where the end gas knocks at the ECU's furthest retard and richest mixture
 // (activeAdvance, knockEnrichLambda), the ECU lowers the boost until it does not, as a production one pulls its boost
 // target on knock. Solved once per engine, at the bench's intake air, like the torque limit. Only with AUTO timing on
 // its derived table: a hand-set spark has no knock control to ask for less.
@@ -133,9 +133,7 @@ function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
   _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
-  // and, from build 376, where the exhaust passes the turbine's limit at the richest mixture (egtEnrichLambda)
-  const egt=ecuGuardsTurbine();
-  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET||egt&&egtAt(r,m)>TURB_T_LIMIT;};
+  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
   const tb=[];let any=false;
   for(let r=1000;r<=e.redline+199;r+=200){
     const rr=Math.min(r,e.redline),b0=boostAvail(rr);

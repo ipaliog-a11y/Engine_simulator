@@ -177,7 +177,7 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 376), but only by
+// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 380), but only by
 // ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
@@ -595,18 +595,18 @@ function knockEnrichLambda(rpm,map,base){
   _knockCache.m.set(key,lam);
   return lam;
 }
-// ---- The turbine's temperature limit (build 376) ----
-// A turbo petrol ECU models the exhaust at the turbine and protects it as it does the end gas: richer first (the excess
-// fuel's evaporation and mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN, then less
-// boost (knockLimitBoost). TURB_T_LIMIT is the owner's 950 C (build 311's note), a cast turbine housing's usual
-// continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C), applied to the gas at the port
-// with no allowance for the manifold's cooling, as CAT_T_LIMIT is. The exhaust is read at the spark the ECU runs at
-// each trial mixture. Only the ECU that fuels the knock (ecuFuelsKnock), and only with a turbine.
+// ---- The turbine's temperature limit (build 380) ----
+// A turbo petrol ECU models the exhaust at the turbine and protects it: it enriches (the excess fuel's evaporation and
+// mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN. TURB_T_LIMIT is the owner's 950 C, a
+// cast turbine housing's usual continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C),
+// read at the turbine inlet (turbineInletT). The exhaust is read at the spark the ECU runs at each trial mixture. Only
+// the ECU that fuels the knock (ecuFuelsKnock), and only with a turbine. Owner's decision: no boost cut yet (EGT's load
+// factor, map/mapMax, is not derived, and would make the cut, not the mixture, do the cooling).
 const TURB_T_LIMIT=950+273.15;
 const ecuGuardsTurbine=()=>engine.intake==='turbo'&&ecuFuelsKnock();
 function egtOverAt(rpm,map,l){
   _lamTrial=l;
-  try{return egtAt(rpm,map,l,Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map)))>TURB_T_LIMIT;}finally{_lamTrial=null;}
+  try{return turbineInletT(rpm,map,l,egtAt(rpm,map,l,Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map))))>TURB_T_LIMIT;}finally{_lamTrial=null;}
 }
 function egtEnrichLambda(rpm,map,base){
   if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
