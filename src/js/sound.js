@@ -857,8 +857,41 @@ function driftSlide(R,s){
   let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
   return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
 }
+// The moose test and the lap replay screech too (build 370), through the same voice.
+// Moose: stepCar's samples carry the four slip angles, so the drift's own test runs on them, with the same rear peak
+// atan(3 mu / C) (drive-model's pkR, from the result's mu and the tyre's cornering coefficient).
+// Lap: the lap solver records no slip angle (it is quasi-steady: a speed profile at the grip limit, no yaw state), so
+// the closest derived quantity is each axle's use of its grip. Where the limit binds (lim 'corner' or 'traction',
+// or a brake point whose recorded useF/useR reaches 1) the tyre runs at the peak of its force curve; in the brush
+// model that sets the drift test's boundary, alpha = atan(3 mu / C), so it slides at v sin of that. Below the limit
+// (lim 'power', light braking) it grips and stays silent. Nothing here is ever past the peak, as the lap never is.
+const SCREECH_AT_PEAK=0.999;   // use of grip counted as at the peak (round-off only: the limit binds at exactly 1)
+let screechPkFor=null,screechPk=0;
+function screechPeak(mu,key){
+  if(screechPkFor!==key){screechPkFor=key;screechPk=Math.atan(3*mu/(vehicle.tyreCC||tyreCC(vehicle.tireType)));}
+  return screechPk;
+}
+function lapGripUse(L,i){
+  const lim=L.lim&&L.lim[i],R=L.replay;
+  if(lim==='corner'||lim==='traction')return 1;
+  if(lim==='brake')return Math.max(R.useF?R.useF[i]:0,R.useR?R.useR[i]:0);
+  return 0;
+}
+function lapSlide(L,q){
+  if(!q||lapGripUse(L,q.i)<SCREECH_AT_PEAK)return 0;
+  return q.v/3.6*Math.sin(screechPeak(tyreMu(vehicle.FzRef,vehicle.FzRef),L));
+}
+function screechSlide(){
+  if(!Sound.on)return 0;
+  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return lapSlide(lapResult,replayAt(lapResult,lapReplay.t));
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  if(vizMode!=='challenges'||!R||!R.ok)return 0;
+  if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
+  if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  return 0;
+}
 function updateScreech(t){
-  const s=Sound.on?driftSoundSample():null,vs=s?driftSlide(chalResult,s):0;
+  const vs=screechSlide();
   if(!vs&&!Sound.screechGain)return;
   if(!Sound.screechGain)initScreech();
   const k=clamp(vs/SCREECH_REF_MS,0,1);

@@ -102,3 +102,6 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
 3. Distance DP for economy (pulse-and-glide on the flat); hybrid energy on economy roads.
 4. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
 5. Drift: handbrake initiation; tighter road once the hold is stronger.
+6. ~~Screech on the track and moose replays (open since build 362).~~ Shipped in build 370: the moose replay uses the
+   drift's past-the-peak test on its slip angles; the lap records no slip angle, so it screeches where its grip use is
+   full (at the peak, v sin α_peak).
