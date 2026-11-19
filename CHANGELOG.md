@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Power assistance, steering friction and the scrub radius in the stepped car (build 375)
+### Power assistance, steering friction and the scrub radius in the stepped car (build 376)
 
 - Plan small-physics step 4. `stepCar` now gives `s.handTorque` (Nm), what the driver holds at the hand wheel: the
   column load `-s.steerTorque` through a boost curve (a 1 Nm threshold, then a gain of 8 parking falling to 1.5 at
@@ -31,6 +31,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Nothing reads the hand torque yet (for force feedback later), so the fingerprint is identical.
 - Left open: a scrub radius by suspension type (no source gives one per type), a hydraulic or EPS curve per car, and
   torque steer (no preset gives shaft angles).
+
+### A compound turbo's split off its design point (build 375)
+
+- Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its
+  own turbine supplies its compressor (at the LP outlet's pressure and temperature), and above target the gate leaves
+  the HP stage only what the LP one does not make (Watson & Janota; Serrano et al., SAE 2008-01-0790). Until now the
+  shafts were tied at the equal design split.
+- On the Golf GTI's frame (large, 2.5 bar) the LP stage makes 14-16% of the ratio (in log terms) while spooling, 24%
+  at 4000 rpm and 54-63% at 6000 rpm to the redline; the target holds once reached. The exhaust pressure solve uses the
+  same split, with the LP wheel held to its tip limit.
+- A compound now comes on boost as the frame alone does (1502 rpm on the Golf at 2.5 bar, was 1719): the HP stage no
+  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test227 checks the split.
+- Fingerprint identical (no preset is a compound).
+- Open: the HP shaft's own inertia and bearing drag (it settles at once), an LP gate, and the LP turbine's sizing
+  (scaled by D^2 from the HP housing, it can make the whole ratio itself at high flow). The guide's Greek for the
+  changed limit line is stale (Greek paused).
 
 ### Camber and toe by heave and pitch in the stepped car (build 374)
 

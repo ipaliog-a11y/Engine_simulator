@@ -41,7 +41,7 @@ reporting its range. Sourcing is batched apart from physics.
 
 4. **Power assistance and steering friction.** An EPS boost curve on the column load `s.steerTorque` already gives
    (PROBABLE, marked), plus the scrub radius's drive-force moment. Torque steer stays out: no preset gives shaft angles.
-   *Build 375:* done (`s.handTorque`: boost curve, Coulomb friction with a dead band, 10 mm scrub radius, all
+   *Build 376:* done (`s.handTorque`: boost curve, Coulomb friction with a dead band, 10 mm scrub radius, all
    PROBABLE; `test229`). Left open: scrub radius by suspension type, a curve per car, torque steer.
 5. **ESP judges a spin by yaw rate**, with a lagged reference (van Zanten, Bosch, SAE 2000-01-1633), in place of
    the rear slip angle. The previous try (yaw alone, no lag) braked the MX-5 on 30% of a hot lap. Its limit reads the
@@ -91,6 +91,8 @@ reporting its range. Sourcing is batched apart from physics.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
+    *Build 375:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
+    Open: the HP shaft's inertia and bearings, an LP gate, the LP turbine's sizing.
 
 ## Sourcing batch (apart from physics)
 
