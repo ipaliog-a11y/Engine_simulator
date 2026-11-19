@@ -70,10 +70,9 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             systems: 5 years of experience", SAE 2000-01-1633): the yaw rate against the reference below, lagged
 //             as the car itself would follow it, by the single-track model's equivalent delay B/C - m v a/(Cr L)
 //             (Abe, Vehicle Handling Dynamics, ch. 3). Past it by espBand, the outer front wheel is braked for
-//             Izz x excess / espTau. It starts only once the rear tyres slip more than espBeta (rad; by default the
-//             angle they peak at, atan(3 mu / C)), and holds until the yaw is back on the reference. (Without that
-//             start, build 328 braked a hot lap's rear-drivers on 26-30% of it; with it, 4-9%, as on the slip angle
-//             alone.) An electric car's regeneration is cut while it works (MSR). Against a push: the yaw rate the driver asks for is the
+//             Izz x excess / espTau, while the rear tyres slip more than espBeta (rad; by default the angle they
+//             peak at, atan(3 mu / C)). (Without that gate, build 328 braked a hot lap's rear-drivers on 26-30% of
+//             it; with it, 2-6%, against 4-12% on the slip angle alone.) An electric car's regeneration is cut while it works (MSR). Against a push: the yaw rate the driver asks for is the
 //             steady turn of the car's own single-track model, v delta / (L (1 + K v^2)), K its understeer gradient
 //             from the tyres' cornering stiffness at the static loads and the toe's steady share (car.Kus, THE TOE), and never more than the grip can
 //             turn the car, mu g / v; short of it by espBand (rad/s) with the front tyres past their peak, the inner
@@ -705,9 +704,9 @@ function stepCar(car,s,u,dt){
           C=Cf*Cr*L*L/v*Math.max(0.1,1+car.Kus*v*v),tau=Math.max(h,B/C-car.m*v*car.a/(Cr*L));
         s.yawRef+=(ref-s.yawRef)*Math.min(1,h/tau);
         const sy=Math.sign(s.yaw),ox=(s.yaw-s.yawRef)*sy-A.espBand;
-        // the car turning faster than asked: a moment against it. It starts once the rear tyres are past their peak
-        // (espBeta), where they hold no more, and holds until the yaw is back on the reference
-        s.espOver=ox>0&&(s.espOver||Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta);
+        // the car turning faster than asked: a moment against it, once the rear tyres are past their peak (espBeta),
+        // where they hold no more
+        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta;
         if(s.espOver)M-=sy*car.Izz*ox/A.espTau;
       }else{s.yawRef=s.yaw;s.espOver=false;}
       if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
