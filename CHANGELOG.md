@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Championship seasons on top of RACE (build 385)
+### Championship seasons on top of RACE (build 386)
 
 Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
 - **CHAMP tab**: series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), round-by-round or instant season, career unlocks, standings and history in `pes.champ.*`.
@@ -26,7 +26,16 @@ Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, t
 - **Points** Top-8 table with optional fastest-lap point; constructor table when a team is entered; multi-class standings on Open Weekend.
 - **Economy** (selected cups): entry fee and finish prizes in credits; tyre-set counters per entrant.
 - **Race hooks**: virtual safety car after enough mistakes, blue-flag ignore time penalty, timed races with minimum pit stops (Enduro Cup).
-- `test234` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+- `test235` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+
+### Vehicle-profile-art skill for factory showroom pictures (build 385)
+
+- New Cursor skill at `.cursor/skills/vehicle-profile-art/`: when a new factory car needs its
+  960×640 pixel-art side view, build the coastal-road prompt (S2000 style reference), generate,
+  post-process to PNG+WebP, and wire `CAR_ART` + both manifests.
+- Scripts: `build-prompt.mjs`, `postprocess.mjs` (classic 1152×864 crop or centre 3:2, nearest-neighbour
+  to 960×640), `validate-art.mjs`. Pairs with `import-vehicle` (that skill now points here for art).
+- `test234` checks the skill files and runs the three scripts against a temp frame and the S2000.
 
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
