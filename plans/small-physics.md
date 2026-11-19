@@ -63,6 +63,9 @@ reporting its range. Sourcing is batched apart from physics.
 7. **Off the track.** Rolling resistance on grass and gravel (Wong, *Theory of Ground Vehicles*, ch. 2: Bekker's
    sinkage), a gravel trap where a circuit draws one, and a painted kerb's grip and ribs. The ESP's limit reads the
    surface.
+   *Build 390:* gravel rolls by Bekker's sinkage (Wong's dry sand as a stand-in: 0.27 of the load), grass 0.08; traps
+   where the picture draws them (`SCENE_TRAP`); the ESP's limit and peak gates scale with the grip. Open: a painted
+   kerb's grip and ribs, the picture's narrow gravel verge, wet ground's rolling resistance.
 8. **A rain tyre's own wet grip.** The compound's wet advantage from the EU label's wet grip index (Regulation
    2020/740, ISO 23671), class by class against a road tyre's. Today only its grooves help.
    *Build 367:* `RACE_WET_G` (race.js): a road tyre is class B's middle (G 1.47), a rain compound (inter, full wet)
