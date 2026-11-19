@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### v0.8, and the leftovers to v1.0 grouped (build 363)
+
+- The title reads v0.8, reached at build 338 (handling phase G); the owner tags it.
+- Owner's decisions: phase E's four open fitted numbers (`DIFF_ASYM0`, `KVCAP`, `TYRE_SLIP`, `TYRE_CC`) are rules until
+  after v1.0, since they retire only when the lap, 0–100 and race run on the stepped car (driving-sim J, after the
+  graphics engine). Water-to-air intercoolers, driving-sim H′ and I, the challenges and the guided build that sets
+  values are before v1.0. The register now holds 6 open, 33 rules.
+- `plans/road-to-v1.md` gets a grouped list of everything left before v1.0 (decisions 21–24).
+- `test166` had failed on `main` since build 353: the moose driver's change moved `DRIVE_DRIVER`'s text. Its match is
+  repointed; no number moves.
+- `plans/small-physics.md`: the smaller physics leftovers planned in about 16 builds, starting with a green
+  baseline (`test136`'s Model 3 motor figures are off their locks on `main`).
+- Left open: the finish line's wording (owner still deciding).
+
 ### Sound on the S-route powerslide, with tyre screech (build 362)
 
 - The powerslide replay now plays the engine (with SOUND ON): its recorded revs and throttle, on the engine's steady

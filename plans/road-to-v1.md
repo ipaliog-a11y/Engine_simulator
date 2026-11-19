@@ -43,6 +43,10 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 | 18 | Phase D's real-car scoreboard | **At the v1.0 gate (H)**, not now. |
 | 19 | Name | **Pixel Powertrain**, with a piston icon (draft chosen separately). |
 | 20 | Suspension geometry | By type for v1.0; a car's own only where published; never fitted (`plans/driving-sim.md`, decision 3). |
+| 21 | Phase E's four open entries (`DIFF_ASYM0`, `KVCAP`, `TYRE_SLIP`, `TYRE_CC`) | **Rules until after v1.0** (build 363): they retire only when the lap, 0–100 and race run on the stepped car (driving-sim J, after the graphics engine). |
+| 22 | Water-to-air intercoolers (B4) | **Before v1.0** (build 363; reverses build 319's deferral). |
+| 23 | Driving-sim H′ (heat and wear in time) and I (aero in motion) | **Before v1.0** (build 363). H′ reuses the race's tyre heat, which stays a rule. |
+| 24 | Challenges and the guided build that sets values | **Before v1.0** (build 363). |
 
 ## Where it stands
 
@@ -90,7 +94,7 @@ scoreboard holds (phase H)".
 *Build 319 (owner's decision: simplify phase B):* only B2 (each real car's valves and ports) and B6 (the catalytic
 converter's double count) stay as builds. The other 10 entries (B1's idle, B3's `TURB_WHEEL`, `SC_TYPE` and vane ring,
 B5's plenum and `INTAKE_SYS`, B7's four) are kept as rules until after v1.0, each with its part in the register; B4
-(water-to-air and twin intercoolers per car) also waits until after v1.0.
+(water-to-air and twin intercoolers per car) also waits until after v1.0 (*reversed at build 363: before v1.0, decision 22*).
 *Build 332 (owner's decision):* `THROAT_RATIO` kept as a rule; no maker publishes a port throat. B2 goes on one
 sourced engine at a time; B6 waits for measured back-pressure.
 *Build 330:* B2's second batch of sourced valves (5 engines, 10 of 93 now); LS7 and LT4 held back. `THROAT_RATIO`
@@ -257,12 +261,12 @@ build (the rpm limit from piston speed and the valve springs, boost from the com
 
 **Driving simulation:** `plans/driving-sim.md` (phase G, the handling, is v1.0 work; owner, November 2026).
 
-**After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); phase B's 10 rules and B4 (build 319); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
+**After v1.0.** Phase C's 12 rules and its 10 unread files (build 316); phase B's 10 rules (build 319); phase E's four (build 363); The tyre's heat as a surface and a bulk (phase F, build 1); 3D 8-bit cars from the profile images and the recorded dimensions; the driving game on `stepCar`;
 the Greek decision; a career layer.
 An electric drivetrain with four motors, one in each wheel hub: each wheel's torque its own, the unsprung mass the
 hub motors add, and torque vectoring explored (yaw moment from the left-right split, in place of braking a wheel),
 on the four-wheel `stepCar`.
-A guided build that sets values (owner's request, November 2026; build 308 only picks a real car). Three builds:
+A guided build that sets values (owner's request, November 2026; build 308 only picks a real car; **moved before v1.0, decision 24**). Three builds:
 1. A walk-through over the existing design cards: the matched car is the start, then a short ordered list of the
    decisions that matter (cylinders and layout, bore and stroke, compression and fuel, redline and valvetrain, air
    and boost; then mass, gearing, tyres), one field per step with its slider, ticks, help and limits, the rest under
@@ -287,7 +291,37 @@ owner's questions.
   stays on the preset's `unsure` list. Only if the sourced car still misses is the physics suspected; if several
   cars miss the same way, it is one missing piece of physics. A preset is never changed just to pass.
 
+## Leftovers to v1.0, grouped (build 363)
+
+The register: 6 open (`EV_RATIO`, `catRampTop`, and phase D's four), 33 rules.
+
+1. **Engine (B).** `EV_RATIO`: each car's valves sourced (10 of 93 engines). `catRampTop`: cat brick and silencer
+   together, waiting for a measured back-pressure source. LS7, LS3, LT4, Coyote over 10% (decision 16). Water-to-air
+   intercoolers per car (decision 22). *Scoreboard at the end.*
+2. **Vehicle parts (D).** Splitter and chord-wise ground effect, each kit car's wing as a part (`AERO_FRONT/REAR`); a
+   floor part (`AERO_FLOOR`); tyre pressure into grip, rated load and stiffness (`TYRE_KZ`); spring, bar and damper
+   rates (`SPRING_STEP` etc.). *Scoreboard at the end.*
+3. **Driving sim H′ and I** (`plans/driving-sim.md`): tyre temperature, pressure and wear in `stepCar`; brake fade;
+   aero by ride height and pitch (needs D's floor and splitter); the wake per axle.
+4. **Handling leftovers** (named in the CHANGELOG): bump stops and droop, anti-dive and anti-squat, bound and rebound
+   apart, grip by camber, ESP by yaw rate, steering assist, the 100–0 stop pooling grip, AWD centre-diff types per car;
+   surfaces (grass and gravel rolling resistance, kerbs, gravel traps); a rain tyre's own wet grip.
+5. **Electric and hybrid**: the lap's torque curve and the race still read the pack at 25 °C; regen power against
+   measured EVs (`plans/vehicle-challenges.md`); an engine start's crank energy, spin-up and run-down. The list beyond
+   the register (RC sag, fast charge, inverter temperature, ageing, three motor types) is optional.
+6. **Engine details**: a compound's split off its design point; rich mixtures cooling the exhaust; the scavenging
+   term reading the target mixture.
+   *Groups 4–6 are planned build by build in `plans/small-physics.md` (about 16 builds).*
+7. **Data**: 83 overhang splits, 26 tyre sizes, two widths (`NO_WIDTH_KNOWN`), each real circuit's pit-lane length.
+8. **Known gaps to rule on or close**: `ACC_KNOWN` (Supra A80, WRX STI), `RATING_KNOWN` (Dino 246), `GAP_KNOWN`
+   (Model 3 torque, Leaf), `AT_LIMITER_KNOWN`, the moose run ~10 km/h under the magazines. Approved: `OFF_KNOWN`,
+   `LIFT_KNOWN`. Check `test125`, logged as failing on `main`.
+9. **Game (decision 24)**: challenges (skid-pad, multi-car ranking, economy DP, hybrid economy, GPX import, drift by
+   handbrake and FWD/AWD, screech on the track and moose replays); the guided build that sets values (3 builds,
+   `plans/guided-build.md`, its 7 questions to the owner first).
+10. **The gate (H)**: full suite, scoreboard, the sweep for absurd builds, guide and README pass.
+
 ## Still open
 
-1. **The finish line's exact wording** (owner undecided). Proposed: register empty or signed off, every car under
-   10% or on the named list with its reason.
+1. **The finish line's exact wording** (owner undecided, still waiting at build 363). Proposed: register empty or
+   signed off, every car under 10% or on the named list with its reason.

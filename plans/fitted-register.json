@@ -150,27 +150,27 @@
    "file": "tyres-brakes-driveline.js",
    "match": "const DIFF_ASYM0",
    "standsFor": "load asymmetry across a driven axle at launch",
-   "retiredBy": "the four-wheel model: each driven wheel's own load and torque",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 363: the lap, 0-100 and race move onto the stepped car only with driving-sim J, after the graphics engine); after v1.0: the four-wheel model: each driven wheel's own load and torque",
    "phase": "E",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "KVCAP",
    "file": "racing-line-lap.js",
    "match": "const KVCAP",
    "standsFor": "a cap on the load a crest or dip adds",
-   "retiredBy": "the four-wheel model: the body on its springs over the road's profile",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 363: the lap, 0-100 and race move onto the stepped car only with driving-sim J, after the graphics engine); after v1.0: the four-wheel model: the body on its springs over the road's profile",
    "phase": "E",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "TYRE_SLIP",
    "file": "tyres-brakes-driveline.js",
    "match": "const TYRE_SLIP_OPT",
    "standsFor": "the tyre's slip curve in the launch only (peak at 10%, shape 1.4)",
-   "retiredBy": "one combined-slip tyre model per wheel, sourced per compound",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 363: the lap, 0-100 and race move onto the stepped car only with driving-sim J, after the graphics engine); after v1.0: one combined-slip tyre model per wheel, sourced per compound",
    "phase": "E",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "TIRE_TYPE windows",
@@ -339,14 +339,14 @@
    "file": "tyres-brakes-driveline.js",
    "match": "const tyreCC=",
    "standsFor": "the cornering stiffness of the sport and semi-slick compounds (set between a measured road tyre and a measured race tyre by grip) and of the drag radial (left at 0.2/deg)",
-   "retiredBy": "a measured tyre per compound (a Magic Formula file or a flat-track curve)",
+   "retiredBy": "kept: a rule until after v1.0 (owner's decision, build 363: the lap, 0-100 and race move onto the stepped car only with driving-sim J, after the graphics engine); after v1.0: a measured tyre per compound (a Magic Formula file or a flat-track curve)",
    "phase": "E",
-   "state": "open"
+   "state": "rule"
   },
   {
    "id": "DRIVE_DRIVER",
    "file": "drive-model.js",
-   "match": "const PREVIEW=0.15,PULL=1.5,PAST=1.2,SPEED=1;",
+   "match": "const PREVIEW=0.15,PULL=d.pull||1.5,PAST=1.2,SPEED=1;",
    "standsFor": "the stepped car's driver: how far ahead it reads the road, how hard it pulls back to the line and to the plan's speed, how far past the tyre's peak it will steer, and when it gives up the plan in a slide",
    "retiredBy": "kept: a driver's manner, not the car's physics (owner's sign-off, build 278)",
    "phase": "E",
