@@ -79,6 +79,7 @@ const DRIVE_G=9.81, DRIVE_RHO=1.20;
 //             rear wheel is braked for Izz x shortfall / espTau. With espCut the throttle closes over espTau while
 //             it works. Off below espVmin. espBand, espTau and espVmin are a calibration (probable: no maker
 //             publishes its own).
+//             Its grip, and the angles the tyres peak at, are those of what the wheels stand on (THE SURFACE, THE SOIL).
 // Which cars have what: traction control is the preset's (vehicle.tc). No preset says yet whether a car had ABS or
 // ESP: ABS is taken as fitted, and ESP as fitted where traction control is (it works through the same hardware).
 const DRIVE_AIDS={abs:true,absSlip:[1,1],absRel:25,absApp:12,tcSlip:1,tcGain:12,
@@ -208,7 +209,7 @@ function driveCar(){
     aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
-    r:v.rTire,Iw:(v.wheelI||2)/4,
+    r:v.rTire,tw:(v.tireWidth||225)/1000,Iw:(v.wheelI||2)/4,
     mu:muR,muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
@@ -546,25 +547,46 @@ function driveLine(lap){return lap.track.line.map((q,i)=>({x:q.x,y:q.y,v:lap.v[i
 //           is PROBABLE: no measurement of it was found.
 //   kerbs   the lap's own (kerbZones, build 217: the FIA's 5 cm Vallelunga and Melbourne ramps, 0.8 m wide), outside
 //           the track's edge; beyond a kerb, or the edge where there is none, grass at the height the kerb left it.
+//   traps   gravel where the circuit's picture draws a trap (SCENE_TRAP: outside a bend, 3.15-8.4 m past the edge),
+//           wet or dry alike (a trap drains; PROBABLE).
+//   rolling a wheel on grass or gravel rolls against the ground as well as its own tyre (DRIVE_SOIL).
 //   bumps   ISO 8608's road, Gd(n) = Gd(n0) (n/n0)^-2 over the standard's own band, 0.011-2.83 cycle/m, at the Gd(n0)
 //           the lap takes for the circuit (TRACK_ROAD), as a sum of 48 waves of fixed phases (a wave's amplitude is the
 //           root of 2 Gd dn). One profile under the left wheels and one under the right, so a rear wheel meets what
 //           the front met a wheelbase earlier.
-// OPEN: the rolling resistance of grass and gravel (Bosch's handbook has figures; not read here), a painted kerb's
-// grip and its ribs, the bumps of grass, how alike the left and right profiles are at long waves (apart here), a
-// tyre's stiffness on soft ground, and aquaplaning. The stability control still takes dry asphalt for its limit.
+// OPEN: a painted kerb's grip and its ribs, the bumps of grass, the narrow gravel verge the picture draws along the
+// edge (grass here), how alike the left and right profiles are at long waves (apart here), a tyre's stiffness on soft
+// ground, wet ground's own rolling resistance, and aquaplaning.
 const DRIVE_SURFACE={asphalt:1,wet:0.50/0.65,gravel:0.35/0.65,grass:0.37/0.65,grassWet:0.22/0.65};
+// THE SOIL (small-physics step 7): the rolling resistance of the ground a wheel stands on, in place of the tyre's own
+// (car.crr) on a hard road.
+//   gravel  Bekker's sinkage of a rigid wheel (Wong, Theory of Ground Vehicles, ch. 2): the pressure under it
+//           p = (kc/b + kphi) z^n sinks it by z0 = [3 W / ((3-n)(kc + b kphi) sqrt D)]^(2/(2n+1)), and the work of
+//           pressing the rut gives Rc = (kc + b kphi) z0^(n+1) / (n+1); b the tyre's width, D its diameter. A tyre
+//           counts as rigid while its inflation holds more than the ground under it (here ~115 kPa against ~220).
+//           The ground is Wong's dry sand (Table 2.3, Land Locomotion Lab: n 1.1, kc 0.99 kN/m^(n+1), kphi
+//           1528.43 kN/m^(n+2)), as a trap's loose rounded gravel: PROBABLE, no Bekker values for gravel were found.
+//           A car's wheel (4 kN, 225 mm, 0.63 m) gives 0.29 of its load, against 0.30 measured for car tyres on sand
+//           (Wong, Table 1.1).
+//   grass   a circuit's verge as firm ground: car tyres on medium-hard soil, 0.08 of the load (Wong, Table 1.1;
+//           Bosch's handbook gives a field 0.1-0.35). PROBABLE that a mown verge is medium-hard.
+const DRIVE_SOIL={gravel:{n:1.1,kc:0.99e3,kphi:1528.43e3},grass:{f:0.08}};
+// A wheel's rolling resistance (N) under load Fz on soil (null: the road).
+function driveRollF(car,Fz,soil){if(!soil)return car.crr*Fz;if(soil.f!=null)return soil.f*Fz;if(!(Fz>0))return 0;
+  const b=car.tw||0.225,D=2*car.r,k=soil.kc+b*soil.kphi,n=soil.n;
+  const z0=Math.pow(3*Fz/((3-n)*k*Math.sqrt(D)),2/(2*n+1));return k*Math.pow(z0,n+1)/(n+1);}
 // A lap's circuit as plain data: its centreline, edges and kerbs, gd its road's Gd(n0) (m3; 0 is smooth), wet or dry.
-function driveSurface(lap,gd,wet){const T=lap.track,c=T.pts,K=T.kerbs,n=c.length,arc=[0],W=[];
+function driveSurface(lap,gd,wet){const T=lap.track,c=T.pts,K=T.kerbs,n=c.length,arc=[0],W=[],cv=sceneCurv(c);
   for(let i=1;i<n;i++)arc.push(arc[i-1]+Math.hypot(c[i].x-c[i-1].x,c[i].y-c[i-1].y));
   if(gd>0)for(let k=0;k<48;k++){const lo=0.011*Math.pow(2.83/0.011,k/48),hi=0.011*Math.pow(2.83/0.011,(k+1)/48),nk=Math.sqrt(lo*hi);
     const ph=q=>{const x=Math.sin(12.9898*(k+1)+78.233*q)*43758.5453;return 2*Math.PI*(x-Math.floor(x));};   // fixed, so a lap repeats
     W.push([2*Math.PI*nk,Math.sqrt(2*gd*0.01/(nk*nk)*(hi-lo)),ph(1),ph(2)]);}
   return {x:c.map(q=>q.x),y:c.map(q=>q.y),nx:c.map(q=>q.nx),ny:c.map(q=>q.ny),hw:c.map(q=>q.hw!=null?q.hw:T.width/2),arc,
-    P:K?Array.from(K.P):null,N:K?Array.from(K.N):null,kw:KERB_W,waves:W,road:wet?DRIVE_SURFACE.wet:1,off:wet?DRIVE_SURFACE.grassWet:DRIVE_SURFACE.grass};}
-// The road under the four wheels of a car at s: {z, grip} for u.road. It reads only its arguments; m is its memory ({i},
+    P:K?Array.from(K.P):null,N:K?Array.from(K.N):null,kw:KERB_W,waves:W,road:wet?DRIVE_SURFACE.wet:1,off:wet?DRIVE_SURFACE.grassWet:DRIVE_SURFACE.grass,
+    trap:cv.map(k=>Math.abs(k)<SCENE_TRAP.curv?0:k>=0?-1:1),trapIn:SCENE_TRAP.in,trapOut:SCENE_TRAP.out,gravel:DRIVE_SURFACE.gravel};}
+// The road under the four wheels of a car at s: {z, grip, soil} for u.road (soil: DRIVE_SOIL's, or null on the road). It reads only its arguments; m is its memory ({i},
 // the centreline point the car is at).
-function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=Math.cos(s.psi),sn=Math.sin(s.psi);
+function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],soil=[null,null,null,null],c=Math.cos(s.psi),sn=Math.sin(s.psi);
   const d2=i=>(s.x-S.x[i])*(s.x-S.x[i])+(s.y-S.y[i])*(s.y-S.y[i]);
   if(m.i==null){m.i=0;for(let i=1;i<n;i++)if(d2(i)<d2(m.i))m.i=i;}
   for(let k=0;k<n&&d2((m.i+1)%n)<d2(m.i);k++)m.i=(m.i+1)%n;
@@ -574,8 +596,12 @@ function driveRoadAt(S,car,s,m){const n=S.x.length,z=[0,0,0,0],grip=[1,1,1,1],c=
     for(let k=0;k<4&&al(i)<0;k++)i=(i-1+n)%n;for(let k=0;k<4&&al((i+1)%n)>=0;k++)i=(i+1)%n;
     const y=(px-S.x[i])*S.nx[i]+(py-S.y[i])*S.ny[i],out=Math.abs(y)-S.hw[i],H=out>0&&S.P?(y>0?S.P:S.N)[i]:0,a=S.arc[i]+al(i);
     for(const w of S.waves)z[q]+=w[1]*Math.cos(w[0]*a+w[2+q%2]);
-    if(out>0){z[q]+=H*Math.min(1,out/S.kw);grip[q]=H&&out<=S.kw?S.road:S.off;}else grip[q]=S.road;}
-  return {z,grip};}
+    if(out>0){z[q]+=H*Math.min(1,out/S.kw);
+      if(H&&out<=S.kw)grip[q]=S.road;
+      else if(S.trap&&S.trap[i]===Math.sign(y)&&out>=S.trapIn&&out<=S.trapOut){grip[q]=S.gravel;soil[q]=DRIVE_SOIL.gravel;}
+      else{grip[q]=S.off;soil[q]=DRIVE_SOIL.grass;}}
+    else grip[q]=S.road;}
+  return {z,grip,soil};}
 // A DRIVER FOR A LINE (build 269): the inputs that take the car round a line of points {x, y, v, grade, kv}. It reads
 // only its arguments (d is its memory: {i} the point it is at; it leaves d.e, how far left of the line the front
 // axle is). What it does is a driver's manner, not the car's physics; its settings are in the register (DRIVE_DRIVER), kept as a rule by the owner's sign-off (build 278).
@@ -632,7 +658,7 @@ function stepCar(car,s,u,dt){
   const wMean=()=>{let a=0;if(sg){for(let i=0;i<4;i++)a+=sg[i]*s.w[i];return a;}for(let i=0;i<4;i++)if(drv[i])a+=s.w[i];return a/nd;};
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
-  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,sl=rd.soil,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
@@ -700,11 +726,13 @@ function stepCar(car,s,u,dt){
     const eT=s.esp;eT[0]=eT[1]=eT[2]=eT[3]=0;
     if(car.esp){let M=0;
       if(s.vx>A.espVmin){
-        // the grip is the tyres' own or, where the car is already turning harder (downforce, a banked dip), what it has shown
-        const lim=Math.max(car.mu*gz,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
+        // the grip is the tyres' own on what is under them or, where the car is already turning harder (downforce, a
+        // banked dip), what it has shown. On a lower grip the brush tyre peaks at a smaller angle, tan by the grip.
+        const gF=gr?(gr[0]+gr[1])/2:1,gB=gr?(gr[2]+gr[3])/2:1,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
+        const lim=Math.max(car.mu*gz*(gF+gB)/2,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
         const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
-        if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>car.pkF)M+=sg*car.Izz*ex/A.espTau;
+        if(ex>0&&Math.abs(s.alpha[0]+s.alpha[1])/2>pkF)M+=sg*car.Izz*ex/A.espTau;
         // too much yaw: more than the reference as the car itself would follow it, lagged by the single-track model's
         // equivalent delay, tau = B/C - m v a/(Cr L) (Abe, Vehicle Handling Dynamics, ch. 3)
         const v=s.vx,Cf=car.CaF,Cr=car.CaR,B=car.m*(car.a*car.a*Cf+car.b*car.b*Cr)+car.Izz*(Cf+Cr),
@@ -713,7 +741,7 @@ function stepCar(car,s,u,dt){
         const sy=Math.sign(s.yaw),ox=(s.yaw-s.yawRef)*sy-A.espBand;
         // the car turning faster than asked: a moment against it, once the rear tyres are past their peak (espBeta),
         // where they hold no more
-        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>A.espBeta;
+        s.espOver=ox>0&&Math.abs(s.alpha[2]+s.alpha[3])/2>pkB;
         if(s.espOver)M-=sy*car.Izz*ox/A.espTau;
       }else{s.yawRef=s.yaw;s.espOver=false;}
       if(M!==0){const fr=M*s.yaw<0,q=(fr?0:2)+(M>0?0:1);                   // against the yaw: an outer front wheel; with it: an inner rear
@@ -762,11 +790,11 @@ function stepCar(car,s,u,dt){
       // Locked, the clutch passes exactly the torque that keeps the engine and the wheels turning together (the
       // torque that brings their slip to nothing in this step, from each side's own acceleration: Karnopp's stick
       // condition); it slips when that is more than it can hold, and then passes what it can hold.
-      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
+      let Id=0,aW=0;for(let i=0;i<4;i++)if(drv[i]){const Iq=car.Iw+h*car.r*dF[i];Id+=Iq;aW-=(Fl[i]*car.r+driveRollF(car,Fz[i],sl&&sl[i])*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;}
       aW/=nd;
       // under an unequal split, the carrier turns at the shares' weighted mean of the wheels, sum sg w (Willis), and
       // each wheel takes its share of the torque, so the driveline's own inertia is 1 / sum(sg^2 / I)
-      if(sg){aW=0;let iI=0;for(let i=0;i<4;i++){const Iq=car.Iw+h*car.r*dF[i];aW-=sg[i]*(Fl[i]*car.r+car.crr*Fz[i]*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;iI+=sg[i]*sg[i]/Iq;}Id=1/iI;}
+      if(sg){aW=0;let iI=0;for(let i=0;i<4;i++){const Iq=car.Iw+h*car.r*dF[i];aW-=sg[i]*(Fl[i]*car.r+driveRollF(car,Fz[i],sl&&sl[i])*car.r*Math.tanh(s.w[i]*car.r/0.5))/Iq;iI+=sg[i]*sg[i]/Iq;}Id=1/iI;}
       let Tcl=(slip/h+Te/car.Ie-ratio*aW)/(1/car.Ie+ratio*ratio*car.eff/Id);
       Tcl=Math.max(-cap,Math.min(cap,Tcl));
       s.we=Math.max(0,s.we+h*(Te-Tcl)/car.Ie);
@@ -790,7 +818,7 @@ function stepCar(car,s,u,dt){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
         const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
         if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
-        const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
+        const roll=driveRollF(car,Fz[q],sl&&sl[q])*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
         if(ax===0?car.inbF:car.inbR)Tbd[q]-=Math.sign(wq)*Tb;
