@@ -449,7 +449,7 @@ function setTab(mode){
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='challenges'){buildVehicle();refreshChallenge();}
+  if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }

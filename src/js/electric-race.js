@@ -46,7 +46,7 @@ function evRaceModel(key,line,grips){
   };
   // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
   // fh: the cells' share of it, at 25 °C and half charge; the race swaps it for the cells' heat at the pack's own
-  // temperature and charge as it goes (evRaceHeatStep, build 370)
+  // temperature and charge as it goes (evRaceHeatStep, build 371)
   const price=L=>{
     const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
@@ -122,7 +122,7 @@ function evRaceTqAt(M,i,f,g,ff,key='tq'){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
-  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 370)
+  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 371)
   const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
   const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
   packHeatStep(X.pack,t,heat,dt);

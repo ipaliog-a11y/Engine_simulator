@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The lap's torque and the race's energy price at the pack's own temperature (build 370)
+### The lap's torque and the race's energy price at the pack's own temperature (build 371)
 
 Step 10 of `plans/small-physics.md`, build 346's follow-up.
 - **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
@@ -27,9 +27,22 @@ Step 10 of `plans/small-physics.md`, build 346's follow-up.
 - **The race:** the pace grid keeps the cells' heat (at 25 °C, half charge) apart in its price; each step the race
   swaps it for the heat at the pack's own temperature and charge. 150 kW from a Model Y at 45 °C: 0.4% less energy.
 - Fingerprint against `main`: only the three Teslas' lap times move, by −0.003 to +0.001% (Model Y 77.859 → 77.857 s).
-  No top speed, ICE car or hybrid moves. `test224` (new) checks it.
+  No top speed, ICE car or hybrid moves. `test226` (new) checks it.
 - Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
   and the motor bench stay at 25 °C.
+
+### Rank several cars on a challenge (build 370)
+
+- The CHALLENGES tab gets **RANK CARS**: add cars (this build, garage builds, factory cars; 12 at most) and press
+  RANK. Each runs the selected challenge with the settings on screen, through that challenge's own solver, and the
+  table lists them passes first, then by the challenge's own score: economy by energy drawn (fuel L × density × LHV
+  from `FUELS`, or pack kWh × 3.6, in MJ, so engine cars and EVs share one scale), stage by time, moose by clear
+  speed, skid pad by steady g, powerslide by peak β.
+- Cars run one at a time; the page yields between cars, with a progress bar and CANCEL (heard before the next car).
+- A challenge registers its score in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry), so a new challenge
+  needs no change to the ranking. No solver changed: the fingerprint is identical.
+- Open: one car's solve still blocks the page while it runs (up to ~3 s for the powerslide's search); moving it off
+  the main thread would need the solvers split into a Worker.
 
 ### Anti-dive and anti-squat in the stepped car (build 369)
 

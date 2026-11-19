@@ -1,55 +1,84 @@
-// The lap's torque and the race's energy price at the pack's own temperature (build 370, plans/small-physics.md step 10).
+// Challenges: rank several cars on one challenge (build 370).
 //
-// WHY THIS EXISTS. Build 346 made the cells' heat follow their temperature, but the lap's torque curve (rated at 25 °C)
-// and the race's pace-grid price still read 25 °C. What must hold:
-//   · driveTorqueRated with no temperature is the 25 °C (rated) curve, so the dyno and the designer do not move;
-//   · evPackGain is 1 at 25 °C, never below 1 when warmer (lower resistance), and above 1 somewhere on a preset EV's
-//     curve once warm (where the pack's power is the limit);
-//   · the lap's walk scales the drive by it: on a Model Y lap the drive's share rises past 1 where the pack is warm;
-//   · the race's grid keeps its cells' heat apart (fh, at 25 °C and half charge), inside its price;
-//   · a race step at 25 °C and half charge spends exactly the grid's price; a warmer pack spends less.
+// WHY THIS EXISTS. The CHALLENGES tab solved one car at a time. The ranking runs a list of cars through the
+// selected challenge with its own solver and score. What must hold:
+//   · every registered kind has a score (RUN_CHALLENGE_SCORES), so the ranking needs no per-challenge code;
+//   · a ranked row's score equals the one-car solve of that car (same physics, same settings);
+//   · the table is sorted: passes first, then by the challenge's own score direction;
+//   · the page yields between cars: the progress bar shows while it runs, and CANCEL stops before the next car;
+//   · the loaded car and its challenge result are the same after a ranking as before;
+//   · no horizontal scroll at phone width, no page errors.
 import { chromium } from './pw.mjs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = fileURLToPath(new URL('..', import.meta.url));
+const shot = process.env.SHOT;
 const browser = await chromium.launch();
-const page = await browser.newPage();
-const errors = [];
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: shot ? 2 : 1 });
+const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-const r = await page.evaluate(() => {
-  loadVehiclePreset(EV_VEHICLE_PRESETS.find(p => /Model Y/.test(p.name)));
-  const e = engine, V = motorRatedV(e), tc = e.motor.cool.tCool, cool = { w: tc, c: tc, r: 60 };
-  const rpms = evCurve(e).map(q => q.rpm);
-  const same = rpms.every(n => driveTorqueRated(e, Math.max(n, 1), V, cool) === driveTorqueRated(e, Math.max(n, 1), V, cool, null, 25));
-  const g = t => rpms.map(n => evPackGain(e, n, t));
-  const g25 = g(25), g45 = g(45);
-  // the lap's walk: 60 s flat out at the knee's speed and above, where the pack's power is the limit
-  const n = 600, prof = { dt: new Float64Array(n).fill(0.1), rpm: new Float64Array(n), tq: new Float64Array(n) };
-  for (let i = 0; i < n; i++) { prof.rpm[i] = e.redline * (0.4 + 0.5 * i / n); prof.tq[i] = evCurve(e).find(q => q.rpm >= prof.rpm[i]).tq; }
-  const H = evLapHeat(e, prof);
-  // the race: a stub car one step along at the grid's own price, at 25 °C and at 45 °C, half charge
-  const M = { ev: { pack: e.pack, motor: e.motor, V, k: 1, rl: e.redline, kWh: e.pack.kWh }, tankKg: 1e9 };
-  const P = 150e3, d = packDraw(e.pack, 0.5, P), fh = d.heat / 3600, fr = P / 3600 + fh;
-  const step = tB => {
-    const c = { evT: { w: tc, c: tc, r: tc, b: tB }, evPeak: { w: 0, b: 0 }, fuelKg: (0.5 - EV_RACE.socFloor) * e.pack.kWh, fuelUsed: 0, _fr: fr, _fh: fh, _tq: 0, v: 30 };
-    const E0 = c.fuelKg; c.fuelKg -= fr / 1000; evRaceHeatStep(M, c, 1, 1, 1); return (E0 - c.fuelKg) * 3.6e6;   // J in 1 s
-  };
-  return { same, g25, g45, shareMax: Math.max(...H.share), bMax: Math.max(...H.tB),
-    price: fr * 3600, s25: step(25), s45: step(45), heat25: d.heat };
+
+const r = await page.evaluate(async () => {
+  const idx = n => FACTORY_CARS.findIndex(p => p.name.includes(n));
+  const out = {};
+  out.unscored = [...new Set(RUN_CHALLENGES.map(c => c.kind))].filter(k => !RUN_CHALLENGE_SCORES[k]);
+  loadVehiclePreset(FACTORY_CARS[idx('MX-5')]);
+  setTab('challenges');
+  const sel = document.getElementById('chalSel');
+  sel.value = 'stage-alpine'; sel.dispatchEvent(new Event('change'));
+  const before = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
+  const add = v => { const s = document.getElementById('chalRankAddSel'); s.value = v; document.getElementById('chalRankAddBtn').click(); };
+  const picks = ['MX-5', 'Golf GTI', 'Model 3'].map(idx);
+  out.picks = picks;
+  for (const i of picks) add('p:' + i);
+  // one-car reference scores
+  const ch = runChallengeById('stage-alpine');
+  out.ref = picks.map(i => withBuild(raceEntrantFrom('p:' + i).build, () => runChallengeScore(ch, solveRunChallenge(ch.id))));
+  const run = chalRankRun();
+  await new Promise(r => setTimeout(r, 0));
+  out.progShown = !document.getElementById('chalRankProg').hidden && !document.getElementById('chalRankStop').hidden;
+  await run;
+  out.rows = chalRank.rows.map(x => ({ name: x.name, s: x.s }));
+  out.table = document.querySelectorAll('#chalRankOut tbody tr').length;
+  out.after = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
+  out.before = before;
+  // cancel: stop after the first car
+  const run2 = chalRankRun();
+  await new Promise(r => setTimeout(r, 0));
+  document.getElementById('chalRankStop').click();
+  await run2;
+  out.cancelled = chalRank.rows.length;
+  // moose kind ranks too (higher is better)
+  sel.value = 'moose'; sel.dispatchEvent(new Event('change'));
+  chalRank.cars.splice(2, 1);
+  await chalRankRun();
+  out.moose = chalRank.rows.map(x => x.s && { v: x.s.v, pass: x.s.pass, higher: x.s.higher });
+  out.scrollW = document.documentElement.scrollWidth, out.w = window.innerWidth;
+  document.getElementById('chalRankOut').scrollIntoView();
+  return out;
 });
+if (shot) await page.screenshot({ path: shot, fullPage: false });
 await browser.close();
-const fails = [...errors], f = (x, d = 4) => (+x).toFixed(d);
-console.log(`== Model Y gain at 45 °C: ${f(Math.min(...r.g45))}..${f(Math.max(...r.g45))} (25 °C: ${f(Math.min(...r.g25))}..${f(Math.max(...r.g25))}) ==`);
-console.log(`== race step: grid price ${f(r.price, 0)} W, spent ${f(r.s25, 0)} W at 25 °C, ${f(r.s45, 0)} W at 45 °C (cells ${f(r.heat25, 0)} W at 25 °C) ==`);
-if (!r.same) fails.push('driveTorqueRated without a temperature is not the 25 °C curve');
-if (r.g25.some(x => Math.abs(x - 1) > 1e-9)) fails.push('evPackGain is not 1 at 25 °C');
-if (r.g45.some(x => x < 1 - 1e-9)) fails.push('a warmer pack gives less torque');
-if (!(Math.max(...r.g45) > 1.001)) fails.push('a warm pack gives no more torque anywhere on the Model Y curve');
-console.log(`== lap walk: pack to ${f(r.bMax, 1)} °C, drive share up to ${f(r.shareMax)} ==`);
-if (!(r.shareMax > 1)) fails.push('the lap walk does not scale the drive by the warm pack');
-if (Math.abs(r.s25 - r.price) > 1e-3 * r.price) fails.push(`a step at 25 °C spends ${f(r.s25, 0)} W, not the grid's ${f(r.price, 0)} W`);
-if (!(r.s45 < r.s25)) fails.push('a warmer pack does not spend less');
-if (errors.length) fails.push(...errors);
-console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
-process.exit(fails.length ? 1 : 0);
+
+const ok = (c, m) => { if (!c) fails.push(m); };
+ok(r.unscored.length === 0, 'kinds without a score: ' + r.unscored);
+ok(r.picks.every(i => i >= 0), 'presets not found');
+ok(r.progShown, 'progress/cancel not shown while running');
+ok(r.table === 3 && r.rows.length === 3, 'table rows ' + r.table);
+for (let k = 0; k < r.ref.length; k++) {
+  const row = r.rows.find(x => x.s && Math.abs(x.s.v - r.ref[k].v) < 1e-9 && x.s.pass === r.ref[k].pass);
+  ok(row, 'ranked score differs from the one-car solve: ' + JSON.stringify(r.ref[k]));
+}
+const sorted = rows => rows.every((x, i) => i === 0 || !x || !rows[i - 1] || (rows[i - 1].pass && !x.pass) ||
+  (rows[i - 1].pass === x.pass && (x.higher ? rows[i - 1].v >= x.v : rows[i - 1].v <= x.v)));
+ok(sorted(r.rows.map(x => x.s)), 'stage rows not sorted');
+ok(r.moose.length === 2 && r.moose.every(x => x && x.higher) && sorted(r.moose), 'moose rows ' + JSON.stringify(r.moose));
+ok(r.cancelled < 3, 'cancel did not stop: ' + r.cancelled + ' rows');
+ok(r.after.mass === r.before.mass && r.after.time === r.before.time && r.after.name === r.before.name, 'car changed: ' + JSON.stringify([r.before, r.after]));
+ok(r.scrollW <= r.w, 'horizontal scroll ' + r.scrollW + ' > ' + r.w);
+console.log('stage-alpine ranking:'); for (const x of r.rows) console.log('  ' + x.name.padEnd(36) + (x.s ? x.s.text + (x.s.pass ? ' PASS' : ' FAIL') : '—'));
+console.log('moose:', JSON.stringify(r.moose), ' cancelled after', r.cancelled, 'car(s)');
+for (const e of errors) fails.push(e);
+if (fails.length) { console.log('FAIL\n  ' + fails.join('\n  ')); process.exit(1); }
+console.log('PASS');

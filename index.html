@@ -224,6 +224,12 @@ body.track-open{overflow:hidden}
 .race-ent button{padding:2px 6px;font-size:7px;box-shadow:none}
 .race-add{display:flex;gap:6px;margin-top:8px}.race-add select{flex:1;min-width:0}
 .race-prog{margin-top:8px;font-size:7px;color:#88aacc}
+#chalRankAddSel{width:0}
+#chalRankOut .perf-head{margin-top:8px}
+.chal-rank-h{font-size:8px;margin:12px 0 4px;color:#ffcc00}
+.chal-rank{width:100%;table-layout:fixed;border-collapse:collapse;font-size:7px;color:#ddd;margin-top:4px}
+.chal-rank th,.chal-rank td{padding:4px 2px;border-bottom:1px solid #222;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chal-rank th{color:#88aacc}.chal-rank th:first-child{width:16px}.chal-rank th:nth-child(3){width:38%}.chal-rank th:last-child{width:56px}
 .race-prog-track{height:8px;background:#26263a;margin-bottom:4px}.race-prog-bar{height:100%;width:0;background:#00ff88}
 #raceScrub{margin:2px 0 10px}
 .race-tower{width:100%;border-collapse:collapse;font-size:7px;color:#ccd}
@@ -815,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 370</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 371</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3261,6 +3267,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
 <b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK or FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in); AUTO tries all three. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car without a handbrake), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
 <b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
+<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -4060,6 +4067,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
 <div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
+<h3 class="chal-rank-h">RANK CARS</h3>
+<div id="chalRankCars"></div>
+<div class="race-add"><select id="chalRankAddSel" class="opt-select" aria-label="Car to add"></select><button id="chalRankAddBtn">ADD</button></div>
+<div class="build-row"><button id="chalRankGo" title="Run every car through this challenge with the settings above">RANK</button><button id="chalRankStop" hidden>CANCEL</button></div>
+<div class="race-prog" id="chalRankProg" hidden><div class="race-prog-track"><div class="race-prog-bar"></div></div><span></span></div>
+<div id="chalRankOut"></div>
 </div>
 <div class="panel" id="racePanel" style="display:none">
 <h2>Race</h2>
@@ -12725,7 +12738,7 @@ function packBuild(s){
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
 // own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
-// (packDraw's tC); since build 370 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
+// (packDraw's tC); since build 371 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
@@ -23642,8 +23655,8 @@ function fillTrackSelect(sel,value){
   sel.value=TRACKS[value]?value:Object.keys(TRACKS)[0];
 }
 // Where an entrant can come from: what is built now, the garage's cars, and the factory cars.
-function raceFillAdd(){
-  const sel=document.getElementById('raceAddSel');if(!sel)return;
+function raceFillAdd(id){
+  const sel=document.getElementById(id||'raceAddSel');if(!sel)return;
   const cars=garage.filter(g=>gKind(g)==='car');
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';
@@ -24590,7 +24603,7 @@ function setTab(mode){
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='challenges'){buildVehicle();refreshChallenge();}
+  if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
@@ -27142,7 +27155,7 @@ function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
 }
-// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 370). The lap's
+// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 371). The lap's
 // curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
 // the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
 // and every 5 °C from 25 to 60, straight between; cached per build and power cap.
@@ -27188,7 +27201,7 @@ function evLapHeat(e,prof){
     if(lap===1&&i===0)tb.b=PACK_COOLANT;
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
-    // and, since build 370, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
+    // and, since build 371, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
@@ -27272,7 +27285,7 @@ function evRaceModel(key,line,grips){
   };
   // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
   // fh: the cells' share of it, at 25 °C and half charge; the race swaps it for the cells' heat at the pack's own
-  // temperature and charge as it goes (evRaceHeatStep, build 370)
+  // temperature and charge as it goes (evRaceHeatStep, build 371)
   const price=L=>{
     const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
@@ -27348,7 +27361,7 @@ function evRaceTqAt(M,i,f,g,ff,key='tq'){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
-  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 370)
+  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 371)
   const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
   const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
   packHeatStep(X.pack,t,heat,dt);
@@ -29708,6 +29721,29 @@ function solveRunChallenge(id){
   if(ch.kind==='skidpad')return simulateSkidpadChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
+// Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
+// own `score` instead. A new challenge registers here (or on its entry) and the ranking needs no change.
+// score(R) runs with that car loaded and returns {v, higher, pass, text}: v sorts (higher is better when `higher`),
+// pass is the challenge's own pass/fail, text is shown. Return null when R has nothing to rank.
+const RUN_CHALLENGE_SCORES={
+  // Economy: each car against its own target time. Sorted by energy drawn from the tank or pack (fuel: litres ×
+  // density × LHV from FUELS; EV: pack kWh × 3.6 MJ), so petrol, diesel and EVs share one scale; shown in their own unit.
+  economy:R=>{
+    const f=!R.ev&&powertrain().fuel(),mj=R.ev?R.kWh*3.6:R.fuelL*(f?f.density*f.LHV:0);
+    return{v:mj,higher:false,pass:Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target),
+      text:(R.ev?R.kWh.toFixed(2)+' kWh':R.fuelL.toFixed(2)+' L')+' · '+mj.toFixed(1)+' MJ'};
+  },
+  stage:R=>({v:R.time,higher:false,pass:!R.dnf,text:R.time.toFixed(1)+' s'}),
+  moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
+  // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
+  skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
+  drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
+};
+function runChallengeScore(ch,R){
+  if(!R||!R.ok)return null;
+  const f=ch.score||RUN_CHALLENGE_SCORES[ch.kind];
+  return f?f(R):null;
+}
 // ====== CHALLENGES tab UI (build 341; EV 342; pace + hover 344; moose 345) ======
 const chalHover={i:-1,map:null};
 let chalMooseT0=0;
@@ -29716,6 +29752,7 @@ let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 function refreshChallenge(){
   // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
   const ch=runChallengeById(activeRunChallenge);
   chalResult=solveRunChallenge(ch.id);
   chalHover.i=-1;
@@ -30328,6 +30365,80 @@ function bindChallengeHover(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
+}
+// ====== CHALLENGES: rank several cars on one challenge (build 370) ======
+// Each car is loaded in turn (withBuild, as the race does), solved by the challenge's own solver with the settings
+// on screen, and scored by runChallengeScore (src/js/run-challenges.js). One car per step, the page yields between
+// cars, so the progress bar moves and CANCEL is heard; a car already solving finishes first (the powerslide's
+// worst search is ~3 s). Nothing here changes a solver.
+const CHAL_RANK_MAX=12;
+const chalRank={cars:[],rows:null,ch:null,busy:false,stop:false,prog:0,progTxt:''};
+function chalRankAdd(){
+  if(chalRank.cars.length>=CHAL_RANK_MAX){flash(tr('TWELVE CARS AT MOST'),'warn');return;}
+  const sel=document.getElementById('chalRankAddSel');if(!sel)return;
+  const e=raceEntrantFrom(sel.value);if(!e)return;
+  const same=chalRank.cars.filter(x=>x.base===e.name).length;
+  e.base=e.name;if(same)e.name=e.name+' #'+(same+1);
+  chalRank.cars.push(e);renderChalRank();
+}
+// Pass first, then by score (each challenge says which way is better); cars with no result last.
+function chalRankSort(rows){
+  return rows.slice().sort((a,b)=>{
+    if(!a.s||!b.s)return(a.s?0:1)-(b.s?0:1);
+    if(a.s.pass!==b.s.pass)return a.s.pass?-1:1;
+    return a.s.higher?b.s.v-a.s.v:a.s.v-b.s.v;
+  });
+}
+async function chalRankRun(){
+  if(chalRank.busy||!chalRank.cars.length)return;
+  const ch=runChallengeById(activeRunChallenge),cars=chalRank.cars.slice(),rows=[];
+  chalRank.busy=true;chalRank.stop=false;chalRank.rows=null;chalRank.ch=ch;
+  try{
+    for(let k=0;k<cars.length&&!chalRank.stop;k++){
+      const e=cars[k];
+      chalRank.prog=k/cars.length;chalRank.progTxt=tr('SOLVING')+' '+e.name+' ('+(k+1)+'/'+cars.length+')';renderChalRank();
+      await raceYield();await raceYield();
+      if(chalRank.stop)break;
+      let s=null,err='';
+      try{s=withBuild(e.build,()=>{
+        if(!powertrain().ready()||!vehicle||!vehicle.mass)return null;
+        return runChallengeScore(ch,solveRunChallenge(ch.id));
+      });}catch(x){err=String(x&&x.message||x);}
+      rows.push({name:e.name,s,err});
+    }
+  }finally{
+    chalRank.busy=false;chalRank.rows=chalRankSort(rows);chalRank.prog=1;
+    if(chalRank.stop)flash(tr('RANKING CANCELLED'),'warn');
+    renderChalRank();
+  }
+}
+function renderChalRank(){
+  const box=document.getElementById('chalRankCars');if(!box)return;
+  box.innerHTML=chalRank.cars.length?chalRank.cars.map((e,k)=>
+    '<div class="race-ent"><span title="'+esc(e.name)+'">'+esc(e.name)+'</span>'+
+    '<button data-rm="'+k+'" aria-label="'+esc(tr('Remove'))+'"'+(chalRank.busy?' disabled':'')+'>✕</button></div>').join('')
+    :'<div class="perf-note">'+tr('Add cars to rank them on this challenge: the car you have built, a garage build or a factory car.')+'</div>';
+  box.querySelectorAll('button[data-rm]').forEach(b=>b.addEventListener('click',()=>{if(chalRank.busy)return;chalRank.cars.splice(+b.dataset.rm,1);renderChalRank();}));
+  const go=document.getElementById('chalRankGo'),stop=document.getElementById('chalRankStop'),add=document.getElementById('chalRankAddBtn');
+  if(go){go.disabled=chalRank.busy||!chalRank.cars.length;go.hidden=chalRank.busy;}
+  if(stop)stop.hidden=!chalRank.busy;
+  if(add)add.disabled=chalRank.busy;
+  const pg=document.getElementById('chalRankProg');
+  if(pg){pg.hidden=!chalRank.busy;pg.querySelector('.race-prog-bar').style.width=Math.round(chalRank.prog*100)+'%';pg.querySelector('span').textContent=chalRank.progTxt;}
+  const out=document.getElementById('chalRankOut');if(!out)return;
+  if(!chalRank.rows||chalRank.busy){out.innerHTML='';return;}
+  out.innerHTML='<div class="perf-head">'+esc(tr(chalRank.ch.name))+'</div><table class="chal-rank"><thead><tr><th>#</th><th>'+tr('CAR')+'</th><th>'+tr('SCORE')+'</th><th>'+tr('RESULT')+'</th></tr></thead><tbody>'+
+    chalRank.rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td title="'+esc(r.name)+'">'+esc(r.name)+'</td><td>'+(r.s?esc(r.s.text):'—')+'</td>'+
+      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'">'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
+    '</tbody></table>';
+}
+function bindChalRank(){
+  if(typeof raceFillAdd==='function')raceFillAdd('chalRankAddSel');
+  const g=id=>document.getElementById(id);
+  if(g('chalRankAddBtn'))g('chalRankAddBtn').addEventListener('click',chalRankAdd);
+  if(g('chalRankGo'))g('chalRankGo').addEventListener('click',chalRankRun);
+  if(g('chalRankStop'))g('chalRankStop').addEventListener('click',()=>{chalRank.stop=true;});
+  renderChalRank();
 }
 // ====== ELECTRIC PRESETS: the three Teslas (build 183, step 2.5b of plans/hybrid-electric/) ======
 // Decision 10: the Model 3 RWD (one motor), the Model Y Long Range (two: a magnet motor at the rear, an induction motor
@@ -32416,6 +32527,7 @@ function bindControls(){
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  if(typeof bindChalRank==='function')bindChalRank();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
