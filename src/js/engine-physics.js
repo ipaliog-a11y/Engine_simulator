@@ -177,8 +177,8 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. The exhaust model cannot tell either: rich of stoichiometric its temperature
-// is flat by construction (exhaustGasT caps the heat released and does not count the extra fuel's evaporation).
+// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 384), but only by
+// ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
   if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
@@ -198,7 +198,7 @@ function mappedAFR(rpm,map){
     return st*lam;
   }
   if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
-  return st*knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map));
+  return st*egtEnrichLambda(rpm,map,knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map)));
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -591,6 +591,32 @@ function knockEnrichLambda(rpm,map,base){
   if(over(base,false)&&over(base,true)){
     if(over(LAMBDA_KNOCK_MIN,true))lam=LAMBDA_KNOCK_MIN;
     else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(over(m,true))hi=m;else lo=m;}lam=hi;}   // to ~0.001
+  }
+  _knockCache.m.set(key,lam);
+  return lam;
+}
+// ---- The turbine's temperature limit (build 384) ----
+// A turbo petrol ECU models the exhaust at the turbine and protects it: it enriches (the excess fuel's evaporation and
+// mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN. TURB_T_LIMIT is the owner's 950 C, a
+// cast turbine housing's usual continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C),
+// read at the turbine inlet (turbineInletT). The exhaust is read at the spark the ECU runs at each trial mixture. Only
+// the ECU that fuels the knock (ecuFuelsKnock), and only with a turbine. Owner's decision: no boost cut yet (EGT's load
+// factor, map/mapMax, is not derived, and would make the cut, not the mixture, do the cooling).
+const TURB_T_LIMIT=950+273.15;
+const ecuGuardsTurbine=()=>engine.intake==='turbo'&&ecuFuelsKnock();
+function egtOverAt(rpm,map,l){
+  _lamTrial=l;
+  try{return turbineInletT(rpm,map,l,egtAt(rpm,map,l,Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map))))>TURB_T_LIMIT;}finally{_lamTrial=null;}
+}
+function egtEnrichLambda(rpm,map,base){
+  if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
+  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
+  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
+  let lam=base;
+  if(egtOverAt(rpm,map,base)){
+    if(egtOverAt(rpm,map,LAMBDA_KNOCK_MIN))lam=LAMBDA_KNOCK_MIN;
+    else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(egtOverAt(rpm,map,m))hi=m;else lo=m;}lam=lo;}   // the leanest that holds, to ~0.001
   }
   _knockCache.m.set(key,lam);
   return lam;
