@@ -903,6 +903,15 @@
       "reference_image": "reference/honda-s2000-reference.jpg",
       "generated_size": "1152x864",
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
+    },
+    "Nissan Skyline GT-R (R32, 1989)": {
+      "file": "nissan-skyline-gt-r-r32-1989.png",
+      "name": "Nissan Skyline GT-R (R32, 1989)",
+      "slug": "nissan-skyline-gt-r-r32-1989",
+      "prompt": "8-bit pixel-art side profile of a 1989 Nissan Skyline GT-R R32 BNR32 coupe, boxy four-headlamp nose, deep front air dam, wide fenders, rear wing, Gun Grey Metallic paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "assets/car-profiles/honda-s2000-ap1-2000.png",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640"
     }
   }
 }

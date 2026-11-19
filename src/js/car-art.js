@@ -112,6 +112,7 @@ const CAR_ART={
   'Nissan Qashqai e-POWER (2022)':'nissan-qashqai-e-power-j12-2022',
   'BMW 330e (2020)':'bmw-330e-g20-2020',
   'Porsche 918 Spyder (2013)':'porsche-918-spyder-2013',
+  'Nissan Skyline GT-R (R32, 1989)':'nissan-skyline-gt-r-r32-1989',
 };
 function carArtUrl(name){const s=name&&CAR_ART[name];return s?CAR_ART_DIR+s+'.webp':'';}
 
@@ -219,6 +220,7 @@ const CAR_NO={
   'Nissan Qashqai e-POWER (2022)':98,
   'BMW 330e (2020)':99,
   'Porsche 918 Spyder (2013)':100,
+  'Nissan Skyline GT-R (R32, 1989)':101,
 };
 const carNo=name=>CAR_NO[name]?String(CAR_NO[name]).padStart(3,'0'):'';
 // The picker's line for a real car: its number, then its name.

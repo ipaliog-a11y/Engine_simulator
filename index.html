@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 386</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 387</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -5902,6 +5902,8 @@ const PRESETS=[
    engine:{valvetrain:'dohc-finger',cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',silencer:'absorptive',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},unsure:['compExd_mm'],note:'export rating; JDM cars were quoted at 280 PS',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',compExd_mm:58,turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:35}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R32)',real:{hp:276,hpRpm:6800,tq:353,tqRpm:4400},unsure:['boost_bar','runner'],note:'JIS net 280 PS / 353 Nm (Nissan Heritage BNR32); gentlemen\'s agreement — real cars made more',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.78,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98,taperRpm:4400,taperPct:20}},
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98}},
   {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
@@ -6049,6 +6051,7 @@ const ENGINE_VALVES={
   'Chrysler 6.4 Hemi (Grand Cherokee SRT)':{iv:54.36,ev:41.91,src:'Dodge Garage, Gen III HEMI quick reference guide part IV: 6.4 head 2.14 / 1.65 in'},
   'BMW S14B23 (M3 E30)':{iv:37,ev:32,src:'TRW OEM and SuperTech standard-size valves: 37 / 32 mm (std)'},
   'Honda B18C spec R (Integra Type R DC2)':{iv:33,ev:28,src:'Brian Crower and Ferrea stock-size valves, B16A/B18C incl. Integra Type R: 33 / 28 mm (std)'},
+  'Nissan RB26DETT (Skyline GT-R R32)':{iv:34.6,ev:30.15,src:'Same RB26 stock valves as the R34 entry: Ferrea / Manley / GSC 34.6 / 30.15 mm'},
   'Nissan RB26DETT (Skyline GT-R R34)':{iv:34.6,ev:30.15,src:'Ferrea, Manley and GSC stock-size valves: 34.6 / 30.15 mm; Tomei +1 mm kit 35.65 / 31.15 (std)'},
   'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'},
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
@@ -8606,6 +8609,9 @@ const VEHICLE_PRESETS=[
   {cat:'Turbo Performance',name:'Toyota Supra RZ (A80, 1993)',engine:'Toyota 2JZ-GTE (Supra A80)',chassis:'coupe',
    body:{kg:1570,cd:0.31,area:1.94,wb:2.55,fWt:0.53,h:1.275},fit:{tc:false,drive:'rwd',tire:'sport',tw:255,twF:235,ta:40,wheel:17,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.9,top:250,limited:true},unsure:['tc','area']},
+  {cat:'Turbo Performance',era:'1980s',name:'Nissan Skyline GT-R (R32, 1989)',engine:'Nissan RB26DETT (Skyline GT-R R32)',chassis:'coupe',
+   body:{kg:1430,cd:0.4,area:1.91,wb:2.615,fWt:0.55,tf:1.48,tr:1.48,h:1.34},fit:{tc:false,drive:'awd',tire:'sport',tw:225,ta:50,wheel:16,brake:'big',rotor:296,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',geoF:'multilink',geoR:'multilink'},
+   real:{t100:5.2,top:250,limited:true},confidence:'high',note:'Nissan Heritage BNR32 curb and 280 PS / 353 Nm; Cd and area secondary / estimated',unsure:['cd','area','fWt','t100','top','rotor','boost_bar']},
   {cat:'Turbo Performance',name:'Nissan Skyline GT-R V-spec (R34, 1999)',engine:'Nissan RB26DETT (Skyline GT-R R34)',chassis:'coupe',
    body:{kg:1560,cd:0.36,area:2.00,wb:2.665,fWt:0.56,h:1.360},fit:{tc:false,drive:'awd',tire:'sport',tw:245,ta:40,wheel:18,brake:'big',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:5.0,top:250,limited:true},note:'rated at the JDM 280 PS; road-test cars made more',unsure:['cd','area','fWt','t100']},
@@ -8782,6 +8788,8 @@ const GEARSETS={
   'Honda S2000 (AP1, 2000)':{r:[3.133,2.045,1.481,1.161,0.971,0.811],fd:4.100,src:'Honda press site (MY03 US) via s2ki'},
   'BMW M3 (E46, 2000)':{r:[4.227,2.528,1.669,1.226,1.000,0.828],fd:3.620,src:'Getrag Type D; BMW ST041 training manual; australiancar.reviews'},
   'Toyota Supra RZ (A80, 1993)':{r:[3.827,2.360,1.685,1.312,1.000,0.793],fd:3.266,src:'V160 (5/93-8/97), mkivsupra.net; 3.266 is the JDM final'},
+  'Nissan Skyline GT-R (R32, 1989)':{r:[3.214,1.925,1.302,1.000,0.752],fd:4.111,
+    src:'FS5R30A factory ratios and 4.111 final (R32/R33 GT-R); GTRUSA / service-data tables'},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{r:[3.827,2.360,1.685,1.312,1.000,0.793],fd:3.545,
     src:'Getrag six-speed shared with the V160; final 3.545 (SAU forum)'},
   'Subaru Impreza WRX STI (GD, 2004)':{r:[3.636,2.375,1.761,1.346,1.062,0.842],fd:3.900,
@@ -9327,6 +9335,7 @@ const SUSP_REAL={
   'BMW M3 (E46, 2000)':{f:'strut',r:'multilink',tf:1.508,tr:1.525},
   'Porsche 911 GT3 (991.2, 2017)':{f:'strut',r:'multilink',tf:1.551,tr:1.555},
   'Toyota Supra RZ (A80, 1993)':{f:'wishbone',r:'wishbone',tf:1.520,tr:1.525},
+  'Nissan Skyline GT-R (R32, 1989)':{f:'multilink',r:'multilink',tf:1.480,tr:1.480},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{f:'multilink',r:'multilink',tf:1.480,tr:1.490},
   'Subaru Impreza WRX STI (GD, 2004)':{f:'strut',r:'strut',tf:1.490,tr:1.500,unsure:true},
   'Mitsubishi Lancer Evolution IX (2006)':{f:'strut',r:'multilink',tf:1.515,tr:1.515},
@@ -20211,6 +20220,7 @@ const CAR_DIMS={
   'BMW M3 (E46, 2000)':{len:4.492,w:1.780,h:1.372,tyF:'225/45R18',tyR:'255/40R18',rimF:8,rimR:9,src:'ad:bmw-m3-coupe-e46-3.2i-24v-343hp-9872'},
   'Porsche 911 GT3 (991.2, 2017)':{len:4.562,w:1.852,h:1.271,tyF:'245/35R20',tyR:'305/30R20',rimF:9,rimR:12,src:'ad:porsche-911-991-ii-gt3-4.0-500hp-29495'},
   'Toyota Supra RZ (A80, 1993)':{len:4.520,w:1.810,h:1.275,tyF:'235/40R17',tyR:'255/40R17',src:'ad:toyota-supra-iv-a80-3.0i-24v-t-turbo-330hp-3454',unsure:['tyres','wb']},
+  'Nissan Skyline GT-R (R32, 1989)':{len:4.545,w:1.755,h:1.340,tyF:'225/50R16',tyR:'225/50R16',src:'nissan-heritage:skyline_gt-r_1989'},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{len:4.600,w:1.785,h:1.360,tyF:'245/40R18',tyR:'245/40R18',src:'ad:nissan-skyline-gt-r-x-r34-2.6-i-24v-turbo-4wd-280hp-360'},
   'Subaru Impreza WRX STI (GD, 2004)':{len:4.415,w:1.740,h:1.440,tyF:'225/45R17',tyR:'225/45R17',rimF:7.5,rimR:7.5,src:'ad:subaru-impreza-ii-facelift-2002-wrx-sti-2.0-265hp-awd-16082'},
   'Mitsubishi Lancer Evolution IX (2006)':{len:4.534,w:1.770,h:1.450,tyF:'235/45R17',tyR:'235/45R17',rimF:8,rimR:8,src:'ad:mitsubishi-lancer-evolution-ix-2.0-mivec-286hp-4wd-44889',unsure:['len']},
@@ -20425,6 +20435,7 @@ const CAR_ART={
   'Nissan Qashqai e-POWER (2022)':'nissan-qashqai-e-power-j12-2022',
   'BMW 330e (2020)':'bmw-330e-g20-2020',
   'Porsche 918 Spyder (2013)':'porsche-918-spyder-2013',
+  'Nissan Skyline GT-R (R32, 1989)':'nissan-skyline-gt-r-r32-1989',
 };
 function carArtUrl(name){const s=name&&CAR_ART[name];return s?CAR_ART_DIR+s+'.webp':'';}
 
@@ -20532,6 +20543,7 @@ const CAR_NO={
   'Nissan Qashqai e-POWER (2022)':98,
   'BMW 330e (2020)':99,
   'Porsche 918 Spyder (2013)':100,
+  'Nissan Skyline GT-R (R32, 1989)':101,
 };
 const carNo=name=>CAR_NO[name]?String(CAR_NO[name]).padStart(3,'0'):'';
 // The picker's line for a real car: its number, then its name.
@@ -32446,6 +32458,7 @@ const CAR_PRICE={
   "BMW M3 (E46, 2000)":35900,
   "Porsche 911 GT3 (991.2, 2017)":72150,
   "Toyota Supra RZ (A80, 1993)":38300,
+  "Nissan Skyline GT-R (R32, 1989)":40400,
   "Nissan Skyline GT-R V-spec (R34, 1999)":41050,
   "Subaru Impreza WRX STI (GD, 2004)":41900,
   "Mitsubishi Lancer Evolution IX (2006)":41000,
@@ -32484,7 +32497,7 @@ const CAR_PRICE={
   "BAC Mono 2.3 (2011)":77200,
   "Nissan 370Z (Z34, 2009)":32950,
   "Honda NSX (NA1, 1991)":54550,
-  "Ford F-150 Raptor (2017)":44350,
+  "Ford F-150 Raptor (2017)":44550,
   "Nissan GT-R (R35, 2017)":52000,
   "Alfa Romeo Giulia Quadrifoglio (2017)":44500,
   "Nissan 300ZX Twin Turbo (Z32, 1990)":36500,
@@ -32525,13 +32538,13 @@ const CAR_PRICE={
   "Toyota Hilux 2.8 D-4D (2016)":36450,
   "Volkswagen Amarok 3.0 V6 TDI (2018)":45200,
   "Chevrolet Camaro ZL1 (2017)":47150,
-  "Tesla Model 3 RWD (2021)":33150,
-  "Tesla Model Y Long Range (2022)":46674,
-  "Tesla Model S Plaid (2021)":76613,
-  "Hyundai Ioniq Hybrid (2016)":35320,
+  "Tesla Model 3 RWD (2021)":33547,
+  "Tesla Model Y Long Range (2022)":47070,
+  "Tesla Model S Plaid (2021)":76604,
+  "Hyundai Ioniq Hybrid (2016)":35321,
   "Toyota Prius (2016)":24811,
-  "Nissan Qashqai e-POWER (2022)":31912,
-  "BMW 330e (2020)":37773,
+  "Nissan Qashqai e-POWER (2022)":32313,
+  "BMW 330e (2020)":37774,
   "Porsche 918 Spyder (2013)":129133
 };
 // ====== GUIDED BUILD (build 308, phase G) ======

@@ -126,6 +126,8 @@ const PRESETS=[
    engine:{valvetrain:'dohc-finger',cylinders:6,layout:'boxer',bore_mm:102.0,stroke_mm:81.5,compression:13.3,redline:9000,cam:'race',vvt:true,valveSpring:'race',valveMat:'titanium',injector:'direct',octane:98,exhaust:'race',silencer:'absorptive',airFilter:'perf',runner:'variable'}},
   {cat:'Turbo Performance',name:'Toyota 2JZ-GTE (Supra A80)',real:{hp:320,hpRpm:5600,tq:427,tqRpm:4000},unsure:['compExd_mm'],note:'export rating; JDM cars were quoted at 280 PS',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:86.0,compression:8.5,redline:6800,intake:'turbo',boost_bar:0.75,turboSize:'medium',compExd_mm:58,turboConfig:'sequential',cam:'sport',vvt:false,injector:'port',intercooler:'large',exhaust:'sport',airFilter:'perf',octane:98,taperRpm:4000,taperPct:35}},   // VVT-i only from mid-1997 (MY1998)
+  {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R32)',real:{hp:276,hpRpm:6800,tq:353,tqRpm:4400},unsure:['boost_bar','runner'],note:'JIS net 280 PS / 353 Nm (Nissan Heritage BNR32); gentlemen\'s agreement — real cars made more',
+   engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.78,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98,taperRpm:4400,taperPct:20}},
   {cat:'Turbo Performance',name:'Nissan RB26DETT (Skyline GT-R R34)',real:{hp:276,hpRpm:6800,tq:392,tqRpm:4400},unsure:['runner'],note:'JDM 280 PS gentlemen\'s agreement; real output is higher',
    engine:{cylinders:6,bore_mm:86.0,stroke_mm:73.7,compression:8.5,redline:8000,intake:'turbo',boost_bar:0.7,turboSize:'small',turboConfig:'twin',cam:'sport',vvt:false,injector:'port',intakeSys:'itb',intercooler:'large',exhaust:'sport',airFilter:'perf',runner:'short',octane:98}},
   {cat:'Turbo Performance',name:'Subaru EJ257 (Impreza WRX STI)',real:{hp:296,hpRpm:6000,tq:407,tqRpm:4000},unsure:['boost_bar','runner'],
@@ -273,6 +275,7 @@ const ENGINE_VALVES={
   'Chrysler 6.4 Hemi (Grand Cherokee SRT)':{iv:54.36,ev:41.91,src:'Dodge Garage, Gen III HEMI quick reference guide part IV: 6.4 head 2.14 / 1.65 in'},
   'BMW S14B23 (M3 E30)':{iv:37,ev:32,src:'TRW OEM and SuperTech standard-size valves: 37 / 32 mm (std)'},
   'Honda B18C spec R (Integra Type R DC2)':{iv:33,ev:28,src:'Brian Crower and Ferrea stock-size valves, B16A/B18C incl. Integra Type R: 33 / 28 mm (std)'},
+  'Nissan RB26DETT (Skyline GT-R R32)':{iv:34.6,ev:30.15,src:'Same RB26 stock valves as the R34 entry: Ferrea / Manley / GSC 34.6 / 30.15 mm'},
   'Nissan RB26DETT (Skyline GT-R R34)':{iv:34.6,ev:30.15,src:'Ferrea, Manley and GSC stock-size valves: 34.6 / 30.15 mm; Tomei +1 mm kit 35.65 / 31.15 (std)'},
   'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'},
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its

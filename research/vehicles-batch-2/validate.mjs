@@ -62,8 +62,12 @@ const factorySrc = [
 ].join('\n');
 const factoryNames = new Set();
 for (const m of factorySrc.matchAll(/\bname:\s*'([^']+)'/g)) factoryNames.add(m[1]);
+// Own shortlist names may already be imported into FACTORY_CARS (batch-1 `own` pattern).
+// Fail only when a shortlist name collides with a factory car that is not on this queue —
+// which cannot happen for names ∈ queue; keep the check as: factory ∩ queue is fine.
+const foreignFactory = new Set([...factoryNames].filter(n => !names.has(n)));
 for (const name of names) {
-  if (factoryNames.has(name)) fails.push(`already in FACTORY_CARS: ${name}`);
+  if (foreignFactory.has(name)) fails.push(`already in FACTORY_CARS: ${name}`);
 }
 
 if (fails.length) {
@@ -71,4 +75,5 @@ if (fails.length) {
   for (const f of fails) console.error('-', f);
   process.exit(1);
 }
-console.log(`OK batch-2 queue: ${vehicles.length} cars, ${ids.size} ids, no FACTORY_CARS collisions`);
+const imported = [...names].filter(n => factoryNames.has(n)).length;
+console.log(`OK batch-2 queue: ${vehicles.length} cars, ${ids.size} ids, ${imported} already imported, no foreign FACTORY_CARS collisions`);

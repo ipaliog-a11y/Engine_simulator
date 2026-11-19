@@ -27,6 +27,7 @@ const CAR_DIMS={
   'BMW M3 (E46, 2000)':{len:4.492,w:1.780,h:1.372,tyF:'225/45R18',tyR:'255/40R18',rimF:8,rimR:9,src:'ad:bmw-m3-coupe-e46-3.2i-24v-343hp-9872'},
   'Porsche 911 GT3 (991.2, 2017)':{len:4.562,w:1.852,h:1.271,tyF:'245/35R20',tyR:'305/30R20',rimF:9,rimR:12,src:'ad:porsche-911-991-ii-gt3-4.0-500hp-29495'},
   'Toyota Supra RZ (A80, 1993)':{len:4.520,w:1.810,h:1.275,tyF:'235/40R17',tyR:'255/40R17',src:'ad:toyota-supra-iv-a80-3.0i-24v-t-turbo-330hp-3454',unsure:['tyres','wb']},
+  'Nissan Skyline GT-R (R32, 1989)':{len:4.545,w:1.755,h:1.340,tyF:'225/50R16',tyR:'225/50R16',src:'nissan-heritage:skyline_gt-r_1989'},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{len:4.600,w:1.785,h:1.360,tyF:'245/40R18',tyR:'245/40R18',src:'ad:nissan-skyline-gt-r-x-r34-2.6-i-24v-turbo-4wd-280hp-360'},
   'Subaru Impreza WRX STI (GD, 2004)':{len:4.415,w:1.740,h:1.440,tyF:'225/45R17',tyR:'225/45R17',rimF:7.5,rimR:7.5,src:'ad:subaru-impreza-ii-facelift-2002-wrx-sti-2.0-265hp-awd-16082'},
   'Mitsubishi Lancer Evolution IX (2006)':{len:4.534,w:1.770,h:1.450,tyF:'235/45R17',tyR:'235/45R17',rimF:8,rimR:8,src:'ad:mitsubishi-lancer-evolution-ix-2.0-mivec-286hp-4wd-44889',unsure:['len']},

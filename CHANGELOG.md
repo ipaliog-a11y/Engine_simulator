@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Nissan Skyline GT-R (R32, 1989) factory car (build 387)
+
+- First batch-2 wave-1 import: BNR32 coupe, ATTESA E-TS AWD, FS5R30A 5-speed (3.214…0.752, fd 4.111).
+- New engine `Nissan RB26DETT (Skyline GT-R R32)` — Heritage 280 PS / 353 Nm (stored 276 hp), 86.0×73.7, 0.78 bar twins, ECU taper 4400/20 so peak sits on the rating (278 hp, +1%).
+- Body 1430 kg / Cd 0.40 / area 1.91 (w×h×0.81); matched 0–100 4.79 vs 5.2 s (−8%); top 250 limited.
+- Showroom art `nissan-skyline-gt-r-r32-1989` (CAR_NO 101). Research in `research/vehicles/nissan-skyline-gtr-r32-1989/`.
+- `test171` overhang-from-profile budget 83 → 84 (R32 has no published front overhang).
+
 ### Next 100 factory cars shortlisted (research batch 2)
 
 - `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).

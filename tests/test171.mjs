@@ -22,7 +22,7 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 // no width found: Radical publishes none for the RSX that was reachable; the Ram's page gives it only with mirrors
 const NO_WIDTH_KNOWN = ['Radical SR3 RSX 1500 (2015)', 'Ram 2500 HO Cummins (2019)'];
 const OPEN_WHEEL = /Ariel Atom|BAC Mono/;          // the wheels stand outside the body
-const UNSURE_BUDGET = 37, READ_OVERHANG_BUDGET = 83;
+const UNSURE_BUDGET = 37, READ_OVERHANG_BUDGET = 84; // +1: R32 GT-R (build 387) — no published overhangs
 
 const R = await page.evaluate(() => {
   const names = FACTORY_CARS.map(p => p.name);

@@ -282,9 +282,9 @@
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
       "source_png": "ford-gt-2005.png"
     },
-    "Lamborghini Murciélago LP640 (2006)": {
+    "Lamborghini Murci\u00e9lago LP640 (2006)": {
       "file": "lamborghini-murcielago-lp640-2006.webp",
-      "name": "Lamborghini Murciélago LP640 (2006)",
+      "name": "Lamborghini Murci\u00e9lago LP640 (2006)",
       "slug": "lamborghini-murcielago-lp640-2006",
       "prompt": "8-bit pixel-art side profile of a 2006 Lamborghini Murcielago LP640 V12 supercar, wedge one-box profile, large side intake behind the door, scissor doors line, Arancio orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
       "reference_image": "reference/honda-s2000-reference.jpg",
@@ -302,9 +302,9 @@
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
       "source_png": "ferrari-458-italia-2010.png"
     },
-    "Lamborghini Huracán LP610-4 (2014)": {
+    "Lamborghini Hurac\u00e1n LP610-4 (2014)": {
       "file": "lamborghini-huracan-lp610-4-2014.webp",
-      "name": "Lamborghini Huracán LP610-4 (2014)",
+      "name": "Lamborghini Hurac\u00e1n LP610-4 (2014)",
       "slug": "lamborghini-huracan-lp610-4-2014",
       "prompt": "8-bit pixel-art side profile of a 2014 Lamborghini Huracan LP610-4 mid-engined supercar, sharp wedge, hexagonal side intake, low flat roof, Verde Mantis lime green paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
       "reference_image": "reference/honda-s2000-reference.jpg",
@@ -342,9 +342,9 @@
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
       "source_png": "porsche-911-turbo-s-992-2020.png"
     },
-    "Lamborghini Huracán STO (2021)": {
+    "Lamborghini Hurac\u00e1n STO (2021)": {
       "file": "lamborghini-huracan-sto-2021.webp",
-      "name": "Lamborghini Huracán STO (2021)",
+      "name": "Lamborghini Hurac\u00e1n STO (2021)",
       "slug": "lamborghini-huracan-sto-2021",
       "prompt": "8-bit pixel-art side profile of a 2021 Lamborghini Huracan STO track-focused supercar, roof snorkel scoop, shark fin on engine cover, big rear wing, Blu Laufey blue paint with orange accents. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
       "reference_image": "reference/honda-s2000-reference.jpg",
@@ -783,9 +783,9 @@
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
       "source_png": "ford-focus-rs-mk3-2016.png"
     },
-    "Renault Mégane R.S. Trophy (2018)": {
+    "Renault M\u00e9gane R.S. Trophy (2018)": {
       "file": "renault-megane-rs-trophy-2018.webp",
-      "name": "Renault Mégane R.S. Trophy (2018)",
+      "name": "Renault M\u00e9gane R.S. Trophy (2018)",
       "slug": "renault-megane-rs-trophy-2018",
       "prompt": "8-bit pixel-art side profile of a 2018 Renault Megane R.S. Trophy five-door hot hatch, C-shaped daytime lights, wide arches, central exhaust, Tonic orange paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
       "reference_image": "reference/honda-s2000-reference.jpg",
@@ -1003,6 +1003,16 @@
       "generated_size": "1152x864",
       "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
       "source_png": "porsche-918-spyder-2013.png"
+    },
+    "Nissan Skyline GT-R (R32, 1989)": {
+      "file": "nissan-skyline-gt-r-r32-1989.webp",
+      "name": "Nissan Skyline GT-R (R32, 1989)",
+      "slug": "nissan-skyline-gt-r-r32-1989",
+      "prompt": "8-bit pixel-art side profile of a 1989 Nissan Skyline GT-R R32 BNR32 coupe, boxy four-headlamp nose, deep front air dam, wide fenders, rear wing, Gun Grey Metallic paint. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
+      "reference_image": "assets/car-profiles/honda-s2000-ap1-2000.png",
+      "generated_size": "1152x864",
+      "post_process": "crop 1080x720 at (36,90), nearest-neighbour resize to 960x640",
+      "source_png": "nissan-skyline-gt-r-r32-1989.png"
     }
   },
   "format": "WebP, quality 82, converted from the 960x640 PNGs on branch assets/car-profiles-and-landing"

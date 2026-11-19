@@ -463,6 +463,7 @@ const SUSP_REAL={
   'BMW M3 (E46, 2000)':{f:'strut',r:'multilink',tf:1.508,tr:1.525},
   'Porsche 911 GT3 (991.2, 2017)':{f:'strut',r:'multilink',tf:1.551,tr:1.555},
   'Toyota Supra RZ (A80, 1993)':{f:'wishbone',r:'wishbone',tf:1.520,tr:1.525},
+  'Nissan Skyline GT-R (R32, 1989)':{f:'multilink',r:'multilink',tf:1.480,tr:1.480},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{f:'multilink',r:'multilink',tf:1.480,tr:1.490},
   'Subaru Impreza WRX STI (GD, 2004)':{f:'strut',r:'strut',tf:1.490,tr:1.500,unsure:true},
   'Mitsubishi Lancer Evolution IX (2006)':{f:'strut',r:'multilink',tf:1.515,tr:1.515},
