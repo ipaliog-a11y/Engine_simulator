@@ -1,7 +1,7 @@
-// Title screen rooms: the original four workshops, then fifty more cars and places (build 389).
+// Title screen rooms: the original four workshops, then fifty more cars and places (build 391).
 //
 // WHY THIS EXISTS. Build 209 opened on one hoist bay. Build 215 adds three more rooms and walks a
-// left-to-right pan across each for five seconds before the next. Build 389 adds fifty pictures and keeps
+// left-to-right pan across each for five seconds before the next. Build 391 adds fifty pictures and keeps
 // only the visible room, the next one, and during a fade the room before, decoded. What must hold:
 //   · 54 scenes, each held 5000 ms, drawn wider than the stage so the pan has somewhere to go;
 //   · every named picture exists on disk; room 4 is bay-miata and the last is canyon-camp;

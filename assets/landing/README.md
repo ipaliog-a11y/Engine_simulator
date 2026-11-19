@@ -17,7 +17,7 @@ Some tiny marks are left, too small to read: a car's bonnet badge, wheel centre 
 | `service-bay-ev.webp` | an electric car's service bay, its drive unit on a dolly | `assets/landing/tesla-model-y.jpg` |
 | `pit-f355.webp` | the F355 in a race pit | `assets/landing/ferrari-f355.jpg` |
 
-Fifty more rooms follow (build 389), each a different car and place, drawn in the same isometric pixel style and saved at the same size. The carousel keeps only the room on view, the next one, and during a fade the room before, decoded.
+Fifty more rooms follow (build 391), each a different car and place, drawn in the same isometric pixel style and saved at the same size. The carousel keeps only the room on view, the next one, and during a fade the room before, decoded.
 
 | File | Room |
 |---|---|

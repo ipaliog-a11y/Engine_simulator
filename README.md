@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 389
+# PIXEL POWERTRAIN v0.8 build 391
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -490,7 +490,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 
   The **title screen** (the menu the sim opens on, and MENU) cycles through workshop pictures with a slow
   pan (build 230, `assets/landing/`). It starts with the original four rooms, then fifty more cars and places
-  (build 389): a coastal boathouse, a desert station, a snow shed, a night alley, and the rest listed beside
+  (build 391): a coastal boathouse, a desert station, a snow shed, a night alley, and the rest listed beside
   the files. Since build 237 the pan is a browser animation, smooth on every frame, each room fades into the
   next, and the bench behind the menu stops drawing while it is covered. With "reduce motion" set, the pictures
   hold still. Only the room on view, the next one, and during a fade the room before, are decoded.
