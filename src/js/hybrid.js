@@ -228,7 +228,16 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      k=clamp(k*B/E.deployKJ*0.995,0,1);
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 391) do not scale with the share
+      k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
+    }
+    // not settled in twelve (build 391: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
+    if(E.deployKJ>B&&E.deployKJ>=1e-6){
+      let lo=0,hi=used,ok=null;
+      for(let it=0;it<10;it++){const m=it?(lo+hi)/2:0;hybDeployShare=m;const Lm=simulateLapRun(key,opts);if(!Lm)return null;const Em=hybLapEnergy(Lm),Bm=hybDeployBudget(Em,extra);
+        if(Em.deployKJ<=Bm||Em.deployKJ<1e-6){lo=m;ok={m,Lm,Em,Bm};}else if(it)hi=m;else break;}
+      if(ok){used=ok.m;L=ok.Lm;E=ok.Em;B=ok.Bm;}
     }
   }finally{hybDeployShare=1;}
   L.hy={share:used,pm:E.pm,starts:E.starts,startStopKJ:E.startStopKJ,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};

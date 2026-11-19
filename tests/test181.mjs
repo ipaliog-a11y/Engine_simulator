@@ -3,7 +3,8 @@
 // WHY THIS EXISTS. Until build 293 the lap replay played a power-split's engine on its full-load line whenever the
 // throttle was open and at idle off it, while the lap's fuel had it on its best line at the power it gave, and stopped
 // off the power. What must hold, on the Prius's lap:
-//   · where the fuel burns nothing, trackSoundState says the engine is off, and the engine's sound is muted there;
+//   · where the fuel burns nothing, trackSoundState says the engine is off (build 391: but while MG1 runs it down, or spins
+//     it up where the fuel burns, it is heard at that speed with the fuel cut), and the engine's sound is muted there;
 //   · where it burns, the sound's engine speed is psOolAt's for the same power, and its manifold moves with the load
 //     (it was 1 bar flat);
 //   · the lap's fuel is what it was (psFuelRate now reads the same psEnginePower).
@@ -26,18 +27,21 @@ const r = await page.evaluate(() => {
   const L = lapResult, R = L.replay, n = R.tAt.length, c = hybCurves(), fuel = psFuelRate()(L);
   // the fuel as build 293 worked it out, inline
   const R0 = c.eng, etaAt = rpm => { if (rpm <= R0[0].rpm) return c.eta[0]; for (let i = 1; i < R0.length; i++) if (rpm <= R0[i].rpm) return c.eta[i - 1] + (c.eta[i] - c.eta[i - 1]) * (rpm - R0[i - 1].rpm) / (R0[i].rpm - R0[i - 1].rpm); return c.eta[c.eta.length - 1]; };
-  const o = { n, off: 0, on: 0, offBad: 0, onBad: 0, rpmErr: 0, fuelErr: 0, mapLo: 9, mapHi: 0 };
+  const o = { n, off: 0, on: 0, spin: 0, spinBad: 0, offBad: 0, onBad: 0, rpmErr: 0, fuelErr: 0, mapLo: 9, mapHi: 0 };
   for (let i = 0; i < n; i++) {
     const Ps = R.pwr[i] - Math.max(0, L.hy.pm[i]), old = Math.fround(Ps > 0 ? psOolAt(Ps / etaAt(R.rpm[i])).gs : 0);
     o.fuelErr = Math.max(o.fuelErr, Math.abs(fuel[i] - old));
     const s = trackSoundState(replayAt(L, R.tAt[i] + 1e-6)), Pe = psEnginePower(L, i, c);
+    // build 391: a start is spun up and a stop run down unfuelled by MG1 (psEngineSoundAt's spin), heard with the fuel cut
+    const sp = psEngineSoundAt(L, i, R.tAt[i] + 1e-6);
+    if (sp && sp.spin) { o.spin++; if (s.off || !s.fuelCut || Math.abs(s.rpm - sp.rpm) > 1) o.spinBad++; continue; }
     if (fuel[i] > 0) {
       o.on++; if (s.off) o.onBad++;
       else { o.rpmErr = Math.max(o.rpmErr, Math.abs(s.rpm - psOolAt(Pe).ne)); o.mapLo = Math.min(o.mapLo, s.map); o.mapHi = Math.max(o.mapHi, s.map); }
     } else { o.off++; if (!s.off) o.offBad++; }
   }
   // the sound muted at an engine-off point
-  lapReplay.playing = true; lapReplay.speed = 0; let k = 0; while (k < n && fuel[k] > 0) k++;
+  lapReplay.playing = true; lapReplay.speed = 0; let k = 0; while (k < n && (fuel[k] > 0 || !trackSoundState(replayAt(L, R.tAt[k] + 1e-6)).off)) k++;
   o.offAt = k; o.onAt = fuel.findIndex(x => x > 0); lapReplay.t = k < n ? R.tAt[k] + 1e-6 : 0; o.srcOff = !!(soundSource() && soundSource().off);
   return o;
 });
@@ -55,6 +59,7 @@ const f = (x, d = 3) => Number(x).toFixed(d);
 console.log(`== Prius lap: ${r.n} points, engine on at ${r.on}, off at ${r.off}; manifold ${f(r.mapLo, 2)}-${f(r.mapHi, 2)} bar; ` +
   `rpm off the best line by ${f(r.rpmErr, 1)}; fuel moved by ${r.fuelErr} g/s; level ${f(heard, 3)} running, ${f(muted, 4)} stopped ==`);
 if (r.on < 10 || r.off < 10) fails.push(`the lap does not both run and stop the engine (${r.on} on, ${r.off} off)`);
+if (r.spinBad) fails.push(`${r.spinBad} of ${r.spin} spin-up or run-down points are not heard unfuelled at their speed`);
 if (r.onBad) fails.push(`${r.onBad} points burn fuel with the sound's engine off`);
 if (r.offBad) fails.push(`${r.offBad} points burn no fuel with the sound's engine running`);
 if (r.rpmErr > 1) fails.push(`the sound's engine is ${f(r.rpmErr, 1)} rpm off the best line`);
