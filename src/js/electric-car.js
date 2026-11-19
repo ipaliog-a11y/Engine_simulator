@@ -70,7 +70,7 @@ function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
 }
-// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 371). The lap's
+// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 372). The lap's
 // curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
 // the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
 // and every 5 °C from 25 to 60, straight between; cached per build and power cap.
@@ -116,7 +116,7 @@ function evLapHeat(e,prof){
     if(lap===1&&i===0)tb.b=PACK_COOLANT;
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
-    // and, since build 371, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
+    // and, since build 372, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses

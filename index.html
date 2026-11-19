@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 371</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 372</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3525,7 +3525,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hint">Simulator preferences. These don't change the engine build.</div>
 
 <div class="design-section">Audio</div>
-<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.</div></div>
+<div class="opt-row"><div><b>ENGINE SOUND</b><div class="opt-note">Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, on the S-route powerslide and moose replays, with tyre screech while the tyres slide (on the lap replay, where they run at their grip limit).</div></div>
 <button id="btnSound" class="toggle" aria-pressed="false">SOUND OFF</button></div>
 <div class="opt-row"><div><b>ENGINE SOUND MODEL</b><div class="opt-note">SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.</div></div>
 <select id="edSoundModel" class="opt-select"><option value="synth">SYNTH</option><option value="gas">GAS</option></select></div>
@@ -6457,7 +6457,7 @@ const I18N={
   'ENGINE SOUND':{el:'ΗΧΟΣ ΚΙΝΗΤΗΡΑ'},
   'ENGINE SOUND MODEL':{el:'ΜΟΝΤΕΛΟ ΗΧΟΥ'},
   'SYNTH: firing pulses through modelled pipes (light). GAS: the cylinders, runners and exhaust simulated as gas, after engine-sim by Ange Yaghi, with a recorded exhaust (heavier; a V12 uses about half a CPU core). Four-strokes, two-strokes and rotaries all have their own gas model.':{el:'SYNTH: παλμοί ανάφλεξης μέσα από μοντελοποιημένους σωλήνες (ελαφρύ). GAS: οι κύλινδροι, οι αγωγοί και η εξάτμιση προσομοιώνονται ως αέριο, κατά το engine-sim του Ange Yaghi, με ηχογραφημένη εξάτμιση (βαρύτερο· ένας V12 θέλει περίπου μισό πυρήνα CPU). Οι τετράχρονοι, οι δίχρονοι και οι περιστροφικοί έχουν ο καθένας το δικό του μοντέλο αερίου.'},
-  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, and on the S-route powerslide replay, with tyre screech while the tyres slide.':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
+  'Synthesised from the firing pulses (firing order, one exhaust per bank; lumpy idle from wild cams). Plays on the DYNO tab, on the TRACK tab with the lap replay, on the S-route powerslide and moose replays, with tyre screech while the tyres slide (on the lap replay, where they run at their grip limit).':{el:'Συντίθεται από τους παλμούς ανάφλεξης (σειρά ανάφλεξης, μία εξάτμιση ανά σειρά κυλίνδρων· ανώμαλο ρελαντί με άγρια εκκεντροφόρο). Ακούγεται στην καρτέλα ΔΥΝΑΜΟ και στην καρτέλα ΠΙΣΤΑ με την αναπαραγωγή του γύρου.'},
   'Simulation':{el:'Προσομοίωση'},
   'WEAR & DAMAGE':{el:'ΦΘΟΡΑ & ΖΗΜΙΑ'},
   'On: detonation/overheat/lean-boost/valve float damage the engine. Off: invincible, for free experimentation.':{el:'Ενεργό: πειράκι/υπερθέρμανση/φτωχό-boost/πλεύση βαλβίδων κάνουν ζημιά. Ανενεργό: άφθαρτος, για ελεύθερο πειραματισμό.'},
@@ -12738,7 +12738,7 @@ function packBuild(s){
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
 // own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
-// (packDraw's tC); since build 371 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
+// (packDraw's tC); since build 372 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){
@@ -18396,8 +18396,41 @@ function driftSlide(R,s){
   let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
   return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
 }
+// The moose test and the lap replay screech too (build 371), through the same voice.
+// Moose: stepCar's samples carry the four slip angles, so the drift's own test runs on them, with the same rear peak
+// atan(3 mu / C) (drive-model's pkR, from the result's mu and the tyre's cornering coefficient).
+// Lap: the lap solver records no slip angle (it is quasi-steady: a speed profile at the grip limit, no yaw state), so
+// the closest derived quantity is each axle's use of its grip. Where the limit binds (lim 'corner' or 'traction',
+// or a brake point whose recorded useF/useR reaches 1) the tyre runs at the peak of its force curve; in the brush
+// model that sets the drift test's boundary, alpha = atan(3 mu / C), so it slides at v sin of that. Below the limit
+// (lim 'power', light braking) it grips and stays silent. Nothing here is ever past the peak, as the lap never is.
+const SCREECH_AT_PEAK=0.999;   // use of grip counted as at the peak (round-off only: the limit binds at exactly 1)
+let screechPkFor=null,screechPk=0;
+function screechPeak(mu,key){
+  if(screechPkFor!==key){screechPkFor=key;screechPk=Math.atan(3*mu/(vehicle.tyreCC||tyreCC(vehicle.tireType)));}
+  return screechPk;
+}
+function lapGripUse(L,i){
+  const lim=L.lim&&L.lim[i],R=L.replay;
+  if(lim==='corner'||lim==='traction')return 1;
+  if(lim==='brake')return Math.max(R.useF?R.useF[i]:0,R.useR?R.useR[i]:0);
+  return 0;
+}
+function lapSlide(L,q){
+  if(!q||lapGripUse(L,q.i)<SCREECH_AT_PEAK)return 0;
+  return q.v/3.6*Math.sin(screechPeak(tyreMu(vehicle.FzRef,vehicle.FzRef),L));
+}
+function screechSlide(){
+  if(!Sound.on)return 0;
+  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return lapSlide(lapResult,replayAt(lapResult,lapReplay.t));
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  if(vizMode!=='challenges'||!R||!R.ok)return 0;
+  if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
+  if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  return 0;
+}
 function updateScreech(t){
-  const s=Sound.on?driftSoundSample():null,vs=s?driftSlide(chalResult,s):0;
+  const vs=screechSlide();
   if(!vs&&!Sound.screechGain)return;
   if(!Sound.screechGain)initScreech();
   const k=clamp(vs/SCREECH_REF_MS,0,1);
@@ -27155,7 +27188,7 @@ function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
 }
-// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 371). The lap's
+// The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 372). The lap's
 // curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
 // the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
 // and every 5 °C from 25 to 60, straight between; cached per build and power cap.
@@ -27201,7 +27234,7 @@ function evLapHeat(e,prof){
     if(lap===1&&i===0)tb.b=PACK_COOLANT;
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
-    // and, since build 371, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
+    // and, since build 372, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
@@ -27285,7 +27318,7 @@ function evRaceModel(key,line,grips){
   };
   // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
   // fh: the cells' share of it, at 25 °C and half charge; the race swaps it for the cells' heat at the pack's own
-  // temperature and charge as it goes (evRaceHeatStep, build 371)
+  // temperature and charge as it goes (evRaceHeatStep, build 372)
   const price=L=>{
     const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
@@ -27361,7 +27394,7 @@ function evRaceTqAt(M,i,f,g,ff,key='tq'){
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
   // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
-  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 371)
+  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 372)
   const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
   const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
   packHeatStep(X.pack,t,heat,dt);

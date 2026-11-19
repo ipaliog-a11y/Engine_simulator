@@ -64,7 +64,7 @@ reporting its range. Sourcing is batched apart from physics.
 
 10. **The lap's torque curve and the race's pace-grid price read the pack's own temperature**, not 25 °C (build
     346's follow-up). Moves EV and hybrid laps; report.
-    *Build 371:* the lap scales the drive by the pack's power at its walked temperature over 25 °C (`evPackGain`, up to
+    *Build 372:* the lap scales the drive by the pack's power at its walked temperature over 25 °C (`evPackGain`, up to
     +1.4% on a Model Y at 45 °C); the race prices the cells' heat at the pack's temperature and charge each step. Tesla
     laps move ≤0.003%. Left open: the hybrid lap and race walk no pack temperature, so they do not move; the race's
     pace grid (speeds) and the motor bench stay at 25 °C.
