@@ -52,7 +52,7 @@ Step 9 of `plans/small-physics.md`.
 - The engine preview's corner lamp follows the open card: block, head, air, flow, fuel, cooling, or the high-voltage bay.
 - VEHICLE can show the showroom photo or the car on a lift. The lift's lamp follows the open vehicle card.
 
-### An ECU laptop on the bench (build 400)
+### An ECU laptop on the bench (build 395)
 
 - LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.
 - F2 puts the fuel, spark and VE tables on the bench. The running cell stays outlined. −5, −1, +1 and +5 step the selected cell, and HOLD CELL sets the dyno brake from that cell's rpm. OPEN ECU MAPS on the fuel card comes straight here. On BUILD the tables stay where they were.
@@ -72,7 +72,7 @@ Step 9 of `plans/small-physics.md`.
 
 - The page added in the previous build, its pictures, its menu item and its test are removed.
 
-### Fifty more title-screen rooms (build 400)
+### Fifty more title-screen rooms (build 391)
 
 - The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
 - Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
