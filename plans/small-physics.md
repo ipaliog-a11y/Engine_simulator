@@ -64,6 +64,9 @@ reporting its range. Sourcing is batched apart from physics.
 12. **Regen power against measured EVs.** A research build: published regen kW limits (Tesla, E-GMP, MEB), the
     coast-down and one-pedal measurements (SAE 2023-01-0623), and the friction brakes blending in at low speed.
     `evRegenTable` changes only if it misses.
+    *Build 366:* researched (`plans/vehicle-challenges.md`); the table is 1.2–1.7× the measured regen kW and ~3× the
+    measured slowing at low speed, set by makers' calibration, not physics. Code unchanged; the fix (a sourced rule per
+    maker, moving every EV) waits on the owner.
 
 ## 6. Engine details
 
