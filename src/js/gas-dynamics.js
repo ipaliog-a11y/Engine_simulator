@@ -58,10 +58,16 @@ function exhaustGasT(load,rpm,lambda,retard){
   // stoichiometric amount. Without the cap a richer mixture came out HOTTER, the opposite of why a
   // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
   // at one assumed mixture per load.
-  const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
-  // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
-  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
-  return 300+dT;
+  // Per kg of air: the gas heated is the air AND all the fuel supplied (it was the air alone until build 101, and the
+  // fuel burned only until build 376), and the excess fuel's evaporation comes out of it (the burned share's is inside
+  // the LHV, a liquid fuel's). That is how a rich mixture cools the exhaust beyond the cap (Heywood, Internal
+  // Combustion Engine Fundamentals, ch. 4 on rich products and ch. 14 on exhaust temperature); the rest of the cooling
+  // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
+  // and H2, whose cp is higher, so this errs warm).
+  const st=e.stoichAFR||14.7, afr=Math.max(6,st*Math.max(1,lam)), heat=(e.fuelLHV||44)*1e6*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
+  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH);
+  const supplied=1/(st*Math.max(0.5,lam)), excess=supplied-1/st;   // kg of fuel per kg of air, and the part not burned
+  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH);
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
 // leaves through the exhaust port, at the mixture lam.
@@ -1062,7 +1068,8 @@ function steadyBoost(rpm){
   // throttle wide open, while the live shaft (advanceShaft, load = throttle) got ~950 K at the same
   // point — so the dyno and the bench spooled on different physics. What really does make low-rpm
   // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
-  // Rich of stoich adds nothing (exhaustGasT caps the release), so a petrol engine's mixture is 1.
+  // A petrol engine's mixture is 1 here: rich of stoich cools it a little (exhaustGasT), which the shaft does not
+  // see yet (named open in build 376).
   const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
   const nMax=e.shaftMax||maxShaftRpm(e.compExd);
   const canHold=pr=>{

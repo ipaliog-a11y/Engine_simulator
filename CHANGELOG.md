@@ -18,6 +18,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Rich mixtures cool the exhaust; the ECU holds the turbine at 950 °C (build 376)
+
+Step 13 of `plans/small-physics.md`, build 311's follow-up. Owner's decision: the exhaust may lower boost on hot presets.
+- **Rich cools the exhaust** (`exhaustGasT`): the gas heated is now the air and all the fuel supplied (it was the fuel
+  burned), and the excess fuel's evaporation comes out of it (Heywood, App. D: gasoline 350 kJ/kg, methanol 1103,
+  E85 ~756, PROBABLE). The release stays capped at stoichiometric. λ 1 → 0.78 on the 993 Turbo at 80% redline: 1147 →
+  1102 °C (was ~25 K of cooling, from the extra work alone, now ~45 K). λ ≥ 1 is unchanged to the bit.
+- **The ECU holds the turbine's limit** (950 °C at the port, PROBABLE housing rating; `TURB_T_LIMIT`): an AUTO turbo
+  petrol ECU on its factory maps enriches to λ 0.78 (`egtEnrichLambda`), then lowers the boost (`knockLimitBoost`,
+  now knock or exhaust). Fixed mixture, edited tables, NA, supercharged, ported and diesel engines: unchanged.
+- **What moved** (fingerprint: 2571 values; 30 of 92 cars' peak power or torque). Peak power: R34 GT-R 388 → 330 hp
+  (real 276), 993 Turbo 425 → 374 (real 408), 720S 689 → 647 (710), 750S 713 → 673 (740), R35 GT-R 546 → 531,
+  Sport quattro 302 → 294, 992 Turbo S 624 → 613; the rest within ±1.5%. Peak torque falls 5–14% on 16 turbo cars
+  (GNX 637 → 558 Nm, F40 585 → 520, STI 410 → 370, Evo IX 424 → 381, Supra 472 → 430). 0–100: 993 Turbo 3.80 → 4.6 s
+  (real 4.5), R34 4.63 → 5.3 s; most others +0–0.2 s. Tech lap: up to +1% (R34). NA cars: EGT −14 K, power ±0.2%.
+  Mean error against the 92 engines' published power: −0.74% → −1.34% (mean absolute 6.48% → 6.54%).
+- `test229` (new) checks the cooling and the limit.
+- Left open: the turbine's shaft balance still reads the exhaust at λ 1 (now slightly hot when the ECU runs rich); no
+  manifold cooling between port and turbine (the limit is read at the port, so it errs strict); rich products' higher
+  cp is not counted (errs warm).
+
 ### A compound turbo's split off its design point (build 375)
 
 - Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its

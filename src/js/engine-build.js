@@ -184,7 +184,7 @@ function buildEngineCore(prevStoich,quiet){
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
-  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
+  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;engine.fuelHfg=fp.hfg;
   engine.fuelHC=fp.hc;engine.fuelOC=fp.oc;   // atoms per C for exhaust composition (build 257)
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
   // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and

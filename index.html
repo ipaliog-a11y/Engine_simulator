@@ -4191,12 +4191,15 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 // diesel: Heywood Internal Combustion Engine Fundamentals, typical CH1.87 / CH1.80. Methanol is
 // CH3OH. E85: 85/15 by volume ethanol/gasoline, converted to a C-basis average (ethanol dens
 // 0.789, gasoline 0.745; ethanol C2H6O → hc 3, oc 0.5 per C).
+// hfg = heat of vaporization, kJ/kg (build 376; what fuel rich of stoichiometric takes from the exhaust): Heywood,
+// Internal Combustion Engine Fundamentals, App. D, Table D.4: gasoline 350, methanol 1103, ethanol 840, light diesel
+// 270. Race gas taken as gasoline's, E85 as 0.83 ethanol by mass (PROBABLE).
 const FUELS={
-  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0,hc:1.87,oc:0},
-  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2,hc:1.87,oc:0},
-  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8,hc:2.80,oc:0.41},
-  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14,hc:4.00,oc:1},
-  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0,hc:1.80,oc:0}   // compression-ignition; octane N/A (cetane)
+  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0,hc:1.87,oc:0,hfg:350},
+  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2,hc:1.87,oc:0,hfg:350},
+  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8,hc:2.80,oc:0.41,hfg:756},
+  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14,hc:4.00,oc:1,hfg:1103},
+  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0,hc:1.80,oc:0,hfg:270}   // compression-ignition; octane N/A (cetane)
 };
 // ---- Engine cycle / type ----
 // Each type reshapes the physics: strokeDiv is the power-stroke divisor in the torque
@@ -4572,10 +4575,16 @@ function exhaustGasT(load,rpm,lambda,retard){
   // stoichiometric amount. Without the cap a richer mixture came out HOTTER, the opposite of why a
   // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
   // at one assumed mixture per load.
-  const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
-  // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
-  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
-  return 300+dT;
+  // Per kg of air: the gas heated is the air AND all the fuel supplied (it was the air alone until build 101, and the
+  // fuel burned only until build 376), and the excess fuel's evaporation comes out of it (the burned share's is inside
+  // the LHV, a liquid fuel's). That is how a rich mixture cools the exhaust beyond the cap (Heywood, Internal
+  // Combustion Engine Fundamentals, ch. 4 on rich products and ch. 14 on exhaust temperature); the rest of the cooling
+  // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
+  // and H2, whose cp is higher, so this errs warm).
+  const st=e.stoichAFR||14.7, afr=Math.max(6,st*Math.max(1,lam)), heat=(e.fuelLHV||44)*1e6*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
+  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH);
+  const supplied=1/(st*Math.max(0.5,lam)), excess=supplied-1/st;   // kg of fuel per kg of air, and the part not burned
+  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH);
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
 // leaves through the exhaust port, at the mixture lam.
@@ -5576,7 +5585,8 @@ function steadyBoost(rpm){
   // throttle wide open, while the live shaft (advanceShaft, load = throttle) got ~950 K at the same
   // point — so the dyno and the bench spooled on different physics. What really does make low-rpm
   // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
-  // Rich of stoich adds nothing (exhaustGasT caps the release), so a petrol engine's mixture is 1.
+  // A petrol engine's mixture is 1 here: rich of stoich cools it a little (exhaustGasT), which the shaft does not
+  // see yet (named open in build 376).
   const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
   const nMax=e.shaftMax||maxShaftRpm(e.compExd);
   const canHold=pr=>{
@@ -8332,7 +8342,7 @@ function buildTorqueLimit(){
   e.afrMode=savedAfrMode;Object.assign(state,sv);
   e.tqLimTable=tb;
 }
-// The knock limit on boost (build 307): where the end gas knocks at the ECU's furthest retard and richest mixture
+// The knock limit on boost (build 307), and the turbine's (build 376): where the end gas knocks at the ECU's furthest retard and richest mixture
 // (activeAdvance, knockEnrichLambda), the ECU lowers the boost until it does not, as a production one pulls its boost
 // target on knock. Solved once per engine, at the bench's intake air, like the torque limit. Only with AUTO timing on
 // its derived table: a hand-set spark has no knock control to ask for less.
@@ -8347,7 +8357,9 @@ function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
   _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
-  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+  // and, from build 376, where the exhaust passes the turbine's limit at the richest mixture (egtEnrichLambda)
+  const egt=ecuGuardsTurbine();
+  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET||egt&&egtAt(r,m)>TURB_T_LIMIT;};
   const tb=[];let any=false;
   for(let r=1000;r<=e.redline+199;r+=200){
     const rr=Math.min(r,e.redline),b0=boostAvail(rr);
@@ -9866,7 +9878,7 @@ function buildEngineCore(prevStoich,quiet){
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
-  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
+  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;engine.fuelHfg=fp.hfg;
   engine.fuelHC=fp.hc;engine.fuelOC=fp.oc;   // atoms per C for exhaust composition (build 257)
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
   // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and
@@ -10491,8 +10503,8 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. The exhaust model cannot tell either: rich of stoichiometric its temperature
-// is flat by construction (exhaustGasT caps the heat released and does not count the extra fuel's evaporation).
+// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 376), but only by
+// ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
   if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
@@ -10512,7 +10524,7 @@ function mappedAFR(rpm,map){
     return st*lam;
   }
   if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
-  return st*knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map));
+  return st*egtEnrichLambda(rpm,map,knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map)));
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -10905,6 +10917,32 @@ function knockEnrichLambda(rpm,map,base){
   if(over(base,false)&&over(base,true)){
     if(over(LAMBDA_KNOCK_MIN,true))lam=LAMBDA_KNOCK_MIN;
     else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(over(m,true))hi=m;else lo=m;}lam=hi;}   // to ~0.001
+  }
+  _knockCache.m.set(key,lam);
+  return lam;
+}
+// ---- The turbine's temperature limit (build 376) ----
+// A turbo petrol ECU models the exhaust at the turbine and protects it as it does the end gas: richer first (the excess
+// fuel's evaporation and mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN, then less
+// boost (knockLimitBoost). TURB_T_LIMIT is the owner's 950 C (build 311's note), a cast turbine housing's usual
+// continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C), applied to the gas at the port
+// with no allowance for the manifold's cooling, as CAT_T_LIMIT is. The exhaust is read at the spark the ECU runs at
+// each trial mixture. Only the ECU that fuels the knock (ecuFuelsKnock), and only with a turbine.
+const TURB_T_LIMIT=950+273.15;
+const ecuGuardsTurbine=()=>engine.intake==='turbo'&&ecuFuelsKnock();
+function egtOverAt(rpm,map,l){
+  _lamTrial=l;
+  try{return egtAt(rpm,map,l,Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map)))>TURB_T_LIMIT;}finally{_lamTrial=null;}
+}
+function egtEnrichLambda(rpm,map,base){
+  if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
+  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
+  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
+  let lam=base;
+  if(egtOverAt(rpm,map,base)){
+    if(egtOverAt(rpm,map,LAMBDA_KNOCK_MIN))lam=LAMBDA_KNOCK_MIN;
+    else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(egtOverAt(rpm,map,m))hi=m;else lo=m;}lam=lo;}   // the leanest that holds, to ~0.001
   }
   _knockCache.m.set(key,lam);
   return lam;
