@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 366
+# PIXEL POWERTRAIN v0.8 build 367
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -275,7 +275,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     texture). The water takes ~30% of any tyre's grip, and at speed it lifts the tyre by Horne's
     balance of its pressure, on the share of the patch its grooves cannot clear: a slick floats from
     ~80 km/h, a treaded road tyre keeps ~60% at 150. Two race-only rain tyres, **intermediates** and
-    **full wets**, clear more water. A car
+    **full wets**, clear more water, and their rubber grips the wet ~5% better (EU tyre label: class A against a road tyre's B). A car
     changes compound when the time its own solved laps say it would win back, over the laps left,
     beats a pit stop, so a late shower can leave a car out on the wrong tyres on purpose. Water and a
     cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run ~20–30% slower,
