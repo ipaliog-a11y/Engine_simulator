@@ -21,9 +21,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 ### Next 100 factory cars shortlisted (research batch 2)
 
 - `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).
-- `queue.json` + `validate.mjs` + `tests/test234.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
+- `queue.json` + `validate.mjs` + `tests/test235.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
 - Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
 - Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
+
+### Vehicle-profile-art skill for factory showroom pictures (build 385)
+
+- New Cursor skill at `.cursor/skills/vehicle-profile-art/`: when a new factory car needs its
+  960×640 pixel-art side view, build the coastal-road prompt (S2000 style reference), generate,
+  post-process to PNG+WebP, and wire `CAR_ART` + both manifests.
+- Scripts: `build-prompt.mjs`, `postprocess.mjs` (classic 1152×864 crop or centre 3:2, nearest-neighbour
+  to 960×640), `validate-art.mjs`. Pairs with `import-vehicle` (that skill now points here for art).
+- `test234` checks the skill files and runs the three scripts against a temp frame and the S2000.
 
 ### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
