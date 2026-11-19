@@ -28,8 +28,8 @@ reporting its range. Sourcing is batched apart from physics.
    Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
-   *Build 368:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
-   wheel centre; jacking; `test222`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
+   *Build 369:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
+   wheel centre; jacking; `test223`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
    brakes on presets, arms by the kit.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
    moment as the body leans. Both the ESP's understeer reference and its roll-steer share then read the full roll.

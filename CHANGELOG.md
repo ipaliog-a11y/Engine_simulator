@@ -18,15 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Anti-dive and anti-squat in the stepped car (build 368)
+### Anti-dive and anti-squat in the stepped car (build 369)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
 
 - **The links carry part of the pitch.** Each tyre's longitudinal force reaches the body through its side-view swing arm with a vertical part (Fx e − T)/d, T the torque reacting on the body (drive through half-shafts, inboard brakes; a live axle's drive and outboard brakes react on the upright). The springs carry the transfer less that, and the front and rear parts together heave the body (jacking). Milliken & Milliken, *RCVD*, ch. 17.
 - **Arms by type** (`SUSP_GEO` `svF`/`svR`, instant centre height and length; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 3): strut 0.15/3.0 m front, wishbone and multi-link 0.20/2.5; rear strut 0.40/2.5, wishbone 0.45/2.5, multi-link 0.50/2.0, solid 0.35/2.5, twist beam its pivot 0.32/0.55. Brakes outboard unless a car sets `inboardF`/`inboardR` (none does).
-- **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test222`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
+- **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test223`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
 - **Known gap, approved by the owner:** `test170`'s `OFF_KNOWN` caps raised, Civic Type R FK8 4.6 → 4.8 m and 911 GT3 (991.2) 4.8 → 4.9 m. The stepped lap's furthest off the line moved ~0.2 m (4.6 → 4.8, 4.7 → 4.9): its driver follows the lap's planned speeds without judging the car's own grip, and the links' pitch share moves the load in transients.
 - **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
+### Skid pad challenge on the CHALLENGES page (build 368)
+
+- New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
+  (60.96 m) circle, the pad Motor Trend and Road & Track report skidpad g on (Car and Driver uses 300 ft). The target
+  speed is bisected until the car can no longer stay within 1 m of the line; the score is the magazines' figure,
+  v²/(g·R) from the held lap's time, with the body's mean ay beside it and how it fails 1 km/h faster
+  (WIDE / TIGHT / SPIN). Top-down replay of the judged lap with the powerslide's dashboard.
+- First figures (lap g): MX-5 NA 0.82, Model 3 0.82, Civic Type R FK8 0.76, 911 GT3 0.98; every one fails WIDE
+  one step up. Against the free references: Model 3 0.82 vs Car and Driver's 0.86 (their 300 ft pad), F-150 Raptor
+  0.89 vs C&D's ~0.72 (the all-terrain tyre gap named in build 354).
+- Left open: the driver's speed loop is proportional, so it settles just under its target (the lap time decides
+  the score); ESC stays at each car's default; the 1 m lane is this game's, not a standard.
+- Fingerprint (lap, 0–100, dyno): identical.
+
 ### A rain tyre's own wet grip (build 367)
 
 - A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's

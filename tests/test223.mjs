@@ -1,11 +1,11 @@
-// Anti-dive and anti-lift in the stepped car (build 368, plans/small-physics.md step 2).
+// Anti-dive and anti-lift in the stepped car (build 369, plans/small-physics.md step 2).
 //
 // WHY THIS EXISTS. All the pitch under braking went through the springs; the links carry a share of it, from each
 // axle's side-view swing arm (SUSP_GEO svF/svR, Milliken RCVD ch. 17). What must hold, braking steadily in a straight
 // line in neutral (M3 E46: strut / multi-link; MX-5: wishbones), downforce off:
 //   · the body's pitch matches a reference worked out apart from stepCar: each corner sinks by its spring's load,
 //     the transfer m ax h / (2L) less the link's share Fx e/d, over the wheel rate, plus the transfer over the tyre's;
-//   · the same with the links carrying nothing (d without end): all of it through the springs, as before build 368;
+//   · the same with the links carrying nothing (d without end): all of it through the springs, as before build 369;
 //   · so the pitch falls by the anti-dive share, and that share is 10-60 %.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
