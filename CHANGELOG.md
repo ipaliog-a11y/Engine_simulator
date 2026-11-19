@@ -18,6 +18,71 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The economy run plans its own speed: a distance DP, and honest fuel at full load (build 394)
+
+- Engine cars and EVs on the economy roads now get their speed plan from a dynamic programme over distance (`ecoDP`,
+  `eco-run.js`): ~50 m stages, speed on a 0.5 m/s grid, least fuel (or pack energy) + λ × time, λ bisected until the
+  finish meets the target, under the fastest run's speeds and with braking up to 4 m/s². It finds pulse-and-glide
+  where it pays: on a flat 5 km at 3 × its fastest time the MX-5 swings 67–76 km/h and uses 6% less than a steady
+  speed (Li, Li, Wang & Peng, ACC 2011); the Model 3 holds a steady speed and coasts to the line. The eco driver
+  (build 352) is now the fallback when the DP finds no plan for the target. Hybrids keep the eco driver (left open).
+- `ecoFuelKg` had two holes, closed here because the DP used them: a demand past the fuel map's full load cost
+  3 × idle fuel (the map has no fuel past its own full load), and every glide was free and drag-free. Now the first is
+  charged pro rata at full-load BSFC, and a glide gentler than the weakest engine braking is in neutral at idle fuel.
+  The old eco driver's Alpine climb priced at ~200% engine efficiency; it is now ~31%.
+- What moved (Alpine and the Dragon, 190 engine and EV runs): the pricing fix alone raises the eco driver's figures
+  by a median of 68%, and the DP then saves 9–32% (median 20%) against the eco driver on the same pricing. Across the
+  six roads and all 570 engine and EV runs, before → after: engine cars −28% to +211% (median +24%; the largest rises
+  are fast turbo cars on Alpine, e.g. GT-R 9.1 → 28.3 L/100 km); EVs −32% to −8% (median −25%). The 30 hybrid runs
+  are unchanged. Finish time is 99.3–100% of the target. Per car: the PR's table.
+- Solve time (uncontended, the slowest roads): engine cars are faster than before (MX-5 Napoléon 2.7 → 1.2 s,
+  Hellcat 3.4 → 1.4 s, because the four capped eco solves no longer run); EVs up to +0.6 s (Model 3 Highland
+  1.2 → 1.7 s). The slowest economy solves are still the hybrids' (build 383's path, unchanged here): the Qashqai e-POWER on
+  Napoléon takes ~32 s.
+- Left open: no DP for hybrids (the ECMS would make the state two-dimensional); nothing finer than a 50 m stage;
+  WLTC keeps its old full-load fallback and overrun rule (`fuel-cycle.js`), so the WLTC figures do not move.
+  Fingerprint identical (5208 values).
+
+### The extra title-menu page is gone (build 393)
+
+- The page added in the previous build, its pictures, its menu item and its test are removed.
+
+### Fifty more title-screen rooms (build 391)
+
+- The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
+- Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
+- Only the room on view, the next room, and during the fade the room before, keep a decoded picture. The others stay unloaded.
+- Left open: a few signs still carry a word the generator invented. Automatic cleanup also marked bodywork, so they were left. They are not maker logos. The original four still have their logos mosaicked by hand.
+
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
+
+- The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
+  a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
+  gravel (PROBABLE: no Bekker values for gravel were found). An M3's wheel sinks 86 mm and rolls against 0.27 of its
+  load, against 0.30 measured for car tyres on sand (Wong, Table 1.1). Grass: 0.08 (Wong, medium-hard soil).
+- `driveSurface` puts gravel where the circuit's picture draws a trap: outside a bend sharper than 33 m radius,
+  3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
+  gravel's (0.35/0.65), as before.
+- The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 389:
+  89%, so the ESP did nothing). With ESP off: 98%.
+- Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
+  of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
+- Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
+  own rolling resistance, and a tyre's stiffness on soft ground.
+### The VE table's mixture is read at its own exhaust, to convergence (build 389)
+
+Step 14 of `plans/small-physics.md`.
+- With a hand-tuned VE table the burned mixture is target × real VE / table VE, and the real VE's scavenging and
+  residual terms read the exhaust temperature, which reads the mixture. Build 305 read that VE at the *target's*
+  exhaust (one pass). Now `veMeteredAFR` iterates from the target until a step moves λ by under 1e-6 (`VE_LOOP_TOL`),
+  and `computeVE` reads the burned λ inside the loop; `veLoopLast` keeps the iteration count.
+- Default build, 4543 rpm / 1.1 bar: table 15 points low, 3 iterations, AFR 14.9313 → 14.9301; 15 points high,
+  3 iterations. The engine's VE now equals the one its mixture was metered at (to 1e-5).
+- Fingerprint identical (5208 values): an untouched table burns the target, so no preset moves; mean error against
+  published power unchanged. `test187` updated.
+- Left open: inside the loop the spark retard behind the exhaust temperature still reads the target mixture's knock.
+
 ### Real circuits stop sticking on an old service-worker cache (build 388)
 
 - Returning visitors still saw 22 circuits after build 386 shipped 32: `sw.js` served
@@ -25,6 +90,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Cache bumped to `v6` (activate drops the stale store). That file is network-first like the
   page; fonts and icons stay cache-first. `test237` locks it.
 - Immediate workaround without this build: hard-refresh the Pages site, or clear site data for it.
+
 
 ### Championship seasons on top of RACE (build 387)
 
@@ -84,6 +150,7 @@ Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decis
   ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
   since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'
   higher cp is not counted (errs warm).
+
 ### Hybrids on the economy roads run their own energy manager (build 383)
 
 - A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
