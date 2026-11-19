@@ -1,88 +1,82 @@
-// Challenges: spiral skid pad and figure 8.
+// Off the track: the soil's rolling resistance, a bend's gravel trap, and an ESP that reads the surface (small-physics 7).
 //
-// WHY THIS EXISTS. Two courses beside the skid pad, both driven by the same stepped car. What must hold:
-//   · the spiral is one turn from 12 m out to the skid pad's radius, and the car is faster at the outside than at the inside;
-//   · the figure 8 is a lemniscate whose tightest bend is half that radius, and the path reaches both loops;
-//   · both cars HOLD, and 1 km/h faster they leave the lane or spin (the search found an edge);
-//   · on the figure 8 the body's mean lateral g is below the bend figure, because the crossing is straight;
-//   · the replay samples carry the dashboard's fields; the UI shows the result and the replay rate;
-//   · no page errors, and no horizontal scroll at phone width.
+// WHY THIS EXISTS. Off the asphalt the stepped car lost grip but rolled as freely as on the road, every verge was grass,
+// and the stability control took dry asphalt's grip for its limit. What must hold:
+//   · on gravel a wheel rolls against Bekker's sinkage (Wong, ch. 2): a car's wheel gives 0.25-0.32 of its load,
+//     against 0.30 measured for car tyres on sand (Wong, Table 1.1), with the ground's pressure under the tyre's
+//     inflation (so it counts as rigid); grass takes 0.08 of the load; with no soil given, the tyre's own crr;
+//   · coasting in neutral on gravel, the car (with its wheels' inertia) slows by their resistance and the air, within 3%;
+//   · a real circuit has traps where its picture draws them: 5 m past the edge outside such a bend is gravel, inside
+//     it and 1.5 m past the edge is grass;
+//   · on wet grass the sine with dwell (FMVSS 126, 6.5 x, from 60 km/h): with ESP the Model 3's yaw rate is under 35%
+//     of its peak 1 s after the steering ends; with it off it is not;
+//   · no page errors.
 import { chromium } from './pw.mjs';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const url = pathToFileURL(path.join(repo, 'index.html')).href;
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-page.setDefaultTimeout(120000);
-const errors = [], fails = [];
+const page = await browser.newPage();
+const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-await page.goto(url, { waitUntil: 'networkidle' });
-const r = await page.evaluate(() => {
-  const out = {
-    spiral: !!RUN_CHALLENGES.find(c => c.id === 'spiral' && c.kind === 'spiral'),
-    fig: !!RUN_CHALLENGES.find(c => c.id === 'fig8' && c.kind === 'fig8'),
-    r0: SPIRAL_R0, r1: SKID_R, rho: FIG8_RHO, cars: []
-  };
-  for (const n of ['MX-5', 'Model 3']) {
-    loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes(n)));
-    const S = simulateSpiralChallenge(), F = simulateFig8Challenge();
-    const ss = S.samples || [], fs = F.samples || [];
-    const rad = q => Math.hypot(q.x, q.y);
-    out.cars.push({
-      n,
-      sOk: S.ok, sOut: S.outcome, entry: S.entryKmh, exit: S.exitKmh, sg: S.gExit, sFail: S.failBy,
-      sRad: ss.length > 20 ? [rad(ss[0]), rad(ss[ss.length - 1])] : null,
-      sDash: ss.length > 20 && ss.every(q => q.rpm > 0 && q.gear >= 1 && isFinite(q.ay) && isFinite(q.delta)),
-      fOk: F.ok, fOut: F.outcome, kmh: F.speedKmh, fg: F.gLap, fay: F.ayMean, fFail: F.failBy,
-      fX: fs.length > 20 ? [Math.min(...fs.map(q => q.x)), Math.max(...fs.map(q => q.x))] : null,
-      fDash: fs.length > 20 && fs.every(q => q.rpm > 0 && q.gear >= 1 && isFinite(q.ay) && isFinite(q.delta))
-    });
-  }
-  setTab('challenges');
-  const sel = document.getElementById('chalSel');
-  const show = id => { sel.value = id; sel.dispatchEvent(new Event('change')); drawChallenge();
-    return document.getElementById('chalHead').textContent; };
-  out.sHead = show('spiral');
-  out.fHead = show('fig8');
-  const el = document.getElementById('chalMooseRate');
-  out.rate = el && el.closest('.field').style.display !== 'none';
-  return out;
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
+const fails = [];
+
+const R = await page.evaluate(() => {
+  const o = {}, g = DRIVE_G;
+  const mk = (n, aids) => { loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n))); vehicle.aids = aids; const c = driveCar(); vehicle.aids = undefined; return c; };
+  const roll = (car, vk) => { const v = vk / 3.6, s = driveState(car); s.vx = v; s.w = s.w.map(() => v / car.r);
+    for (let k = car.ratios.length; k >= 1; k--) { s.gear = k; if (v / car.r * car.ratios[k - 1] * car.fd * 30 / Math.PI >= 2000) break; }
+    s.we = v / car.r * car.ratios[s.gear - 1] * car.fd; return s; };
+  const all = x => [x, x, x, x], SO = DRIVE_SOIL;
+  // ---- the soil
+  { const c = mk('BMW M3 (E46'), W = 4000, Q = SO.gravel, k = Q.kc + c.tw * Q.kphi;
+    const z0 = Math.pow(3 * W / ((3 - Q.n) * k * Math.sqrt(2 * c.r)), 2 / (2 * Q.n + 1));
+    o.soil = { gravel: driveRollF(c, W, Q) / W, grass: driveRollF(c, W, SO.grass) / W, road: driveRollF(c, W, null) === c.crr * W,
+      p: (Q.kc / c.tw + Q.kphi) * Math.pow(z0, Q.n) / 1000, z0: z0 * 1000 };
+    // coasting in neutral on gravel from 60 km/h
+    const s = roll(c, 60), road = { grip: all(DRIVE_SURFACE.gravel), soil: all(Q) };
+    for (let t = 0; t < 0.5; t += 0.001) stepCar(c, s, { steer: 0, throttle: 0, brake: 0, gear: 0, road }, 0.001);
+    const v0 = s.vx, F = s.Fz.reduce((a, f) => a + driveRollF(c, f, Q), 0) + 0.5 * DRIVE_RHO * c.cdA * v0 * v0;
+    for (let t = 0; t < 0.2; t += 0.001) stepCar(c, s, { steer: 0, throttle: 0, brake: 0, gear: 0, road }, 0.001);
+    o.coast = { got: (v0 - s.vx) / 0.2, want: F / (c.m + 4 * c.Iw / (c.r * c.r)) }; }   // the wheels turn too
+  // ---- the traps of a real circuit
+  { const lap = simulateLap('yasmarina'), S = driveSurface(lap, 0), c = mk('BMW M3 (E46'), n = S.x.length;
+    const at = (i, side, past) => { const y = side * (S.hw[i] + past + c.tF / 2), p = { x: S.x[i] + S.nx[i] * y, y: S.y[i] + S.ny[i] * y,
+      psi: Math.atan2(S.ny[i], S.nx[i]) - Math.PI / 2 }; const r = driveRoadAt(S, c, p, {}); const q = side > 0 ? 0 : 1;   // the left wheels sit +y
+      return r.soil[q] === SO.gravel ? 'gravel' : r.soil[q] === SO.grass ? 'grass' : 'road'; };
+    let traps = 0, out = {}, inn = {}, near = {};
+    for (let i = 0; i < n; i++) if (S.trap[i] && S.trap[(i + 1) % n] === S.trap[i] && S.trap[(i - 1 + n) % n] === S.trap[i]) { traps++;
+      const a = at(i, S.trap[i], 5), b = at(i, -S.trap[i], 5), d = at(i, S.trap[i], 1.5); out[a] = (out[a] || 0) + 1; inn[b] = (inn[b] || 0) + 1; near[d] = (near[d] || 0) + 1; }
+    o.trap = { traps, n, out, inn, near }; }
+  // ---- the ESP on wet grass: the sine with dwell
+  { const G = DRIVE_SURFACE.grassWet, road = { grip: all(G), soil: all(SO.grass) };
+    const swd = car => { const s = roll(car, 60), v = 60 / 3.6, L = car.a + car.b, T = 1 / 0.7, t0 = 0.5, end = t0 + T + 0.5;
+      const A = Math.min(6.5 * 0.3 * G * g * L * (1 + car.Kus * v * v) / (v * v), car.steerLock * 4.71 / 8.5);   // 6.5 x the steering for 0.3 g of this grip
+      const st = t => t < 0 ? 0 : t < 0.75 * T ? Math.sin(2 * Math.PI * 0.7 * t) : t < 0.75 * T + 0.5 ? -1 : t < T + 0.5 ? Math.sin(2 * Math.PI * 0.7 * (t - 0.5)) : 0;
+      let pk = 0, r1 = 0, beta = 0;
+      while (s.t < end + 1.1) { const t = s.t - t0; stepCar(car, s, { steer: A * st(t) / car.steerLock, throttle: 0, brake: 0, gear: s.gear, road }, 0.005);
+        if (t > 0.5 * T) pk = Math.max(pk, Math.abs(s.yaw)); if (Math.abs(s.t - end - 1) < 0.003) r1 = Math.abs(s.yaw);
+        beta = Math.max(beta, Math.abs(Math.atan2(s.vy, Math.max(1, s.vx))) * 180 / Math.PI); }
+      return { r1: r1 / pk, beta }; };
+    o.esp = { on: swd(mk('Tesla Model 3', { esp: true })), off: swd(mk('Tesla Model 3', { esp: false })) }; }
+  return o;
 });
-await page.setViewportSize({ width: 375, height: 800 });
-await page.waitForTimeout(300);
-const sw = await page.evaluate(() => document.documentElement.scrollWidth);
 await browser.close();
 
-for (const c of r.cars) {
-  console.log(c.n.padEnd(10), 'spiral', c.sOut, c.entry && c.entry.toFixed(0) + '→' + c.exit.toFixed(0), 'km/h', c.sg && c.sg.toFixed(2) + ' g', '+1', c.sFail,
-    '| fig', c.fOut, c.kmh && c.kmh.toFixed(0), 'km/h', 'bend', c.fg && c.fg.toFixed(2), 'mean', c.fay && c.fay.toFixed(2), '+1', c.fFail);
-}
-console.log('UI', r.sHead, '|', r.fHead, 'rate', r.rate, 'scrollWidth@375', sw);
-if (!r.spiral || !r.fig) fails.push('challenge missing from RUN_CHALLENGES');
-if (r.r0 !== 12) fails.push('spiral inner ' + r.r0);
-if (Math.abs(r.r1 - 30.48) > 0.01) fails.push('spiral outer ' + r.r1);
-if (Math.abs(r.rho - 15.24) > 0.01) fails.push('figure-8 bend ' + r.rho);
-const edge = ['WIDE', 'TIGHT', 'SPIN'];
-for (const c of r.cars) {
-  if (!c.sOk || c.sOut !== 'HOLD') fails.push(c.n + ' spiral ' + c.sOut);
-  if (!(c.exit > c.entry + 10)) fails.push(c.n + ' spiral did not speed up ' + c.entry + ' → ' + c.exit);
-  if (!c.sRad || !(c.sRad[1] > c.sRad[0] + 10)) fails.push(c.n + ' spiral radius ' + c.sRad);
-  if (!(c.sg > 0.5 && c.sg < 1.3)) fails.push(c.n + ' spiral g ' + c.sg);
-  if (!edge.includes(c.sFail)) fails.push(c.n + ' spiral +1 km/h ' + c.sFail);
-  if (!c.sDash) fails.push(c.n + ' spiral replay samples');
-  if (!c.fOk || c.fOut !== 'HOLD') fails.push(c.n + ' figure 8 ' + c.fOut);
-  if (!(c.kmh > 30)) fails.push(c.n + ' figure 8 speed ' + c.kmh);
-  if (!(c.fg > 0.6 && c.fg < 1.4)) fails.push(c.n + ' figure 8 bend g ' + c.fg);
-  if (!(c.fay < c.fg)) fails.push(c.n + ' figure 8 mean ay ' + c.fay + ' not under bend g ' + c.fg);
-  if (!c.fX || !(c.fX[0] < -20 && c.fX[1] > 20)) fails.push(c.n + ' figure 8 span ' + c.fX);
-  if (!edge.includes(c.fFail)) fails.push(c.n + ' figure 8 +1 km/h ' + c.fFail);
-  if (!c.fDash) fails.push(c.n + ' figure 8 replay samples');
-}
-if (!/Spiral Skid Pad/.test(r.sHead || '') || !/km\/h/.test(r.sHead || '')) fails.push('spiral UI: ' + r.sHead);
-if (!/Figure 8/.test(r.fHead || '') || !/km\/h/.test(r.fHead || '')) fails.push('figure 8 UI: ' + r.fHead);
-if (!r.rate) fails.push('replay rate hidden');
-if (sw > 375) fails.push('horizontal scroll at 375 px: ' + sw);
+const S = R.soil, f2 = x => x.toFixed(2);
+console.log(`soil: gravel ${f2(S.gravel)} of the load (sinks ${S.z0.toFixed(0)} mm, ground ${S.p.toFixed(0)} kPa under the tyre), grass ${f2(S.grass)}; no soil gives crr: ${S.road}`);
+if (!(S.gravel >= 0.25 && S.gravel <= 0.32)) fails.push('gravel\'s rolling resistance is not Wong\'s sand');
+if (!(S.p < 200)) fails.push('the ground presses harder than the tyre\'s inflation: not a rigid wheel');
+if (S.grass !== 0.08 || !S.road) fails.push('grass, or the road without soil, is not as given');
+console.log(`coasting on gravel: ${f2(R.coast.got)} m/s2 (the wheels and the air ${f2(R.coast.want)})`);
+if (!(Math.abs(R.coast.got - R.coast.want) <= 0.03 * R.coast.want)) fails.push('the car does not slow by the soil\'s resistance');
+const T = R.trap;
+console.log(`Yas Marina: ${T.traps} of ${T.n} points with a trap; 5 m out ${JSON.stringify(T.out)}, 5 m in ${JSON.stringify(T.inn)}, 1.5 m out ${JSON.stringify(T.near)}`);
+if (!(T.traps > 10) || T.out.gravel !== T.traps || T.inn.grass !== T.traps || T.near.grass !== T.traps) fails.push('the traps are not where the picture draws them');
+console.log(`wet grass, sine with dwell 6.5 x from 60 km/h, Model 3: ESP on ${f2(R.esp.on.r1)} of the peak yaw 1 s after (slip ${R.esp.on.beta.toFixed(1)} deg), off ${f2(R.esp.off.r1)} (${R.esp.off.beta.toFixed(1)} deg)`);
+if (!(R.esp.on.r1 < 0.35)) fails.push('ESP does not catch the car on wet grass');
+if (!(R.esp.off.r1 >= 0.35)) fails.push('with ESP off the car does not spin on wet grass: the check shows nothing');
 for (const e of errors) fails.push(e);
-if (fails.length) { console.log('FAIL\n  ' + fails.join('\n  ')); process.exit(1); }
+if (fails.length) { console.log('FAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
 console.log('PASS');

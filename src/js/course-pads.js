@@ -1,4 +1,4 @@
-// ====== SPIRAL SKID PAD AND FIGURE 8 (build 390) ======
+// ====== SPIRAL SKID PAD AND FIGURE 8 (build 399) ======
 // Two courses for the same stepped car and driver as the skid pad (skidpad-run.js). The lane is that pad's
 // SKID_TOL (1 m either side of the line: this game's lane, not a standard). Outcomes use its words:
 //   SPIN   body slip β over 25°, or the nose more than 90° off the line

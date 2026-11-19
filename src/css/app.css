@@ -4,29 +4,33 @@
    which at the same pixel size renders far smaller than this font and was unreadable. */
 @font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-greek.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
 *{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated;-webkit-font-smoothing:none}
-body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh}
+body{background:#0a0a12;color:#e0e0e0;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.6;overflow-x:hidden;min-height:100vh;--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="build"]{--mode-accent:#ffcc00;--mode-surface:#1a1404;--mode-border:#aa8800}
+body[data-group="test"]{--mode-accent:#00ff88;--mode-surface:#04140c;--mode-border:#00aa66}
+body[data-group="drive"]{--mode-accent:#00ccff;--mode-surface:#04141c;--mode-border:#0088aa}
+body[data-group="more"]{--mode-accent:#c8c8d8;--mode-surface:#14141c;--mode-border:#666}
 /* 1100px was letterboxing a dense instrument panel: on a 1440 screen it wasted 340px and on a
    2560 one, 1460. Nothing here wants to be narrow — the tabs are tables, charts and maps. */
 .container{max-width:min(1600px,96vw);margin:0 auto;padding:8px}
-header{text-align:center;padding:12px 8px;border-bottom:4px solid #333;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
+header{text-align:center;padding:12px 8px;border-bottom:4px solid var(--mode-border);background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);margin-bottom:12px}
 header h1{font-size:14px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;letter-spacing:1px}
 header .subtitle{font-size:8px;color:#888;margin-top:6px}
 /* align-items:start matters more than it looks. Grid rows stretch every column to the height of
    the tallest, and the right column (ENGINE CONTROLS) is far taller than the canvas — so the left
    panel was padding itself out with 400px of empty background under the dyno chart and the track
    map. It read as a layout bug because it was one. */
-.main{display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start}
-@media(max-width:800px){.main{grid-template-columns:1fr}}
-/* Portrait (phones & tablets held upright): stack to one column and use the full width so the
-   sim fills the screen instead of sitting in a narrow strip. Font & controls scale up too. */
-@media(orientation:portrait){
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+@media(min-width:1400px){.main{grid-template-columns:minmax(0,1fr) minmax(340px,400px)}}
+@media(max-width:900px),(max-height:520px){.main{grid-template-columns:1fr}}
+/* A short or narrow window, including a phone on its side: one column, larger type, no inner form scroll. */
+@media(max-width:900px),(max-height:520px){
   .container{max-width:100%;padding:10px}
   .main{grid-template-columns:1fr;gap:14px}
   body{font-size:12px}
   header h1{font-size:18px}
   header .subtitle{font-size:10px}
   .viz-tabs button{font-size:10px;padding:12px 4px}
-  .design-panel{max-height:none}          /* let the form flow with the page, no inner scrollbar */
+  .design-panel{max-height:none}
   .panel h2{font-size:11px}
   .stat{min-width:28%;flex:1}
   .stat .value{font-size:16px}
@@ -37,7 +41,7 @@ header .subtitle{font-size:8px;color:#888;margin-top:6px}
   .field input,.field select{font-size:10px;padding:9px}
 }
 /* Tall, roomy portrait (tablets): scale the type up a touch more for legibility. */
-@media(orientation:portrait) and (min-width:700px){
+@media(min-width:700px) and (max-width:900px) and (min-height:700px){
   body{font-size:14px}
   .viz-tabs button{font-size:12px}
   .design-section{font-size:11px}
@@ -89,7 +93,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 /* ---- Engine Design tab ---- */
 /* Was a flat 600px, so the design form scrolled inside a box inside a viewport that had room to
    spare, and the last row was always cut in half. Tie it to the window instead. */
-.design-panel{display:none;padding:12px;background:#0d0d18;max-height:calc(100vh - 230px);overflow-y:auto}
+.design-panel{display:none;padding:12px;background:#0d0d18}
 .design-panel.active{display:block}
 /* ELECTRIC (build 179): the motor, inverter and battery sections show only for an electric build, the combustion ones only for an engine */
 #designPanel:not(.ev):not(.hy) [data-ev]{display:none!important}
@@ -149,9 +153,13 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .build-strip button{font-size:8px;padding:4px 8px;box-shadow:none;border:2px solid #33334a;background:#151522;color:#00ff88;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .build-strip button:hover{border-color:#ffcc00;color:#ffcc00}
 .build-strip .k{color:#667}
-/* Phones: two to a row (this has to follow the rules above to win over them). Eight tabs do not fit
-   one row on a phone and pushed the whole panel wider than the screen; they wrap to two rows of four. */
-@media(orientation:portrait){
+.file-wrap{position:relative;display:inline-flex}
+.file-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;display:flex;flex-direction:column;gap:6px;min-width:160px;padding:8px;background:#0a0a12;border:3px solid var(--mode-accent)}
+.file-pop[hidden]{display:none}
+.file-pop button{width:100%}
+.mode-chips{font-size:8px;color:var(--mode-accent);letter-spacing:0}
+/* A narrow window keeps two fields to a row. The open mode's tabs stay one strip. */
+@media(max-width:900px),(max-height:520px){
   .viz-tabs{flex-wrap:wrap}
   .viz-tabs button{flex:1 0 25%;border-bottom:2px solid #333}
   .design-grid,.pick-row{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -302,7 +310,7 @@ body.race-open{overflow:hidden}
 .dyno-result{padding:14px 18px 18px;background:#0d0d18;border:4px solid #444;grid-column:1}
 /* The side column spans both rows, so the result panel sits directly under the chart instead of
    below the (taller) control column. One-column layouts are unaffected. */
-@media(min-width:801px) and (orientation:landscape){.side-panel{grid-column:2;grid-row:1 / span 2}}
+@media(min-width:901px) and (min-height:521px){.side-panel{grid-column:2;grid-row:1 / span 2}}
 .dyno-result h4{font-size:12px;color:#ffcc00;margin:0 0 12px}
 .dr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
 .dr-card{background:#12121c;border:2px solid #2a2a3e;padding:10px 12px}
@@ -467,7 +475,7 @@ table.hy-map td:focus{outline:2px solid #ffcc00;outline-offset:-2px}
 .title-screen[hidden]{display:none!important}
 .title-stage{grid-row:1;position:relative;min-height:0;background:#1b2433;overflow:hidden}
 .title-dock{grid-row:2;padding:14px 16px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-top:4px solid #333}
-/* the four rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
+/* the rooms, stacked (build 237): the one on view fades in over the one before; each walks by its own transform */
 .title-room{position:absolute;display:block;max-width:none;user-select:none;pointer-events:none;opacity:0;will-change:transform,opacity;backface-visibility:hidden}
 .title-room.on{opacity:1;transition:opacity .7s linear}
 @media(prefers-reduced-motion:reduce){.title-room.on{transition:none}}
@@ -752,28 +760,65 @@ body.guided-open{overflow:hidden}
   #designPanel.hy #evDesigner .evd-mini{display:none}
 }
 
-/* ---- The four sections (build 261). Desktop: the ten tabs in one row, a gap between sections. Phone (portrait): a bar
-   of the four at the foot of the screen, as an app has, and the tabs as one strip that slides to the open section. ---- */
-.viz-groups{display:none}
-.viz-tabs button[data-g="drive"]:nth-child(5),.viz-tabs button[data-g="test"]:nth-child(7),.viz-tabs button[data-g="more"]:nth-child(9){border-left:4px solid #0a0a12}
-@media(orientation:portrait){
+/* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
+   (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
+.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
+body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
+body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
+body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
+body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
+body[data-group="more"] .mode-room{display:none}
+.vh-view{display:flex;gap:6px;margin:0 0 8px}
+.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
+.viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
+.viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
+.viz-groups button[data-g="more"]{flex:0.72}
+.viz-groups button:last-child{border-right:none}
+.viz-groups svg{width:16px;height:16px;fill:currentColor}
+.viz-groups button.active{background:var(--mode-surface);color:var(--mode-accent);box-shadow:inset 0 -3px 0 var(--mode-accent)}
+.viz-tabs button:not(.ing){display:none}
+.viz-tabs button.active{background:var(--mode-surface);color:var(--mode-accent);border-bottom:3px solid var(--mode-accent);margin-bottom:-3px}
+.viz-panel>#engineCanvas{display:block;width:min(100%,calc(min(62vh,560px)*640/420));max-height:min(62vh,560px);height:auto;margin-inline:auto}
+#modeCurtain{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,var(--mode-accent) 0 4px,transparent 4px 8px)}
+#modeCurtain.go{animation:modeCurtain 180ms steps(4) forwards}
+@keyframes modeCurtain{0%{opacity:.4;clip-path:inset(0 0 100% 0)}100%{opacity:0;clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){#modeCurtain.go{animation:none}}
+.ecu{margin-top:8px;background:#101018;border:4px solid #3a3a4a}
+.ecu-bezel{padding:8px}
+.ecu-top,.ecu-keys{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.ecu-top b{color:var(--mode-accent);font-weight:normal}
+.ecu-led{display:inline-flex;gap:4px;align-items:center;font-size:7px;color:#667}
+.ecu-led i{width:8px;height:8px;background:#222;border:1px solid #444}
+.ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
+.ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
+.ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
+.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+.ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
+[data-ecu-hide]{display:none!important}
+#btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
+@media(max-width:900px),(max-height:520px){
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+}
+@media(pointer:coarse){
+  .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
+}
+@media(max-width:900px),(max-height:520px){
   header{padding:6px 8px;margin-bottom:8px;border-bottom-width:2px}
-  header h1{font-size:9px;letter-spacing:0}
+  header h1{font-size:11px;letter-spacing:0}
   header .subtitle{font-size:7px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
   .build-strip button{font-size:8px;padding:6px 8px}
+  .mode-chips{display:none}
   .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
   .viz-tabs::-webkit-scrollbar{display:none}
-  .viz-panel{min-width:0}   /* a grid item grows to its content's width unless told otherwise: the strip must scroll, not push */
-  .viz-tabs button{flex:0 0 25%;border-left:none!important}
-  .viz-tabs button:not(.ing){opacity:.55}
+  .viz-panel{min-width:0}
+  .viz-tabs button.ing{flex:1 1 0;min-width:0;border-left:none;overflow:hidden;text-overflow:ellipsis}
   body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
   .evd-side{max-height:calc(75vh - 58px)}
   body:has(#designPanel.active.ev),body:has(#designPanel.active.hy),body:has(#vehiclePanelTab.active),body:has(#designPanel.active .evd-side){padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
-  .viz-groups{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;background:#0a0a12;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
-  .viz-groups button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;font-size:8px;background:#12121c;color:#778;border:none;border-right:2px solid #26263a;box-shadow:none}
-  .viz-groups button:last-child{border-right:none}
-  .viz-groups svg{width:20px;height:20px;fill:currentColor}
-  .viz-groups button.active{background:#004422;color:#00ff88}
-  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}   /* the full pages stop above the bar */
+  .viz-groups{position:fixed;left:0;right:0;bottom:0;z-index:25;margin:0;border:none;border-top:3px solid #333;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .viz-groups button{flex-direction:column;gap:5px;padding:8px 2px 7px;font-size:8px}
+  .viz-groups svg{width:20px;height:20px}
+  .track-page,.race-page,.evd-side{bottom:calc(58px + env(safe-area-inset-bottom,0px))}
 }

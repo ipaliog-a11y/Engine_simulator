@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 390
+# PIXEL POWERTRAIN v0.8 build 399
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -183,14 +183,14 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 ### Simulation & live tuning
 - **Live outputs**: Power (HP), Torque (Nm), BMEP, Volumetric Efficiency, Thermal
   Efficiency, BSFC, Fuel Flow, Knock Risk, Engine Health.
-- **Ten tabs** — **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
+- **Twelve tabs in four sections** — BUILD, TEST, DRIVE and MORE. **ENGINE** (build the engine), **VEHICLE** (drop it in a car & read its
   performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **CHAMP** (seasons by class with points and standings), **CHALLENGES**, **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
   scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
-  TRACK and the race's setup, timing tower and telemetry on RACE.
+  TRACK and the race's setup, timing tower and telemetry on RACE. LIVE and DYNO carry an ECU laptop: a scope, the fuel, spark and VE tables, the fault list, and the difference from a logged pull. The track instruments include an eight-light shift bar and a brake-temperature mark once a rotor passes 450 °C.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
@@ -492,10 +492,12 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   number is given once and never changes. **COPY FROM** takes a real car's body and parts by its number or
   name and keeps your engine: the result is a custom car, "Custom (from 012)".
 
-  The **title screen** (the menu the sim opens on, and MENU) cycles through four workshop pictures with a slow
-  pan (build 230, `assets/landing/`), with the makers' and sponsors' logos pixelated out. Since build 237 the pan is
-  a browser animation, smooth on every frame, each room fades into the next, and the bench behind the menu stops
-  drawing while it is covered. With "reduce motion" set, the pictures hold still.
+  The **title screen** (the menu the sim opens on, and MENU) cycles through workshop pictures with a slow
+  pan (build 230, `assets/landing/`). It starts with the original four rooms, then fifty more cars and places
+  (build 391): a coastal boathouse, a desert station, a snow shed, a night alley, and the rest listed beside
+  the files. Since build 237 the pan is a browser animation, smooth on every frame, each room fades into the
+  next, and the bench behind the menu stops drawing while it is covered. With "reduce motion" set, the pictures
+  hold still. Only the room on view, the next one, and during a fade the room before, are decoded.
 
   **CAR SHOWCASE** (build 237), the menu's fifth item, shows every factory car on one page: its showroom
   picture and number, in number order, filtered by family. Pick one to see it large with the figures its maker

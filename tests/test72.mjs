@@ -20,7 +20,7 @@ const fails = [];
 // running engine moves while the race plays
 const spec = () => page.evaluate(() => { const b = serializeBuild('x', ''); return JSON.stringify({ e: b.engine, v: b.vehicle, m: b.fuelMap || null }); });
 const before = await spec();
-await page.click('#tabRace');
+await page.evaluate(() => document.getElementById('tabRace').click());
 await page.waitForTimeout(200);
 const setup = await page.evaluate(() => ({
   page: !document.getElementById('racePage').hidden,

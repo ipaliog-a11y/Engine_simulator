@@ -90,6 +90,7 @@ function bindControls(){
   document.getElementById('btnImport').addEventListener('click',openFileDialog);
   document.getElementById('btnShare').addEventListener('click',shareBuild);
   document.getElementById('btnLogPull').addEventListener('click',logPull);
+  document.getElementById('btnDynoSweep').addEventListener('click',startDynoSweep);
   document.getElementById('btnClearPulls').addEventListener('click',clearPulls);
   document.getElementById('btnReportPng').addEventListener('click',exportDynoPNG);
   document.getElementById('btnReportPdf').addEventListener('click',exportDynoPDF);
@@ -170,6 +171,14 @@ function bindControls(){
     menu.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>setMoreMenu(false),0);});
     document.addEventListener('click',e=>{if(menu.classList.contains('open')&&!e.target.closest('.more-wrap'))setMoreMenu(false);});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){setMoreMenu(false);more.focus();}});}
+  {const fb=document.getElementById('btnFile'),pop=document.getElementById('filePop');
+    const set=o=>{pop.hidden=!o;fb.setAttribute('aria-expanded',String(!!o));};
+    fb.addEventListener('click',e=>{e.stopPropagation();set(pop.hidden);});
+    pop.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>set(false),0);});
+    document.addEventListener('click',e=>{if(!pop.hidden&&!e.target.closest('.file-wrap'))set(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){set(false);fb.focus();}});}
+  document.getElementById('btnStripGuide').addEventListener('click',()=>setTab('guide'));
+  document.getElementById('btnStripOptions').addEventListener('click',()=>setTab('options'));
   // the dyno's rpm table, behind its button (the result box is re-rendered, so the click is caught on the box)
   document.getElementById('dynoResult').addEventListener('click',e=>{if(e.target.closest('#btnDynoTable'))toggleDynoTable();});
   // LIVE OUTPUT folds to its first row of gauges, a third of its height; the choice is kept in this browser
@@ -318,6 +327,13 @@ function bindControls(){
   document.getElementById('btnBuild').addEventListener('click',()=>{buildEngine();flash(isElectric()?tr('DRIVE BUILT')+' • '+engine.score.peakKW+' kW':tr('ENGINE BUILT')+' • '+engine.displacement_L.toFixed(engine.displacement_L<1?2:1)+'L');setTab('dyno')});
   document.getElementById('btnDesignReset').addEventListener('click',()=>{applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();flash(tr('DESIGN RESET TO DEFAULTS'))});
 }
+let dynoSweep=null;
+function startDynoSweep(){
+  if(vizMode!=='dyno')setTab('dyno');
+  state.throttle=1;dynoSweep={t:0,dur:5};
+  syncSliders();
+  flash(tr('RUN PULL'));
+}
 function syncSliders(){
   document.getElementById('throttle').value=Math.round(state.throttle*100);
   document.getElementById('load').value=Math.round(state.load*100);
@@ -335,6 +351,14 @@ function loop(now){
   updatePhysics();
   stepWear(dt);
   obdStep(dt);
+  if(dynoSweep&&engine){
+    dynoSweep.t+=dt;
+    const f=clamp(dynoSweep.t/dynoSweep.dur,0,1);
+    state.throttle=1;
+    state.load=loadForRpm(lerp(engine.idleRpmEff||800,engine.redline*0.99,f));
+    if(f>=1)dynoSweep=null;
+    syncSliders();
+  }
   updateSound();
   // Under the title menu or the car showcase nothing of the app is on view, so it is not drawn: the bench keeps running
   // (and sounding) underneath, and the menu's pan has the frame to itself (build 237). The first frame after either
@@ -350,7 +374,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function appCovered(){const c=document.body.classList;return c.contains('title-open')||c.contains('showcase-open')||c.contains('guided-open');}
-bindControls();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
+bindControls();bindEcu();bindHybridPanel();bindHybMap();applyEngineToForm(Object.assign({},DEFAULT_ENGINE));buildEngine();
 applyVehicleToForm(DEFAULT_VEHICLE);buildVehicle();updateVehicleSummary();
 loadFromHash();   // open a shared build if the URL carries one
 applyLang(currentLang);   // localise the UI (persisted choice)

@@ -152,7 +152,7 @@ if (!guard.junkFiltered) fails.push('entries with no build payload were not filt
 if (!guard.emptyState) fails.push('empty garage shows no empty state');
 
 // ---------------------------------------------------------------- 5. UI + i18n
-await page.click('#tabVehicle'); await page.waitForTimeout(400);
+await page.evaluate(() => document.getElementById('tabVehicle').click()); await page.waitForTimeout(400);
 const ui = await page.evaluate(({ a }) => {
   eval(a); document.getElementById('garageName').value = 'UI check';
   document.getElementById('btnGarageSave').click();
