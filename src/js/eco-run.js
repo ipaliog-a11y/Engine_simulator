@@ -3,7 +3,7 @@
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build 384, ecoDP) for ICE and EV.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Distance DP (build BNUM, ecoDP) for ICE and EV.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -154,11 +154,11 @@ function ecoDriverTable(){
   }
   return{drive,lift,shift,mEff,ev:false};
 }
-// The engine's fuel rule on the economy road (build 384; ecoFuelKg and the distance DP both use it). Warm oil; the gear
+// The engine's fuel rule on the economy road (build BNUM; ecoFuelKg and the distance DP both use it). Warm oil; the gear
 // with least fuel, as WLTP. Overrun: fuel cut needs a gear whose engine braking is no more than the slowing asked for
-// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build 384 every glide was free and
+// (the brakes add the rest); a gentler glide is in neutral at idle fuel (until build BNUM every glide was free and
 // drag-free). Past the 90% torque reserve in every gear the engine runs at full load in the gear that costs least,
-// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build 384 such a point
+// and a demand past the fuel map's full load is charged pro rata at that point's BSFC. Until build BNUM such a point
 // fell through to 3 × idle fuel (the map has no fuel past its own full load), which the eco blends leaned on.
 function ecoFuelRule(){
   const e=engine,C=FUEL_CYCLE,M=engineFuelMap(95),r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
@@ -251,7 +251,7 @@ function ecoHybrid(line,v){
   }
   return hybridCycle(vehicle,{segs});
 }
-// ---- Distance DP (build 384) ----
+// ---- Distance DP (build BNUM) ----
 // The eco driver above follows fixed rules (best-BSFC drive, lift, a speed cap). This finds the speed profile itself:
 // a dynamic programme over distance in stages of ~50 m (state: speed on a 0.5 m/s grid, from rest; within a stage v²
 // is linear, i.e. constant acceleration), minimising fuel (ICE, g) or pack energy (EV, J) plus λ × time, with λ
@@ -260,9 +260,9 @@ function ecoHybrid(line,v){
 // force, so it can choose pulse-and-glide (best-BSFC pulse, neutral glide at idle) and lift-coast before climbs and
 // corners where they pay. Speeds stay under the min-time profile (corner and braking limits), drive force under the
 // full-load force (the reserve ecoFuelKg allows), braking under ECO_DP.aBrake. The profile is then priced by the
-// same functions as every other candidate, and kept only if cheaper. Hybrids are not solved here (named open).
+// same functions as the eco driver. Hybrids are not solved here (named open).
 // Pulse-and-glide as optimal control under a time constraint: Li, Li, Wang & Peng, ACC 2011 (cited above).
-const ECO_DP={on:true,stage:50,dv:0.5,aBrake:4,nF:48,iters:14};
+const ECO_DP={on:true,stage:50,dv:0.5,aBrake:4,nF:48,iters:10};
 function ecoCostTable(nS,dv){
   const hv=dv/2,nJ=2*nS+1,nF=ECO_DP.nF,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const tab=new Float64Array(nJ*nF),Fmax=new Float64Array(nJ),Fmin=new Float64Array(nJ),glide=new Float64Array(nJ),idle=new Float64Array(nJ);
@@ -349,7 +349,15 @@ function ecoDP(line,env,target){
   const j0=Math.min(nJ-1,80),r0=Math.max(1e-6,rate(j0,aero[j0]+roll[j0]));
   let lo=Math.log(r0*1e-2),hi=Math.log(r0*1e2),best=solve(Math.exp(hi));
   if(!best||best.t>target)return null;
-  for(let it=0;it<ECO_DP.iters;it++){const mid=(lo+hi)/2,r=solve(Math.exp(mid));if(r&&r.t<=target){hi=mid;best=r;}else lo=mid;}
+  let slow=null;
+  for(let it=0;it<ECO_DP.iters;it++){const mid=(lo+hi)/2,r=solve(Math.exp(mid));if(r&&r.t<=target){hi=mid;best=r;}else{lo=mid;if(r)slow=r;}}
+  // The time jumps between neighbouring λ (a discrete plan); mix the last plan too slow and the first in time,
+  // speed by speed, and bisect the mix so the finish lands on the target rather than up to ~4% early.
+  if(slow&&best.t<target*0.999){
+    let a=0,b=1;
+    for(let it=0;it<12;it++){const c=(a+b)/2,v=best.v.map((x,i)=>x*(1-c)+slow.v[i]*c),t=ecoTimeOf(line,v);
+      if(t<=target){a=c;best={v,t};}else b=c;}
+  }
   best.ms=performance.now()-t0;best.stages=S;best.states=nS;
   return best;
 }
@@ -374,11 +382,15 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     return best;
   };
   const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
-  let best=null,s=1,bestC=Infinity;
-  for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
-  if(!best){best=solveAt(1)||mt;s=1;}
-  let dpMs=null,dpUsed=false;
-  if(ECO_DP.on&&!hyb){const d=ecoDP(line,mt.v,target);if(d){dpMs=d.ms;const c=cost(d);if(c<bestC){bestC=c;best=d;dpUsed=true;}}}
+  // Engine cars and EVs: the distance DP (build BNUM). On the 190 runs measured at Alpine and the Dragon it beat the eco
+  // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each
+  // blend costs ~11 capped solves; running both pushed long roads past 4 s). Hybrids keep the blends.
+  let best=null,s=1,bestC=Infinity,dpMs=null,dpUsed=false;
+  if(ECO_DP.on&&!hyb){const d=ecoDP(line,mt.v,target);if(d){dpMs=d.ms;best=d;dpUsed=true;s=0;}}
+  if(!best){
+    for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
+    if(!best){best=solveAt(1)||mt;s=1;}
+  }
   const v=best.v,time=best.t;
   // Peak acceleration and deceleration of the eco profile (m/s²), shown so the driving style can be read off the result.
   let aUp=0,aDn=0;for(let i=0;i<line.length-1;i++){const a=(v[i+1]*v[i+1]-v[i]*v[i])/(2*Math.max(0.05,line[i].ds3));if(a>aUp)aUp=a;if(-a>aDn)aDn=-a;}

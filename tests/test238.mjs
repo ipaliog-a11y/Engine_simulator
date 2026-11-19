@@ -1,6 +1,6 @@
-// Economy road: a distance DP for the speed plan, and honest fuel at full load (build 384).
+// Economy road: a distance DP for the speed plan, and honest fuel at full load (build BNUM).
 //
-// WHY THIS EXISTS. The economy run's speed plan was a capped eco driver; build 384 adds a dynamic programme over
+// WHY THIS EXISTS. The economy run's speed plan was a capped eco driver; build BNUM adds a dynamic programme over
 // distance (ecoDP: least fuel or pack energy + λ × time, λ searched to meet the target) and closes a pricing hole in
 // ecoFuelKg (a demand past the fuel map's full load cost 3 × idle). What must hold:
 //   · MX-5 at Alpine Pass and Model 3 on the Dragon: the DP is kept, finishes on the target (≤ target, within 2%),
