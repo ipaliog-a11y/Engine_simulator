@@ -18,3 +18,7 @@ exist — orphan WebPs fail `test131`.
 node .cursor/skills/vehicle-profile-art/scripts/postprocess.mjs research/vehicles-art-batch-2/raw/<slug>.png \
   --slug <slug> --staging research/vehicles-art-batch-2 --in-place
 ```
+
+## Status
+
+**100 / 100** generated and post-processed (2026-11-19). Spot-checked Cosworth (facing left after one regen) and FL5 Type R. Ready to copy into `assets/cars/` + `CAR_ART` per car as imports land.
