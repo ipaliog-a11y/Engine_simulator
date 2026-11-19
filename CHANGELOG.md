@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Camber and toe by heave and pitch, and the weight's own roll moment (build NNN)
+
+Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE.
+- **The body's weight, leaning, adds m g h_arm sin φ to the roll moment.** Steady roll rises 9–10 % (M3 E46 5.73°/g, MX-5 6.06°/g, AE86 5.50°/g), matching a full roll worked out apart (springs on tyres, roll centres, weight) within 0.2 % (`test224`, new).
+- **The ESP's understeer reference reads the full roll**: its roll-steer share now goes by each axle's roll on its springs with the tyres' give and the weight's moment, not the springs alone.
+- **The lap should follow**: its `rollGrad` leaves the weight's moment out too (~10 % less roll); not changed here, as it moves every lap.
+- **Left open:** the curves' own change with travel (linear here), bump steer apart from roll steer by the kit.
 ### Anti-dive and anti-squat in the stepped car (build 369)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
