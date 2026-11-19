@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 382)
+### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
 
 Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decisions.
 - **Rich cools the exhaust** (`exhaustGasT`): the gas heated is now the air and all the fuel supplied (it was the fuel

@@ -79,7 +79,7 @@ egt.forEach(e => {
   // The 2JZ archetype sits 1 C over test47's ceiling the other way, so the derivation is centred.
   // The Renesis, still on the old hand-set share, cooled with the air + fuel gas mass (897 -> 842);
   // floor moved with it, reason in test47.
-  // Build 382 (owner's decision): rich mixtures now cool the exhaust (the extra fuel's mass and evaporation, exhaustGasT),
+  // Build 384 (owner's decision): rich mixtures now cool the exhaust (the extra fuel's mass and evaporation, exhaustGasT),
   // real physics; these engines already read too cool, a missing heat term. Floors lowered to the new values, rounded down.
   const KNOWN_LOW = { '1.3 Rotary NA (Renesis)': 830, '1.6 Sport NA I4': 805 };
   if (KNOWN_LOW[e.n] != null && e.full < e.lo) {
