@@ -39,6 +39,9 @@ function driftSCourse(R,halfW,mid){
 }
 // Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD stays
 // on the grip path (handbrake not modelled — named gap): NO_SLIDE is the honest result for power-over.
+// AWD (build 379) takes the RWD path: power-over works as far as the centre coupling lets the rear axle turn faster than the
+// front. stepCar models the coupling (centreCoupling, build 320): a clutch closed on the first slip or a viscous coupling
+// sends torque forward as the rear slips, so a car like the 993 Turbo (viscous, rear driven) gets NO_SLIDE honestly.
 function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
   const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
@@ -98,7 +101,8 @@ function driftRun(car,plan,sample,D){
   const s=driveState(car),L0=C.line[0];
   s.x=L0.x;s.y=L0.y;s.psi=Math.atan2(C.line[1].y-L0.y,C.line[1].x-L0.x);
   s.vx=plan.v;s.w=s.w.map(()=>plan.v/car.r);
-  s.gear=plan.gear||2;s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
+  // A single-speed car (an EV) has no second gear: until build 379 it was put in gear 2 and never drove (STALL).
+  s.gear=Math.min(plan.gear||2,car.ratios.length);s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
   const k0=gripOnly?0:(plan.kick|0);
   const d={i:0,kick1:k0,kick2:k0,pull:plan.pull||2.2,seen1:false,seen2:false};
   let len=0;for(let k=1;k<C.line.length;k++)len+=Math.hypot(C.line[k].x-C.line[k-1].x,C.line[k].y-C.line[k-1].y);
@@ -177,6 +181,7 @@ function simulateDriftChallenge(){
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,
     halfW:R.halfW,line:R.line,zones:R.zones,samples:R.samples||[],plan:R.plan,
     trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},
-    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
+    slide1:R.slide1,slide2:R.slide2,pkR:R.pkR,
+    centre:car.drive==='awd'&&car.centre?{type:car.centre.type,f:car.centre.f}:null   // AWD power-over is as far as this lets the rear slip (build 379)
   };
 }
