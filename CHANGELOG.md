@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Fifty more title-screen rooms (build 391)
+
+- The menu still opens on the original four workshops, then cycles through **50 new pixel-art rooms** (54 in all). Each one is a different car in a different place: coastal boathouse, desert station, snow shed, night alley, barn, harbour, rooftop, forest service park, hangar, and the rest in `assets/landing/README.md`.
+- Same isometric style as the first four, 1920×1072 WebP. About 11 MB together.
+- Only the room on view, the next room, and during the fade the room before, keep a decoded picture. The others stay unloaded.
+- Left open: a few signs still carry a word the generator invented. Automatic cleanup also marked bodywork, so they were left. They are not maker logos. The original four still have their logos mosaicked by hand.
+
 ### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
 
 - The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of

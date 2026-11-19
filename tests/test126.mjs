@@ -1,16 +1,21 @@
-// Title screen rooms: tyre bay, V8 flat-lay, pit garage; five-second pan (build 215).
+// Title screen rooms: the original four workshops, then fifty more cars and places (build 391).
 //
 // WHY THIS EXISTS. Build 209 opened on one hoist bay. Build 215 adds three more rooms and walks a
-// left-to-right pan across each for five seconds before the next. What must hold:
-//   · four scenes, each held 5000 ms, drawn wider than the stage so the pan has somewhere to go;
+// left-to-right pan across each for five seconds before the next. Build 391 adds fifty pictures and keeps
+// only the visible room, the next one, and during a fade the room before, decoded. What must hold:
+//   · 54 scenes, each held 5000 ms, drawn wider than the stage so the pan has somewhere to go;
+//   · every named picture exists on disk; room 4 is bay-miata and the last is canyon-camp;
+//   · at most three pictures are decoded at once;
 //   · titleAdvance(0) starts on scene 0 at pan 0; late in the hold the pan has moved right;
 //   · crossing 5000 ms lands on the next scene and resets the pan;
-//   · every scene shows its picture (since build 230, assets/landing/*.webp in an <img>; since build 237 one <img> per
-//     room, titleRoomEl() the one on view), covering the stage, placed where the pan says (test148 covers how it moves);
+//   · a full cycle (54 × 5000 ms) wraps to scene 0;
+//   · every scene shows its picture (an <img>, titleRoomEl() the one on view), covering the stage, placed where the
+//     pan says (test148 covers how it moves);
 //   · the existing menu still opens on ?title=1 (test123 covers the buttons).
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
+import fs from 'fs';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const url = pathToFileURL(path.join(repo, 'index.html')).href + '?title=1';
 const fails = [], errors = [];
@@ -22,8 +27,15 @@ await page.goto(url, { waitUntil: 'networkidle' });
 await page.waitForTimeout(200);
 
 const info = await page.evaluate(() => titleSceneInfo());
-console.log('title scenes', info);
-if (info.n !== 4) fails.push('expected 4 title scenes, got ' + info.n);
+console.log('title scenes', info.n, info.rooms[0], '…', info.rooms[info.n - 1]);
+if (info.n !== 54) fails.push('expected 54 title scenes, got ' + info.n);
+if (info.rooms[4] !== 'assets/landing/bay-miata.webp') fails.push('room 4 should be bay-miata, got ' + info.rooms[4]);
+if (info.rooms[53] !== 'assets/landing/canyon-camp.webp') fails.push('last room should be canyon-camp, got ' + info.rooms[53]);
+for (const room of info.rooms) {
+  if (!fs.existsSync(path.join(repo, room))) fails.push('missing ' + room);
+}
+const loaded0 = await page.evaluate(() => titleRooms.filter(R => R.im.getAttribute('src')).length);
+if (loaded0 < 1 || loaded0 > 3) fails.push('decoded room window should be 1 to 3 at the start, got ' + loaded0);
 if (info.holdMs !== 5000) fails.push('each scene should hold 5000 ms, got ' + info.holdMs);
 if (!(info.sceneW > info.viewW)) fails.push('scene is not wider than the view, so it cannot pan');
 if (info.pan !== info.sceneW - info.viewW) fails.push('pan range should be sceneW - viewW');
@@ -44,13 +56,16 @@ const third = await page.evaluate(() => titleAdvance(10100));
 if (third.idx !== 2) fails.push('at 10.1 s expected scene 2 (V8 flat-lay), got ' + third.idx);
 const fourth = await page.evaluate(() => titleAdvance(15100));
 if (fourth.idx !== 3) fails.push('at 15.1 s expected scene 3 (pit garage), got ' + fourth.idx);
-const wrap = await page.evaluate(() => titleAdvance(20100));
-if (wrap.idx !== 0) fails.push('at 20.1 s should wrap to scene 0, got ' + wrap.idx);
+const fifth = await page.evaluate(() => titleAdvance(20100));
+if (fifth.idx !== 4) fails.push('at 20.1 s expected scene 4 (first new room), got ' + fifth.idx);
+const wrapAt = info.n * 5000 + 100;
+const wrap = await page.evaluate(t => titleAdvance(t), wrapAt);
+if (wrap.idx !== 0) fails.push('at ' + wrapAt + ' ms should wrap to scene 0, got ' + wrap.idx);
 
 // Since build 230 each room is a picture (an <img>, assets/landing/): each must load, be the right room's picture,
 // cover the stage, and sit where the pan says (its left edge at -pan × scale).
 const seen = new Set();
-for (const ms of [0, 4000, 5100, 10100, 15100]) {
+for (const ms of [0, 4000, 5100, 10100, 15100, 20100]) {
   await page.evaluate(t => titleAdvance(t), ms);
   await page.waitForFunction(() => { const i = titleRoomEl(); return i && i.classList.contains('on') && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
   const r = await page.evaluate(t => {
@@ -66,7 +81,9 @@ for (const ms of [0, 4000, 5100, 10100, 15100]) {
   if (!r.leftOk) fails.push(`scene at ${ms} ms is not placed where the pan says`);
   seen.add(r.room);
 }
-if (seen.size !== 4) fails.push('not all four rooms were shown: ' + [...seen].join(', '));
+if (seen.size !== 5) fails.push('not all of the first five rooms were shown: ' + [...seen].join(', '));
+const loaded1 = await page.evaluate(() => titleRooms.filter(R => R.im.getAttribute('src')).length);
+if (loaded1 < 1 || loaded1 > 3) fails.push('decoded room window grew past 3, got ' + loaded1);
 
 console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : 'PASS');
 console.log('ERRORS:', errors.length ? errors : 'none');
