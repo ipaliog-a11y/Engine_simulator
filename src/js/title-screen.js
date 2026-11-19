@@ -135,6 +135,7 @@ function titleMark(){
   titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
 }
 function titleGo(mode){
+  if(mode==='film'){location.href='film.html';return;}   // the evolution film is its own page; the label is tr()'d with the menu
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)

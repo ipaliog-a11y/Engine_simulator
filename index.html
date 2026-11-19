@@ -805,6 +805,7 @@ body.guided-open{overflow:hidden}
 <button type="button" data-go="options">SETTINGS</button>
 <button type="button" data-go="showcase">CAR SHOWCASE</button>
 <button type="button" data-go="guided">GUIDED BUILD</button>
+<button type="button" data-go="film">FILM</button>
 </nav>
 <p class="title-hint">ARROWS SELECT · ENTER OPENS</p>
 <p class="title-ver" id="titleVer"></p>
@@ -824,7 +825,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 389</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 390</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -32874,6 +32875,7 @@ function titleMark(){
   titleButtons().forEach((b,i)=>b.classList.toggle('on',i===titleSel));
 }
 function titleGo(mode){
+  if(mode==='film'){location.href='film.html';return;}   // the evolution film is its own page; the label is tr()'d with the menu
   closeTitleScreen();
   if(mode==='showcase'){openShowcase('title');return;}   // the car showcase is a page of its own (build 237)
   if(mode==='guided'){openGuided('title');return;}       // so is the guided build (build 308)
