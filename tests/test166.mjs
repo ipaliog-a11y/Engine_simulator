@@ -9,7 +9,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const OPEN = 10,   // 10 since build 332: THROAT_RATIO signed off as a rule. 11 since build 319: phase B's last 10 (all but B2 and B6) signed off as rules until after v1.0. 21 since build 316: phase C's last 12 signed off as rules until after v1.0. 33 since build 314: MOTOR.statorShape retired, the stator diameter a part. 34 since build 302: SAT_K (magnet motors), the field-weakening constants and the iron's 80/20 retired by the circuit solved under load. 37 since build 299: RACE.pitLoss retired by the pit lane's length. 38 since build 295: TYRE_RACE and the TIRE_TYPE windows signed off as rules until after v1.0. 40 since build 294: TURBO_CONFIG retired (a compound's two stages). 41 since build 292: FLUX_KM retired by the magnets as geometry. Before: 42 since build 284: electric.js audited, its 15 fitted numbers listed (phase C). Before: 27 since build 278: DRIVE_DRIVER signed off as a rule. Before: 27 since build 266 (TYRE_CC); 28 since build 269: DRIVE_DRIVER, the stepped car's driver, awaiting sign-off as a rule
+const OPEN = 6,    // 6 since build 363: phase E's four (DIFF_ASYM0, KVCAP, TYRE_SLIP, TYRE_CC) kept as rules until after v1.0. 10 since build 332: THROAT_RATIO signed off as a rule. 11 since build 319: phase B's last 10 (all but B2 and B6) signed off as rules until after v1.0. 21 since build 316: phase C's last 12 signed off as rules until after v1.0. 33 since build 314: MOTOR.statorShape retired, the stator diameter a part. 34 since build 302: SAT_K (magnet motors), the field-weakening constants and the iron's 80/20 retired by the circuit solved under load. 37 since build 299: RACE.pitLoss retired by the pit lane's length. 38 since build 295: TYRE_RACE and the TIRE_TYPE windows signed off as rules until after v1.0. 40 since build 294: TURBO_CONFIG retired (a compound's two stages). 41 since build 292: FLUX_KM retired by the magnets as geometry. Before: 42 since build 284: electric.js audited, its 15 fitted numbers listed (phase C). Before: 27 since build 278: DRIVE_DRIVER signed off as a rule. Before: 27 since build 266 (TYRE_CC); 28 since build 269: DRIVE_DRIVER, the stepped car's driver, awaiting sign-off as a rule
       AUDIT = 10, RULES = ['RACE_DRIVERS', 'part costs', 'DRIVE_DRIVER', 'TYRE_RACE', 'TIRE_TYPE windows', 'RACE racecraft',
         // build 316, owner's sign-off: phase C simplified, these kept until after v1.0
         'HYB_RACE.margin', 'EV_RACE', 'MOTOR.mech', 'MOTOR_COOLING', 'RETENTION.vTip', 'INVERTER', 'ACTIVE_TO_MOTOR',
@@ -18,7 +18,9 @@ const OPEN = 10,   // 10 since build 332: THROAT_RATIO signed off as a rule. 11 
         'CAM.ampMul', 'CAM.loWiden', 'CAM.idleRpm', 'TURB_WHEEL', 'SC_TYPE', 'VANE_R2/VANE_H', 'plenum volume', 'veBell',
         'typeImep', 'INTAKE_SYS metering and idle',
         // build 332, owner's sign-off: no maker publishes a port throat
-        'THROAT_RATIO'];   // DRIVE_DRIVER: owner's sign-off, build 278
+        'THROAT_RATIO',
+        // build 363, owner's sign-off: phase E's four wait for driving-sim J, after v1.0
+        'DIFF_ASYM0', 'KVCAP', 'TYRE_SLIP', 'TYRE_CC'];   // DRIVE_DRIVER: owner's sign-off, build 278
 const reg = JSON.parse(readFileSync(path.join(repo, 'plans/fitted-register.json'), 'utf8'));
 const fails = [];
 for (const e of reg.entries) {
