@@ -65,12 +65,21 @@ function fitPixCanvas(cv,gw,gh){
   return {g,k,ox:Math.floor((bw-gw*k)/2),oy:0,bw,bh};
 }
 // The backdrop both previews share: the app's navy, a dot grid like a workshop floor.
-function pixBackdrop(g,bw,bh,k,ox,floorY){
+// A lamp and a prop in the corner, one colour per development card, so the bay reads at a glance.
+const BAY_LAMP={block:'#ffcc00',head:'#00ccff',air:'#ff8800',flow:'#ff4444',fuel:'#00ff88',cool:'#4488ff',ev:'#ff6600',
+  chassis:'#ffcc00',dims:'#00ccff',gearbox:'#ff8800',tyres:'#00ff88',aero:'#66ddff',brakes:'#ff4444',susp:'#aa88ff',aids:'#ffaa00',cell:'#00ff88',pit:'#ff4444'};
+function pixBackdrop(g,bw,bh,k,ox,floorY,bay){
   g.fillStyle='#0a0a10';g.fillRect(0,0,bw,bh);
   g.fillStyle='#161624';
   for(let y=4;y*k<bh;y+=8)for(let x=4;ox+x*k<bw;x+=8)g.fillRect(ox+x*k,y*k,k,k);
   if(floorY!=null){g.fillStyle='#12121c';g.fillRect(0,floorY*k,bw,bh-floorY*k);
     g.fillStyle='#26263a';g.fillRect(0,floorY*k,bw,k);}
+  if(!bay)return;
+  const card=String(bay).split(':').pop();
+  const lamp=BAY_LAMP[card]||'#ffcc00';
+  g.fillStyle='#2a2a38';g.fillRect(ox+2*k,2*k,14*k,10*k);
+  g.fillStyle=lamp;g.fillRect(ox+4*k,4*k,4*k,4*k);
+  g.fillStyle='#3a3a4a';g.fillRect(ox+2*k,(floorY!=null?floorY-8:70)*k,8*k,6*k);
 }
 
 // The name on the left, the figures on the right; a long name is cut short rather than run into them.
@@ -442,7 +451,8 @@ function paintEngine(cv,e,opts){
   const gh=opts.caption?ENG_GH+12:ENG_GH;
   const F=fitPixCanvas(cv,ENG_GW,gh);if(!F)return false;
   const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,null);
+  pixBackdrop(g,bw,bh,k,ox,null,opts.bay||null);
+  if(cv)cv.dataset.bay=opts.bay||'';
   const buf=new PixBuf(ENG_GW,ENG_GH);
   drawEngineSprite(buf,e,opts.t||0);
   g.drawImage(buf.canvas(),ox,0,ENG_GW*k,ENG_GH*k);
@@ -459,11 +469,25 @@ const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: re
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  const card=(typeof ICD!=='undefined'&&ICD.st&&ICD.st.card)||'block';
+  const pt=e.type==='electric'?'ev':'ice';
+  paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+}
+function paintVehicleBay(){
+  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
+  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
+  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
+  const {g,k,ox,bw,bh}=F;
+  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
+  const buf=new PixBuf(CAR_GW,CAR_GH);
+  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
+  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
+  cv.dataset.bay='car:'+card;
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
+  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -480,6 +504,12 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
+}
+{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
+  if(photo&&bayBtn&&cv){
+    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
+    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
+  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;

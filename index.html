@@ -774,6 +774,14 @@ body.guided-open{overflow:hidden}
 
 /* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
    (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
+.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
+body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
+body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
+body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
+body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
+body[data-group="more"] .mode-room{display:none}
+.vh-view{display:flex;gap:6px;margin:0 0 8px}
+.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
 .viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
 .viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
 .viz-groups button[data-g="more"]{flex:0.72}
@@ -861,7 +869,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 390</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 391</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -886,6 +894,7 @@ body.guided-open{overflow:hidden}
 <button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
 <button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
 </nav>
+<div class="mode-room" id="modeRoom" aria-hidden="true"></div>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
@@ -3660,7 +3669,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
+<div class="vh-view"><button type="button" id="btnVhPhoto" class="on">SHOWROOM</button><button type="button" id="btnVhBay">BAY</button></div>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
+<canvas id="vhBay" class="pix-preview" hidden role="img" aria-label="The car on the workshop lift"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -20820,12 +20831,21 @@ function fitPixCanvas(cv,gw,gh){
   return {g,k,ox:Math.floor((bw-gw*k)/2),oy:0,bw,bh};
 }
 // The backdrop both previews share: the app's navy, a dot grid like a workshop floor.
-function pixBackdrop(g,bw,bh,k,ox,floorY){
+// A lamp and a prop in the corner, one colour per development card, so the bay reads at a glance.
+const BAY_LAMP={block:'#ffcc00',head:'#00ccff',air:'#ff8800',flow:'#ff4444',fuel:'#00ff88',cool:'#4488ff',ev:'#ff6600',
+  chassis:'#ffcc00',dims:'#00ccff',gearbox:'#ff8800',tyres:'#00ff88',aero:'#66ddff',brakes:'#ff4444',susp:'#aa88ff',aids:'#ffaa00',cell:'#00ff88',pit:'#ff4444'};
+function pixBackdrop(g,bw,bh,k,ox,floorY,bay){
   g.fillStyle='#0a0a10';g.fillRect(0,0,bw,bh);
   g.fillStyle='#161624';
   for(let y=4;y*k<bh;y+=8)for(let x=4;ox+x*k<bw;x+=8)g.fillRect(ox+x*k,y*k,k,k);
   if(floorY!=null){g.fillStyle='#12121c';g.fillRect(0,floorY*k,bw,bh-floorY*k);
     g.fillStyle='#26263a';g.fillRect(0,floorY*k,bw,k);}
+  if(!bay)return;
+  const card=String(bay).split(':').pop();
+  const lamp=BAY_LAMP[card]||'#ffcc00';
+  g.fillStyle='#2a2a38';g.fillRect(ox+2*k,2*k,14*k,10*k);
+  g.fillStyle=lamp;g.fillRect(ox+4*k,4*k,4*k,4*k);
+  g.fillStyle='#3a3a4a';g.fillRect(ox+2*k,(floorY!=null?floorY-8:70)*k,8*k,6*k);
 }
 
 // The name on the left, the figures on the right; a long name is cut short rather than run into them.
@@ -21197,7 +21217,8 @@ function paintEngine(cv,e,opts){
   const gh=opts.caption?ENG_GH+12:ENG_GH;
   const F=fitPixCanvas(cv,ENG_GW,gh);if(!F)return false;
   const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,null);
+  pixBackdrop(g,bw,bh,k,ox,null,opts.bay||null);
+  if(cv)cv.dataset.bay=opts.bay||'';
   const buf=new PixBuf(ENG_GW,ENG_GH);
   drawEngineSprite(buf,e,opts.t||0);
   g.drawImage(buf.canvas(),ox,0,ENG_GW*k,ENG_GH*k);
@@ -21214,11 +21235,25 @@ const previewStill=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: re
 function renderEnginePreview(){
   const cv=document.getElementById('enginePreview');if(!cv)return;
   const e=readEngineFromForm();
-  paintEngine(cv,e,{t:previewT,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+  const card=(typeof ICD!=='undefined'&&ICD.st&&ICD.st.card)||'block';
+  const pt=e.type==='electric'?'ev':'ice';
+  paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
+}
+function paintVehicleBay(){
+  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
+  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
+  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
+  const {g,k,ox,bw,bh}=F;
+  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
+  const buf=new PixBuf(CAR_GW,CAR_GH);
+  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
+  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
+  cv.dataset.bay='car:'+card;
 }
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
+  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -21235,6 +21270,12 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
+}
+{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
+  if(photo&&bayBtn&&cv){
+    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
+    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
+  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;
@@ -25414,6 +25455,7 @@ function updateDashLamps(){
 function updateUI(){
   if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
   if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -25491,6 +25533,7 @@ function updateUI(){
     if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
     chips.textContent=bits.join(' · ');
   }
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
