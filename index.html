@@ -815,7 +815,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 366</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 367</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -29509,7 +29509,7 @@ function simulateDriftChallenge(){
     slide1:R.slide1,slide2:R.slide2,pkR:R.pkR
   };
 }
-// ====== SKID PAD (build 366) ======
+// ====== SKID PAD (build 367) ======
 // Steady cornering on a 200 ft (61 m) diameter circle, the pad Motor Trend and Road & Track report their skidpad g on
 // (Car and Driver uses a 300 ft circle). The magazines time laps at the highest speed the car holds on the circle and
 // give g = v²/(g·R) with v = 2πR / lap time; so does this. Physics: stepCar driven by driveDriver round a closed line
@@ -29594,7 +29594,7 @@ function simulateSkidpadChallenge(){
 }
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (366).
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (367).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -29901,7 +29901,7 @@ function drawDriftHud(s){
   ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+60,ys+24);
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
 }
-// Skid pad (build 366): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
+// Skid pad (build 367): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
 function drawSkidpadChallenge(g,R){
   chalHover.map=null;
   g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);

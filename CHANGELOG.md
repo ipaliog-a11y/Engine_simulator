@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Skid pad challenge on the CHALLENGES page (build 366)
+### Skid pad challenge on the CHALLENGES page (build 367)
 
 - New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
   (60.96 m) circle, the pad Motor Trend and Road & Track report skidpad g on (Car and Driver uses 300 ft). The target
@@ -31,6 +31,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Left open: the driver's speed loop is proportional, so it settles just under its target (the lap time decides
   the score); ESC stays at each car's default; the 1 m lane is this game's, not a standard.
 - Fingerprint (lap, 0–100, dyno): identical.
+
+### Regen power against measured EVs, researched (build 366)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test221` prints the comparison and checks the gap stays named.
 
 ### A green baseline: test136 re-locked, test145 passes (build 365)
 
