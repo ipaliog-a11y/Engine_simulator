@@ -328,6 +328,7 @@ function updateDashLamps(){
 function updateUI(){
   if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
   if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -405,6 +406,7 @@ function updateUI(){
     if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
     chips.textContent=bits.join(' · ');
   }
+  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};

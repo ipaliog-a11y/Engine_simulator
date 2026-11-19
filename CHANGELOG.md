@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Each section and each card has its own bay (build 396)
+
+- BUILD shows the workshop, an electric build shows the service bay, TEST shows the garage and DRIVE shows the pit, as a strip under the section bar.
+- The engine preview's corner lamp follows the open card: block, head, air, flow, fuel, cooling, or the high-voltage bay.
+- VEHICLE can show the showroom photo or the car on a lift. The lift's lamp follows the open vehicle card.
+
 ### An ECU laptop on the bench (build 395)
 
 - LIVE and DYNO now carry a tuning laptop. F1 is a rolling scope (rpm, manifold pressure, lambda and knock on an engine; pack voltage, current, winding temperature and charge on an electric drive). FREEZE holds the trace.

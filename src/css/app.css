@@ -762,6 +762,14 @@ body.guided-open{overflow:hidden}
 
 /* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
    (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
+.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
+body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
+body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
+body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
+body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
+body[data-group="more"] .mode-room{display:none}
+.vh-view{display:flex;gap:6px;margin:0 0 8px}
+.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
 .viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
 .viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
 .viz-groups button[data-g="more"]{flex:0.72}
