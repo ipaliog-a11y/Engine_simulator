@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 391)
+
+Step 9 of `plans/small-physics.md`.
+- `simulateBraking` (the 100–0 and 0–200–0) now brakes each axle as the lap has since build 150: braking moves load
+  forward (m a h/L), downforce splits by the aero balance, each axle's tyres grip at their own load, and each axle's
+  brakes give their share (`brakeFrontShare`), fading with their own rotors. With ABS (every preset) each axle is held
+  at the lesser of its grip and its brakes; ABS's EBD stands in for the valve (Bosch Automotive Handbook). Until now
+  the stop pooled four tyres' grip at a quarter of the load each, whatever the brakes' split.
+- Without ABS the stop is where the first axle reaches its grip, through a knee-point proportioning valve
+  (`brakeValveRear`; Limpert, *Brake Design and Safety*; Breuer & Bill, *Brake Technology Handbook*): two chords of the
+  ideal split meeting it at 0.4 g and at R13-H's 0.8 g. The 0.4 g knee is ours (it makes the larger gap least).
+- Every preset's 100–0 is 0 to +4.5% longer (median +2.4%), from the tyres' load sensitivity: the loaded fronts grip
+  less per newton. Front-heavy small cars move most (Fiat 500 TwinAir 39.1 → 40.8 m), the Model Y not at all. The one
+  published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
+- Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
+- Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
 ### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
 
 - The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of

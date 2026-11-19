@@ -217,23 +217,51 @@ function buildVehicle(){
   if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
-// Braking run from v0 (m/s) to a stop: decel is the lesser of tyre grip (μ·(weight+downforce))
-// and what the brakes can command (capacity, fading as they absorb heat), with aero drag also
-// helping to slow the car. Returns stopping distance (m) and time (s).
+// Braking run from v0 (m/s) to a stop. Returns stopping distance (m) and time (s).
+// Build 391 (small-physics 9): per axle, as the lap brakes since build 150. Braking moves load forward (m a h/L) and the
+// downforce splits by the aero balance, so each axle's tyres grip at their own load; each axle's brakes give it their
+// share (brakeFrontShare), fading with its own rotors. With ABS, which also does the job of the proportioning valve
+// (EBD: Bosch Automotive Handbook, "electronic brake-force distribution" replaces the mechanical valve), each axle is
+// held at the lesser of its grip and its brakes, and the car stops with the sum. Without ABS the driver brakes to the
+// point where the first axle reaches its grip, through the road car's knee-point proportioning valve (brakeValveRear).
+// Until this build the stop pooled the four tyres' grip at a quarter of the load each, whatever the split.
 function simulateBraking(v0,T0){
-  const m=vehicle.mass,dt=0.005,th=vehicle.brakeTh;let v=v0,x=0,t=0;
+  const m=vehicle.mass,dt=0.005,th=vehicle.brakeTh;let v=v0,x=0,t=0,aL=0.8*G;
   const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
+  const fH=vehicle.brakeFrontShare||0.7,hL=(vehicle.cg||0.5)/Math.max(0.5,vehicle.wb||2.6),fWt=vehicle.fWt||0.55;
+  const aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,abs=!(vehicle.aids&&vehicle.aids.abs===false);
+  const valve=abs?null:brakeValveRear(fWt,hL);
+  // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
+  const grip=(a,dn)=>{const Nf=m*G*fWt+dn*aeroF+m*a*hL,Nr=m*G+dn-Nf;
+    return [tyreMuX(Math.max(1,Nf)/2,vehicle.FzRefF)*Math.max(0,Nf),tyreMuX(Math.max(1,Nr)/2)*Math.max(0,Nr)];};
   while(v>0.15&&t<25){
-    const down=0.5*AIR_RHO*vehicle.clA*v*v;
-    const gripDecel=tyreMuX((m*G+down)/4)*(m*G+down)/m;             // tyre-limited, at the load on each tyre
-    const brakeDecel=vehicle.brakeDecelCap*brakeFadeAt(st.F,th);   // brake-limited, at the rotor's temperature
-    // mechanical (tyre/brake) decel, rising to it over the pressure build-up time
-    const mech=Math.min(gripDecel,brakeDecel)*Math.min(1,t/BRAKE_RISE_S);
+    const dn=0.5*AIR_RHO*vehicle.clA*v*v;
+    const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
+    let fF,fR;
+    if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.min(g[0],cF);fR=Math.min(g[1],cR);aL=(fF+fR)/m;}}
+    else{   // the most front force (m/s2) at which neither axle is past its grip: a bisection, as locking is monotonic
+      const ok=xf=>{const xr=Math.min(valve(xf),cR/m),g=grip(xf+xr,dn);return xf*m<=g[0]+1e-6&&xr*m<=g[1]+1e-6;};
+      let lo=0,hi=cF/m;if(ok(hi))lo=hi;else for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
+      fF=lo*m;fR=Math.min(valve(lo),cR/m)*m;aL=(fF+fR)/m;}
+    const rise=Math.min(1,t/BRAKE_RISE_S),mech=aL*rise;   // rising to it over the pressure build-up time
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
-    brakeHeatStep(st,th,mech,v,dt);                               // the work, into the rotors
+    brakeHeatStep(st,th,mech,v,dt,undefined,aL>0?fF/(fF+fR):undefined);   // the work, into each axle's rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
   }
   return {dist:x,time:t,tF:st.F,tR:st.R};
+}
+// A road car's knee-point proportioning valve: the rear brake (m/s2) at a front brake xf (m/s2). Limpert (Brake Design and
+// Safety, 3rd ed., SAE 2011, ch. 7) and Breuer & Bill (Brake Technology Handbook, SAE 2008, ch. on brake-force
+// distribution): above its knee pressure the valve lets the rear line rise more slowly than the front, so the installed
+// distribution is two straight lines that stay under the ideal (both axles at their grip) and meet it where the rule
+// wants: UN ECE R13-H has the front lock first up to 0.8 g (R13H_Z), as brakeForceCap sizes the rear. Here both lines are
+// chords of the ideal curve, (0, knee) and (knee, 0.8 g). The ideal is a parabola in z (front fWt z + h/L z^2), and a
+// chord's gap to a parabola grows with the square of its span, so the knee that makes the larger gap least sits halfway,
+// at 0.4 g (ours, from that minimax: no maker's knee is cited). Past 0.8 g the second line carries on; it never falls.
+function brakeValveRear(fWt,hL){
+  const X=z=>z*(fWt+z*hL)*G,Y=z=>z*(1-fWt-z*hL)*G,zk=R13H_Z/2;
+  const xk=X(zk),yk=Y(zk),s=Math.max(0,(Y(R13H_Z)-yk)/Math.max(1e-6,X(R13H_Z)-xk));
+  return xf=>xf<=xk?yk*xf/xk:yk+s*(xf-xk);
 }
 // A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
 // independent of the live driving state. Every live variable that feeds torque — mixture,
