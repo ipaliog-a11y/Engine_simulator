@@ -828,7 +828,7 @@ function packBuild(s){
 // resistance, and the 18650s are of the 2000 era; it is used for every graphite-anode lithium chemistry here.
 // Lead-acid and NiMH have no cited energy here, so they stay at 25 °C. The 50 °C power cut (packDerate) is the cells'
 // own limit and is not this curve. Since build 346 the lap, the race and the WLTP cycle read it at their pack's temperature
-// (packDraw's tC); the bench and the lap's torque curve still read 25 °C.
+// (packDraw's tC); since build 368 the lap's torque (evPackGain) and the race's energy price too. The bench reads 25 °C.
 const PACK_T_REF=25, R_GAS=8.314462618;
 const R_CT_SHARE=(10-1)/(Math.exp(68000/R_GAS*(1/(273.15-20)-1/(273.15+PACK_T_REF)))-1);   // ≈ 0.07, from the tenfold rise to −20 °C
 function packR(b,tC){

@@ -18,6 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The lap's torque and the race's energy price at the pack's own temperature (build 368)
+
+Step 10 of `plans/small-physics.md`, build 346's follow-up.
+- **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
+  pack's power at its temperature over 25 °C (`evPackGain`). Warmer cells have less resistance, so where the pack's
+  power is the limit the drive gives a little more: a Model Y up to +1.4% at 45 °C.
+- **The race:** the pace grid keeps the cells' heat (at 25 °C, half charge) apart in its price; each step the race
+  swaps it for the heat at the pack's own temperature and charge. 150 kW from a Model Y at 45 °C: 0.4% less energy.
+- Fingerprint against `main`: only the three Teslas' lap times move, by −0.003 to +0.001% (Model Y 77.859 → 77.857 s).
+  No top speed, ICE car or hybrid moves. `test222` (new) checks it.
+- Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
+  and the motor bench stay at 25 °C.
+
 ### A rain tyre's own wet grip (build 367)
 
 - A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
