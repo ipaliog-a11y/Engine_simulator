@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 387
+# PIXEL POWERTRAIN v0.8 build 388
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -187,7 +187,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   performance), **PARTS** (design a part and fit it), **GARAGE** (the saved builds), **TRACK** (lap it round a circuit), **RACE** (race
   it against other builds), **CHAMP** (seasons by class with points and standings), **CHALLENGES**, **LIVE** (the engine running: cutaway, the
   whole bank firing in its real order, and the controls), **DYNO** (power/torque curve,
-  scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
+  scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 72 pages in 10 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
   TRACK and the race's setup, timing tower and telemetry on RACE.
@@ -384,11 +384,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   pixels and smeared. The backing store is now sized to real device pixels and the context scaled,
   so the drawing code keeps its 640×420 coordinates and the output is pixel-exact — which fixes
   **DYNO** and **TRACK** at the same time.
-- **In-app GUIDE, a wiki** — kept in-app so the offline PWA stays self-contained. 60 pages in 9
+- **In-app GUIDE, a wiki** — kept in-app so the offline PWA stays self-contained. 72 pages in 10
   sections, from *How an engine works* to *The track*, and every one climbs three levels: **LV1 ·
   REAL LIFE** (how the part works on a real car, with an 8-bit picture and no maths), **LV2 · IN THE
   GAME** (the controls and what to watch) and **LV3 · THE PHYSICS** (the equations the sim actually
-  solves, their sources, and an orange note where something is still fitted). The 62 pictures are
+  solves, their sources, and an orange note where something is still fitted). The 74 pictures are
   drawn in code on the app's pixel grid, so they are crisp at any size, cost nothing offline and
   move where moving teaches something (a piston, a pulse in a header, a turbo spooling, a wastegate
   opening); they hold still for reduced motion. A search box filters the index, pages link to each
@@ -517,7 +517,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   between visits. The whole interface localises: tabs, labels, every dropdown, the design and
   vehicle summaries, the status bar, tooltips and screen-reader labels, and the challenge card
   (units, the names of real cars and circuits, and the terms Greek enthusiasts use in English, such as
-  BOOST, ECU and LSD, stay as they are). The in-app GUIDE is translated in full, all 60 pages; the
+  BOOST, ECU and LSD, stay as they are). The in-app GUIDE was translated in full while Greek was kept up; text added since it was paused shows in English. The
   labels drawn inside its pictures and the PNG/PDF reports are still English.
 - **Responsive** — a fluid layout that fills the screen in **portrait** (phones & tablets held
   upright) as well as landscape, scaling type and controls up so nothing sits in a narrow strip.

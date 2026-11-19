@@ -73,6 +73,9 @@ A car company is split into departments that hand the same project along: <b>pow
 <b>RACE</b> — two to eight cars on one circuit, run to a lap count, with tyres that heat and wear, fuel that burns off, pit stops and traffic. Nobody drives; you set it up and watch. See <a data-gp="race">The race</a>.
 <br><b>CHAMP</b> — seasons of those races: classes, calendars, points and standings. See <a data-gp="champ">Championship</a>.
 </div>
+<div class="guide-body" data-gk="tabsMore3">
+<b>CHALLENGES</b> — the car on its own on a road or a test: economy runs, fixed-time stages, the moose test, the S-route powerslide and the skid pad, and RANK CARS to compare several on one. See <a data-gp="challenges">Challenges</a>.
+</div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="tabsPhys">
@@ -83,6 +86,9 @@ Each tab runs a different solver over the same engine, which is why they always 
 <br>· <b>VEHICLE</b> integrates a standing start through the gearbox, and a stop (<i>simulateAccel</i>, <i>simulateBraking</i>).
 <br>· <b>TRACK</b> solves a lap: a racing line, then a speed at every metre of it (<i>simulateLap</i>).
 <br>· <b>RACE</b> solves each car's lap at several levels of grip and fuel, then runs them all together on a 50 ms clock (<i>simulateRace</i>).
+</div>
+<div class="guide-body" data-gk="tabsPhys2">
+· <b>CHAMP</b> calls the race once per round. <b>CHALLENGES</b> solves its economy runs and stages as the lap is solved, on an open road; the moose test, the powerslide, the skid pad and the driver-aid tests step the whole car in time, wheel by wheel, with a driver (<i>stepCar</i>).
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="welcome">How the app works</a> · <a data-gp="driving">Driving controls</a> · <a data-gp="lapsolve">Solving a lap</a></div>
@@ -622,7 +628,7 @@ and the cycle's efficiency is that, weighted by the burn rate. Whatever is not t
 </div>
 <div class="guide-see">See also: <a data-gp="ignition">Ignition &amp; spark timing</a> · <a data-gp="knock">Compression &amp; knock</a> · <a data-gp="heat">Heat, cooling &amp; EGT</a> · <a data-gp="types">Engine types</a></div>
 </section>
-<section class="guide-page" id="gp-heat" data-cat="engine" data-title="Heat, cooling &amp; EGT" data-tags="cooling radiator fan thermostat oil cooler egt exhaust temperature woschni energy balance" hidden>
+<section class="guide-page" id="gp-heat" data-cat="engine" data-title="Heat, cooling &amp; EGT" data-tags="cooling radiator fan thermostat oil cooler egt exhaust temperature woschni energy balance rich enrichment turbine inlet 950" hidden>
 <h4 class="guide-title">Heat, cooling &amp; EGT</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="energysplit"></canvas><div class="gart-cap">Where the fuel's energy goes at full load: roughly a third becomes work.</div>
@@ -646,6 +652,9 @@ For poppet-valve engines the exhaust's share is an energy balance, closed:
 <span class="geq">Q<sub>exhaust</sub> = Q<sub>fuel</sub> − W<sub>gross</sub> − Q<sub>walls</sub> − Q<sub>port</sub></span>
 The wall heat comes from <b>Woschni's</b> correlation integrated over a traced cycle, <i>h ∝ B<sup>−0.2</sup> p<sup>0.8</sup> T<sup>−0.55</sup> w<sup>0.8</sup></i>, with the gas velocity <i>w</i> from piston speed plus a combustion term and the walls at 450 K. The exhaust port's share uses Caton &amp; Heywood's measured <i>Nu = 0.0483 Re<sup>0.783</sup></i>. A joule lost to the wall early in expansion would have done work; one lost late would only have gone out of the exhaust, and the model splits it that way, so energy is conserved by construction.<br>
 EGT is shown two ways in the model: the mass-averaged temperature the turbine works on, and what a thermocouple in the pipe would read (closer to the time average, a little cooler, because the hottest gas passes quickest).
+</div>
+<div class="guide-body" data-gk="heatRich">
+<b>Rich runs cooler.</b> The gas heated is the air and all the fuel supplied, but no more fuel burns than at stoichiometric, and the excess takes its heat of evaporation out of the gas (Heywood, App. D: petrol 350 kJ/kg, E85 ~756, methanol 1103; probable). On a 993 Turbo at 80% of the redline, λ 1 → 0.78 takes the port from 1211 to 1164 °C. The <b>turbine inlet</b> is cooler again: the port's gas runs 0.30 m of pipe to a ~700 °C manifold wall (Caton &amp; Heywood's correlation carried on), 80–110 K below the port at full load. A turbo petrol ECU in AUTO holds the turbine inlet at <b>950 °C</b> by enriching, down to λ 0.78. Open: it does not cut boost, so about 15 hot turbo presets stay over 950 °C there.
 </div>
 <div class="guide-limit" data-gk="heatLimit">
 Limit: the coolant and oil temperatures come from a lumped model, not from heat flows through the block: a heat load (the fuel burned, against the fuel the engine burns at the power its radiator was sized for at 29% brake efficiency) against a cooling capacity, with first-order lags. A factory radiator is sized to hold the coolant at 112 °C at rated power in 49 °C air, and the oil 9 °C above it (its 121 °C continuous limit); the rpm-based airflow and the oil cooler's effect are still fitted.
@@ -1687,7 +1696,7 @@ then biased by the GEARING slider and held to 2.2–6.0:1. The upshift rule is t
 </div>
 <div class="guide-see">See also: <a data-gp="gearbox">Gearboxes</a> · <a data-gp="torquepower">Torque vs power</a> · <a data-gp="aero">Aero: drag &amp; downforce</a></div>
 </section>
-<section class="guide-page" id="gp-traction" data-cat="car" data-title="Differential &amp; traction" data-tags="differential diff lsd limited slip spool open diff traction fwd awd launch weight transfer" hidden>
+<section class="guide-page" id="gp-traction" data-cat="car" data-title="Differential &amp; traction" data-tags="differential diff lsd limited slip spool open diff traction fwd awd launch weight transfer driver aids abs traction control tc esp esc stability control yaw rate" hidden>
 <h4 class="guide-title">Differential &amp; traction</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="diff"></canvas><div class="gart-cap">An open diff sends the same torque to both wheels, so the one on ice decides how much that is.</div>
@@ -1721,6 +1730,9 @@ barely moves when you change diff, the engine is the limit, not grip.
 <div class="guide-body" data-gk="tractionMore2">
 <b>The trade on a lap.</b> A locked diff never wastes drive but scrubs in every corner. On the 6.2 supercharged V8 in the muscle chassis, a spool is about 0.1 s quicker to 100 km/h than a clutch LSD (4.85 against 4.97 s) and about 1.5 s slower per lap (75.74 against 74.24 s), while an open diff is worst at both (5.96 s, 77.35 s): it spins the inside wheel just when cornering has unloaded it.
 </div>
+<div class="guide-body" data-gk="aids">
+<b>ECU: DRIVER AIDS</b> on the VEHICLE tab are the car's calibration, yours to change: <b>ABS</b> and the slip it releases a wheel at, front and rear (× the tyre's peak slip); <b>TRACTION CONTROL</b> and its slip target; <b>STABILITY CONTROL (ESP)</b>, how far the tail may slide before it acts, and whether it also cuts the engine. The card runs three tests of the stepped car: the sine with dwell (FMVSS 126's final run, 270° of hand wheel, against the same car with ESP off), a stop from 100 km/h and a standing start. The lap and the 0–100 do not read these settings yet; the powerslide turns ESP and TC off.
+</div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="tractionPhys">
@@ -1728,8 +1740,11 @@ The two wheels of an axle are never loaded alike (camber, torque reaction, wind-
 <span class="geq">F<sub>drive</sub> ≤ μ<sub>x</sub> · N<sub>driven</sub> · k<sub>diff</sub>, &nbsp; ΔN<sub>rear</sub> = m · a · h / L</span>
 with the drive layout fixing which axle's load counts.
 </div>
+<div class="guide-body" data-gk="aidsPhys">
+<b>The aids (Bosch Automotive Handbook; van Zanten, SAE 950759 and 2000-01-1633).</b> <b>ABS</b> eases a wheel's brake pressure while it slips past the tyre's peak and reapplies it below, cycling about the top of the friction curve. <b>TC</b> closes the throttle while the worst driven wheel slips past its target. <b>ESP</b> compares the yaw rate with the car's own steady single-track turn, <i>v δ / (L (1 + K v²))</i>, never more than the grip allows, <i>μ g / v</i>, lagged as the car itself would follow it (Abe, ch. 3). Turning too fast while the rear tyres are past their peak, it brakes the outer front wheel; too slow while the fronts are past theirs, the inner rear. An electric car's regen is cut while it works. Its band, time constant and lowest speed are probable: no maker publishes them. No preset says whether a car has ABS or ESP: ABS is taken as fitted, and ESP wherever traction control is.
 </div>
-<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="gearbox">Gearboxes</a> · <a data-gp="performance">Performance tests</a></div>
+</div>
+<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="gearbox">Gearboxes</a> · <a data-gp="performance">Performance tests</a> · <a data-gp="brakes">Brakes &amp; fade</a></div>
 </section>
 <section class="guide-page" id="gp-aero" data-cat="car" data-title="Aero: drag &amp; downforce" data-tags="aerodynamics drag downforce wing splitter diffuser cd cda top speed" hidden>
 <h4 class="guide-title">Aero: drag &amp; downforce</h4>
@@ -1782,7 +1797,7 @@ Choose the <b>brake</b> type on the VEHICLE tab. It sets the pads, calipers, rot
 The lap is driven flat out, braking at the limit into every corner, as a professional would on a qualifying lap. Light cars and small brakes come out where real ones are measured on track (300–550 °C on a short circuit, up to ~650 °C on a fast one); heavy, fast cars on long fast circuits (a Hellcat or an E46 M3 at Spa) run their rotors to 750–900 °C and fade, as real ones do when driven that hard. Track-day measurements usually read lower, 450–600 °C in the core, because most drivers brake earlier and softer than the limit. The <b>rear brakes</b> stay much cooler than the fronts on most cars. The lap's driver uses every bit of both axles' grip, braking into each corner while already cornering at the limit, and there the rear tyres have nothing left for braking: ABS releases them and the fronts do it all. Real cars are measured with rears from about as hot as the fronts (a 911, a Viper) to almost cold (a Clio Cup car), because real drivers brake mostly in a straight line and turn in with some grip to spare. The lap's line is quicker than that straight-braking one in the model, by 1–2 s on a test oval.</div>
 <div class="guide-see">See also: <a data-gp="performance">Performance tests</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="tyres">Tyres &amp; grip</a></div>
 </section>
-<section class="guide-page" id="gp-suspension" data-cat="car" data-title="Suspension, roll &amp; camber" data-tags="suspension roll camber coilovers springs anti-roll bar ride frequency stiffness geometry strut wishbone multi-link twist beam solid axle roll centre track" hidden>
+<section class="guide-page" id="gp-suspension" data-cat="car" data-title="Suspension, roll &amp; camber" data-tags="suspension roll camber coilovers springs anti-roll bar ride frequency stiffness geometry strut wishbone multi-link twist beam solid axle roll centre track anti-dive anti-squat bump stop droop rebound toe steering scrub radius power steering" hidden>
 <h4 class="guide-title">Suspension, roll &amp; camber</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="roll"></canvas><div class="gart-cap">In a corner the body leans out, and the loaded outside tyre leans with it.</div>
@@ -1842,6 +1857,16 @@ Ways to move the balance:
 <li><b>Braking</b> moves load to the front, so on the brakes into a corner the rear runs out first. The lap brakes no harder there than the rear can hold the corner.</li>
 </ul>
 TRACK shows which axle sets the limit through the corners.
+</div>
+<div class="guide-body" data-gk="suspStep">
+<b>In the stepped car</b> (the moose test, the powerslide, the skid pad and the driver-aid tests; the lap and the 0–100 do not use it yet) each wheel moves on its own, and its suspension has more to it (Reimpell, <i>The Automotive Chassis</i>; Milliken, <i>RCVD</i> ch. 17; every figure by type is probable):
+<ul>
+<li><b>Travel ends.</b> Up to a progressive bump rubber and down to full droop, by type (strut 70/80 mm, wishbone and multi-link 80/90, twist beam 85/95, solid axle 100/110); a lifted wheel hangs from the body. Rebound is damped 3× bound, their mean the kit's damper.</li>
+<li><b>Anti-dive and anti-squat.</b> Each tyre's longitudinal force reaches the body through its side-view swing arm, so the links carry part of the pitch: braking at ~0.45 g an M3 E46 pitches 0.90° instead of 1.22° (27% anti-dive). A front-driven strut car pitches more under power (pro-lift from its half-shafts).</li>
+<li><b>Camber and toe follow each wheel's travel</b>, not only the roll: 20 mm of bump gives a strut −0.38°, a wishbone −0.72°; front toe goes out in bump. A solid axle or twist beam keeps both wheels parallel.</li>
+<li><b>Steering.</b> The column load includes each front tyre's longitudinal force on the scrub radius (10 mm unless a preset gives one) and goes through a power-assist curve with a little friction, to the torque at the hand wheel (nothing reads it yet).</li>
+</ul>
+Open: grip by camber is in the lap but not yet in the stepped car (it took the test driver off the line), and the weight's own roll moment as the body leans is left out of both.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="dampers">Dampers &amp; the road</a> · <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a></div>
@@ -2220,7 +2245,7 @@ Each round calls <i>simulateRace</i> with the season's seed offset by the round 
 </div>
 <div class="guide-see">See also: <a data-gp="race">The race</a> · <a data-gp="challenges">Challenges</a></div>
 </section>
-<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
+<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g powerslide drift handbrake rank cars" hidden>
 <h4 class="guide-title">Challenges</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Three ways to test a whole car on a road: how little it burns at a set pace, whether it beats a set time, and how fast it can swerve round a moose.</div>
@@ -2247,7 +2272,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
+The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. An EV's regen is capped by its maker's rule, checked against measured cars (see <a data-gp="evdrive">The electric drive</a>); a garage-built EV takes the default. Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -2366,7 +2391,7 @@ Engine cost is built up from parts: about $900 per cylinder plus $350 per litre 
 </div>
 <div class="guide-see">See also: <a data-gp="scorecard">The scorecard</a> · <a data-gp="wear">Wear &amp; reliability</a></div>
 </section>
-<section class="guide-page" id="gp-sound" data-cat="more" data-title="Options, sound &amp; tips" data-tags="options sound audio engine sound wear language tips" hidden>
+<section class="guide-page" id="gp-sound" data-cat="more" data-title="Options, sound &amp; tips" data-tags="options sound audio engine sound wear language tips tyre screech squeal" hidden>
 <h4 class="guide-title">Options, sound &amp; tips</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
 <canvas class="gart" data-art="speaker"></canvas><div class="gart-cap">An engine's sound is its firing pulses, shaped by the pipes they run down.</div>
@@ -2392,6 +2417,9 @@ Sound is synthesised from the same model, in an AudioWorklet running its own cra
 <br>· a turbo whines at its blade-pass frequency from the live shaft speed, a blower from the crank through its drive;
 <br>· the intake roars at the runner's Helmholtz frequency;
 <br>· knock rings the chamber at <i>f = 1.84 c / (π B)</i>, about 6 kHz, through the block.
+</div>
+<div class="guide-body" data-gk="soundScreech">
+<b>Tyre screech</b> plays on the powerslide, moose and lap replays (with SOUND ON): noise through two band-passes near 1 and 2 kHz (the ~1 kHz squeal band is a probable figure), louder with the sliding speed <i>v·sin α</i>. On the powerslide and the moose run it sounds while either axle is past its tyre's peak slip angle, <i>atan(3μ/C)</i>. The lap solver has no yaw state, so on a lap it marks where the tyres are at their limit (corners, traction, full braking), not a slide.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="firing">Crank &amp; firing order</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="knock">Compression &amp; knock</a></div>

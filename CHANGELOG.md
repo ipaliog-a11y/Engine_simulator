@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The guide catches up with builds 362–384 (build 388)
+
+Text only; no physics moves.
+- **Driver aids** (`gp-traction`, which the ECU: DRIVER AIDS card links to, had no word on them since build 282): ABS,
+  TC and ESP settings and their three tests, and the physics, including the yaw-rate judgement of build 380.
+- **Stepped car's suspension** (`gp-suspension`): travel ends and rebound damping (364), anti-dive/squat (369), camber
+  and toe by travel (374), steering assist and scrub radius (376), and the camber gap left open (381).
+- **Rich mixtures cool the exhaust** and the 950 °C turbine-inlet enrichment (384) on `gp-heat`; **tyre screech**
+  (362, 371) on `gp-sound`; **CHALLENGES** and the stepped car on `gp-tabs`.
+- `gp-challenges` no longer says regen is unchecked against measured EVs (fixed by build 378).
+- README: the guide is 72 pages in 10 sections with 74 pictures (it said 60, 9 and 62), and new guide text is English.
+- Left open: Greek for the new blocks (paused; they fall back to English). No guide page yet for the stepped car as a
+  whole; its pieces sit on the pages above.
+
 ### Championship seasons on top of RACE (build 387)
 
 Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
