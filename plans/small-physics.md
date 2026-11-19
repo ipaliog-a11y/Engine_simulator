@@ -14,6 +14,8 @@ reporting its range. Sourcing is batched apart from physics.
   open, or fix it.
 - `test145` (engine wear and coolant at full load; ~6 min) was reported failing on `main` at build ~320. Rerun it, then
   treat it the same way.
+  *Build 365:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
+  test145 passes on `main` (fixed by builds 336-337). Nothing left open here.
 - Not physics, noted only: `test42` (3 untranslated starter messages, Greek paused), `test64` (the track map never
   draws the car sprite), `test125` (folded LIVE OUTPUT at 21%, not a third).
 
@@ -26,8 +28,8 @@ reporting its range. Sourcing is batched apart from physics.
    Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
-   *Build 365:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
-   wheel centre; jacking; `test221`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
+   *Build 367:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
+   wheel centre; jacking; `test222`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
    brakes on presets, arms by the kit.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
    moment as the body leans. Both the ESP's understeer reference and its roll-steer share then read the full roll.
@@ -65,6 +67,9 @@ reporting its range. Sourcing is batched apart from physics.
 12. **Regen power against measured EVs.** A research build: published regen kW limits (Tesla, E-GMP, MEB), the
     coast-down and one-pedal measurements (SAE 2023-01-0623), and the friction brakes blending in at low speed.
     `evRegenTable` changes only if it misses.
+    *Build 366:* researched (`plans/vehicle-challenges.md`); the table is 1.2–1.7× the measured regen kW and ~3× the
+    measured slowing at low speed, set by makers' calibration, not physics. Code unchanged; the fix (a sourced rule per
+    maker, moving every EV) waits on the owner.
 
 ## 6. Engine details
 

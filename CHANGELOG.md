@@ -18,15 +18,37 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Anti-dive and anti-squat in the stepped car (build 365)
+### Anti-dive and anti-squat in the stepped car (build 367)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
 
 - **The links carry part of the pitch.** Each tyre's longitudinal force reaches the body through its side-view swing arm with a vertical part (Fx e − T)/d, T the torque reacting on the body (drive through half-shafts, inboard brakes; a live axle's drive and outboard brakes react on the upright). The springs carry the transfer less that, and the front and rear parts together heave the body (jacking). Milliken & Milliken, *RCVD*, ch. 17.
 - **Arms by type** (`SUSP_GEO` `svF`/`svR`, instant centre height and length; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 3): strut 0.15/3.0 m front, wishbone and multi-link 0.20/2.5; rear strut 0.40/2.5, wishbone 0.45/2.5, multi-link 0.50/2.0, solid 0.35/2.5, twist beam its pivot 0.32/0.55. Brakes outboard unless a car sets `inboardF`/`inboardR` (none does).
-- **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test221`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
+- **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test222`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
 - **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
 
+### Regen power against measured EVs, researched (build 366)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test221` prints the comparison and checks the gap stays named.
+
+### A green baseline: test136 re-locked, test145 passes (build 365)
+
+Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
+
+- **test136** (the Teslas' locked motor figures) was failing since build 314. Run at each build, the moves come from
+  three merged builds, each intended and each in its own entry: 314 (Model 3 stator 226 → 225 mm, MotorXP) moved the
+  torque, knee, motor mass and peak hold (Model 3 424 → 426 Nm, 6627 → 6604 rpm, 55.18 → 54.66 kg, 37 → 29 s);
+  315 (jacket cooling) the continuous power (Model 3 259 → 282 kW, Model Y 316 → 336, Plaid 708 → 750); 354
+  (premium touring tyres) the Model 3's 0-100 (6.18 → 5.90 s). Re-locked to today's values, with the builds named
+  in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
+- **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
+- Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
 ### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
 
 Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.

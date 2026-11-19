@@ -40,6 +40,12 @@
 // turns to the d-axis: the hybrids' motors' peaks 86 → 114 kW (Ioniq), 53 → 70 (Prius), 143 → 195 (Qashqai), 80 → 108
 // (330e) against their published 32, 53, 140 and 80 (a named gap in the CHANGELOG; the pack caps them in the car).
 // The tail motor's knee 3422 → 1784 rpm.
+// Build 364 re-locked the Teslas to what three merged builds moved on purpose (found by running this test at each):
+// build 314 (STATOR DIAMETER a part; Model 3 226 → 225 mm, MotorXP, shared by the Y and Plaid) Model 3 424 → 426 Nm,
+// knee 6627 → 6604, motor 55.18 → 54.66 kg, hold 37 → 29 s; Model Y 549 → 550 Nm, knee 7140 → 7106, hold 95 → 82 s;
+// Plaid 1519 → 1524 Nm, 794 → 793 kW. Build 315 (jacket cooling from Gnielinski) the continuous power, Model 3
+// 253 → 282, Model Y 336, Plaid 750 kW, and the Model Y's hold 82 → 102 s (Plaid's 12 → 10 s over the two). Build 354 (premium touring tyres) the Model 3's 0-100 6.18 → 5.90 s.
+// The Wh/km drifted inside the lock's tolerance (Model 3 117.56 → 117.59) and is kept.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -56,25 +62,25 @@ const fails = [];
 // Locked at build 224. See plans/hybrid-electric/drivetrain.md for which stage may change which block.
 const CARS = {
   'Model 3': {
-    peakKW: 204, peakTQ: 424, knee: 6627, contKW: 259, holdS: 37, best: 0.9765, kWkg: 3.7, redline: 18000,
-    motors: 1, massM: 55.18, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
+    peakKW: 204, peakTQ: 426, knee: 6604, contKW: 282, holdS: 29, best: 0.9765, kWkg: 3.7, redline: 18000,
+    motors: 1, massM: 54.66, massP: 440.12, R: 0.066236, Vnom: 340.84, p50: 209737, p10: 202273,
     whkm: 117.56, wall: 138.31, regen: 49.59, range: 459.3, fd: 9.03, drive: 'rwd',
-    t100: 6.18, t60: 5.92, top: 225, cg: 0.52,
-    pts: { 1000: 424.09, 6627: 291.59, 13254: 145.44, 18000: 105.79 }
+    t100: 5.90, t60: 5.645, top: 225, cg: 0.52,
+    pts: { 1000: 425.61, 6604: 292.40, 13208: 145.86, 18000: 105.71 }
   },
   'Model Y': {
-    peakKW: 360, peakTQ: 549, knee: 7140, contKW: 316, holdS: 95, best: 0.9745, kWkg: 3.7, redline: 18000,
-    motors: 2, massM: 98.3, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
+    peakKW: 360, peakTQ: 550, knee: 7106, contKW: 336, holdS: 102, best: 0.9745, kWkg: 3.7, redline: 18000,
+    motors: 2, massM: 97.56, massP: 424.84, R: 0.05256, Vnom: 352.93, p50: 377316, p10: 294578,
     whkm: 139.63, wall: 164.27, regen: 56.39, range: 502.8, fd: 9.03, drive: 'awd',
-    t100: 4.48, t60: 4.31, top: 217, cg: 0.66,
-    pts: { 1000: 548.77, 7140: 476.04, 14280: 239.73, 18000: 189.18 }
+    t100: 4.47, t60: 4.30, top: 217, cg: 0.66,
+    pts: { 1000: 550.29, 7106: 478.00, 14212: 240.74, 18000: 189.05 }
   },
   Plaid: {
-    peakKW: 794, peakTQ: 1519, knee: 5591, contKW: 708, holdS: 12, best: 0.978, kWkg: 4.8, redline: 20000,
-    motors: 3, massM: 165.38, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
+    peakKW: 793, peakTQ: 1524, knee: 5591, contKW: 750, holdS: 10, best: 0.978, kWkg: 4.8, redline: 20000,
+    motors: 3, massM: 163.82, massP: 625.78, R: 0.029359, Vnom: 404.4, p50: 824184, p10: 692384,
     whkm: 160.22, wall: 188.49, regen: 59.59, range: 561.7, fd: 7.56, drive: 'awd',
     t100: 2.525, t60: 2.435, top: 322, cg: 0.52,
-    pts: { 1000: 1518.53, 5591: 1327.24, 11182: 668.35, 20000: 352.48 }
+    pts: { 1000: 1523.72, 5591: 1325.94, 11182: 667.49, 20000: 351.65 }
   }
 };
 const HYB = {
