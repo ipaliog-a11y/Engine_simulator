@@ -149,11 +149,13 @@ function stepHybridBench(dt){
   // MG1 (power-split): the engine's speed and its reaction
   let P1=0;
   if(ps){
-    if(run){state.rpm+=(H.neT-state.rpm)*(1-Math.exp(-dt/B.neTau));state.rpm=clamp(state.rpm,e.idleRpmEff,e.redline);}
+    if(run){state.rpm+=(H.neT-state.rpm)*(1-Math.exp(-dt/B.neTau));state.rpm=clamp(state.rpm,e.idleRpmEff,e.redline);H.Tspin=0;}
     else hybSpin(H,dt);
     H.ne=state.rpm;const G=hybGear(hy,H.ne,H.n);H.ns=G.ns;
-    const Ts=run?H.Te*G.ks:0;H.T1=Ts;
-    P1=H.engOn&&Ts!==0?psMg1Elec(hy,Ts,H.ns,{w:tc+20,c:tc+15,r:60}):0;
+    // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
+    // at the step's mean speed: the pack pays for the start and takes the stop back (build 391)
+    const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
+    P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
   // takes, with the 12 V load and MG1's power on the same bus
@@ -161,8 +163,14 @@ function stepHybridBench(dt){
   let Tm=H.TmWant==null?hybMotorFor(hy,H.n,P1-B.auxW,temp):H.TmWant;
   Tm=Math.min(Tm,hybMotorFor(hy,H.n,H.soc>0.02?PinMax:P1-B.auxW,temp));
   Tm=Math.max(Tm,hybMotorFor(hy,H.n,H.soc<0.98?PinMin:P1-B.auxW,temp)*(H.n>5?1:0));
-  const V=hybBusV(hy),L=motorLosses(m,Math.abs(Tm),Math.max(H.n,1),V,temp);
-  const Pm=Tm*w0+(Tm!==0||H.n>0?L.total:0);
+  const V=hybBusV(hy);
+  // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
+  // crank torque), so the shaft feels none of it; a P2's motor cranks through its slipping clutch what it is not giving the
+  // shaft, paid at the faster side's speed (build 391)
+  const Tcancel=ps&&!run?(H.Tspin||0)*hybGear(hy,H.ne,H.n).kr:0;Tm+=Tcancel;
+  H.Tc2=!ps&&!run&&H.engOn?Math.max(0,motorMaxTorque(m,Math.max(H.n,1),V,60)-Math.abs(Tm)):0;
+  const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
+  const Pm=Tm*w0+H.Tc2*Math.max(w0,state.rpm*Math.PI/30)+(Tm!==0||H.Tc2||H.n>0?L.total:0);
   const Pbus=Pm-P1+B.auxW,d=packDraw(pack,H.soc,Pbus)||packDraw(pack,H.soc,Math.min(Pbus,lim.Pmax))||{I:0,V:packOcv(pack,H.soc),heat:0};
   H.soc=clamp(H.soc-d.I*dt/(pack.Ah*3600),0,1);
   motorHeatStep(m,temp,L,dt);packHeatStep(pack,H.tB,d.heat,dt);
@@ -170,7 +178,7 @@ function stepHybridBench(dt){
   // the shaft
   const drag=H.n>1?L.mech/w0:0;
   if(ps){
-    const Tring=run?H.Te*hybGear(hy,H.ne,H.n).kr:0,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
+    const Tring=run?H.Te*hybGear(hy,H.ne,H.n).kr:-Tcancel,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
     const hMax=0.5*J*Math.PI/(30*ref/(220*m.nMax/e.redline)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tring+Tm-drag-hybBrakeAt(H.n,m.nMax,0,ref))/J*h;H.n=clamp(om*30/Math.PI,0,m.nMax);}
     H.Tshaft=Tring+Tm;
@@ -207,18 +215,49 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // and adding its rotor's J/ks^2 (it turns at 1/ks of the engine's speed, hybGear); a P2's motor gives through its clutch
 // what it is not giving the shaft. Stopping, MG1 or the generator, fixed to the crank, brakes it at the same full torque;
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
-// closes there). The crank's energy (~1 kJ) is not drawn from the pack nor the stop's returned to it, and MG2's cancelling
-// of MG1's reaction on the ring is not modelled.
+// closes there). Build 391: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
+// at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
 const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
   const e=engine,hy=e.hy,V=hybBusV(hy);
   let J=e.inertia,Tc=0;
   if(hy.mode!=='p2'){const G=hybGear(hy,state.rpm,H.n);J+=hy.mg1.J/(G.ks*G.ks);
     Tc=motorMaxTorque(hy.mg1,Math.max(Math.abs(G.ns),1),V,60)/G.ks*(H.engOn?1:state.rpm>0?-1:0);}
-  else if(H.engOn)Tc=Math.max(0,motorMaxTorque(hy.motor,Math.max(H.n,1),V,60)-Math.abs(H.Tm||0));
+  else if(H.engOn)Tc=H.Tc2!=null?H.Tc2:Math.max(0,motorMaxTorque(hy.motor,Math.max(H.n,1),V,60)-Math.abs(H.Tm||0));
+  H.Tspin=hy.mode!=='p2'&&(state.rpm>0||H.engOn)?Tc:0;
   const Tf=Math.min(0,brakeTorqueRaw(Math.max(state.rpm,1),state.map,true));
-  const w=Math.max(0,state.rpm*Math.PI/30+(Tc+(state.rpm>0?Tf:0))/J*dt);
-  state.rpm=H.engOn?Math.min(w*30/Math.PI,hybFireRpm(H)):w*30/Math.PI;
+  const w0=state.rpm*Math.PI/30,wu=w0+(Tc+(state.rpm>0?Tf:0))/J*dt,w=Math.max(0,wu);
+  H.neSpin0=state.rpm;state.rpm=H.engOn?Math.min(w*30/Math.PI,hybFireRpm(H)):w*30/Math.PI;
+  // MG1 pushes only for the part of the step before it reaches the firing speed (or rest): the pack pays that share
+  const wEnd=state.rpm*Math.PI/30;if(H.Tspin&&wu!==w0&&wEnd!==wu)H.Tspin*=clamp((wEnd-w0)/(wu-w0),0,1);
+}
+// A power-split's or a series hybrid's start and stop off the bench (build 391), for the lap's pack and its replay's sound:
+// hybSpin's law integrated once (2 ms steps), the engine warm, its manifold at the air, the ring held. Starting, MG1 at its
+// full torque spins it from rest to idle; stopping, it brakes it from the redline to rest. The pack's power is MG1's
+// T w plus its losses, and MG2's losses holding the ring's reaction; with the ring turning MG2's T w adds, but the two
+// machines' sum is still the crank's T w (the planetary's power balance), so only the losses move with the car's speed.
+// Returns the start's draw (J) and time, the curves, and the stop's return (J) and run-down from any speed.
+function hybStartStop(){
+  const e=engine,hy=e.hy;
+  if(hy._ss&&hy._ss.score===e.score)return hy._ss;
+  const ps=hy.mode==='ps',V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
+  const ks=ps?PS.rho/(1+PS.rho):1,kr=ps?1/(1+PS.rho)/PS.k2:0,J=e.inertia+hy.mg1.J/(ks*ks),h=0.002,k30=30/Math.PI;
+  const c0=state.coolant,o0=state.oil;state.coolant=90;state.oil=100;
+  try{
+    const mg=(rpm,dir)=>{const ns=Math.max(rpm/ks,1),T1=motorMaxTorque(hy.mg1,ns,V,60),Tc=dir*T1/ks;
+      return {Tc,P:dir*T1*ns/k30+motorLosses(hy.mg1,T1,ns,V,temp).total+(kr?motorLosses(hy.motor,Math.abs(Tc*kr),1,V,temp).total:0)};};
+    const Tf=rpm=>rpm>0?Math.min(0,brakeTorqueRaw(Math.max(rpm,1),1,true)):0;
+    const up={t:[0],rpm:[0]};let w=0,E=0,t=0;
+    while(w*k30<e.idleRpmEff&&t<5){const a=mg(w*k30,1);E+=a.P*h;w+=(a.Tc+Tf(w*k30))/J*h;t+=h;up.t.push(t);up.rpm.push(Math.min(w*k30,e.idleRpmEff));}
+    const startJ=E,upT=t,dn={rpm:[e.redline],E:[0]};w=e.redline/k30;E=0;
+    while(w>0&&dn.rpm.length<5000){const a=mg(w*k30,-1);E-=a.P*h;w=Math.max(0,w+(a.Tc+Tf(w*k30))/J*h);dn.rpm.push(w*k30);dn.E.push(E);}
+    // from a speed: the run-down's index there, the energy it returns to rest, its speed el seconds on
+    const from=rpm=>{let i=0;while(i<dn.rpm.length-1&&dn.rpm[i]>rpm)i++;return i;};
+    const stopJ=rpm=>{const i=from(rpm);return dn.E[dn.E.length-1]-dn.E[i];};
+    const downAt=(rpm,el)=>{const i=from(rpm)+Math.round(el/h);return i<dn.rpm.length?dn.rpm[i]:0;};
+    const upAt=(r0,el)=>{let i=0;while(i<up.rpm.length-1&&up.rpm[i]<r0)i++;i+=Math.round(el/h);return i<up.rpm.length?up.rpm[i]:null;};
+    return (hy._ss={score:e.score,startJ,upT,stopJ,downAt,upAt,downT:(dn.rpm.length-1)*h,J});
+  }finally{state.coolant=c0;state.oil=o0;}
 }
 
 // ---- the LIVE tab's hybrid panel: the power-flow diagram, the battery gauge, the drive mode and the manual controls ----

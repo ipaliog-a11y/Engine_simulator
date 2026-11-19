@@ -88,6 +88,13 @@ reporting its range. Sourcing is batched apart from physics.
 11. **A hybrid's engine start and stop, stepped.** The ~1 kJ to crank comes from the pack and comes back on the stop,
     the spin-up and run-down come from the engine's and motor's inertias, and MG2 cancels MG1's reaction on the ring.
     Bench, sound and lap replay.
+    *Build 391:* the bench's pack pays each start (MG1's or a P2 motor's crank power, with losses) and takes each stop
+    back; a power-split's MG2 cancels the ring's reaction (kr of MG1's crank torque). `hybStartStop` integrates both
+    (Prius: 1.14 kJ in 0.17 s, 0.72 kJ back from idle); the lap charges each power-split's or series hybrid's start less
+    the stop from idle (Prius 15 starts, 6.2 kJ, lap +0.11%), and the replay's sound spins up and runs down. Left open:
+    `hybridCycle` (WLTC, economy roads) has no start cost: its per-second choice has no memory of the engine's state, and
+    ~0.4 kJ a start is under its 0.5%-of-pack charge tolerance; the lap's fuel and time still fire at once, and its
+    engine speeds above idle carry no inertia; a P2 below the engine's speed pays as if at the engine's.
 12. **Regen power against measured EVs.** A research build: published regen kW limits (Tesla, E-GMP, MEB), the
     coast-down and one-pedal measurements (SAE 2023-01-0623), and the friction brakes blending in at low speed.
     `evRegenTable` changes only if it misses.

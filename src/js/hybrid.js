@@ -195,9 +195,19 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 391): each start draws its crank
+  // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
+  // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
+  let ssJ=0,starts=0;
+  if(hy.mode!=='p2'){
+    const S=hybStartStop(),back=S.stopJ(engine.idleRpmEff);
+    for(let i=0;i<n;i++){const j=(i+1)%n,a=R.pwr[i]>0,b=R.pwr[j]>0;
+      if(!a&&b){ssJ+=S.startJ-back;starts++;}}
+    deployJ+=ssJ;
+  }
   // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
   const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
-  return {pm,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
+  return {pm,starts,startStopKJ:ssJ/1000,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
@@ -221,7 +231,7 @@ function hybridLap(key,opts){
       k=clamp(k*B/E.deployKJ*0.995,0,1);
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
+  L.hy={share:used,pm:E.pm,starts:E.starts,startStopKJ:E.startStopKJ,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
   return L;
 }
 // The design summary's line for a hybrid.
