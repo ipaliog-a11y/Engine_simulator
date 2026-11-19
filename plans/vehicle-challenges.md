@@ -96,7 +96,9 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
 ## Follow-ups
 
 1. Skid-pad challenge.
-2. Multi-car ranking on a challenge.
+2. ~~Multi-car ranking on a challenge.~~ Shipped (G2): `src/js/chal-rank.js`. A new challenge registers its score
+   in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry): `{v, higher, pass, text}`; the ranking needs no change.
+   Open: one car's solve still blocks the page (up to ~3 s, powerslide); a Worker would need the solvers split out.
 3. Distance DP for economy (pulse-and-glide on the flat); hybrid energy on economy roads.
 4. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
 5. Drift: handbrake initiation; tighter road once the hold is stronger.

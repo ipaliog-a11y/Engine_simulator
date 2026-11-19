@@ -58,3 +58,24 @@ function solveRunChallenge(id){
   if(ch.kind==='drift')return simulateDriftChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
+// Each challenge's own score, for the ranking (build G2, src/js/chal-rank.js). Keyed by kind; an entry may carry its
+// own `score` instead. A new challenge registers here (or on its entry) and the ranking needs no change.
+// score(R) runs with that car loaded and returns {v, higher, pass, text}: v sorts (higher is better when `higher`),
+// pass is the challenge's own pass/fail, text is shown. Return null when R has nothing to rank.
+const RUN_CHALLENGE_SCORES={
+  // Economy: each car against its own target time. Sorted by energy drawn from the tank or pack (fuel: litres ×
+  // density × LHV from FUELS; EV: pack kWh × 3.6 MJ), so petrol, diesel and EVs share one scale; shown in their own unit.
+  economy:R=>{
+    const f=!R.ev&&powertrain().fuel(),mj=R.ev?R.kWh*3.6:R.fuelL*(f?f.density*f.LHV:0);
+    return{v:mj,higher:false,pass:Math.abs(R.time-R.target)<=Math.max(1,0.01*R.target),
+      text:(R.ev?R.kWh.toFixed(2)+' kWh':R.fuelL.toFixed(2)+' L')+' · '+mj.toFixed(1)+' MJ'};
+  },
+  stage:R=>({v:R.time,higher:false,pass:!R.dnf,text:R.time.toFixed(1)+' s'}),
+  moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
+  drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
+};
+function runChallengeScore(ch,R){
+  if(!R||!R.ok)return null;
+  const f=ch.score||RUN_CHALLENGE_SCORES[ch.kind];
+  return f?f(R):null;
+}
