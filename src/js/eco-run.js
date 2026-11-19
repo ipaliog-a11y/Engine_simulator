@@ -3,7 +3,7 @@
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Hybrid (build 382): hybridCycle on the road's profile (ecoHybrid below). Named gap: speed cap is not optimal lift-coast DP.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Named gap: speed cap is not optimal lift-coast DP.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -219,7 +219,7 @@ function ecoEnergyJ(line,v){
   }
   return{E,regenJ:back};
 }
-// A hybrid on the road (build 382): the speed profile as hybridCycle's steps (fuel-cycle.js), so the charge-sustaining
+// A hybrid on the road (build 383): the speed profile as hybridCycle's steps (fuel-cycle.js), so the charge-sustaining
 // energy manager (ECMS: electric only, engine with load-point shifting, regen within the motor's and the pack's limits,
 // the same rule as hybRegenTable) runs on the road's own grade. Warm start at the tune's target charge; the pack ends
 // where it started (or the R154 charge correction is added as fuel, as on WLTC). Same mass and 12 V load as ecoFuelKg.
@@ -267,7 +267,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     const kWh=en.E/3.6e6,whkm=en.E/3600/km,kWhMin=enMin?enMin.E/3.6e6:null;
     return Object.assign(base,{kWh,whkm,regenKWh:en.regenJ/3.6e6,kWhMin});
   }
-  if(hyb){   // fuel (charge-sustained) and the pack's energy out and back (build 382)
+  if(hyb){   // fuel (charge-sustained) and the pack's energy out and back (build 383)
     const h=ecoHybrid(line,v),hm=ecoHybrid(line,mt.v),L=h.kg/fp.density;
     return Object.assign(base,{hybrid:true,fuelL:L,fuelKg:h.kg,l100:L/km*100,fuelLMin:hm.kg/fp.density,engOff:1-h.onShare,
       packOutKWh:h.packOutKWh,packInKWh:h.packInKWh,dSocKWh:h.dSocKJ/3600,corrected:h.corrected,limitShare:h.limitShare});

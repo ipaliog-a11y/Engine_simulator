@@ -127,7 +127,7 @@ function engineCycleLine(v){
 // runs from what the pack can cover to what it can take back, so a larger pack spaced five points so far apart that
 // the Prius's cycle scattered ~2% either way (build 207: 4.24 and 4.34 L/100 km at five, 4.31 and 4.32 at 17 or 33).
 const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],splitsDirect:[0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1],ehr:0.15};
-// prof (build 382, the economy road): {segs:[{vm,a,dt,sinT,cosT}]} replaces the WLTC's 1 s steps with the road's own
+// prof (build 383, the economy road): {segs:[{vm,a,dt,sinT,cosT}]} replaces the WLTC's 1 s steps with the road's own
 // (grade included), started warm; nothing cached, no plug-in cycles. Without it the cycle is exactly as before.
 function hybridCycle(v,prof){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;

@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Hybrids on the economy roads run their own energy manager (build 382)
+### Hybrids on the economy roads run their own energy manager (build 383)
 
 - A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
   WLTC's charge-sustaining ECMS (`hybridCycle`, `fuel-cycle.js`) on the road's speed profile with its grade: electric
@@ -34,6 +34,25 @@ they are accurate about *what* shipped but not about the day it shipped.
   (power-split, at speed) or engine + motor allow, the engine is charged for the power on its best line anyway
   (`limitShare`: Prius 36%, e-POWER 37%, 330e 15%, 918 12%, Ioniq 7% of the run). Plug-ins run charge-sustaining.
   WLTC itself still uses the old flat-out fallback on its hardest steps (most on the Prius), left so WLTC does not move.
+- Against owner reports: at 200% pace (63 km/h) the Prius and Ioniq read 6.4 L/100 km on Alpine Pass; Prius owners
+  report 4.5–4.8 for whole mountain trips at the limits and 5.6 on a near-all-uphill stretch. Alpine is one-way and
+  climbing, so no descent pays it back; not a like-for-like figure.
+
+### A handbrake for the stepped car and the drift challenge (build 382)
+
+- `stepCar` takes `u.handbrake` (0–1): brake torque on the rear wheels only, which the ABS does not ease (a lever on the
+  rear calipers or a drum-in-hat sits outside it). Its force, `hbCap`, is the rear service brake's (PROBABLE: no maker
+  publishes a lever-brake torque), never under the UN ECE R13-H / FMVSS 135 parking floor of holding the laden car on a
+  20% grade (0.196 m g). Without `u.handbrake` nothing moves: the fingerprint is identical.
+- The S-Route Powerslide gains METHOD HANDBRAKE for RWD and FWD (Velenis et al., CDC 2011, handbrake cornering). RWD:
+  clutch down and lever up at turn-in until the rear passes its peak, then power holds the slide. FWD: the lever holds
+  the rears sliding while β is short of the target, with part throttle on the fronts. AUTO tries it last, so every car
+  that CLEARed before CLEARs on the same plan. A rear locked by the lever counts as past its peak.
+- Civic Type R: NO_SLIDE before, now CLEAR on AUTO by the handbrake (β 11.6° / 11.5°, 32 km/h). Power-over still
+  NO_SLIDE. MX-5 and Mustang also CLEAR on HANDBRAKE.
+- Left open: AWD has no handbrake (the lever on a coupled centre brakes the fronts too; a rally car's hydraulic lever
+  opens the centre first, not modelled), so it falls back to power-over. The tyre screech in the replay keys on slip
+  angle and does not yet hear a lever-locked rear.
 
 ### Grip by camber in the stepped car: tried, left named until after v1.0 (build 381)
 
