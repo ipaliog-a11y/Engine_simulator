@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A rain tyre's own wet grip (build 364)
+### A rain tyre's own wet grip (build 366)
 
 - A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
   wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
@@ -26,6 +26,28 @@ they are accurate about *what* shipped but not about the day it shipped.
   keeps 0.749 of its dry grip, a road tyre 0.71 as before.
 - Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
   race rain tyre's real figure above class A (no label grades it).
+
+### A green baseline: test136 re-locked, test145 passes (build 365)
+
+Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
+
+- **test136** (the Teslas' locked motor figures) was failing since build 314. Run at each build, the moves come from
+  three merged builds, each intended and each in its own entry: 314 (Model 3 stator 226 → 225 mm, MotorXP) moved the
+  torque, knee, motor mass and peak hold (Model 3 424 → 426 Nm, 6627 → 6604 rpm, 55.18 → 54.66 kg, 37 → 29 s);
+  315 (jacket cooling) the continuous power (Model 3 259 → 282 kW, Model Y 316 → 336, Plaid 708 → 750); 354
+  (premium touring tyres) the Model 3's 0-100 (6.18 → 5.90 s). Re-locked to today's values, with the builds named
+  in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
+- **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
+- Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
+### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
+
+Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's travel ends.** Up to the bump rubber and down to full droop by the axle's type (`SUSP_GEO`: strut 70/80 mm, wishbone and multi-link 80/90, twist beam 85/95, solid axle 100/110; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 5). Past bump a progressive rubber, F = kb x / (1 − x/25 mm), kb the wheel rate (PROBABLE); at its solid height and at full droop the wheel is stopped on the body, so a lifted wheel hangs from it.
+- **Bound and rebound apart:** rebound 3× bound (passenger dampers ~3:1, Dixon, *The Shock Absorber Handbook*; PROBABLE), their mean the kit's damper, so the lap's quarter car is unchanged.
+- **`test220`** (new): a 200 mm step reaches the rubber and stops at its travel (M3 95 mm, MX-5 105 mm); a 300 mm hole leaves the wheel hanging at full droop off the road for 140–160 ms, never past it.
+- **`test205` updated, in the open:** a wheel falling into a 60 mm dip now falls against the rebound damping, so it is off the road 49–53 ms (44–47 before); its reference quarter car now uses the rebound damping too (51–55 ms).
+- **Left open:** travel by the kit (a lowered car keeps its type's), the damper's blow-off, the tyre's own damping.
 
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 

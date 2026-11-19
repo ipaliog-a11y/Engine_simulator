@@ -14,6 +14,8 @@ reporting its range. Sourcing is batched apart from physics.
   open, or fix it.
 - `test145` (engine wear and coolant at full load; ~6 min) was reported failing on `main` at build ~320. Rerun it, then
   treat it the same way.
+  *Build 365:* test136 re-locked to builds 314 (stator 225 mm), 315 (jacket cooling) and 354 (tyres), all intended;
+  test145 passes on `main` (fixed by builds 336-337). Nothing left open here.
 - Not physics, noted only: `test42` (3 untranslated starter messages, Greek paused), `test64` (the track map never
   draws the car sprite), `test125` (folded LIVE OUTPUT at 21%, not a third).
 
@@ -22,6 +24,8 @@ reporting its range. Sourcing is batched apart from physics.
 1. **Bump stops and droop.** Travel by suspension type (Reimpell), a progressive bump rubber past it, and the wheel
    hanging free at full droop. Bound and rebound damping apart, from the damper part's ratio (typical about 1:3,
    PROBABLE; Dixon, *The Shock Absorber Handbook*).
+   *Build 364:* done (travel by `SUSP_GEO` type, rubber 25 mm, rebound 3× bound about the kit's mean; `test220`).
+   Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
@@ -44,7 +48,7 @@ reporting its range. Sourcing is batched apart from physics.
    surface.
 8. **A rain tyre's own wet grip.** The compound's wet advantage from the EU label's wet grip index (Regulation
    2020/740, ISO 23671), class by class against a road tyre's. Today only its grooves help.
-   *Build 364:* `RACE_WET_G` (race.js): a road tyre is class B's middle (G 1.47), a rain compound (inter, full wet)
+   *Build 366:* `RACE_WET_G` (race.js): a road tyre is class B's middle (G 1.47), a rain compound (inter, full wet)
    class A's floor (1.55), both PROBABLE; its low-speed wet grip is 0.71 x 1.55/1.47 = 0.749. Open: road compounds
    by their own class (eco, sport, semi), and a race rain tyre measured above class A.
 
