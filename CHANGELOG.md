@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Camber and toe by heave and pitch in the stepped car (build NNN)
+### Camber and toe by heave and pitch in the stepped car (build 374)
 
 Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
 
@@ -26,6 +26,28 @@ Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is i
 - **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
 - **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
 - **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
+### test174: ESP is judged at FMVSS 126's final run, where the Model 3 still spins (build 372)
+
+- test174 failed since build 354: on its premium touring tyres the Model 3 no longer spins at 6.5 times the 0.3 g
+  steering (116 deg of hand wheel) without ESP (yaw 0.01 of its peak 1 s on), so ESP had nothing to correct. That is
+  the car changing as intended, not a bug.
+- The ESP off/on comparison now runs at the rule's own final run (FMVSS 126 S7.9.4: the greater of 6.5 times or 270 deg).
+  There ESP off spins (yaw 0.91 of its peak, 83 deg sideways) and ESP on holds it to 0.46 and 36 deg. The test now also
+  asks that ESP off spins there. The pass checks at 5 and 6.5 times are unchanged.
+- Left open: at 270 deg, ESP on still has yaw 0.46 of its peak 1 s on, past the rule's 0.35. The ESP is not tuned to
+  pass there. That needs its own build.
+
+### Tyre screech on the lap replay and the moose replay (build 371)
+
+- The moose replay now screeches (with SOUND ON) by the powerslide's own test: while either axle is past the rear
+  tyre's peak slip angle, atan(3μ/C), louder with v·sin α. On the MX-5 it sounds for 45 of 355 samples, never at the start.
+- The lap replay records no slip angle (the lap solver is a quasi-steady speed profile with no yaw state), so it uses the
+  closest derived quantity, each axle's use of its grip: where the limit binds (corner, traction, or a brake point at
+  full use) the tyre sits at its peak, and the screech is v·sin α_peak; below the limit it is silent. On the MX-5
+  it sounds on 275 of 442 points, all 223 corner points, no power points.
+- Same synth path as build 362; no physics changed; fingerprint identical.
+- Left open: the lap never goes past the peak, so the track screech marks the limit, not a slide; Greek paused.
+
 ### Rank several cars on a challenge (build 370)
 
 - The CHALLENGES tab gets **RANK CARS**: add cars (this build, garage builds, factory cars; 12 at most) and press
@@ -48,6 +70,7 @@ Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is i
 - **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test223`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
 - **Known gap, approved by the owner:** `test170`'s `OFF_KNOWN` caps raised, Civic Type R FK8 4.6 → 4.8 m and 911 GT3 (991.2) 4.8 → 4.9 m. The stepped lap's furthest off the line moved ~0.2 m (4.6 → 4.8, 4.7 → 4.9): its driver follows the lap's planned speeds without judging the car's own grip, and the links' pitch share moves the load in transients.
 - **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
+
 ### Skid pad challenge on the CHALLENGES page (build 368)
 
 - New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
