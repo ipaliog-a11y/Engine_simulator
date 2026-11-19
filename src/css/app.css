@@ -212,6 +212,12 @@ body.track-open{overflow:hidden}
 .race-ent button{padding:2px 6px;font-size:7px;box-shadow:none}
 .race-add{display:flex;gap:6px;margin-top:8px}.race-add select{flex:1;min-width:0}
 .race-prog{margin-top:8px;font-size:7px;color:#88aacc}
+#chalRankAddSel{width:0}
+#chalRankOut .perf-head{margin-top:8px}
+.chal-rank-h{font-size:8px;margin:12px 0 4px;color:#ffcc00}
+.chal-rank{width:100%;table-layout:fixed;border-collapse:collapse;font-size:7px;color:#ddd;margin-top:4px}
+.chal-rank th,.chal-rank td{padding:4px 2px;border-bottom:1px solid #222;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chal-rank th{color:#88aacc}.chal-rank th:first-child{width:16px}.chal-rank th:nth-child(3){width:38%}.chal-rank th:last-child{width:56px}
 .race-prog-track{height:8px;background:#26263a;margin-bottom:4px}.race-prog-bar{height:100%;width:0;background:#00ff88}
 #raceScrub{margin:2px 0 10px}
 .race-tower{width:100%;border-collapse:collapse;font-size:7px;color:#ccd}

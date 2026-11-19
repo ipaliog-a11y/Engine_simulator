@@ -18,6 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Rank several cars on a challenge (build 370)
+
+- The CHALLENGES tab gets **RANK CARS**: add cars (this build, garage builds, factory cars; 12 at most) and press
+  RANK. Each runs the selected challenge with the settings on screen, through that challenge's own solver, and the
+  table lists them passes first, then by the challenge's own score: economy by energy drawn (fuel L × density × LHV
+  from `FUELS`, or pack kWh × 3.6, in MJ, so engine cars and EVs share one scale), stage by time, moose by clear
+  speed, skid pad by steady g, powerslide by peak β.
+- Cars run one at a time; the page yields between cars, with a progress bar and CANCEL (heard before the next car).
+- A challenge registers its score in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry), so a new challenge
+  needs no change to the ranking. No solver changed: the fingerprint is identical.
+- Open: one car's solve still blocks the page while it runs (up to ~3 s for the powerslide's search); moving it off
+  the main thread would need the solvers split into a Worker.
+
 ### Anti-dive and anti-squat in the stepped car (build 369)
 
 Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
