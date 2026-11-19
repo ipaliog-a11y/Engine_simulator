@@ -4,10 +4,10 @@
 // a low-pressure turbo feeding the frame the build chose (compoundStage). What must hold:
 //   · the LP wheel is matched to an equal pressure split of the target: D_LP/D_HP = (s/sqrt(T1/T0))^(1/2), s = sqrt(PR);
 //     the choke flow is that wheel's, with no multiple;
-//   · the shafts (build 374): each its own; the state is the LP shaft, with its own inertia (heavier than the frame's)
+//   · the shafts (build 375): each its own; the state is the LP shaft, with its own inertia (heavier than the frame's)
 //     and its own tip limit (test227 checks the split between them);
 //   · on the Golf GTI's frame at 2.5 bar, the compound makes more power than the single and pushes against less
-//     exhaust pressure at 5500 rpm; it comes on boost no later (build 374: its HP stage spools on its own; tied
+//     exhaust pressure at 5500 rpm; it comes on boost no later (build 375: its HP stage spools on its own; tied
 //     to the LP shaft until then, it came on later);
 //   · a compound with a VGT runs the housing (no ring) without error; a single, twin and sequential have no LP stage.
 import { chromium } from './pw.mjs';

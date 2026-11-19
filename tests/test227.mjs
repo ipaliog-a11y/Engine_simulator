@@ -1,4 +1,4 @@
-// A compound turbo's split off its design point (build 374).
+// A compound turbo's split off its design point (build 375).
 //
 // WHY THIS EXISTS. Since build 294 a compound's two stages held their equal design split at every point, the HP shaft
 // tied to the LP one. Each shaft now balances on its own map (compoundNet, compoundSplit). On a designed compound (the
