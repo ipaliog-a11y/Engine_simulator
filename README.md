@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 364
+# PIXEL POWERTRAIN v0.8 build 377
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -275,7 +275,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     texture). The water takes ~30% of any tyre's grip, and at speed it lifts the tyre by Horne's
     balance of its pressure, on the share of the patch its grooves cannot clear: a slick floats from
     ~80 km/h, a treaded road tyre keeps ~60% at 150. Two race-only rain tyres, **intermediates** and
-    **full wets**, clear more water. A car
+    **full wets**, clear more water, and their rubber grips the wet ~5% better (EU tyre label: class A against a road tyre's B). A car
     changes compound when the time its own solved laps say it would win back, over the laps left,
     beats a pit stop, so a late shower can leave a car out on the wrong tyres on purpose. Water and a
     cool wet surface take heat out of the tyres; a sunny track adds it. Wet laps run ~20–30% slower,
@@ -324,6 +324,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car without a
     handbrake), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. Handbrake and loose surfaces
     are not modelled.
+  - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
+    magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
+  - **RANK CARS** runs several cars (this build, garage builds, factory cars) through the selected challenge
+    with the same settings, one car at a time with a progress bar and CANCEL, and lists them passes first,
+    then by the challenge's own score (economy by tank or pack energy in MJ, so engine cars and EVs share a scale).
   - The **i** button beside the Challenges heading shows how the selected challenge is run and judged.
   - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
     double-click to reset. Known gaps: the economy plan is a
@@ -415,7 +420,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
 - **Engine sound** — plays on the **DYNO** tab from the engine controls, and on the **TRACK** tab
   from the lap replay (its recorded rpm, throttle and boost, so shifts, lifts and blow-offs are heard
   as the car goes round), and on the **S-route powerslide** replay (its revs and throttle, with a
-  tyre screech while a tyre slides past its peak slip angle); other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
+  tyre screech while a tyre slides past its peak slip angle). The lap replay screeches where the tyres
+  run at their grip limit, the moose replay while a tyre slides past its peak; other tabs are quiet. Synthesised from the **firing pulses** in an AudioWorklet: every cylinder
   fires at its slot in the real firing order and its pulse goes down its own bank's exhaust
   (one pipe for an inline engine, left and right for a V or a boxer), so engines with the same
   firing rate no longer sound alike. A cross-plane V8 fires each bank unevenly

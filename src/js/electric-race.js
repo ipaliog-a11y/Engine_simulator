@@ -45,14 +45,16 @@ function evRaceModel(key,line,grips){
     try{return withRaceTrim(grip,0,()=>simulateLap(key,Object.assign({line,evRace:true},o)));}finally{evPowerCap=1;}
   };
   // a solved lap in battery energy: the drive's own losses and the cells', against the shaft
+  // fh: the cells' share of it, at 25 °C and half charge; the race swaps it for the cells' heat at the pack's own
+  // temperature and charge as it goes (evRaceHeatStep, build 373)
   const price=L=>{
-    const O=L.evOp,fr=new Float32Array(n);
+    const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
       const rpm=Math.max(1,O.rpm[i]),T=O.tq[i],P=T*rpm*Math.PI/30+motorLosses(e.motor,Math.abs(T),rpm,V,cool).total;
       const d=packDraw(e.pack,0.5,P);
-      fr[i]=(P+(d?d.heat:0))/3600;
+      fh[i]=(d?d.heat:0)/3600;fr[i]=P/3600+fh[i];
     }
-    return {v:Float32Array.from(L.v),fr,tq:Float32Array.from(O.tq),lap:L.lap};
+    return {v:Float32Array.from(L.v),fr,fh,tq:Float32Array.from(O.tq),lap:L.lap};
   };
   const kWhLap=q=>{let E=0;for(let i=0;i<n;i++){const j=(i+1)%n;E+=q.fr[i]*line[i].ds3/Math.max(2,(q.v[i]+q.v[j])/2);}return E/1000;};
   const nom=solve(1,0),prof=[];
@@ -106,12 +108,12 @@ function evRaceFFNow(M,c){
   return evRaceFF(cap);
 }
 // The motor's torque (Nm, negative regenerating) the pace grid gives at a fractional point, as racePaceAt gives speed.
-function evRaceTqAt(M,i,f,g,ff){
+function evRaceTqAt(M,i,f,g,ff,key='tq'){
   const tq=k=>{
     const GR=M.grips,NG=GR.length,NF=RACE_FUEL.length;
     let a=0;while(a<NG-2&&g>GR[a+1])a++;
     const fa=clamp((g-GR[a])/(GR[a+1]-GR[a]),0,1),b=ff>=0.5?1:0,fb=(ff-RACE_FUEL[b])/(RACE_FUEL[b+1]-RACE_FUEL[b]),P=M.prof;
-    return (P[a*NF+b].tq[k]*(1-fb)+P[a*NF+b+1].tq[k]*fb)*(1-fa)+(P[(a+1)*NF+b].tq[k]*(1-fb)+P[(a+1)*NF+b+1].tq[k]*fb)*fa;
+    return (P[a*NF+b][key][k]*(1-fb)+P[a*NF+b+1][key][k]*fb)*(1-fa)+(P[(a+1)*NF+b][key][k]*(1-fb)+P[(a+1)*NF+b+1][key][k]*fb)*fa;
   };
   const x=tq(i);return x+(tq((i+1)%M.n)-x)*f;
 }
@@ -119,9 +121,12 @@ function evRaceTqAt(M,i,f,g,ff){
 // losses at the speed and the torque it is running at (both scaled, as the race's burn is, by how close to the solved
 // pace the car is going: r).
 function evRaceHeatStep(M,c,r,dt,save){
-  const X=M.ev,t=c.evT,P=c._fr*3600*r*r*save;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b);   // at the pack's temperature (build 346)
-  packHeatStep(X.pack,t,d?d.heat:0,dt);
+  // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
+  // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 373)
+  const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
+  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
+  packHeatStep(X.pack,t,heat,dt);
+  const dE=(heat-h0)*dt/3.6e6;c.fuelKg-=dE;c.fuelUsed+=dE;
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
   motorHeatStep(X.motor,t,motorLosses(X.motor,Math.abs(T),rpm,X.V,t),dt);
   c.evPeak.w=Math.max(c.evPeak.w,t.w);c.evPeak.b=Math.max(c.evPeak.b,t.b);

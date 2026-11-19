@@ -1,62 +1,49 @@
-// Import-vehicle skill: research validator and accuracy helper (build 364).
+// Bump stops, droop and bound/rebound damping in the stepped car (build 364, plans/small-physics.md step 1).
 //
-// WHY THIS EXISTS. Agents import real cars via `.cursor/skills/import-vehicle/`. The skill's
-// validate-research script must accept a known-good research entry (batch-1 Ferrari F40), and
-// check-accuracy must load a shipped factory car and exit 0 inside the documented bands.
-// What must hold:
-//   · the skill's SKILL.md names the workflow and the hard rules;
-//   · validate-research.mjs exits 0 on the F40 research entry written to a temp file;
-//   · check-accuracy.mjs exits 0 on "Ferrari F40 (1987)" (already in the game, medium confidence).
-import { execFileSync } from 'child_process';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+// WHY THIS EXISTS. Each corner's spring was linear without end: a wheel could rise through the body or hang below
+// it. What must hold, on a strut-fronted car (M3 E46) and a wishbone-fronted one (MX-5):
+//   · a 200 mm step up under the left front reaches the bump rubber but never passes its travel (bump + rubber);
+//   · the road falling 300 mm away under it leaves the wheel hanging at full droop (over 20 ms, off the road), never past it;
+//   · rebound damping is DAMPER_RB times bound, their mean the kit's damper (the lap's quarter car unchanged).
+import { chromium } from './pw.mjs';
+import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
-import os from 'os';
-
 const repo = fileURLToPath(new URL('..', import.meta.url));
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const errors = [];
+page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
 const fails = [];
-const skill = path.join(repo, '.cursor/skills/import-vehicle');
-const skillMd = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf8');
-if (!/^---\nname: import-vehicle\n/m.test(skillMd)) fails.push('SKILL.md missing name frontmatter');
-if (!/Derive, do not fit/i.test(skillMd)) fails.push('SKILL.md missing derive-do-not-fit rule');
-if (!/check-accuracy\.mjs/.test(skillMd)) fails.push('SKILL.md does not point at check-accuracy.mjs');
-
-const pack = JSON.parse(fs.readFileSync(path.join(repo, 'research/vehicles-batch-1/vehicles.json'), 'utf8'));
-const f40 = pack.vehicles.find(v => v.name === 'Ferrari F40 (1987)');
-if (!f40) fails.push('batch-1 has no Ferrari F40 to use as a validator fixture');
-else {
-  const tmp = path.join(os.tmpdir(), 'pes-import-vehicle-f40.json');
-  // The car already exists in presets; the validator would fail on duplicate name. Rename for the shape check.
-  // Keep the real engine name; mark existing so the validator does not demand a new PRESETS slot.
-  const sample = Object.assign({}, f40, {
-    name: 'IMPORT-VEHICLE-SKILL-FIXTURE F40',
-    id: 'import-vehicle-skill-fixture-f40',
-    engineStatus: 'existing',
-  });
-  delete sample.enginePreset;
-  fs.writeFileSync(tmp, JSON.stringify(sample));
-  try {
-    const out = execFileSync('node', [path.join(skill, 'scripts/validate-research.mjs'), tmp], { encoding: 'utf8' });
-    console.log('== validate: ' + out.trim() + ' ==');
-  } catch (e) {
-    fails.push('validate-research failed: ' + (e.stderr || e.stdout || e.message).toString().slice(0, 400));
-  } finally {
-    try { fs.unlinkSync(tmp); } catch (_) {}
+const R = await page.evaluate(() => {
+  const out = [];
+  for (const n of ['BMW M3 (E46', 'Mazda MX-5']) {
+    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
+    const car = driveCar(), o = { name: n, up: car.bumpF, top: car.bumpF + DRIVE_BUMP_RUBBER, dn: car.droopF, rb: DAMPER_RB };
+    const trav = s => s.zu[0] - s.heave - s.pitch * car.a - s.roll * car.tF / 2;   // the left front's, up on the body
+    const run = z => { const s = driveRolling(car, 60); let hi = -1, lo = 1, hang = 0;
+      for (let t = 0; t < 2; t += 0.001) stepCar(car, s, { steer: 0, throttle: 0.12, brake: 0 }, 0.001);
+      for (let t = 0; t < 0.6; t += 0.001) { stepCar(car, s, { steer: 0, throttle: 0.12, brake: 0, road: { z: [z, 0, 0, 0] } }, 0.001);
+        const c = trav(s); hi = Math.max(hi, c); lo = Math.min(lo, c);
+        // hanging: the tyre off the road, the wheel at full droop (within 1 mm: the body moves after the wheels in a step)
+        if (s.Fz[0] === 0 && Math.abs(c + car.droopF) < 1e-3) hang += 0.001; }
+      return { hi, lo, hang }; };
+    o.bump = run(0.2); o.drop = run(-0.3);
+    out.push(o);
   }
+  return out;
+});
+await browser.close();
+const mm = x => (x * 1000).toFixed(1);
+for (const o of R) {
+  console.log(`${o.name.padEnd(14)} 200 mm up: highest ${mm(o.bump.hi)} mm (rubber from ${mm(o.up)}, travel ${mm(o.top)}); ` +
+    `300 mm down: lowest ${mm(o.drop.lo)} mm (droop ${mm(o.dn)}), hanging there off the road ${mm(o.drop.hang)} ms`);
+  if (!(o.bump.hi > o.up)) fails.push(`${o.name}: the step up never reaches the bump rubber`);
+  if (!(o.bump.hi <= o.top + 1e-6)) fails.push(`${o.name}: the wheel passes its bump travel`);
+  if (!(o.drop.lo >= -o.dn - 1e-6)) fails.push(`${o.name}: the wheel hangs past full droop`);
+  if (!(o.drop.hang > 0.02)) fails.push(`${o.name}: the lifted wheel does not hang at full droop`);
+  if (!(o.rb > 1)) fails.push(`${o.name}: rebound is not stiffer than bound`);
 }
-
-try {
-  const out = execFileSync('node', [path.join(skill, 'scripts/check-accuracy.mjs'), 'Ferrari F40 (1987)'], {
-    encoding: 'utf8', timeout: 120000,
-  });
-  console.log(out.trim().split('\n').map(l => '== ' + l + ' ==').join('\n'));
-} catch (e) {
-  fails.push('check-accuracy F40 failed: ' + (e.stderr || e.stdout || e.message).toString().slice(0, 500));
-}
-
-if (fails.length) {
-  console.log('\nFAIL:\n  ' + fails.join('\n  '));
-  process.exit(1);
-}
-console.log('\nOK: import-vehicle skill scripts validate research and check a real car.');
-process.exit(0);
+for (const e of errors) fails.push(e);
+if (fails.length) { console.log('\nFAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
+console.log('\nPASS');

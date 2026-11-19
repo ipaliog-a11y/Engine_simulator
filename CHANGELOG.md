@@ -18,14 +18,165 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Import-vehicle skill for researching real-car presets (build 364)
+### Import-vehicle skill for researching real-car presets (build 377)
 
 - New Cursor skill at `.cursor/skills/import-vehicle/`: when asked to import a real car (e.g. Ferrari F50),
   research sourced body/engine numbers, write presets, run accuracy bands (±25% power, ±35% matched 0–100 and top),
   fix honest input errors only, and report unachievable gaps with suggested actions.
 - Includes schema/checklist/gap-report references, a JSON template, `validate-research.mjs`, and
   `check-accuracy.mjs`. Derive-do-not-fit is hard-coded; physics constants are never tuned to pass.
-- `test220` checks the skill files and runs both scripts against the existing Ferrari F40.
+- `test230` checks the skill files and runs both scripts against the existing Ferrari F40.
+
+### Power assistance, steering friction and the scrub radius in the stepped car (build 376)
+
+- Plan small-physics step 4. `stepCar` now gives `s.handTorque` (Nm), what the driver holds at the hand wheel: the
+  column load `-s.steerTorque` through a boost curve (a 1 Nm threshold, then a gain of 8 parking falling to 1.5 at
+  speed, a 60 Nm ceiling; the shape after Pfeffer & Harrer, *Steering Handbook*; every number PROBABLE), plus 1.5 Nm
+  of Coulomb friction (PROBABLE) against a turning wheel. A held wheel near the centre needs nothing: the dead band.
+- On an FK8 at 80 km/h the assist takes 58–70% of a 4–14 Nm load (test229); at a 20 Nm load it takes 84% parking.
+- The column load now includes each front tyre's longitudinal force on the scrub radius (equal forces cancel). No
+  preset gives one, so every car takes 10 mm (Reimpell: −20 to +20 mm on passenger cars; PROBABLE); `scrubRadius`
+  in a preset overrides it.
+- Nothing reads the hand torque yet (for force feedback later), so the fingerprint is identical.
+- Left open: a scrub radius by suspension type (no source gives one per type), a hydraulic or EPS curve per car, and
+  torque steer (no preset gives shaft angles).
+
+### A compound turbo's split off its design point (build 375)
+
+- Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its
+  own turbine supplies its compressor (at the LP outlet's pressure and temperature), and above target the gate leaves
+  the HP stage only what the LP one does not make (Watson & Janota; Serrano et al., SAE 2008-01-0790). Until now the
+  shafts were tied at the equal design split.
+- On the Golf GTI's frame (large, 2.5 bar) the LP stage makes 14-16% of the ratio (in log terms) while spooling, 24%
+  at 4000 rpm and 54-63% at 6000 rpm to the redline; the target holds once reached. The exhaust pressure solve uses the
+  same split, with the LP wheel held to its tip limit.
+- A compound now comes on boost as the frame alone does (1502 rpm on the Golf at 2.5 bar, was 1719): the HP stage no
+  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test227 checks the split.
+- Fingerprint identical (no preset is a compound).
+- Open: the HP shaft's own inertia and bearing drag (it settles at once), an LP gate, and the LP turbine's sizing
+  (scaled by D^2 from the HP housing, it can make the whole ratio itself at high flow). The guide's Greek for the
+  changed limit line is stale (Greek paused).
+
+### Camber and toe by heave and pitch in the stepped car (build 374)
+
+Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE (`test228`, new).
+- **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
+- **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
+- **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
+### The lap's torque and the race's energy price at the pack's own temperature (build 373)
+
+Step 10 of `plans/small-physics.md`, build 346's follow-up.
+- **The lap:** its torque curve stays the rated one (pack at 25 °C), and the lap's heat walk now scales the drive by the
+  pack's power at its temperature over 25 °C (`evPackGain`). Warmer cells have less resistance, so where the pack's
+  power is the limit the drive gives a little more: a Model Y up to +1.4% at 45 °C.
+- **The race:** the pace grid keeps the cells' heat (at 25 °C, half charge) apart in its price; each step the race
+  swaps it for the heat at the pack's own temperature and charge. 150 kW from a Model Y at 45 °C: 0.4% less energy.
+- Fingerprint against `main`: only the three Teslas' lap times move, by −0.003 to +0.001% (Model Y 77.859 → 77.857 s).
+  No top speed, ICE car or hybrid moves. `test226` (new) checks it.
+- Left open: hybrids walk no pack temperature in the lap or the race, so nothing to read; the race's pace grid speeds
+  and the motor bench stay at 25 °C.
+
+### test174: ESP is judged at FMVSS 126's final run, where the Model 3 still spins (build 372)
+
+- test174 failed since build 354: on its premium touring tyres the Model 3 no longer spins at 6.5 times the 0.3 g
+  steering (116 deg of hand wheel) without ESP (yaw 0.01 of its peak 1 s on), so ESP had nothing to correct. That is
+  the car changing as intended, not a bug.
+- The ESP off/on comparison now runs at the rule's own final run (FMVSS 126 S7.9.4: the greater of 6.5 times or 270 deg).
+  There ESP off spins (yaw 0.91 of its peak, 83 deg sideways) and ESP on holds it to 0.46 and 36 deg. The test now also
+  asks that ESP off spins there. The pass checks at 5 and 6.5 times are unchanged.
+- Left open: at 270 deg, ESP on still has yaw 0.46 of its peak 1 s on, past the rule's 0.35. The ESP is not tuned to
+  pass there. That needs its own build.
+
+### Tyre screech on the lap replay and the moose replay (build 371)
+
+- The moose replay now screeches (with SOUND ON) by the powerslide's own test: while either axle is past the rear
+  tyre's peak slip angle, atan(3μ/C), louder with v·sin α. On the MX-5 it sounds for 45 of 355 samples, never at the start.
+- The lap replay records no slip angle (the lap solver is a quasi-steady speed profile with no yaw state), so it uses the
+  closest derived quantity, each axle's use of its grip: where the limit binds (corner, traction, or a brake point at
+  full use) the tyre sits at its peak, and the screech is v·sin α_peak; below the limit it is silent. On the MX-5
+  it sounds on 275 of 442 points, all 223 corner points, no power points.
+- Same synth path as build 362; no physics changed; fingerprint identical.
+- Left open: the lap never goes past the peak, so the track screech marks the limit, not a slide; Greek paused.
+
+### Rank several cars on a challenge (build 370)
+
+- The CHALLENGES tab gets **RANK CARS**: add cars (this build, garage builds, factory cars; 12 at most) and press
+  RANK. Each runs the selected challenge with the settings on screen, through that challenge's own solver, and the
+  table lists them passes first, then by the challenge's own score: economy by energy drawn (fuel L × density × LHV
+  from `FUELS`, or pack kWh × 3.6, in MJ, so engine cars and EVs share one scale), stage by time, moose by clear
+  speed, skid pad by steady g, powerslide by peak β.
+- Cars run one at a time; the page yields between cars, with a progress bar and CANCEL (heard before the next car).
+- A challenge registers its score in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry), so a new challenge
+  needs no change to the ranking. No solver changed: the fingerprint is identical.
+- Open: one car's solve still blocks the page while it runs (up to ~3 s for the powerslide's search); moving it off
+  the main thread would need the solvers split into a Worker.
+
+### Anti-dive and anti-squat in the stepped car (build 369)
+
+Step 2 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **The links carry part of the pitch.** Each tyre's longitudinal force reaches the body through its side-view swing arm with a vertical part (Fx e − T)/d, T the torque reacting on the body (drive through half-shafts, inboard brakes; a live axle's drive and outboard brakes react on the upright). The springs carry the transfer less that, and the front and rear parts together heave the body (jacking). Milliken & Milliken, *RCVD*, ch. 17.
+- **Arms by type** (`SUSP_GEO` `svF`/`svR`, instant centre height and length; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 3): strut 0.15/3.0 m front, wishbone and multi-link 0.20/2.5; rear strut 0.40/2.5, wishbone 0.45/2.5, multi-link 0.50/2.0, solid 0.35/2.5, twist beam its pivot 0.32/0.55. Brakes outboard unless a car sets `inboardF`/`inboardR` (none does).
+- **Effect:** braking at ~0.45 g in neutral the M3 E46 pitches 0.90° (1.22° without the links), the MX-5 1.34° (1.75°): anti-dive 27 % and 23 %, both within 0.1 % of a reference worked out apart from `stepCar` (`test223`, new). Under power the M3's rear rises 2 mm (anti-squat) and its pitch falls 20 %; a front-driven strut car pitches more (its half-shafts' torque gives pro-lift).
+- **Known gap, approved by the owner:** `test170`'s `OFF_KNOWN` caps raised, Civic Type R FK8 4.6 → 4.8 m and 911 GT3 (991.2) 4.8 → 4.9 m. The stepped lap's furthest off the line moved ~0.2 m (4.6 → 4.8, 4.7 → 4.9): its driver follows the lap's planned speeds without judging the car's own grip, and the links' pitch share moves the load in transients.
+- **Left open:** the arm's change with travel, inboard brakes on presets that have them, the arms by the kit.
+
+### Skid pad challenge on the CHALLENGES page (build 368)
+
+- New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
+  (60.96 m) circle, the pad Motor Trend and Road & Track report skidpad g on (Car and Driver uses 300 ft). The target
+  speed is bisected until the car can no longer stay within 1 m of the line; the score is the magazines' figure,
+  v²/(g·R) from the held lap's time, with the body's mean ay beside it and how it fails 1 km/h faster
+  (WIDE / TIGHT / SPIN). Top-down replay of the judged lap with the powerslide's dashboard.
+- First figures (lap g): MX-5 NA 0.82, Model 3 0.82, Civic Type R FK8 0.76, 911 GT3 0.98; every one fails WIDE
+  one step up. Against the free references: Model 3 0.82 vs Car and Driver's 0.86 (their 300 ft pad), F-150 Raptor
+  0.89 vs C&D's ~0.72 (the all-terrain tyre gap named in build 354).
+- Left open: the driver's speed loop is proportional, so it settles just under its target (the lap time decides
+  the score); ESC stays at each car's default; the 1 m lane is this game's, not a standard.
+- Fingerprint (lap, 0–100, dyno): identical.
+
+### A rain tyre's own wet grip (build 367)
+
+- A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
+  wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
+  inter and full wet at class A's floor (1.55), both probable. Standing still on a properly wet track a rain tyre
+  keeps 0.749 of its dry grip, a road tyre 0.71 as before.
+- Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
+  race rain tyre's real figure above class A (no label grades it).
+
+### Regen power against measured EVs, researched (build 366)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test221` prints the comparison and checks the gap stays named.
+
+### A green baseline: test136 re-locked, test145 passes (build 365)
+
+Step 0 of `plans/small-physics.md`. No physics changed; the fingerprint is identical.
+
+- **test136** (the Teslas' locked motor figures) was failing since build 314. Run at each build, the moves come from
+  three merged builds, each intended and each in its own entry: 314 (Model 3 stator 226 → 225 mm, MotorXP) moved the
+  torque, knee, motor mass and peak hold (Model 3 424 → 426 Nm, 6627 → 6604 rpm, 55.18 → 54.66 kg, 37 → 29 s);
+  315 (jacket cooling) the continuous power (Model 3 259 → 282 kW, Model Y 316 → 336, Plaid 708 → 750); 354
+  (premium touring tyres) the Model 3's 0-100 (6.18 → 5.90 s). Re-locked to today's values, with the builds named
+  in the test. The hybrids, the tail motor and the Wh/km had not moved past the lock.
+- **test145** passes on `main` (7 min): builds 336 and 337 had already fixed what failed at build ~320.
+- Left open, not physics: test42, test64 and test125 still fail on `main` (see the plan).
+### Bump stops, droop, and bound and rebound damping in the stepped car (build 364)
+
+Step 1 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's travel ends.** Up to the bump rubber and down to full droop by the axle's type (`SUSP_GEO`: strut 70/80 mm, wishbone and multi-link 80/90, twist beam 85/95, solid axle 100/110; PROBABLE, Reimpell, *The Automotive Chassis*, ch. 5). Past bump a progressive rubber, F = kb x / (1 − x/25 mm), kb the wheel rate (PROBABLE); at its solid height and at full droop the wheel is stopped on the body, so a lifted wheel hangs from it.
+- **Bound and rebound apart:** rebound 3× bound (passenger dampers ~3:1, Dixon, *The Shock Absorber Handbook*; PROBABLE), their mean the kit's damper, so the lap's quarter car is unchanged.
+- **`test220`** (new): a 200 mm step reaches the rubber and stops at its travel (M3 95 mm, MX-5 105 mm); a 300 mm hole leaves the wheel hanging at full droop off the road for 140–160 ms, never past it.
+- **`test205` updated, in the open:** a wheel falling into a 60 mm dip now falls against the rebound damping, so it is off the road 49–53 ms (44–47 before); its reference quarter car now uses the rebound damping too (51–55 ms).
+- **Left open:** travel by the kit (a lowered car keeps its type's), the damper's blow-off, the tyre's own damping.
 
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 

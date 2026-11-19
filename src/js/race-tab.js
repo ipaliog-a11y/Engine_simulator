@@ -22,8 +22,8 @@ function fillTrackSelect(sel,value){
   sel.value=TRACKS[value]?value:Object.keys(TRACKS)[0];
 }
 // Where an entrant can come from: what is built now, the garage's cars, and the factory cars.
-function raceFillAdd(){
-  const sel=document.getElementById('raceAddSel');if(!sel)return;
+function raceFillAdd(id){
+  const sel=document.getElementById(id||'raceAddSel');if(!sel)return;
   const cars=garage.filter(g=>gKind(g)==='car');
   let h='<optgroup label="'+esc(tr('THIS BUILD'))+'"><option value="cur">'+esc(tr('The car on the VEHICLE tab'))+'</option></optgroup>';
   if(cars.length)h+='<optgroup label="'+esc(tr('GARAGE'))+'">'+cars.map(g=>'<option value="g:'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</optgroup>';

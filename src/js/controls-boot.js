@@ -107,7 +107,7 @@ function bindControls(){
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
     // One group per kind (build 352: the list grew past a dozen).
-    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE'},groups={};
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD'},groups={};
     RUN_CHALLENGES.forEach(c=>{
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
@@ -140,6 +140,7 @@ function bindControls(){
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  if(typeof bindChalRank==='function')bindChalRank();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
