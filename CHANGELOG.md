@@ -25,6 +25,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
 - Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
 
+### Ten more measured real circuits (build 386)
+
+- **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
+  CSVs (OSM bbox or circuit relation for geo; DEM heights as before); Daytona road course, Lime Rock,
+  Laguna Seca, VIR, Indianapolis road course, Le Mans and Road Atlanta from track-atlas measured edges
+  (width = distance to left + right edge; already WGS84, no rigid fit).
+- Importer: OSM `type=circuit` relations; atlas `.surface.geojson` path. `test65` covers all 32.
+- Left open: Sebring / Watkins Glen / Long Beach (atlas seen-both edge coverage too low).
+
 ### Vehicle-profile-art skill for factory showroom pictures (build 385)
 
 - New Cursor skill at `.cursor/skills/vehicle-profile-art/`: when a new factory car needs its

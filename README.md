@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 385
+# PIXEL POWERTRAIN v0.8 build 386
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -239,8 +239,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   balanced) and the **Nordschleife** (20.4 km, 44 corners, 290 m of elevation and 505 m of climbing
   per lap — geometry and gradients derived from a recorded GPX trace, corners numbered rather than
   named because the detector can't be reliably aligned with the circuit's real corner names) — plus
-  **22 real circuits** (Spa, Suzuka, Silverstone, Monza, Brands Hatch and the rest; see *Real
-  circuits* below) with measured width and terrain-model elevation. You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
+  **32 real circuits** (Spa, Suzuka, Silverstone, Monza, Brands Hatch, Le Mans, Laguna Seca and the
+  rest; see *Real circuits* below) with measured width and terrain-model elevation. You get a **lap time**, three **sector splits**, average / slowest / fastest speeds
   and the number of gear changes, plus a view of the lap from above and behind the car — the track drawn to its real, **varying**
   width,
   with an **optimised racing line** through it **coloured by what is limiting the car** — power, traction, cornering grip or braking — and a legend totalling
@@ -807,23 +807,15 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   *Accuracy note: imported lap times read a little slow — the line is still an approximation of the
   minimum-time line, the width profile is modelled from the layout rather than surveyed, and the
   driver never errs. It is a consistent yardstick for comparing builds, not a lap record.*
-- **Real circuits (new, build 123)**: 22 real tracks under **REAL CIRCUITS** in the circuit menu —
-  COTA, Brands Hatch GP, Hungaroring, Catalunya, Hockenheim, the Indianapolis oval, Albert Park,
-  Hermanos Rodríguez, Gilles Villeneuve, Monza, Nürburgring GP, Bahrain, Interlagos, Sepang, Shanghai,
-  Silverstone, Sochi, Spa-Francorchamps, Red Bull Ring, Suzuka, Yas Marina and Zandvoort. No single
-  open source has everything, so `tools/import-real-tracks.mjs` combines three:
-  the [TUM racetrack database](https://github.com/TUMFTM/racetrack-database) gives the centreline every
-  5 m and the **measured** width to each side (from satellite imagery), in a local frame with no
-  geography and no height; [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) (or
-  OpenStreetMap, for Brands Hatch and the Indianapolis oval) gives the same circuit in latitude and
-  longitude, and a rigid fit lays one on the other (1.2–7.4 m RMS; Yas Marina 13 m, where the sources
-  differ in layout); a terrain model through [OpenTopoData](https://www.opentopodata.org) (EU-DEM 25 m,
-  USGS 10 m, SRTM 30 m) then gives each point its height, median-filtered and smoothed over ~60 m so
-  model noise doesn't invent crests. Lengths land within 0.3 % of the official figures, and the
-  rises where they are well published match: Spa 103 m (104), Red Bull Ring 68 m (65), Interlagos
-  41 m (43), Suzuka 42 m (40). The generated `tracks/real-circuits.js` is kept apart from the app
-  because it carries its sources' licences (TUM data LGPL-3.0, OpenStreetMap ODbL); without it the app
-  simply has its four test circuits.
+- **Real circuits (build 123, +10 in build 386)**: 32 real tracks under **REAL CIRCUITS** — the
+  original 22 from TUM (COTA through Zandvoort), plus Moscow Raceway, Oschersleben and the Norisring
+  (also TUM; Norisring via an OSM circuit relation), and Daytona road course, Lime Rock, Laguna Seca,
+  VIR, Indianapolis road course, Le Mans and Road Atlanta from
+  [track-atlas](https://github.com/tobi/track-atlas) measured edges. `tools/import-real-tracks.mjs`
+  builds them offline: TUM centreline + measured width fitted onto bacinger/f1-circuits or OSM, or
+  atlas midline/edges already in WGS84; heights from OpenTopoData (EU-DEM / USGS / SRTM), smoothed.
+  Lengths land within 1 % of the official figures. `tracks/real-circuits.js` stays apart (TUM LGPL-3.0,
+  OSM/atlas ODbL).
   *Caveats:* the layout is the one in the source data, which can predate a rebuild (Catalunya with the
   chicane, Zandvoort before 2020, Yas Marina before 2021); a terrain model measures ground, so tree
   cover and buildings leak a few metres into the street-side tracks (Albert Park, Mexico City); corners
@@ -963,7 +955,7 @@ node tools/stamp.mjs --check    # verify it is consistent and ahead of origin/ma
    each with its own firing frequency, fuelling, efficiency, emissions and sound.
 6. ~~**(A) Vehicle / drivetrain layer**~~ ✅ — chassis, drivetrain, gearbox types, differential
    types, tyres, aero, weight, brakes and suspension → acceleration, top speed, braking and the
-   0–200–0 test, with **per-chassis factory fitment**; a **test track** (four test circuits and 22 real ones, a
+   0–200–0 test, with **per-chassis factory fitment**; a **test track** (four test circuits and 32 real ones, a
    friction-circle lap solver with a late-apex racing line, variable width and 3D elevation,
    sector splits and a limit-coloured map); lap time feeding the **challenge system and
    scorecard**; and a **garage** holding any number of named chassis+engine combos.

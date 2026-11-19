@@ -4,19 +4,19 @@
 //   node tools/import-real-tracks.mjs            fetch (cached in tools/.cache/), fit, write, print QA
 //   node tools/import-real-tracks.mjs --only spa only the named circuit(s), comma separated
 //
-// THREE SOURCES, BECAUSE NONE HAS EVERYTHING.
+// TWO PIPELINES, SAME OUTPUT SHAPE.
+//
+// TUM pipeline (three sources, because none has everything):
 //   1. TUMFTM/racetrack-database (LGPL-3.0): centreline every 5 m and the MEASURED width to each side,
 //      in a local metre frame with no geographic reference and no height.
-//   2. bacinger/f1-circuits (MIT) GeoJSON, or OpenStreetMap raceway ways (ODbL) where bacinger has no
-//      file: the same circuit in latitude/longitude, but sparse (Spa: 153 points, gaps up to 377 m).
-//   3. A terrain model through OpenTopoData: EU-DEM 25 m in Europe, USGS NED 10 m in the USA, SRTM 30 m
-//      elsewhere. Height at any latitude/longitude.
-// The TUM centreline is laid onto the geographic one by a rigid fit (rotation + translation, no scale:
-// both are metres), which georeferences it; the terrain model then gives each point its height.
+//   2. bacinger/f1-circuits (MIT) GeoJSON, OpenStreetMap raceway ways (ODbL), or an OSM circuit
+//      relation (street circuits such as the Norisring): the same circuit in latitude/longitude.
+//   3. A terrain model through OpenTopoData: EU-DEM 25 m / USGS NED 10 m / SRTM 30 m.
+// The TUM centreline is laid onto the geographic one by a rigid fit (rotation + translation, no scale).
 //
-// A terrain model is the ground plus a few metres of noise (and, in a city, roofs). Vertical curvature
-// is the second derivative of that height, so unsmoothed noise would invent crests the road does not
-// have. A 5-point median takes out single spikes, then a Gaussian over ~60 m keeps the hills.
+// Atlas pipeline (track-atlas measured surfaces):
+//   Left/right edges and midline already in WGS84 from open orthoimagery. Width at each station is
+//   the sum of distances to the nearest left and right edge points. DEM heights as above. No rigid fit.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -27,11 +27,12 @@ const CACHE = path.join(ROOT, 'tools', '.cache');
 const OUT = path.join(ROOT, 'tracks', 'real-circuits.js');
 const TUM = 'https://raw.githubusercontent.com/TUMFTM/racetrack-database/master/tracks/';
 const BAC = 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/';
+const ATLAS = 'https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/';
 const STEP = 20;          // control-point spacing, metres (the app's spline resamples to 5 m)
 const MAX_RMS = 15;       // a fit worse than this means the two sources disagree about the layout
 
-// key: app key; tum: TUM file; geo: bacinger id, or an OSM bbox [w,s,e,n]; dem: OpenTopoData dataset.
-const CIRCUITS = [
+// key: app key; tum: TUM file; geo: bacinger id, OSM bbox [w,s,e,n], or { relation }; dem; label; place.
+const TUM_CIRCUITS = [
   { key: 'cota',   tum: 'Austin',       geo: 'us-2012', dem: 'ned10m',   label: 'COTA',             place: 'Austin, Texas' },
   { key: 'brands', tum: 'BrandsHatch',  geo: [0.245, 51.348, 0.280, 51.366], dem: 'eudem25m', label: 'BRANDS HATCH', place: 'Kent, England' },
   { key: 'hungaro',tum: 'Budapest',     geo: 'hu-1986', dem: 'eudem25m', label: 'HUNGARORING',      place: 'Mogyoród, Hungary' },
@@ -54,16 +55,36 @@ const CIRCUITS = [
   { key: 'suzuka', tum: 'Suzuka',       geo: 'jp-1962', dem: 'srtm30m',  label: 'SUZUKA',           place: 'Suzuka, Japan' },
   { key: 'yasmarina',tum:'YasMarina',   geo: 'ae-2009', dem: 'srtm30m',  label: 'YAS MARINA',       place: 'Abu Dhabi, UAE' },
   { key: 'zandvoort',tum:'Zandvoort',   geo: 'nl-1948', dem: 'eudem25m', label: 'ZANDVOORT',        place: 'Zandvoort, Netherlands' },
+  { key: 'moscow', tum: 'MoscowRaceway', geo: [36.2503, 55.992, 36.2722, 56.0014], dem: 'srtm30m', label: 'MOSCOW RACEWAY', place: 'Volokolamsk, Russia' },
+  { key: 'oschersleben', tum: 'Oschersleben', geo: [11.2681, 52.0231, 11.2866, 52.0323], dem: 'eudem25m', label: 'OSCHERSLEBEN', place: 'Oschersleben, Germany' },
+  { key: 'norisring', tum: 'Norisring', geo: { relation: 1889538 }, dem: 'eudem25m', label: 'NORISRING', place: 'Nuremberg, Germany' },
 ];
 
+// Measured edges from tobi/track-atlas (MIT code; ODbL for OSM-derived geometry). Already WGS84.
+const ATLAS_CIRCUITS = [
+  { key: 'daytona', atlas: 'daytona', layout: 'gp', dem: 'ned10m', label: 'DAYTONA', place: 'Daytona Beach, Florida' },
+  { key: 'lime_rock', atlas: 'lime-rock', layout: 'gp', dem: 'ned10m', label: 'LIME ROCK', place: 'Lakeville, Connecticut' },
+  { key: 'laguna', atlas: 'laguna-seca', layout: 'gp', dem: 'ned10m', label: 'LAGUNA SECA', place: 'Monterey, California' },
+  { key: 'vir', atlas: 'virginia-international-raceway', layout: 'gp', dem: 'ned10m', label: 'VIR', place: 'Alton, Virginia' },
+  { key: 'indy_road', atlas: 'indianapolis', layout: 'gp', dem: 'ned10m', label: 'INDIANAPOLIS ROAD', place: 'Speedway, Indiana (road course)' },
+  { key: 'lemans', atlas: 'circuit-de-la-sarthe', layout: '24h', dem: 'eudem25m', label: 'LE MANS', place: 'Le Mans, France' },
+  { key: 'road_atlanta', atlas: 'road-atlanta', layout: 'gp', dem: 'ned10m', label: 'ROAD ATLANTA', place: 'Braselton, Georgia' },
+];
+
+const CIRCUITS = [...TUM_CIRCUITS, ...ATLAS_CIRCUITS];
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const demName = dem => dem === 'eudem25m' ? 'EU-DEM 25 m' : dem === 'ned10m' ? 'USGS 10 m' : 'SRTM 30 m';
+const geoKind = geo => typeof geo === 'string' ? 'the f1-circuits'
+  : geo && typeof geo === 'object' && geo.relation ? 'OpenStreetMap' : 'OpenStreetMap';
+
 // curl rather than fetch: it honours the environment's proxy and CA settings without configuration.
 async function cached(name, url, args = []) {
   mkdirSync(CACHE, { recursive: true });
   const f = path.join(CACHE, name);
   if (existsSync(f)) return readFileSync(f, 'utf8');
   for (let a = 0; ; a++) {
-    try { execFileSync('curl', ['-sSL', '--fail', '--max-time', '120', ...args, '-o', f, url]); return readFileSync(f, 'utf8'); }
+    try { execFileSync('curl', ['-sSL', '--fail', '--max-time', '120', '-A', 'PixelPowertrainImport/1.0', ...args, '-o', f, url]); return readFileSync(f, 'utf8'); }
     catch (e) { if (a >= 3) throw new Error('download failed: ' + url); await sleep(2000 * 2 ** a); }
   }
 }
@@ -73,23 +94,42 @@ function readTum(text) {
   return text.split('\n').filter(l => l.trim() && !l.startsWith('#'))
     .map(l => l.split(',').map(Number)).map(([x, y, wr, wl]) => ({ x, y, w: wr + wl }));
 }
+function parseOsmWays(xml, { racewayOnly = true, memberIds = null } = {}) {
+  const nodes = new Map();
+  for (const m of xml.matchAll(/<node id="(\d+)"[^>]*?lat="([-\d.]+)" lon="([-\d.]+)"/g)) nodes.set(m[1], [+m[3], +m[2]]);
+  const lines = [];
+  for (const m of xml.matchAll(/<way id="(\d+)"[^>]*>([\s\S]*?)<\/way>/g)) {
+    const id = m[1], body = m[2];
+    if (memberIds && !memberIds.has(id)) continue;
+    if (racewayOnly && !/<tag k="highway" v="raceway"\/>/.test(body)) continue;
+    lines.push([...body.matchAll(/<nd ref="(\d+)"\/>/g)].map(n => nodes.get(n[1])).filter(Boolean));
+  }
+  return lines;
+}
 // Reference geometry as a list of polylines in [lon, lat].
 async function geoLines(c) {
   if (typeof c.geo === 'string') {
     const g = JSON.parse(await cached(c.geo + '.geojson', BAC + c.geo + '.geojson'));
     return g.features.map(f => f.geometry).flatMap(g => g.type === 'LineString' ? [g.coordinates] : g.coordinates);
   }
+  if (c.geo && typeof c.geo === 'object' && c.geo.relation) {
+    // Street circuits (Norisring): OSM stores a type=circuit relation whose members are ordinary
+    // roads, not highway=raceway. Take every member way except the pit lane.
+    const id = c.geo.relation;
+    const xml = await cached(c.key + '-rel.xml', `https://api.openstreetmap.org/api/0.6/relation/${id}/full`);
+    const members = new Set();
+    for (const m of xml.matchAll(/<member type="way" ref="(\d+)" role="([^"]*)"/g)) {
+      if (m[2] === 'pit_lane') continue;
+      members.add(m[1]);
+    }
+    const lines = parseOsmWays(xml, { racewayOnly: false, memberIds: members });
+    if (!lines.length) throw new Error(c.key + ': OSM relation ' + id + ' has no usable member ways');
+    return lines;
+  }
   // OpenStreetMap: every way tagged highway=raceway in the box. Extra ways (an alternative loop, a
   // kart track) do no harm: the fit pulls the TUM line onto the NEAREST reference point.
   const xml = await cached(c.key + '.osm', 'https://api.openstreetmap.org/api/0.6/map?bbox=' + c.geo.join(','));
-  const nodes = new Map();
-  for (const m of xml.matchAll(/<node id="(\d+)"[^>]*?lat="([-\d.]+)" lon="([-\d.]+)"/g)) nodes.set(m[1], [+m[3], +m[2]]);
-  const lines = [];
-  for (const m of xml.matchAll(/<way id="\d+"[^>]*>([\s\S]*?)<\/way>/g)) {
-    if (!/<tag k="highway" v="raceway"\/>/.test(m[1])) continue;
-    lines.push([...m[1].matchAll(/<nd ref="(\d+)"\/>/g)].map(n => nodes.get(n[1])).filter(Boolean));
-  }
-  return lines;
+  return parseOsmWays(xml, { racewayOnly: true });
 }
 
 // ---- geometry ----
@@ -186,13 +226,27 @@ function smoothZ(z, step) {
   return med.map((_, i) => { let s = 0; for (let k = -R; k <= R; k++) s += med[(i + k + n) % n] * wts[k + R]; return s / W; });
 }
 
-// ---- main ----
-const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7) || (process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '');
-const want = only ? CIRCUITS.filter(c => only.split(',').includes(c.key)) : CIRCUITS;
-const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8').match(/=\s*(\{[\s\S]*\});\s*$/)[1]) : {};
-const result = only ? prev : {};
-const qa = [];
-for (const c of want) {
+function packTrack(c, { out, total, en, ll, z, zr, src, blurb, fitRms = 0, mirrored = false }) {
+  const minE = Math.min(...en.map(p => p[0])), maxN = Math.max(...en.map(p => p[1])), zMin = Math.min(...z);
+  const wMean = out.reduce((s, p) => s + p.w, 0) / out.length;
+  const track = {
+    label: c.label, width: +wMean.toFixed(2), wprof: out.map(p => +(p.w / wMean).toFixed(3)),
+    real: true, names: [],
+    blurb,
+    src: { ...src, fitRms: +fitRms.toFixed(2), lat: +((ll.reduce((s, p) => s + p[1], 0) / ll.length)).toFixed(5),
+      lon: +((ll.reduce((s, p) => s + p[0], 0) / ll.length)).toFixed(5) },
+    pts: en.map(([e, n], i) => ({ x: +(e - minE).toFixed(1), y: +(maxN - n).toFixed(1), z: +(z[i] - zMin).toFixed(1) })),
+  };
+  const ws = out.map(p => p.w);
+  return {
+    track,
+    qa: { key: c.key, length_m: Math.round(total), pts: out.length, fitRms_m: +fitRms.toFixed(1), mirrored,
+      width_m: `${Math.min(...ws).toFixed(1)}-${Math.max(...ws).toFixed(1)}`,
+      elevRange_m: +(Math.max(...z) - zMin).toFixed(1), rawRange_m: +(Math.max(...zr) - Math.min(...zr)).toFixed(1) },
+  };
+}
+
+async function buildTum(c) {
   const tum = readTum(await cached(c.tum + '.csv', TUM + c.tum + '.csv'));
   const lines = await geoLines(c);
   const all = lines.flat(), lat0 = all.reduce((s, p) => s + p[1], 0) / all.length, lon0 = all.reduce((s, p) => s + p[0], 0) / all.length;
@@ -208,21 +262,61 @@ for (const c of want) {
   const zr = await elevations(c, ll);
   if (zr.some(v => v == null)) throw new Error(c.key + ': terrain model has gaps on this circuit');
   const z = smoothZ(zr, total / out.length);
-  // App frame: x east, y DOWN the screen (south), as gpxToTrack does; re-origined to positive values.
-  const minE = Math.min(...en.map(p => p[0])), maxN = Math.max(...en.map(p => p[1])), zMin = Math.min(...z);
-  const wMean = out.reduce((s, p) => s + p.w, 0) / out.length;
-  result[c.key] = {
-    label: c.label, width: +wMean.toFixed(2), wprof: out.map(p => +(p.w / wMean).toFixed(3)),
-    // Not `gps`: the app's GPS denoiser exists for raw receiver traces. TUM's centreline is already
-    // smoothed, and denoising it again shaved 1.3 % off every lap by straightening real bends.
-    real: true, names: [],
-    blurb: `${c.place}. Centreline and measured track width from the TUM racetrack database, laid onto ${typeof c.geo === 'string' ? 'the f1-circuits' : 'OpenStreetMap'} geometry (fit ${F.rms.toFixed(1)} m RMS); elevation from the ${c.dem === 'eudem25m' ? 'EU-DEM 25 m' : c.dem === 'ned10m' ? 'USGS 10 m' : 'SRTM 30 m'} terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.`,
-    src: { tum: c.tum, geo: c.geo, dem: c.dem, fitRms: +F.rms.toFixed(2), lat: +lat0.toFixed(5), lon: +lon0.toFixed(5) },
-    pts: en.map(([e, n], i) => ({ x: +(e - minE).toFixed(1), y: +(maxN - n).toFixed(1), z: +(z[i] - zMin).toFixed(1) })),
-  };
-  const ws = out.map(p => p.w);
-  qa.push({ key: c.key, length_m: Math.round(total), pts: out.length, fitRms_m: +F.rms.toFixed(1), mirrored: F.mirrored,
-    width_m: `${Math.min(...ws).toFixed(1)}-${Math.max(...ws).toFixed(1)}`, elevRange_m: +(Math.max(...z) - zMin).toFixed(1), rawRange_m: +(Math.max(...zr) - Math.min(...zr)).toFixed(1) });
+  return packTrack(c, {
+    out, total, en, ll, z, zr, fitRms: F.rms, mirrored: F.mirrored,
+    src: { tum: c.tum, geo: c.geo, dem: c.dem },
+    blurb: `${c.place}. Centreline and measured track width from the TUM racetrack database, laid onto ${geoKind(c.geo)} geometry (fit ${F.rms.toFixed(1)} m RMS); elevation from the ${demName(c.dem)} terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.`,
+  });
+}
+
+async function buildAtlas(c) {
+  const url = `${ATLAS}${c.atlas}/raw/layers/${c.layout}.surface.geojson`;
+  const g = JSON.parse(await cached(`${c.key}-surface.geojson`, url));
+  const byRole = {};
+  for (const f of g.features) {
+    const role = f.properties && f.properties.role;
+    if (role) byRole[role] = f;
+  }
+  const mid = byRole.midline, left = byRole.edge_left, right = byRole.edge_right;
+  if (!mid || !left || !right) throw new Error(c.key + ': surface geojson missing midline/edges');
+  const midLL = mid.geometry.coordinates; // [lon, lat]
+  const lat0 = midLL.reduce((s, p) => s + p[1], 0) / midLL.length;
+  const lon0 = midLL.reduce((s, p) => s + p[0], 0) / midLL.length;
+  const R = 6371000, rad = Math.PI / 180, kx = rad * R * Math.cos(lat0 * rad), ky = rad * R;
+  const proj = ([lon, lat]) => [(lon - lon0) * kx, (lat - lat0) * ky];
+  const leftCloud = refCloud([left.geometry.coordinates], proj);
+  const rightCloud = refCloud([right.geometry.coordinates], proj);
+  const pts = midLL.map(([lon, lat]) => {
+    const [x, y] = proj([lon, lat]);
+    const w = leftCloud.nearest(x, y)[1] + rightCloud.nearest(x, y)[1];
+    return { x, y, w };
+  });
+  const { out, total } = resampleClosed(pts, STEP);
+  const en = out.map(p => [p.x, p.y]);
+  const ll = en.map(([e, n]) => [lon0 + e / kx, lat0 + n / ky]);
+  const zr = await elevations(c, ll);
+  if (zr.some(v => v == null)) throw new Error(c.key + ': terrain model has gaps on this circuit');
+  const z = smoothZ(zr, total / out.length);
+  const q = (mid.properties && mid.properties.quality) || {};
+  const ce95 = q.accuracy_m != null ? +q.accuracy_m : 0;
+  return packTrack(c, {
+    out, total, en, ll, z, zr, fitRms: 0, mirrored: false,
+    src: { atlas: c.atlas, layout: c.layout, dem: c.dem, ce95_m: ce95 },
+    blurb: `${c.place}. Measured midline and track edges from track-atlas (open orthoimagery; absolute accuracy about ${ce95 ? ce95.toFixed(1) + ' m' : 'a metre'} CE95); elevation from the ${demName(c.dem)} terrain model, smoothed. Corners are numbered, not named. The layout is the one in the source data and may predate recent changes.`,
+  });
+}
+
+// ---- main ----
+const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7) || (process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '');
+const want = only ? CIRCUITS.filter(c => only.split(',').includes(c.key)) : CIRCUITS;
+if (only && !want.length) throw new Error('no circuits matched --only ' + only);
+const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8').match(/=\s*(\{[\s\S]*\});\s*$/)[1]) : {};
+const result = only ? prev : {};
+const qa = [];
+for (const c of want) {
+  const packed = c.atlas ? await buildAtlas(c) : await buildTum(c);
+  result[c.key] = packed.track;
+  qa.push(packed.qa);
   console.error('done', c.key);
 }
 console.table(qa);
@@ -230,11 +324,13 @@ mkdirSync(path.dirname(OUT), { recursive: true });
 writeFileSync(OUT, `// Real circuits for Pixel Powertrain. GENERATED by tools/import-real-tracks.mjs — do not edit by hand.
 //
 // Track data is derived from, and carries the licences of, its sources:
-//  - Centrelines and track widths: TUMFTM racetrack-database, Technical University of Munich,
+//  - Centrelines and track widths (TUM set): TUMFTM racetrack-database, Technical University of Munich,
 //    https://github.com/TUMFTM/racetrack-database — GNU LGPL-3.0. This file is kept separate from the
 //    MIT-licensed app so it can be replaced or regenerated on its own.
-//  - Georeferencing: bacinger/f1-circuits, https://github.com/bacinger/f1-circuits — MIT; and
-//    © OpenStreetMap contributors, https://www.openstreetmap.org/copyright — ODbL (Brands Hatch).
+//  - Measured edges (atlas set): tobi/track-atlas, https://github.com/tobi/track-atlas — MIT code;
+//    OSM-derived geometry ODbL (© OpenStreetMap contributors).
+//  - Georeferencing (TUM set): bacinger/f1-circuits, https://github.com/bacinger/f1-circuits — MIT; and
+//    © OpenStreetMap contributors, https://www.openstreetmap.org/copyright — ODbL.
 //  - Elevation via OpenTopoData (https://www.opentopodata.org): EU-DEM v1.1 (© European Union,
 //    Copernicus Land Monitoring Service), USGS 3DEP/NED (public domain), NASA SRTM (public domain).
 window.REAL_TRACKS = ${JSON.stringify(result)};
