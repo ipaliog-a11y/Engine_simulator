@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Next 100 factory cars shortlisted (research batch 2)
+
+- `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).
+- `queue.json` + `validate.mjs` + `tests/test235.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
+- Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
+- Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
+
 ### Ten more measured real circuits (build 386)
 
 - **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
