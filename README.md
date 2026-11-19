@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 382
+# PIXEL POWERTRAIN v0.8 build 383
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -303,7 +303,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - **Economy** — finish at a target time (125, 150 or 200% of the car's own fastest time) on the least fuel
     (litres, L/100 km) or pack energy (kWh, Wh/km, regen recovered). An **eco driver** does it: an engine car
     accelerates at its engine's best-BSFC point, shifts up early and slows on engine braking in fuel cut; an
-    EV accelerates at its motor's most efficient torque and slows on regen where it can. A speed cap and a
+    EV accelerates at its motor's most efficient torque and slows on regen where it can; a hybrid's fuel comes
+    from its WLTC energy manager on the road (pack out and back, engine-off time). A speed cap and a
     blend toward the car's full grip and power (shown as ECO BLEND) make the time; the cheapest is kept.
   - **Fixed-time stage** — the same set time for every car on each road (a Golf GTI Mk7's best plus 2%).
     The car's fastest run from a standing start either makes it or is a **DNF**.
@@ -333,7 +334,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   - The **i** button beside the Challenges heading shows how the selected challenge is run and judged.
   - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
     double-click to reset. Known gaps: the economy plan is a
-    search over a cap and a blend, not an optimal plan; a hybrid uses the engine-car path; regen strength
+    search over a cap and a blend, not an optimal plan; a hybrid's charge-sustaining energy manager drives
+    the engine's speed profile, and a climb past its motor limits is charged as engine fuel; regen strength
     is the maker's sourced cap (build 378: ~0.21 g and 77–90 kW on the Teslas).
 
 - **Animated engine cutaway** — the LIVE tab is a section through the engine you

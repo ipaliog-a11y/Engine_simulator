@@ -18,6 +18,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Hybrids on the economy roads run their own energy manager (build 383)
+
+- A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
+  WLTC's charge-sustaining ECMS (`hybridCycle`, `fuel-cycle.js`) on the road's speed profile with its grade: electric
+  only, engine with load-point shifting, regen within the motor's and pack's limits (the `hybRegenTable` rule). It
+  starts warm at the tune's target charge and ends where it started (within 0.5% of the pack), or is charge-corrected
+  as on WLTC. The result shows fuel, pack energy out and back in, engine-off time and time over the hybrid's limits.
+- Alpine Pass at 125%, before → after (L/100 km): Ioniq 6.03 → 9.50, Prius 3.13 → 8.08, Qashqai e-POWER 2.31 → 10.77,
+  330e 5.17 → 15.42, 918 Spyder 14.37 → 25.43. The old figures were low: where a climb needed more than the engine alone
+  gives, the engine path fell back to "full load at 1100 rpm" fuel and charged the rest of the power to nobody.
+- Engine cars and EVs do not move; the fingerprint is identical (5208 values; WLTC hybrid cycles included: the road path
+  is behind a `prof` argument, and its 10 rpm × 1 Nm memo is off on WLTC).
+- Open: the speed profile is still the engine's eco driver, not hybrid-aware. Where a climb asks more than MG1/MG2
+  (power-split, at speed) or engine + motor allow, the engine is charged for the power on its best line anyway
+  (`limitShare`: Prius 36%, e-POWER 37%, 330e 15%, 918 12%, Ioniq 7% of the run). Plug-ins run charge-sustaining.
+  WLTC itself still uses the old flat-out fallback on its hardest steps (most on the Prius), left so WLTC does not move.
+- Against owner reports: at 200% pace (63 km/h) the Prius and Ioniq read 6.4 L/100 km on Alpine Pass; Prius owners
+  report 4.5–4.8 for whole mountain trips at the limits and 5.6 on a near-all-uphill stretch. Alpine is one-way and
+  climbing, so no descent pays it back; not a like-for-like figure.
+
 ### A handbrake for the stepped car and the drift challenge (build 382)
 
 - `stepCar` takes `u.handbrake` (0–1): brake torque on the rear wheels only, which the ABS does not ease (a lever on the

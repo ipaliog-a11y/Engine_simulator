@@ -3,7 +3,7 @@
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Named gap: speed cap is not optimal lift-coast DP.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Named gap: speed cap is not optimal lift-coast DP.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -219,6 +219,19 @@ function ecoEnergyJ(line,v){
   }
   return{E,regenJ:back};
 }
+// A hybrid on the road (build 383): the speed profile as hybridCycle's steps (fuel-cycle.js), so the charge-sustaining
+// energy manager (ECMS: electric only, engine with load-point shifting, regen within the motor's and the pack's limits,
+// the same rule as hybRegenTable) runs on the road's own grade. Warm start at the tune's target charge; the pack ends
+// where it started (or the R154 charge correction is added as fuel, as on WLTC). Same mass and 12 V load as ecoFuelKg.
+function ecoHybrid(line,v){
+  if(!isHybrid())return null;
+  const segs=[];
+  for(let i=0;i<line.length-1;i++){
+    const ds=line[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2);
+    segs.push({vm,dt:ds/vm,a:(v1*v1-v0*v0)/(2*Math.max(0.05,ds)),sinT:line[i].sinT,cosT:line[i].cosT});
+  }
+  return hybridCycle(vehicle,{segs});
+}
 // Eco strategy (build 352): the eco driver (ecoDriverTable) on the open solve, then a speed cap so the finish time hits
 // the target (not early). If the eco driver alone is too slow for the target, its limits are blended back toward the
 // car's own (s) until it makes it. factorOpt (build 344): UI pace 1.25 / 1.5 / 2.0; else the road's timeFactor.
@@ -239,7 +252,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
     return best;
   };
-  const cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:ecoFuelKg(line,r.v);
+  const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
   let best=null,s=1,bestC=Infinity;
   for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
   if(!best){best=solveAt(1)||mt;s=1;}
@@ -253,6 +266,11 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     if(!en)return{ok:false,reason:'electric',road};
     const kWh=en.E/3.6e6,whkm=en.E/3600/km,kWhMin=enMin?enMin.E/3.6e6:null;
     return Object.assign(base,{kWh,whkm,regenKWh:en.regenJ/3.6e6,kWhMin});
+  }
+  if(hyb){   // fuel (charge-sustained) and the pack's energy out and back (build 383)
+    const h=ecoHybrid(line,v),hm=ecoHybrid(line,mt.v),L=h.kg/fp.density;
+    return Object.assign(base,{hybrid:true,fuelL:L,fuelKg:h.kg,l100:L/km*100,fuelLMin:hm.kg/fp.density,engOff:1-h.onShare,
+      packOutKWh:h.packOutKWh,packInKWh:h.packInKWh,dSocKWh:h.dSocKJ/3600,corrected:h.corrected,limitShare:h.limitShare});
   }
   const st={},kg=ecoFuelKg(line,v,st);
   const L=kg/fp.density,kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
