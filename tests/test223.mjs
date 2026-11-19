@@ -1,84 +1,57 @@
-// Challenges: rank several cars on one challenge (build 369).
+// Anti-dive and anti-lift in the stepped car (build 369, plans/small-physics.md step 2).
 //
-// WHY THIS EXISTS. The CHALLENGES tab solved one car at a time. The ranking runs a list of cars through the
-// selected challenge with its own solver and score. What must hold:
-//   · every registered kind has a score (RUN_CHALLENGE_SCORES), so the ranking needs no per-challenge code;
-//   · a ranked row's score equals the one-car solve of that car (same physics, same settings);
-//   · the table is sorted: passes first, then by the challenge's own score direction;
-//   · the page yields between cars: the progress bar shows while it runs, and CANCEL stops before the next car;
-//   · the loaded car and its challenge result are the same after a ranking as before;
-//   · no horizontal scroll at phone width, no page errors.
+// WHY THIS EXISTS. All the pitch under braking went through the springs; the links carry a share of it, from each
+// axle's side-view swing arm (SUSP_GEO svF/svR, Milliken RCVD ch. 17). What must hold, braking steadily in a straight
+// line in neutral (M3 E46: strut / multi-link; MX-5: wishbones), downforce off:
+//   · the body's pitch matches a reference worked out apart from stepCar: each corner sinks by its spring's load,
+//     the transfer m ax h / (2L) less the link's share Fx e/d, over the wheel rate, plus the transfer over the tyre's;
+//   · the same with the links carrying nothing (d without end): all of it through the springs, as before build 369;
+//   · so the pitch falls by the anti-dive share, and that share is 10-60 %.
 import { chromium } from './pw.mjs';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const shot = process.env.SHOT;
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: shot ? 2 : 1 });
-const errors = [], fails = [];
+const page = await browser.newPage();
+const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-
-const r = await page.evaluate(async () => {
-  const idx = n => FACTORY_CARS.findIndex(p => p.name.includes(n));
-  const out = {};
-  out.unscored = [...new Set(RUN_CHALLENGES.map(c => c.kind))].filter(k => !RUN_CHALLENGE_SCORES[k]);
-  loadVehiclePreset(FACTORY_CARS[idx('MX-5')]);
-  setTab('challenges');
-  const sel = document.getElementById('chalSel');
-  sel.value = 'stage-alpine'; sel.dispatchEvent(new Event('change'));
-  const before = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
-  const add = v => { const s = document.getElementById('chalRankAddSel'); s.value = v; document.getElementById('chalRankAddBtn').click(); };
-  const picks = ['MX-5', 'Golf GTI', 'Model 3'].map(idx);
-  out.picks = picks;
-  for (const i of picks) add('p:' + i);
-  // one-car reference scores
-  const ch = runChallengeById('stage-alpine');
-  out.ref = picks.map(i => withBuild(raceEntrantFrom('p:' + i).build, () => runChallengeScore(ch, solveRunChallenge(ch.id))));
-  const run = chalRankRun();
-  await new Promise(r => setTimeout(r, 0));
-  out.progShown = !document.getElementById('chalRankProg').hidden && !document.getElementById('chalRankStop').hidden;
-  await run;
-  out.rows = chalRank.rows.map(x => ({ name: x.name, s: x.s }));
-  out.table = document.querySelectorAll('#chalRankOut tbody tr').length;
-  out.after = { mass: vehicle.mass, time: chalResult.time, name: loaded.car && loaded.car.name };
-  out.before = before;
-  // cancel: stop after the first car
-  const run2 = chalRankRun();
-  await new Promise(r => setTimeout(r, 0));
-  document.getElementById('chalRankStop').click();
-  await run2;
-  out.cancelled = chalRank.rows.length;
-  // moose kind ranks too (higher is better)
-  sel.value = 'moose'; sel.dispatchEvent(new Event('change'));
-  chalRank.cars.splice(2, 1);
-  await chalRankRun();
-  out.moose = chalRank.rows.map(x => x.s && { v: x.s.v, pass: x.s.pass, higher: x.s.higher });
-  out.scrollW = document.documentElement.scrollWidth, out.w = window.innerWidth;
-  document.getElementById('chalRankOut').scrollIntoView();
+const fails = [];
+const R = await page.evaluate(() => {
+  const out = [];
+  for (const n of ['BMW M3 (E46', 'Mazda MX-5']) {
+    loadVehiclePreset(FACTORY_CARS.find(x => x.name.startsWith(n)));
+    const o = { name: n };
+    for (const flat of [false, true]) {
+      const car = driveCar(); car.clA = 0;
+      if (flat) { car.svF = [0, 1e9]; car.svR = [0, 1e9]; }
+      const s = driveRolling(car, 140);
+      for (let t = 0; t < 0.5; t += 0.001) stepCar(car, s, { steer: 0, throttle: 0.2, brake: 0 }, 0.001);
+      for (let t = 0; t < 2.5; t += 0.001) stepCar(car, s, { steer: 0, throttle: 0, brake: 0.25, gear: 0 }, 0.001);
+      let N = 0, p = 0, ax = 0; const fx = [0, 0, 0, 0];
+      for (let t = 0; t < 1; t += 0.001) { stepCar(car, s, { steer: 0, throttle: 0, brake: 0.25, gear: 0 }, 0.001);
+        N++; p += s.pitch; ax += s.ax; for (let i = 0; i < 4; i++) fx[i] += s.Fx[i]; }
+      p /= N; ax /= N; for (let i = 0; i < 4; i++) fx[i] /= N;
+      // the reference: steady, each corner's drop = spring load / wheel rate + transfer / tyre rate (outboard brakes)
+      const L = car.a + car.b, dW = car.m * ax * car.h / L / 2;            // the front's gain per wheel (ax < 0: dW < 0)
+      const dropF = (-dW + fx[0] * car.svF[0] / car.svF[1]) / car.ksF - dW / car.ktF;
+      const dropR = (dW + -fx[2] * car.svR[0] / car.svR[1]) / car.ksR + dW / car.ktR;
+      o[flat ? 'flat' : 'links'] = { p, ref: (dropR - dropF) / L, ax };
+    }
+    out.push(o);
+  }
   return out;
 });
-if (shot) await page.screenshot({ path: shot, fullPage: false });
 await browser.close();
-
-const ok = (c, m) => { if (!c) fails.push(m); };
-ok(r.unscored.length === 0, 'kinds without a score: ' + r.unscored);
-ok(r.picks.every(i => i >= 0), 'presets not found');
-ok(r.progShown, 'progress/cancel not shown while running');
-ok(r.table === 3 && r.rows.length === 3, 'table rows ' + r.table);
-for (let k = 0; k < r.ref.length; k++) {
-  const row = r.rows.find(x => x.s && Math.abs(x.s.v - r.ref[k].v) < 1e-9 && x.s.pass === r.ref[k].pass);
-  ok(row, 'ranked score differs from the one-car solve: ' + JSON.stringify(r.ref[k]));
+const deg = x => (x * 180 / Math.PI).toFixed(3);
+for (const o of R) {
+  const share = 1 - o.links.p / o.flat.p, shareRef = 1 - o.links.ref / o.flat.ref;
+  console.log(`${o.name.padEnd(12)} at ${(o.links.ax / 9.81).toFixed(2)} g: pitch ${deg(o.links.p)} deg (reference ${deg(o.links.ref)}); ` +
+    `no links ${deg(o.flat.p)} (reference ${deg(o.flat.ref)}); anti share ${(share * 100).toFixed(1)} % (reference ${(shareRef * 100).toFixed(1)} %)`);
+  for (const k of ['links', 'flat']) if (!(Math.abs(o[k].p / o[k].ref - 1) < 0.01)) fails.push(`${o.name} (${k}): pitch off its reference by more than 1 %`);
+  if (!(Math.abs(share - shareRef) < 0.01)) fails.push(`${o.name}: the pitch does not fall by the anti share`);
+  if (!(shareRef > 0.1 && shareRef < 0.6)) fails.push(`${o.name}: anti share outside 10-60 %`);
 }
-const sorted = rows => rows.every((x, i) => i === 0 || !x || !rows[i - 1] || (rows[i - 1].pass && !x.pass) ||
-  (rows[i - 1].pass === x.pass && (x.higher ? rows[i - 1].v >= x.v : rows[i - 1].v <= x.v)));
-ok(sorted(r.rows.map(x => x.s)), 'stage rows not sorted');
-ok(r.moose.length === 2 && r.moose.every(x => x && x.higher) && sorted(r.moose), 'moose rows ' + JSON.stringify(r.moose));
-ok(r.cancelled < 3, 'cancel did not stop: ' + r.cancelled + ' rows');
-ok(r.after.mass === r.before.mass && r.after.time === r.before.time && r.after.name === r.before.name, 'car changed: ' + JSON.stringify([r.before, r.after]));
-ok(r.scrollW <= r.w, 'horizontal scroll ' + r.scrollW + ' > ' + r.w);
-console.log('stage-alpine ranking:'); for (const x of r.rows) console.log('  ' + x.name.padEnd(36) + (x.s ? x.s.text + (x.s.pass ? ' PASS' : ' FAIL') : '—'));
-console.log('moose:', JSON.stringify(r.moose), ' cancelled after', r.cancelled, 'car(s)');
 for (const e of errors) fails.push(e);
-if (fails.length) { console.log('FAIL\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('PASS');
+if (fails.length) { console.log('\nFAIL:\n  ' + fails.join('\n  ')); process.exit(1); }
+console.log('\nPASS');

@@ -93,7 +93,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   pitch  Iyy theta'' = m ax h less the four corners' forces at their arms (each corner's wheel rate and damping:
 //          quarterCar; since phase G6 through each wheel's own travel, THE WHEELS). The transfer is m ax h / L when
 //          steady. Iyy = m a b: a dynamic index of 1 in pitch (Gillespie, Fundamentals of Vehicle Dynamics, ch. 5:
-//          road cars 0.8-1.2). No anti-dive or anti-squat yet, so all of it goes through the springs.
+//          road cars 0.8-1.2). Since build 369 the links carry the anti-dive and anti-squat share (THE LINKS).
 //   Left out: the weight's own roll moment as the body leans (m g arm phi, a few per cent: the lap's rollGrad leaves
 //   it out too), and the unsprung masses' share of the transfer (it is counted with the body's).
 // THE WHEELS (phase G6). Each wheel moves up and down on its own, between its tyre and its spring: a quarter car at
@@ -120,8 +120,15 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
 //          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
-//   Left out, named: the tyre's own damping, the damper's blow-off, anti-dive and anti-squat, jacking, camber and toe
-//   by heave and pitch, and travel by the kit (a lowered car keeps its type's).
+//   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
+//          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
+//          the wheel that reacts on the body (drive through half-shafts on an independent axle, inboard brakes; a live
+//          axle's and outboard brakes' react on the upright), lifting the body at the front and pulling it down at the
+//          rear when braking (Milliken & Milliken, RCVD, ch. 17). J is a force between wheel and body: the body gets it
+//          at the corner, the wheel its reaction, so the springs carry the transfer less J, and their sum heaves the
+//          body (jacking). Brakes are outboard unless the car says v.inboardF / v.inboardR (no preset does).
+//   Left out, named: the tyre's own damping, the damper's blow-off, camber and toe by heave and pitch, the arm's change
+//   with travel, and travel by the kit (a lowered car keeps its type's).
 const DRIVE_BUMP_RUBBER=0.025,DAMPER_RB=3;
 function driveBody(v,a,b){
   const gF=SUSP_GEO[v.suspFront]||SUSP_GEO.strut,gR=SUSP_GEO[v.suspRear]||SUSP_GEO.multilink;
@@ -131,7 +138,8 @@ function driveBody(v,a,b){
   const kz=q=>2*q.ks*q.kt/(q.ks+q.kt),L=a+b;      // an axle's vertical rate, its springs on its tyres
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
+    liveF:v.suspFront==='solid',liveR:v.suspRear==='solid',inbF:!!v.inboardF,inbR:!!v.inboardR,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
     pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR))};
 }
 // THE STEERING TORQUE (phase G2). Each front tyre's side force acts behind the steering axis, so it turns the wheel
@@ -706,9 +714,11 @@ function stepCar(car,s,u,dt){
     // eases the motor's braking by as much (every electric car cuts regeneration when its ABS works).
     if(car.el&&car.abs&&Tw<0){let m=1;for(let i=0;i<4;i++)if(drv[i])m=Math.min(m,s.abs[i]);Tw*=m;}
     // ---- wheels
+    const Tbd=[0,0,0,0];                                                   // each wheel's torque reacting on the body (THE LINKS)
     for(let ax=0;ax<2;ax++){
-      const i=ax*2,j=i+1,driven=drv[i];
-      let Ti=(driven?(sg?Tw*sg[i]:Tw/nd):0)+(ax===0?Ff*car.r/2:0),Tj=Ti;
+      const i=ax*2,j=i+1,driven=drv[i],Td=driven?(sg?Tw*sg[i]:Tw/nd):0;
+      let Ti=Td+(ax===0?Ff*car.r/2:0),Tj=Ti;
+      if(!(ax===0?car.liveF:car.liveR))Tbd[i]=Tbd[j]=Td;
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
         if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
@@ -716,6 +726,7 @@ function stepCar(car,s,u,dt){
         const roll=car.crr*Fz[q]*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
+        if(ax===0?car.inbF:car.inbR)Tbd[q]-=Math.sign(wq)*Tb;
         const db=h*Tb/Iq;                                                  // the brake can stop a wheel, never turn it back
         if(Math.abs(wq)<=db)wq=0;else wq-=Math.sign(wq)*db;
         s.w[q]=wq;
@@ -765,7 +776,8 @@ function stepCar(car,s,u,dt){
         let vr=A/(1+h*(A>0?cb:cr)/mu);                                      // the damper's sign is A's, whichever c
         const cn=cc+h*vr;if(cn>top)vr=(top-cc)/h;else if(cn<-dn)vr=(-dn-cc)/h;
         const vw=vb+vr,S=Fz[w]-W0+Fl-mu*dg-mu*(vw-s.zuV[w])/h;s.zuV[w]=vw;s.zu[w]+=h*vw;return S;};
-      const SL=wheel(i,cL,zbV+rlV,e-bar,D),SR=wheel(j,cR,zbV-rlV,e+bar,-D);
+      const sv=f?car.svF:car.svR,sx=f?1:-1,JL=sx*(Fl[i]*sv[0]-Tbd[i])/sv[1],JR=sx*(Fl[j]*sv[0]-Tbd[j])/sv[1];   // THE LINKS
+      const SL=wheel(i,cL,zbV+rlV,e-bar,D+JL)-JL,SR=wheel(j,cR,zbV-rlV,e+bar,-D+JR)-JR;
       SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;}
     s.heaveV+=h*(SS-car.mS*dg-down)/car.mS;s.heave+=h*s.heaveV;
     s.rollV+=h*(car.m*ay*car.rollArm-MR)/car.rollI;s.roll+=h*s.rollV;

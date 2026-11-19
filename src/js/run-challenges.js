@@ -61,7 +61,7 @@ function solveRunChallenge(id){
   if(ch.kind==='skidpad')return simulateSkidpadChallenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
-// Each challenge's own score, for the ranking (build 369, src/js/chal-rank.js). Keyed by kind; an entry may carry its
+// Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
 // own `score` instead. A new challenge registers here (or on its entry) and the ranking needs no change.
 // score(R) runs with that car loaded and returns {v, higher, pass, text}: v sorts (higher is better when `higher`),
 // pass is the challenge's own pass/fail, text is shown. Return null when R has nothing to rank.
