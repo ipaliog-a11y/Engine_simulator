@@ -18,11 +18,9 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### An 8-bit film of how the car changed (build 392)
+### The extra title-menu page is gone (build 393)
 
-- **FILM** on the title menu opens `film.html`: eight scenes, 3–5 seconds each, from a 1961 drawing office to a racer leaving the pit. Cars, tools and crews move; the cut is an 8-pixel shutter.
-- Backgrounds are four pixel plates (coast, night street, workshop, pit) in the showroom and landing style. The moving parts are drawn on the canvas.
-- Left open: no sound. Greek for the new menu word is paused, same as GUIDED BUILD.
+- The page added in the previous build, its pictures, its menu item and its test are removed.
 
 ### Fifty more title-screen rooms (build 391)
 
@@ -47,7 +45,6 @@ they are accurate about *what* shipped but not about the day it shipped.
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
-
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.
