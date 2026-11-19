@@ -1,0 +1,98 @@
+{
+  "id": "hyundai-i30-n-performance-2018",
+  "name": "Hyundai i30 N Performance (PD, 2018)",
+  "cat": "Compact Turbo",
+  "era": "2010s",
+  "role": "Korean hot hatch",
+  "confidence": "high",
+  "chassis": "hatch",
+  "chassisFit": "good",
+  "chassisNote": "FWD Performance Package hatch; hatch archetype + sport tyres / e-LSD (clsd).",
+  "engineStatus": "new",
+  "engine": "Hyundai G4KH 2.0 T-GDI (i30 N Performance)",
+  "body": {
+    "kg": 1429,
+    "cd": 0.33,
+    "area": 2.23,
+    "wb": 2.65,
+    "fWt": 0.62,
+    "tf": 1.556,
+    "tr": 1.564,
+    "h": 1.447
+  },
+  "fit": {
+    "drive": "fwd",
+    "tire": "sport",
+    "tw": 235,
+    "ta": 35,
+    "wheel": 19,
+    "brake": "big",
+    "rotor": 345,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": true,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "strut",
+    "geoR": "multilink"
+  },
+  "real": {
+    "t100": 6.1,
+    "top": 250,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [3.083, 1.931, 1.2721, 0.9571, 0.7703, 0.6405],
+    "fd": 4.333,
+    "src": "Hyundai EU/DE technical data (Nov 2018) and later i30 N sheets: 3.083/1.931/1.696/1.276/1.027/0.854, reverse 3.588; final 4.333 (1/2/R) and 3.250 (3/4/5/6). Gears 3–6 scaled by 3.250/4.333 for a single fd (GR Yaris pattern)."
+  },
+  "enginePreset": {
+    "cat": "Compact Turbo",
+    "era": "2010s",
+    "name": "Hyundai G4KH 2.0 T-GDI (i30 N Performance)",
+    "displacement_cc": 1998,
+    "real": {
+      "hp": 275,
+      "hpRpm": 6000,
+      "tq": 353,
+      "tqRpm": 1450,
+      "unit": "PS"
+    },
+    "unsure": ["boost_bar"],
+    "note": "Theta II G4KH Performance Package: 275 PS @ 6000, 353 Nm from 1450–4700 with overboost to 378 Nm (brochure). Store the sustained 353 Nm plateau as tqLimit; overboost is brief and not modelled separately. Twin-scroll turbo; peak boost ~1.2 bar on DE technical sheet (unsure confirmation of continuous rating).",
+    "engine": {
+      "valvetrain": "dohc-roller",
+      "cylinders": 4,
+      "bore_mm": 86.0,
+      "stroke_mm": 86.0,
+      "compression": 9.5,
+      "redline": 6800,
+      "intake": "turbo",
+      "boost_bar": 1.2,
+      "turboSize": "medium",
+      "cam": "sport",
+      "vvt": true,
+      "injector": "direct",
+      "intercooler": "large",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true,
+      "tqLimit": 353
+    }
+  },
+  "sources": {
+    "engine": "https://www.hyundai.com/content/dam/hyundai/ww/en/images/footer/downloads/cars/e-brochure/i30n-ebrochure-2018.pdf — 275 PS @ 6000, 353 Nm (overboost 378), bore×stroke 86×86, CR 9.5, 1998 cc.",
+    "body": "https://www.hyundai.news/newsroom/dam/de/Pressemappen/i30_N/hyundai_i30_n_nov2018_technische_daten.pdf — Cd 0.33, Stirnfläche 2.23 m², wb 2650, 1795×1447, tracks 1556/1564, DIN kerb lightest 1429 kg (Performance).",
+    "performance": "Hyundai e-brochure / DE technical data: 0–100 6.1 s, top 250 km/h (Performance Package).",
+    "gearset": "Hyundai DE technical data Nov 2018 and EU i30 N technical specifications PDF — dual final 4.333 / 3.250.",
+    "fit": "DE technical data: 235/35 R19, front discs 345 mm (Performance), multilink rear, N Corner Carving e-LSD."
+  },
+  "unsure": ["fWt", "boost_bar", "kg"],
+  "note": "Pinned 2018 PD hatch Performance Package 6MT (275 PS), not the later 280 PS facelift or DCT. body.kg uses Hyundai's lightest DIN kerb 1429 kg; if that DIN figure includes the 75 kg driver, subtract 75 (listed unsure). Published frontal area 2.23 m² used (not w×h×0.81). fWt 0.62 layout estimate for FWD hot hatch. Overboost 378 Nm is not a sustained plateau — tqLimit stays 353. Factory aero inside Cd."
+}

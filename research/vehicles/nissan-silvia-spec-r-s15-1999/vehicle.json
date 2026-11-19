@@ -1,0 +1,96 @@
+{
+  "id": "nissan-silvia-spec-r-s15-1999",
+  "name": "Nissan Silvia Spec-R (S15, 1999)",
+  "cat": "NA Sports",
+  "era": "1990s",
+  "role": "RWD sports coupe (SR20DET turbo)",
+  "confidence": "high",
+  "chassis": "coupe",
+  "chassisFit": "good",
+  "chassisNote": "Light RWD coupe archetype; factory turbo lives in the engine, not the chassis key. Shortlist keeps NA Sports next to other light RWD icons.",
+  "engineStatus": "new",
+  "engine": "Nissan SR20DET (Silvia Spec-R S15)",
+  "body": {
+    "kg": 1240,
+    "cd": 0.3,
+    "area": 1.76,
+    "wb": 2.525,
+    "fWt": 0.55,
+    "tf": 1.47,
+    "tr": 1.46,
+    "h": 1.285
+  },
+  "fit": {
+    "drive": "rwd",
+    "tire": "sport",
+    "tw": 205,
+    "ta": 55,
+    "wheel": 16,
+    "brake": "big",
+    "rotor": 280,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": false,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "strut",
+    "geoR": "multilink"
+  },
+  "real": {
+    "t100": 5.5,
+    "top": 180,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [3.626, 2.2, 1.541, 1.213, 1.0, 0.767],
+    "fd": 3.692,
+    "src": "Nissan Japan Silvia press kit 19 Jan 1999 (spec-R 6MT column): 3.626/2.200/1.541/1.213/1.000/0.767, final 3.692."
+  },
+  "enginePreset": {
+    "cat": "Turbo Performance",
+    "era": "1990s",
+    "name": "Nissan SR20DET (Silvia Spec-R S15)",
+    "displacement_cc": 1998,
+    "real": {
+      "hp": 250,
+      "hpRpm": 6400,
+      "tq": 275,
+      "tqRpm": 4800,
+      "unit": "PS"
+    },
+    "unsure": ["boost_bar", "redline"],
+    "note": "Nissan press kit: 250 PS @ 6400, 28.0 kg·m (= 275 Nm) @ 4800, bore×stroke 86×86, CR 8.5. Peak boost ~0.8–0.9 bar typical for late S15 ball-bearing turbo (unsure). hp stored as brochure 250 PS number (batch-1 convention).",
+    "engine": {
+      "cylinders": 4,
+      "bore_mm": 86.0,
+      "stroke_mm": 86.0,
+      "compression": 8.5,
+      "redline": 7500,
+      "intake": "turbo",
+      "boost_bar": 0.85,
+      "turboSize": "small",
+      "cam": "sport",
+      "vvt": true,
+      "injector": "port",
+      "intercooler": "large",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true
+    }
+  },
+  "sources": {
+    "engine": "https://global.nissannews.com/en/releases/19990119-e_presskit — SR20DET 250 PS / 28.0 kg·m, 86.0×86.0, CR 8.5, curb 1240 kg, dims, 6MT ratios.",
+    "body": "Nissan Silvia press kit 1999: 4445×1695×1285 mm, wb 2525, tracks 1470/1460, curb 1240 kg (spec-R 6MT). Cd 0.30 from secondary compilations (listed unsure).",
+    "performance": "Period / secondary 0–100 ~5.5 s; JDM top often quoted at the 180 km/h limiter (unsure). Unlimited cars are faster.",
+    "gearset": "https://global.nissannews.com/en/releases/19990119-e_presskit — spec-R 6MT table.",
+    "fit": "Nissan press kit: 205/55R16, ventilated front discs with opposed 4-piston calipers on Spec-R, helical LSD on MT."
+  },
+  "unsure": ["cd", "area", "fWt", "t100", "top", "rotor", "boost_bar", "redline"],
+  "note": "Factory turbo; shortlist category stays NA Sports (may move to Turbo Performance at import). Curb 1240 kg is Nissan's published Spec-R 6MT figure (fluids, no driver — JDM curb). Frontal area = 1.695 × 1.285 × 0.81 ≈ 1.76 m². fWt 0.55 layout estimate. Torque 28.0 kg·m × 9.80665 ≈ 275 Nm. Rotor ~280 mm common Spec-R figure (unsure). Optional HICAS not modelled."
+}

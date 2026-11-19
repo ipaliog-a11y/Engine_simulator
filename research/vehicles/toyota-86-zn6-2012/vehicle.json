@@ -1,0 +1,95 @@
+{
+  "id": "toyota-86-zn6-2012",
+  "name": "Toyota 86 (ZN6, 2012)",
+  "cat": "NA Sports",
+  "era": "2010s",
+  "role": "RWD coupe (first gen)",
+  "confidence": "high",
+  "chassis": "coupe",
+  "chassisFit": "good",
+  "chassisNote": "Light RWD sports coupe; coupe archetype fits. Published 53:47 static split.",
+  "engineStatus": "new",
+  "engine": "Toyota-Subaru FA20 (86/BRZ)",
+  "body": {
+    "kg": 1239,
+    "cd": 0.27,
+    "area": 1.85,
+    "wb": 2.57,
+    "fWt": 0.53,
+    "tf": 1.52,
+    "tr": 1.54,
+    "h": 1.285
+  },
+  "fit": {
+    "drive": "rwd",
+    "tire": "sport",
+    "tw": 215,
+    "ta": 45,
+    "wheel": 17,
+    "brake": "slotted",
+    "rotor": 294,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": true,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "strut",
+    "geoR": "wishbone"
+  },
+  "real": {
+    "t100": 7.6,
+    "top": 226,
+    "limited": false,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [3.626, 2.188, 1.541, 1.213, 1.0, 0.767],
+    "fd": 4.1,
+    "src": "Toyota EU GT86 DPL 2012 / AU launch specs: 6MT 3.626/2.188/1.541/1.213/1.000/0.767, final 4.100."
+  },
+  "enginePreset": {
+    "cat": "NA Sports",
+    "era": "2010s",
+    "name": "Toyota-Subaru FA20 (86/BRZ)",
+    "displacement_cc": 1998,
+    "real": {
+      "hp": 200,
+      "hpRpm": 7000,
+      "tq": 205,
+      "tqRpm": 6400,
+      "unit": "PS"
+    },
+    "unsure": [],
+    "note": "FA20 boxer: 200 DIN hp (147 kW) @ 7000, 205 Nm @ 6400–6600, 86×86, CR 12.5, redline 7400 (Toyota EU DPL). D-4S port+direct. Skip badge-twin Subaru BRZ per batch-2 rules.",
+    "engine": {
+      "cylinders": 4,
+      "layout": "boxer",
+      "bore_mm": 86.0,
+      "stroke_mm": 86.0,
+      "compression": 12.5,
+      "redline": 7400,
+      "intake": "na",
+      "cam": "sport",
+      "vvt": true,
+      "injector": "direct",
+      "intakeSys": "efi",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true
+    }
+  },
+  "sources": {
+    "engine": "https://newsroom.toyota.eu/download/666488/gt86-dpl-2012-en-387271.pdf — FA20 200 DIN hp / 147 kW @ 7000, 205 Nm @ 6400–6600, 86×86, CR 12.5, max 7400 rpm.",
+    "body": "Toyota EU GT86 DPL 2012: vehicle weight 1239 kg, Cd 0.27, 53:47 split, wb 2570, tracks 1520/1540. UK tech sheet: 1775×1285, front discs 294 mm.",
+    "performance": "Toyota EU DPL / UK media: 0–100 7.6 s (6MT), top 226 km/h (6MT).",
+    "gearset": "Toyota EU DPL 2012 gear table + AU automobilesreview launch specs final 4.100.",
+    "fit": "Toyota EU DPL / UK tech: 6MT, Torsen LSD, strut/wishbone, 294 mm front ventilated discs; 215/45R17 typical EU 17-inch fitment."
+  },
+  "unsure": ["area", "kg"],
+  "note": "First-gen ZN6 6MT (not BRZ twin). body.kg 1239 from Toyota EU DPL (table labelled Min EC/ECE, also used as the marketing 'vehicle weight'); JDM G grade 車両重量 1230 kg. If the EU figure truly includes the 75 kg driver, subtract 75 (listed unsure). Frontal area = 1.775 × 1.285 × 0.81 ≈ 1.85 m² (estimate). fWt 0.53 published. Factory aero inside Cd 0.27."
+}

@@ -1,0 +1,98 @@
+{
+  "id": "vw-golf-r-mk7-2015",
+  "name": "VW Golf R (Mk7, 2015)",
+  "cat": "Compact Turbo",
+  "era": "2010s",
+  "role": "AWD hot hatch",
+  "confidence": "high",
+  "chassis": "rally",
+  "chassisFit": "good",
+  "chassisNote": "Same Haldex AWD hot-hatch slot as the Focus RS Mk3 already in the game; rally archetype + fit.drive awd.",
+  "engineStatus": "new",
+  "engine": "VW EA888 2.0 TSI (Golf R Mk7)",
+  "body": {
+    "kg": 1476,
+    "cd": 0.32,
+    "area": 2.09,
+    "wb": 2.63,
+    "fWt": 0.59,
+    "tf": 1.541,
+    "tr": 1.515,
+    "h": 1.436
+  },
+  "fit": {
+    "drive": "awd",
+    "tire": "sport",
+    "tw": 225,
+    "ta": 40,
+    "wheel": 18,
+    "brake": "big",
+    "rotor": 340,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": true,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "strut",
+    "geoR": "multilink"
+  },
+  "real": {
+    "t100": 5.1,
+    "top": 250,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [3.36, 2.09, 1.48, 1.09, 0.8483, 0.7018],
+    "fd": 4.24,
+    "src": "VW US 2015 Golf R technical specifications PDF: MQ350 6MT 3.36/2.09/1.48/1.09/1.10/0.91, Final I 4.24 (1–4), Final II 3.27 (5–6). Gears 5–6 scaled by 3.27/4.24 so a single fd matches GR Yaris / RS3 dual-final pattern."
+  },
+  "enginePreset": {
+    "cat": "Compact Turbo",
+    "era": "2010s",
+    "name": "VW EA888 2.0 TSI (Golf R Mk7)",
+    "displacement_cc": 1984,
+    "real": {
+      "hp": 300,
+      "hpRpm": 5500,
+      "tq": 380,
+      "tqRpm": 1800,
+      "unit": "PS"
+    },
+    "unsure": ["boost_bar"],
+    "note": "EU/UK Mk7 Golf R EA888 Gen3: 300 PS from 5500–6200, 380 Nm from 1800–5500 (VW UK press pack). Separate from the existing GTI EA888 preset (220 hp / 350 Nm). US cars were SAE 292 hp; this pack pins the EU rating. Peak boost ~1.2 bar typical for the R calibration (unsure).",
+    "engine": {
+      "valvetrain": "dohc-roller",
+      "cylinders": 4,
+      "bore_mm": 82.5,
+      "stroke_mm": 92.8,
+      "compression": 9.6,
+      "redline": 6800,
+      "intake": "turbo",
+      "boost_bar": 1.2,
+      "turboSize": "small",
+      "cam": "stock",
+      "vvt": true,
+      "injector": "direct",
+      "intercooler": "large",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true,
+      "tqLimit": 380
+    }
+  },
+  "sources": {
+    "engine": "https://www.vwpress.co.uk/assets/documents/original/17499-Golf_R_Press_Pack_0716.pdf — 300 PS 5500–6200, 380 Nm 1800–5500, 0–62 mph 5.1 s manual / 4.9 s DSG, top 155 mph limited.",
+    "body": "VW UK press pack kerbweight 1476 kg (3-door manual); VW US 2015 tech specs PDF — Cd 0.32, wb 2630 mm, 1799×1436 mm, tracks 1541/1515, front rotors 13.4 in (340 mm), 225/40 R18.",
+    "performance": "VW UK press pack: 0–62 mph 5.1 s (manual), top speed electronically limited to 155 mph (250 km/h).",
+    "gearset": "https://media.vw.com/assets/documents/original/6387-1646354283566f0c7d73925.pdf — 2015 Golf R Technical Specifications, manual column.",
+    "fit": "VW US 2015 tech specs: 4Motion Haldex AWD, strut front / multilink rear, 225/40 R18, 13.4-in vented front discs."
+  },
+  "unsure": ["kg", "area", "fWt", "boost_bar"],
+  "note": "Pinned EU/UK Mk7 (pre-7.5) 3-door 6MT, 300 PS. body.kg is the VW UK kerbweight 1476 kg; if a later DIN sheet proves that figure includes the 75 kg driver, subtract 75 (listed unsure). Frontal area = 1.799 × 1.436 × 0.81 ≈ 2.09 m² (estimate). fWt 0.59 from a Motor Trend instrumented Euro-spec car (~59/41). Factory aero sits inside Cd 0.32 — aF/aR/aFl none. Dual final drive modelled like GR Yaris (scale 5–6). Separate engine from Golf GTI EA888."
+}

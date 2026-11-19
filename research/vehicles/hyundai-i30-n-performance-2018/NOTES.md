@@ -1,20 +1,20 @@
 # Hyundai i30 N Performance (PD, 2018)
 
-Queued in batch-2 **wave 1** (`research/vehicles-batch-2/queue.json`).
+Queued in batch-2 **wave 1**. Research filled in `vehicle.json`.
 
-## Status
+## Sources
 
-Research not started. Do not invent numbers. Follow `.cursor/skills/import-vehicle/SKILL.md`.
+- **Engine / performance:** Hyundai i30 N 2018 e-brochure — 275 PS / 353 Nm (overboost 378), 0–100 6.1 s, 250 km/h.
+- **Body / Cd / area / gears / brakes:** Hyundai Germany technical data (Nov 2018) — Cd 0.33, Stirnfläche 2.23 m², DIN kerb 1429–1509 kg, dual-final 4.333/3.250, 345 mm front discs, 235/35 R19.
 
-## Intended slot
+## Chassis
 
-- **cat:** Compact Turbo
-- **chassis:** hatch
-- **path:** combustion
-- **expected confidence:** high
+`hatch` FWD with electronic LSD → `diff: clsd`.
 
-## Next
+## Engine
 
-1. Fill `vehicle.json` from maker press / Autodata-class sources.
-2. `node .cursor/skills/import-vehicle/scripts/validate-research.mjs research/vehicles/hyundai-i30-n-performance-2018/vehicle.json`
-3. Only then implement presets (separate PR).
+New `Hyundai G4KH 2.0 T-GDI (i30 N Performance)`. First Korean combustion factory car in the Compact Turbo lane.
+
+## Confidence
+
+**high** for geometry, Cd, area, gears, power, 0–100. `kg` DIN-with-driver ambiguity noted; `fWt` estimated.

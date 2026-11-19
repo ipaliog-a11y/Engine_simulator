@@ -1,0 +1,100 @@
+{
+  "id": "alpine-a110-pure-2018",
+  "name": "Alpine A110 Pure (2018)",
+  "cat": "NA Sports",
+  "era": "2010s",
+  "role": "Mid-engine sports",
+  "confidence": "high",
+  "chassis": "super",
+  "chassisFit": "good",
+  "chassisNote": "Mid-engine aluminium sports coupe; use chassis super with body.engPos mid (archetype would otherwise sit front-mid wrong).",
+  "engineStatus": "new",
+  "engine": "Renault-Nissan 1.8 TCe (Alpine A110)",
+  "body": {
+    "kg": 1098,
+    "cd": 0.32,
+    "area": 1.94,
+    "wb": 2.42,
+    "fWt": 0.44,
+    "tf": 1.551,
+    "tr": 1.566,
+    "h": 1.252,
+    "engPos": "mid"
+  },
+  "fit": {
+    "drive": "rwd",
+    "tire": "sport",
+    "tw": 235,
+    "twF": 205,
+    "ta": 45,
+    "wheel": 17,
+    "brake": "big",
+    "rotor": 296,
+    "susp": "sport",
+    "gears": 7,
+    "gearbox": "dct",
+    "diff": "clsd",
+    "tc": true,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "wishbone",
+    "geoR": "wishbone"
+  },
+  "real": {
+    "t100": 4.5,
+    "top": 250,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": null,
+    "fd": null,
+    "src": "Alpine / Renault press state a Getrag 7-speed wet DCT with ratios developed for the A110, but no public ratio table was found in the 2018 Pure brochure or Carfolio entry. Leave null — do not invent."
+  },
+  "enginePreset": {
+    "cat": "NA Sports",
+    "era": "2010s",
+    "name": "Renault-Nissan 1.8 TCe (Alpine A110)",
+    "displacement_cc": 1798,
+    "real": {
+      "hp": 252,
+      "hpRpm": 6000,
+      "tq": 320,
+      "tqRpm": 2000,
+      "unit": "PS"
+    },
+    "unsure": ["boost_bar", "compression", "redline"],
+    "note": "Alliance 1.8 turbo calibrated by Alpine/Renault Sport: 252 PS (185 kW) @ 6000, 320 Nm (Carfolio peak at 2000 rpm). Brochure quotes hp without always stating PS vs SAE; 252 hp in Alpine copy matches 252 PS / 185 kW. Compression and continuous boost not in the Pure brochure (unsure).",
+    "engine": {
+      "valvetrain": "dohc-roller",
+      "cylinders": 4,
+      "bore_mm": 79.7,
+      "stroke_mm": 90.1,
+      "compression": 9.5,
+      "redline": 6800,
+      "intake": "turbo",
+      "boost_bar": 1.2,
+      "turboSize": "small",
+      "cam": "sport",
+      "vvt": true,
+      "injector": "direct",
+      "intercooler": "large",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true,
+      "tqLimit": 320
+    }
+  },
+  "sources": {
+    "engine": "https://www.auto-brochures.com/makes/alpine/Alpine_int%20A110_2018-4.pdf — 1798 cc, 252 hp (185 kW), 320 Nm. Carfolio Alpine A110 Pure: 79.7×90.1, 252 PS @ 6000, 320 Nm @ 2000.",
+    "body": "Alpine 2018 Pure brochure: min kerb 1098 kg, 4180×1798×1252, wb 2420, brakes 296 mm. Carfolio: Cd 0.32, frontal area 1.94 m², tracks 1551/1566.",
+    "performance": "Alpine Pure brochure: 0–100 4.5 s, top 250 km/h.",
+    "gearset": "Not published in Alpine Pure / Légende 2018 brochure or Renault UK Première Edition press notes (Getrag 7DCT mentioned without ratios).",
+    "fit": "Alpine Pure brochure: 205/45 R17 front, 235/45 R17 rear (Pure); double wishbone; 296 mm discs; 7-speed DCT."
+  },
+  "unsure": ["fWt", "boost_bar", "compression", "redline", "gearset"],
+  "note": "Pinned 2018 Pure (not Légende / S / R). Factory turbo mid-engine car kept in NA Sports per shortlist. body.kg 1098 is Alpine's min Pure kerb. Published Cd 0.32 and area 1.94 m² (Carfolio). fWt 0.44 mid-engine layout estimate. Gear ratios deliberately null. Compression 9.5 is a typical figure for this Alliance turbo family (unsure) — replace if a maker sheet appears."
+}

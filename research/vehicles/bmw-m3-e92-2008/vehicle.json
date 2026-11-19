@@ -1,0 +1,99 @@
+{
+  "id": "bmw-m3-e92-2008",
+  "name": "BMW M3 (E92, 2008)",
+  "cat": "NA Sports",
+  "era": "2000s",
+  "role": "NA V8 coupe",
+  "confidence": "high",
+  "chassis": "coupe",
+  "chassisFit": "good",
+  "chassisNote": "RWD sports coupe; coupe archetype. Published 50:50 split.",
+  "engineStatus": "new",
+  "engine": "BMW S65B40 (M3 E92)",
+  "body": {
+    "kg": 1655,
+    "cd": 0.31,
+    "area": 2.09,
+    "wb": 2.761,
+    "fWt": 0.5,
+    "tf": 1.538,
+    "tr": 1.539,
+    "h": 1.418
+  },
+  "fit": {
+    "drive": "rwd",
+    "tire": "sport",
+    "tw": 265,
+    "twF": 245,
+    "ta": 35,
+    "wheel": 18,
+    "brake": "big",
+    "rotor": 360,
+    "susp": "sport",
+    "gears": 6,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": true,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "strut",
+    "geoR": "multilink"
+  },
+  "real": {
+    "t100": 4.8,
+    "top": 250,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [4.055, 2.369, 1.582, 1.192, 1.0, 0.872],
+    "fd": 3.846,
+    "src": "ZF Type G 6MT as tabulated for E92 M3 Coupe: 4.055/2.369/1.582/1.192/1.000/0.872, final 3.846 (australiancar.reviews compilation of BMW data)."
+  },
+  "enginePreset": {
+    "cat": "NA Sports",
+    "era": "2000s",
+    "name": "BMW S65B40 (M3 E92)",
+    "displacement_cc": 3999,
+    "real": {
+      "hp": 420,
+      "hpRpm": 8300,
+      "tq": 400,
+      "tqRpm": 3900,
+      "unit": "PS"
+    },
+    "unsure": ["silencer"],
+    "note": "S65B40 4.0 V8: 420 PS (309 kW) @ 8300, 400 Nm @ 3900, 92.0×75.2, CR 12.0, 8400 limiter, individual throttle bodies, double-VANOS. Separate from any later S55 turbo M3/M4 engine.",
+    "engine": {
+      "cylinders": 8,
+      "layout": "v",
+      "bore_mm": 92.0,
+      "stroke_mm": 75.2,
+      "compression": 12.0,
+      "redline": 8400,
+      "intake": "na",
+      "cam": "race",
+      "vvt": true,
+      "injector": "port",
+      "intakeSys": "itb",
+      "exhaust": "race",
+      "silencer": "absorptive",
+      "airFilter": "perf",
+      "runner": "short",
+      "octane": 98,
+      "radiator": "large",
+      "oilCooler": true,
+      "valveSpring": "race"
+    }
+  },
+  "sources": {
+    "engine": "https://www.australiancar.reviews/review-bmw-e92-m3-coupe-2007-13/ — S65B40 309 kW @ 8300, 400 Nm @ 3900, 3999 cc, CR 12.0, 8400 limit, ITBs, double-VANOS.",
+    "body": "australiancar.reviews / UltimateSpecs: kerb 1655 kg (manual), 4615×1817×1418, wb 2761, tracks 1538/1539, Cd 0.31, 50:50 split.",
+    "performance": "BMW-quoted 0–100 4.8 s (6MT), 250 km/h limited (common EU M figure).",
+    "gearset": "ZF Type G ratios via australiancar.reviews E92 M3 compilation.",
+    "fit": "Typical E92 M3 Coupe: 245/40 R18 front, 265/40 R18 rear; ~360 mm front M compound discs (common figure, listed unsure if exact early-MY size differs)."
+  },
+  "unsure": ["area", "rotor"],
+  "note": "Pinned E92 Coupe 6MT (not E90 sedan / E93 convertible / DCT). body.kg 1655 is the published manual kerb. Frontal area = 1.817 × 1.418 × 0.81 ≈ 2.09 m². fWt 0.50 published. Factory aero inside Cd. Rotor 360 mm is the usual early E92 M front size (unsure)."
+}
