@@ -28,6 +28,9 @@ reporting its range. Sourcing is batched apart from physics.
    Left open: travel by the kit, the damper's blow-off.
 2. **Anti-dive and anti-squat.** The pitch share carried by the links, from the side-view swing arm by suspension
    type (Milliken RCVD ch. 17; Reimpell). Today all pitch goes through the springs (~2° at 0.5 g). Jacking with it.
+   *Build 369:* done (`SUSP_GEO` `svF`/`svR` by type, PROBABLE; drive through half-shafts and inboard brakes on the
+   wheel centre; jacking; `test223`: M3 anti-dive 27 %, MX-5 23 %). Left open: the arm's change with travel, inboard
+   brakes on presets, arms by the kit.
 3. **Camber and toe by heave and pitch**, from the same type curves the roll already uses. Also the weight's own roll
    moment as the body leans. Both the ESP's understeer reference and its roll-steer share then read the full roll.
 
@@ -61,7 +64,7 @@ reporting its range. Sourcing is batched apart from physics.
 
 10. **The lap's torque curve and the race's pace-grid price read the pack's own temperature**, not 25 °C (build
     346's follow-up). Moves EV and hybrid laps; report.
-    *Build 368:* the lap scales the drive by the pack's power at its walked temperature over 25 °C (`evPackGain`, up to
+    *Build 370:* the lap scales the drive by the pack's power at its walked temperature over 25 °C (`evPackGain`, up to
     +1.4% on a Model Y at 45 °C); the race prices the cells' heat at the pack's temperature and charge each step. Tesla
     laps move ≤0.003%. Left open: the hybrid lap and race walk no pack temperature, so they do not move; the race's
     pace grid (speeds) and the motor bench stay at 25 °C.

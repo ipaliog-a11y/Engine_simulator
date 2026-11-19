@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 368
+# PIXEL POWERTRAIN v0.8 build 370
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -324,6 +324,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car without a
     handbrake), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. Handbrake and loose surfaces
     are not modelled.
+  - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
+    magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
   - The **i** button beside the Challenges heading shows how the selected challenge is run and judged.
   - Hover the road for distance, speed and gradient at that point; wheel or pinch to zoom, drag to scroll,
     double-click to reset. Known gaps: the economy plan is a
