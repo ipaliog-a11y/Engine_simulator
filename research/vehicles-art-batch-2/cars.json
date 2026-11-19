@@ -75,7 +75,7 @@
       "slug": "hyundai-i30-n-performance-2018",
       "phrase": "2018 Hyundai i30 N Performance five-door hot hatch, Performance Blue paint, triangular fog lights, big rear wing",
       "prompt": "8-bit pixel-art side profile of a 2018 Hyundai i30 N Performance five-door hot hatch, Performance Blue paint, triangular fog lights, big rear wing. Accurate body shape and proportions for this exact model and generation. Exact side elevation, car facing LEFT (nose on the left), centred, wheels on the road, the car spans about 80% of the image width. Match the reference image's style exactly: chunky visible pixels, retro 16-bit/8-bit game palette, the same coastal road scene behind the car - grey asphalt foreground, metal guardrail, blue sea, green hills/mountains on the left, bright blue sky with white pixel clouds. Same framing and lighting as the reference. No text, no logos, no watermark.",
-      "status": "pending"
+      "status": "done"
     },
     {
       "cat": "compact-turbo",
