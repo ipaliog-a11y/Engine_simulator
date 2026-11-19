@@ -21,7 +21,7 @@ const open = () => page.evaluate(() => !document.getElementById('titleScreen').h
 const mode = () => page.evaluate(() => vizMode);
 if (!await open()) fails.push('title screen did not open on ?title=1');
 const labels = await page.$$eval('#titleScreen .title-menu button', bs => bs.map(b => b.textContent.trim()));
-const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS', 'CAR SHOWCASE', 'GUIDED BUILD'];
+const want = ['BUILD AN ENGINE', 'BUILD A VEHICLE', 'OPEN WIKI', 'SETTINGS', 'CAR SHOWCASE', 'GUIDED BUILD', 'FILM'];
 if (labels.join('|') !== want.join('|')) fails.push('menu labels: ' + labels.join(' | '));
 // since build 230 the room is a picture (an <img>), not a canvas: it must be loaded and cover the stage
 // (since build 237 each room is its own <img>, and titleRoomEl() is the one on view)
@@ -59,7 +59,7 @@ await gk.addInitScript(() => { try { localStorage.setItem('pes.lang', 'el'); } c
 await gk.goto(url, { waitUntil: 'networkidle' });
 await gk.waitForTimeout(200);
 const greek = await gk.$$eval('#titleScreen .title-menu button, #btnMenu', bs => bs.map(b => b.textContent.trim()));
-const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ', 'GUIDED BUILD', 'ΜΕΝΟΥ'];   // GUIDED BUILD (308): Greek paused
+const greekWant = ['ΦΤΙΑΞΕ ΚΙΝΗΤΗΡΑ', 'ΦΤΙΑΞΕ ΟΧΗΜΑ', 'ΑΝΟΙΞΕ ΟΔΗΓΟ', 'ΡΥΘΜΙΣΕΙΣ', 'ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ', 'GUIDED BUILD', 'FILM', 'ΜΕΝΟΥ'];   // GUIDED BUILD (308) and FILM: Greek paused
 if (greek.join('|') !== greekWant.join('|')) fails.push('Greek menu: ' + greek.join(' | '));
 await gk.close();
 

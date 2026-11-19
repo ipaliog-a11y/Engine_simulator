@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL POWERTRAIN</title>
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:'Press Start 2P';font-style:normal;font-weight:400;font-display:swap;src:url(assets/PressStart2P-latin.woff2) format('woff2')}
+html,body{margin:0;height:100%;background:#0a0a12}
+body{display:flex;align-items:center;justify-content:center}
+canvas{width:min(100vw, calc(100vh * 16 / 9));height:auto;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="film" width="480" height="270"></canvas>
+<script>
+<!-- @include js/film.js -->
+</script>
+</body>
+</html>
