@@ -5,7 +5,8 @@
 //   · steady in a corner, the body rolls on its springs by the lap's own roll gradient (vehicle.rollGrad), within 2%,
 //     on three cars, and by more than that to the road, the tyres giving too (build 333);
 //   · steady, the front axle carries the lap's lltdF share of the lateral transfer, within 2%;
-//   · steady under the brakes, it pitches by m ax h / Kp, within 2%, and dives past it on the way (it is damped, not lagged);
+//   · steady under the brakes in neutral, it pitches by the springs' and tyres' give less the links' anti-dive share
+//     (build 369: each corner's spring carries the transfer less Fx e/d), within 2%, and dives past it on the way;
 //   · a step of the wheel (ISO 7401) rolls the body past its steady angle, and further with the roll damping halved.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -31,10 +32,15 @@ const R = await page.evaluate(() => {
     o.front = (s.Fz[1] - s.Fz[0]) * car.tF / 2 / ((s.Fz[1] - s.Fz[0]) * car.tF / 2 + (s.Fz[3] - s.Fz[2]) * car.tR / 2);
     // steady braking
     s = driveRolling(car, 160); let pk = 0;
-    let sp = 0, sw = 0, k = 0;   // averaged over the last second
-    for (let t = 0; t < 3; t += 0.001) { stepCar(car, s, { steer: 0, throttle: 0, brake: 0.3 }, 0.001); const w = car.m * s.ax * car.h / car.pitchK;
-      pk = Math.min(pk, s.pitch - w); if (t > 2) { sp += s.pitch; sw += w; k++; } }
-    o.pitch = sp / k; o.pitchWant = sw / k; o.pitchPk = o.pitchWant + pk; o.gear = s.gear;
+    let sp = 0, sa = 0, k = 0; const fx = [0, 0, 0, 0];   // averaged over the last second
+    for (let t = 0; t < 3; t += 0.001) { stepCar(car, s, { steer: 0, throttle: 0, brake: 0.3, gear: 0 }, 0.001);
+      pk = Math.min(pk, s.pitch); if (t > 2) { sp += s.pitch; sa += s.ax; k++; for (let i = 0; i < 4; i++) fx[i] += s.Fx[i]; } }
+    // each corner's drop: its spring's load (the transfer less the link's Fx e/d) over the wheel rate, the transfer over the tyre's
+    { const L = car.a + car.b, dW = car.m * (sa / k) * car.h / L / 2;
+      const dropF = (-dW + fx[0] / k * car.svF[0] / car.svF[1]) / car.ksF - dW / car.ktF;
+      const dropR = (dW - fx[2] / k * car.svR[0] / car.svR[1]) / car.ksR + dW / car.ktR;
+      o.pitchWant = (dropR - dropF) / L; }
+    o.pitch = sp / k; o.pitchPk = pk; o.gear = s.gear;
     // step steer at 80 km/h, as built and with the roll damping halved
     // the roll past where the moment at that instant would hold it (m ay arm / K), as a share of the final roll
     const step = c => { const q = driveRolling(c, 80); let m = 0;

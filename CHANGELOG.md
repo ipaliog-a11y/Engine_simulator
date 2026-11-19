@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A sourced regen cap per maker (build 374)
+### A sourced regen cap per maker (build 376)
 
 Step 12b of `plans/small-physics.md`, the owner's decision on build 366's finding.
 - **The rule:** `EV_REGEN_RULES` (`src/js/electric.js`) caps `evRegenTable` after the motor and pack limits, which stay:
@@ -30,8 +30,35 @@ Step 12b of `plans/small-physics.md`, the owner's decision on build 366's findin
   power 90 / 78 / 150 → 77 / 77 / 90 kW. `test221` now fails if any lands more than 10% off.
 - **What moved:** economy run (Alpine) energy +1.5% / +1.0% / +9.2% (Plaid's regen 6.31 → 3.05 kWh); lap time
   −0.0000004% / +0.0009% / +0.000002%. WLTC, 0–100, top speed, ICE cars and hybrids (`hybRegenTable`) do not move.
+- `test216`'s skidpad held speed with a fixed +0.15 throttle bias that assumed the old regen in an EV's one-pedal
+  map (0.87 → 0.81 g with the cap); it now holds speed closed-loop (PI), where main and this build both give 0.86 g.
+  Band unchanged (0.83–0.90).
 - Left open: a garage-built EV takes the default; E-GMP and MEB have no preset to check against.
 
+### A compound turbo's split off its design point (build 375)
+
+- Each stage of a compound now balances on its own map: the LP shaft is the state, the HP stage settles where its
+  own turbine supplies its compressor (at the LP outlet's pressure and temperature), and above target the gate leaves
+  the HP stage only what the LP one does not make (Watson & Janota; Serrano et al., SAE 2008-01-0790). Until now the
+  shafts were tied at the equal design split.
+- On the Golf GTI's frame (large, 2.5 bar) the LP stage makes 14-16% of the ratio (in log terms) while spooling, 24%
+  at 4000 rpm and 54-63% at 6000 rpm to the redline; the target holds once reached. The exhaust pressure solve uses the
+  same split, with the LP wheel held to its tip limit.
+- A compound now comes on boost as the frame alone does (1502 rpm on the Golf at 2.5 bar, was 1719): the HP stage no
+  longer carries the LP shaft's inertia. Peak 311 hp (was 318). test179 updated to say so; test227 checks the split.
+- Fingerprint identical (no preset is a compound).
+- Open: the HP shaft's own inertia and bearing drag (it settles at once), an LP gate, and the LP turbine's sizing
+  (scaled by D^2 from the HP housing, it can make the whole ratio itself at high flow). The guide's Greek for the
+  changed limit line is stale (Greek paused).
+
+### Camber and toe by heave and pitch in the stepped car (build 374)
+
+Step 3 of `plans/small-physics.md`. Only `stepCar` changes; the fingerprint is identical.
+
+- **Each wheel's camber and toe follow its own travel**, not only the axle's roll: the same curves by type (camber 1/fvsa a metre, the top inwards in bump; toe the roll steer's own, rs/(t/2), out at the front in bump). 20 mm of heave: strut −0.38°, wishbone −0.72°, M3 multi-link rear −0.57°; front toe 0.08° out. A solid axle or twist beam keeps its wheels' camber and toe in parallel travel. Reimpell, *The Automotive Chassis*, ch. 3; PROBABLE (`test228`, new).
+- **The ESP's understeer reference reads the full roll**: its roll-steer share goes by each axle's roll on its springs with the tyres' give, worked out apart and matched by the stepped car within 0.2 %, no longer by the springs alone.
+- **Tests updated in the open:** `test196`'s braking pitch (in neutral) now expects the springs' pitch less the anti-dive share, as `test223` works it out: it had failed since build 369, when the links began to carry part of the pitch (M3 −1.09° against the old −1.53°). `test201`'s outside camber adds the wheel's heave. `test203` at rest: a trace of bump steer as the body settles (under 0.001°, each axle's pair equal and opposite) instead of exactly none.
+- **Left open, named gap (owner's decision):** the weight's own roll moment as the body leans (m g h_arm sin φ). It adds 9–10 % steady roll, but pushed `test170` past its caps (911 GT3 5.9 m against 4.9, Model 3 4.1 m); it lands together with the lap's `rollGrad`, which leaves it out too. Also open: the curves' own change with travel (linear here).
 ### The lap's torque and the race's energy price at the pack's own temperature (build 373)
 
 Step 10 of `plans/small-physics.md`, build 346's follow-up.

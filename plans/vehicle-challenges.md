@@ -73,7 +73,7 @@ MEB, and a regen kW limit below the pack's charge power), which no relation in t
 sourced figure per maker, and it moves all three EVs (economy run most; the lap's regen kWh and rotor heat; WLTC
 little, its stops ask < 1.5 m/s²). Not changed in this build.
 
-*Closed in build 374:* `EV_REGEN_RULES` (`src/js/electric.js`) caps the table per maker; the Teslas now land at
+*Closed in build 376:* `EV_REGEN_RULES` (`src/js/electric.js`) caps the table per maker; the Teslas now land at
 2.06 m/s² and 77 / 77 / 90 kW.
 
 ## Moose run (shipped)
