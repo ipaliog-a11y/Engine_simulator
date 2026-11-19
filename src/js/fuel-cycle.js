@@ -127,10 +127,12 @@ function engineCycleLine(v){
 // runs from what the pack can cover to what it can take back, so a larger pack spaced five points so far apart that
 // the Prius's cycle scattered ~2% either way (build 207: 4.24 and 4.34 L/100 km at five, 4.31 and 4.32 at 17 or 33).
 const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],splitsDirect:[0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1],ehr:0.15};
-function hybridCycle(v){
+// prof (build 382, the economy road): {segs:[{vm,a,dt,sinT,cosT}]} replaces the WLTC's 1 s steps with the road's own
+// (grade included), started warm; nothing cached, no plug-in cycles. Without it the cycle is exactly as before.
+function hybridCycle(v,prof){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
   const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug].join('|');
-  if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
+  if(!prof&&e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
@@ -142,7 +144,15 @@ function hybridCycle(v){
   const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),busV(HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
   // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load; Pin: what
   // else is on the bus (a power-split's MG1, generating)
-  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
+  // On the road (prof) the losses and the engine's fuel are memoised on a 10 rpm × 1 Nm grid (0.5 Nm for the engine, the
+  // pack's charge to 1%), as ecoEnergyJ does: the bisection runs the same road ~20 times. The WLTC path is unchanged.
+  const mL=new Map(),mF=new Map();
+  const lossAt=prof?(T,rpm,soc)=>{const kt=Math.round(Math.abs(T)),kr=Math.round(Math.max(rpm,1)/10),ks=ps?0:Math.round(soc*100),k=(ks*1e4+kr)*1e5+kt;
+      let L=mL.get(k);if(L===undefined){L=motorLosses(mot,kt,Math.max(kr*10,1),busV(ks/100||soc),temp).total;mL.set(k,L);}return L;}
+    :(T,rpm,soc)=>motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total;
+  const fuelAt=prof?(rpm,T,oilT)=>{const kr=Math.round(rpm/10),kt=Math.max(1,Math.round(T*2)),k=kr*1e6+kt;
+      let g=mF.get(k);if(g===undefined){g=engineFuelAt(kr*10,kt/2,oilT);mF.set(k,g);}return g;}:engineFuelAt;
+  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?lossAt(T,rpm,soc):0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
   const Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   // the HYBRID TUNE (build 192): the charge window, the regeneration, the motor's help, electric driving, load-point
@@ -152,10 +162,14 @@ function hybridCycle(v){
   const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
   // cd (build 194, a plug-in's charge-depleting cycles): start from cd.soc with the engine at cd.Tc, and do not run the
   // engine to warm it (a plug-in drives away on its pack; the engine starts when it is asked for, cold)
-  const run=(s,cd)=>{
-    let fuel=0,E=0,x=0,Tc=cd?cd.Tc:C.soak,evS=0,onS=0,stopS=0,warmS=null,firstOn=null;
-    for(let i=0;i<WLTC_3B.length-1;i++){
-      const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
+  const run0=(s,cd)=>{
+    let fuel=0,E=0,x=0,Tc=cd?cd.Tc:C.soak,evS=0,onS=0,stopS=0,warmS=null,firstOn=null,Jout=0,Jin=0,fbS=0;
+    const N=prof?prof.segs.length:WLTC_3B.length-1;
+    for(let i=0;i<N;i++){
+      let vm,a,dt=1,sinT=0,cosT=1;
+      if(prof){const q=prof.segs[i];vm=q.vm;a=q.a;dt=q.dt;sinT=q.sinT;cosT=q.cosT;}
+      else{const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36;vm=(v0+v1)/2;a=v1-v0;}
+      x+=vm*dt;
       const soc=(cd?cd.soc:soc0)+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=!cd&&Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
       const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
@@ -173,7 +187,7 @@ function hybridCycle(v){
           if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60))continue;
           const T2=stand?0:T-Te*G.kr;
           if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),hybBusV(hy),60)))continue;
-          const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
+          const gs=fuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
           const J=packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp));
           if(!tu.lps&&J<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
           consider(gs,J,true);
@@ -186,7 +200,7 @@ function hybridCycle(v){
       }else if(direct){   // the eCVT (build 189), or a series hybrid (193): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
         const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
         const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
         if(T<=0){const Tm=Math.max(T,-motDn(n2)*kRegen);consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
         else{
@@ -196,7 +210,7 @@ function hybridCycle(v){
       }else for(let g=0;g<v.ratios.length;g++){
         const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
         const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
         if(T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
           const Tm=Math.max(T,-motDn(rpm)*kRegen);
@@ -209,20 +223,30 @@ function hybridCycle(v){
           const Te=Math.max(0,T-help)+(Te0-Math.max(0,T-help))*k,Tm=T-Te;
           if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
           if(!tu.lps&&Tm<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
-          const gs=engineFuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
+          const gs=fuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
           consider(gs,packJ(Tm,rpm,soc),true);
         }
       }
-      if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
-      fuel+=best.gs;E-=best.J;
-      if(best.on&&firstOn==null)firstOn=x-vm;
-      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
-      else if(vm<0.1)stopS++;else evS++;
+      if(!best&&prof){   // on the road: a climb asks more than the controller's machine limits allow (a power-split's MG1
+        // and MG2 at speed; a parallel's engine plus motor). The engine gives it on its best line up to 90% of its top,
+        // the pack the rest up to its power (above its floor) through a 90% electrical path (as the charge correction
+        // below). Energy is charged in full; only those limits are set aside. Time spent so: limitShare (named gap).
+        const Pw=Math.max(0,(m*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT)*vm/eff),O=psOol();
+        const Pe=Math.min(Pw,O.Pmax*C.reserve),Pp=soc>socLo?Math.min(Pbat,Pw-Pe):0;
+        best={gs:psOolAt(Pe).gs,J:Pp/0.9+C.auxW,on:true};fbS+=dt;
+      }
+      if(!best){best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};fbS+=dt;}   // flat out in first
+      fuel+=best.gs*dt;E-=best.J*dt;if(best.J>0)Jout+=best.J*dt;else Jin-=best.J*dt;
+      if(best.on&&firstOn==null)firstOn=x-vm*dt;
+      if(best.on){onS+=dt;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs*dt/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
+      else if(vm<0.1)stopS+=dt;else evS+=dt;
     }
-    return {fuel,E,x,evS,onS,stopS,warmS,Tc,firstOn};
+    return {fuel,E,x,evS,onS,stopS,warmS,Tc,firstOn,Jout,Jin,fbS};
   };
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
+  // On the road (prof) the engine starts warm, at the tune's target charge: run0's cd start (no warm-up rule)
+  const cs0=prof?{soc:soc0,Tc:stat}:undefined,run=s=>run0(s,cs0);
   let lo=2e-5,hi=3e-4,Rlo=run(lo),Rhi=run(hi),R=Rlo,sBest=lo;
   // The bracket must hold the root (build 202): an engine efficient enough at high load charges the pack even at the
   // lowest factor (the Ioniq on a 75% target, once its ECU stopped enriching there), and the secant only pressed against
@@ -250,8 +274,11 @@ function hybridCycle(v){
   const bestBsfc=Math.min(...psOol().P.map((P,i)=>psOol().gs[i]*3.6e6/P));
   const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
   const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
+  if(prof){const tT=R.evS+R.onS+R.stopS;
+    return {km,l100:L/km*100,L,kg,evShare:R.evS/tT,onShare:R.onS/tT,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
+      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:R.fbS/tT};}
   const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
-  if(e.hyPlug)res.plug=plugCycles(run,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
+  if(e.hyPlug)res.plug=plugCycles(run0,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
   e._hcyc={score:e.score,key,res};return res;
 }
 // ---- a plug-in hybrid over WLTP (build 194, step 3.5a) ----

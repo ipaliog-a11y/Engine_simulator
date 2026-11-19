@@ -31,7 +31,7 @@ Real roads: OSRM centreline + ASTER elevation; width modelled (as Nordschleife).
 - Binary-search a speed cap on the open min-time solve so finish time hits the target.
 - ICE: fuel from `engineFuelAt` (warm oil). EV (build 342): pack kWh / Wh/km via `motorLosses` + `packDraw` + regen (`ecoEnergyJ`).
 - UI shows the target once (time ≈ target by construction). Hover the route (build 344) for distance, speed and incline at that point.
-- **Named gap:** speed cap is not optimal lift-coast DP. A pure max-time limit would pick flat-out here (DFCO on brakes). Hybrids still use the ICE fuel path on this challenge.
+- **Named gap:** speed cap is not optimal lift-coast DP. A pure max-time limit would pick flat-out here (DFCO on brakes). Hybrids: see build 382 below (Follow-up 3).
 
 ## Eco driver and fixed-time stages (build 352)
 
@@ -104,7 +104,12 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
 2. ~~Multi-car ranking on a challenge.~~ Shipped in build 370: `src/js/chal-rank.js`. A new challenge registers its score
    in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry): `{v, higher, pass, text}`; the ranking needs no change.
    Open: one car's solve still blocks the page (up to ~3 s, powerslide); a Worker would need the solvers split out.
-3. Distance DP for economy (pulse-and-glide on the flat); hybrid energy on economy roads.
+3. Distance DP for economy (pulse-and-glide on the flat), open (G6). ~~Hybrid energy on economy roads.~~ Shipped in build 382:
+   `ecoHybrid` runs `hybridCycle`'s charge-sustaining ECMS on the road's profile with grade, warm, from the tune's target
+   charge. Open: the speed profile is still the engine's eco driver (not hybrid-aware); where a climb needs more than
+   MG1/MG2 (power-split) or engine + motor (parallel) allow, the engine is charged for it on its best line
+   (`limitShare`, 7–37% of the Alpine run); plug-ins run charge-sustaining; WLTC still hits its old flat-out-in-first
+   fallback on its hardest steps (most on the Prius), left so the WLTC figures do not move.
 4. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
 5. Drift: handbrake initiation; tighter road once the hold is stronger.
 6. ~~Screech on the track and moose replays (open since build 362).~~ Shipped in build 371: the moose replay uses the

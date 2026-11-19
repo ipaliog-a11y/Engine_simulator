@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Hybrids on the economy roads run their own energy manager (build 382)
+
+- A hybrid on an economy challenge was priced as a plain engine (`ecoFuelKg`). Now `ecoHybrid` (`eco-run.js`) runs the
+  WLTC's charge-sustaining ECMS (`hybridCycle`, `fuel-cycle.js`) on the road's speed profile with its grade: electric
+  only, engine with load-point shifting, regen within the motor's and pack's limits (the `hybRegenTable` rule). It
+  starts warm at the tune's target charge and ends where it started (within 0.5% of the pack), or is charge-corrected
+  as on WLTC. The result shows fuel, pack energy out and back in, engine-off time and time over the hybrid's limits.
+- Alpine Pass at 125%, before → after (L/100 km): Ioniq 6.03 → 9.50, Prius 3.13 → 8.08, Qashqai e-POWER 2.31 → 10.77,
+  330e 5.17 → 15.42, 918 Spyder 14.37 → 25.43. The old figures were low: where a climb needed more than the engine alone
+  gives, the engine path fell back to "full load at 1100 rpm" fuel and charged the rest of the power to nobody.
+- Engine cars and EVs do not move; the fingerprint is identical (5208 values; WLTC hybrid cycles included: the road path
+  is behind a `prof` argument, and its 10 rpm × 1 Nm memo is off on WLTC).
+- Open: the speed profile is still the engine's eco driver, not hybrid-aware. Where a climb asks more than MG1/MG2
+  (power-split, at speed) or engine + motor allow, the engine is charged for the power on its best line anyway
+  (`limitShare`: Prius 36%, e-POWER 37%, 330e 15%, 918 12%, Ioniq 7% of the run). Plug-ins run charge-sustaining.
+  WLTC itself still uses the old flat-out fallback on its hardest steps (most on the Prius), left so WLTC does not move.
+
 ### Grip by camber in the stepped car: tried, left named until after v1.0 (build 381)
 
 - Small-physics step 6 tried the lap's camber law (`latCamberF`) in the stepped car, now that the stability control judges by yaw rate. It still takes `test170`'s test driver past `OFF_KNOWN`: by each axle's outside wheel, as the lap has it, the 911 GT3 runs 11.8 m off the line and 41° sideways, the Model 3 9.5 m and 38°, the Civic 7.9 m, the WRX 6.6 m (caps 4–4.8 m); by each wheel's own lean the GT3 leaves the line.
