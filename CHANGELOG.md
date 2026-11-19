@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### A rain tyre's own wet grip (build 366)
+### A rain tyre's own wet grip (build 367)
 
 - A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
   wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
@@ -26,6 +26,16 @@ they are accurate about *what* shipped but not about the day it shipped.
   keeps 0.749 of its dry grip, a road tyre 0.71 as before.
 - Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
   race rain tyre's real figure above class A (no label grades it).
+
+### Regen power against measured EVs, researched (build 366)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test221` prints the comparison and checks the gap stays named.
 
 ### A green baseline: test136 re-locked, test145 passes (build 365)
 

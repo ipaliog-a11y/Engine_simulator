@@ -4,7 +4,7 @@
 //   · dry, every compound keeps all its grip; wet, the grip falls with speed for every compound (Horne's lift);
 //   · a slick, all exposed, keeps under a quarter at 150 km/h, a treaded road tyre over half, a full wet over half;
 //   · a full wet out-grips a slick at every speed from 40 km/h;
-//   · (build 366) standing still on a wet track, only the adhesion is left: a road tyre keeps keep0 (0.71), a rain
+//   · (build 367) standing still on a wet track, only the adhesion is left: a road tyre keeps keep0 (0.71), a rain
 //     compound keeps it times its EU label class over a road tyre's, 1.55/1.47 (RACE_WET_G);
 //   · a slick-shod car calls a rain tyre on a wet track; a wet race runs with no page error.
 import { chromium } from './pw.mjs';
