@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A rain tyre's own wet grip (build 364)
+
+- A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
+  wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
+  inter and full wet at class A's floor (1.55), both probable. Standing still on a properly wet track a rain tyre
+  keeps 0.749 of its dry grip, a road tyre 0.71 as before.
+- Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
+  race rain tyre's real figure above class A (no label grades it).
+
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 
 - The title reads v0.8, reached at build 338 (handling phase G); the owner tags it.
