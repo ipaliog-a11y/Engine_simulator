@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 388)
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 390)
 
 - The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
   a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
@@ -28,12 +28,33 @@ they are accurate about *what* shipped but not about the day it shipped.
   3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
   gravel's (0.35/0.65), as before.
 - The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
-  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 387:
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 389:
   89%, so the ESP did nothing). With ESP off: 98%.
 - Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
+### The VE table's mixture is read at its own exhaust, to convergence (build 389)
+
+Step 14 of `plans/small-physics.md`.
+- With a hand-tuned VE table the burned mixture is target × real VE / table VE, and the real VE's scavenging and
+  residual terms read the exhaust temperature, which reads the mixture. Build 305 read that VE at the *target's*
+  exhaust (one pass). Now `veMeteredAFR` iterates from the target until a step moves λ by under 1e-6 (`VE_LOOP_TOL`),
+  and `computeVE` reads the burned λ inside the loop; `veLoopLast` keeps the iteration count.
+- Default build, 4543 rpm / 1.1 bar: table 15 points low, 3 iterations, AFR 14.9313 → 14.9301; 15 points high,
+  3 iterations. The engine's VE now equals the one its mixture was metered at (to 1e-5).
+- Fingerprint identical (5208 values): an untouched table burns the target, so no preset moves; mean error against
+  published power unchanged. `test187` updated.
+- Left open: inside the loop the spark retard behind the exhaust temperature still reads the target mixture's knock.
+
+### Real circuits stop sticking on an old service-worker cache (build 388)
+
+- Returning visitors still saw 22 circuits after build 386 shipped 32: `sw.js` served
+  `tracks/real-circuits.js` cache-first under `pixel-engine-sim-v5`, which never changed.
+- Cache bumped to `v6` (activate drops the stale store). That file is network-first like the
+  page; fonts and icons stay cache-first. `test237` locks it.
+- Immediate workaround without this build: hard-refresh the Pages site, or clear site data for it.
+
 
 ### Championship seasons on top of RACE (build 387)
 

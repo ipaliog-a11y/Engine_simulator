@@ -63,7 +63,7 @@ reporting its range. Sourcing is batched apart from physics.
 7. **Off the track.** Rolling resistance on grass and gravel (Wong, *Theory of Ground Vehicles*, ch. 2: Bekker's
    sinkage), a gravel trap where a circuit draws one, and a painted kerb's grip and ribs. The ESP's limit reads the
    surface.
-   *Build 388:* gravel rolls by Bekker's sinkage (Wong's dry sand as a stand-in: 0.27 of the load), grass 0.08; traps
+   *Build 390:* gravel rolls by Bekker's sinkage (Wong's dry sand as a stand-in: 0.27 of the load), grass 0.08; traps
    where the picture draws them (`SCENE_TRAP`); the ESP's limit and peak gates scale with the grip. Open: a painted
    kerb's grip and ribs, the picture's narrow gravel verge, wet ground's rolling resistance.
 8. **A rain tyre's own wet grip.** The compound's wet advantage from the EU label's wet grip index (Regulation
@@ -105,6 +105,8 @@ reporting its range. Sourcing is batched apart from physics.
     *Build 384:* rich cools ~45 K from λ 1 to 0.78; the ECU enriches (no boost cut) to hold 950 °C at the turbine
     inlet. Open: the boost cut, until EGT's load factor is derived; the shaft balance reads λ 1.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
+    *Build 389:* done for the VE table's metering (the only place burned and target differ on AUTO): iterated to
+    1e-6 in λ, 3 iterations. Fingerprint identical. Open: the retard inside the loop reads the target's knock.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
     *Build 375:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.
