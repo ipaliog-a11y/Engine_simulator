@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 400)
+### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 402)
 
 Step 9 of `plans/small-physics.md`.
 - `simulateBraking` (the 100–0 and 0–200–0) now brakes each axle as the lap has since build 150: braking moves load
@@ -34,6 +34,32 @@ Step 9 of `plans/small-physics.md`.
   published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
 - Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
 - Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
+### The economy run plans its own speed: a distance DP, and honest fuel at full load (build 400)
+
+- Engine cars and EVs on the economy roads now get their speed plan from a dynamic programme over distance (`ecoDP`,
+  `eco-run.js`): ~50 m stages, speed on a 0.5 m/s grid, least fuel (or pack energy) + λ × time, λ bisected until the
+  finish meets the target, under the fastest run's speeds and with braking up to 4 m/s². It finds pulse-and-glide
+  where it pays: on a flat 5 km at 3 × its fastest time the MX-5 swings 67–76 km/h and uses 6% less than a steady
+  speed (Li, Li, Wang & Peng, ACC 2011); the Model 3 holds a steady speed and coasts to the line. The eco driver
+  (build 352) is now the fallback when the DP finds no plan for the target. Hybrids keep the eco driver (left open).
+- `ecoFuelKg` had two holes, closed here because the DP used them: a demand past the fuel map's full load cost
+  3 × idle fuel (the map has no fuel past its own full load), and every glide was free and drag-free. Now the first is
+  charged pro rata at full-load BSFC, and a glide gentler than the weakest engine braking is in neutral at idle fuel.
+  The old eco driver's Alpine climb priced at ~200% engine efficiency; it is now ~31%.
+- What moved (Alpine and the Dragon, 190 engine and EV runs): the pricing fix alone raises the eco driver's figures
+  by a median of 68%, and the DP then saves 9–32% (median 20%) against the eco driver on the same pricing. Across the
+  six roads and all 570 engine and EV runs, before → after: engine cars −28% to +211% (median +24%; the largest rises
+  are fast turbo cars on Alpine, e.g. GT-R 9.1 → 28.3 L/100 km); EVs −32% to −8% (median −25%). The 30 hybrid runs
+  are unchanged. Finish time is 99.3–100% of the target. Per car: the PR's table.
+- Solve time (uncontended, the slowest roads): engine cars are faster than before (MX-5 Napoléon 2.7 → 1.2 s,
+  Hellcat 3.4 → 1.4 s, because the four capped eco solves no longer run); EVs up to +0.6 s (Model 3 Highland
+  1.2 → 1.7 s). The slowest economy solves are still the hybrids' (build 383's path, unchanged here): the Qashqai e-POWER on
+  Napoléon takes ~32 s.
+- Left open: no DP for hybrids (the ECMS would make the state two-dimensional); nothing finer than a 50 m stage;
+  WLTC keeps its old full-load fallback and overrun rule (`fuel-cycle.js`), so the WLTC figures do not move.
+  Fingerprint identical (5208 values).
+
+
 ### Spiral skid pad and a figure 8 (build 399)
 
 - **Spiral Skid Pad** (`spiral`): one counter-clockwise turn of an Archimedean spiral, from 12 m out to the skid pad's own radius (30.48 m). The line's speed is sqrt(ay × ρ), with ρ the local radius of curvature, so the car is asked to go faster as the bend opens. ay is searched. On an MX-5 the held run is 36 → 58 km/h, 0.86 g at the exit; 1 km/h faster it runs wide.

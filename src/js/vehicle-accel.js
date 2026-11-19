@@ -218,7 +218,7 @@ function buildVehicle(){
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop. Returns stopping distance (m) and time (s).
-// Build 400 (small-physics 9): per axle, as the lap brakes since build 150. Braking moves load forward (m a h/L) and the
+// Build 402 (small-physics 9): per axle, as the lap brakes since build 150. Braking moves load forward (m a h/L) and the
 // downforce splits by the aero balance, so each axle's tyres grip at their own load; each axle's brakes give it their
 // share (brakeFrontShare), fading with its own rotors. With ABS, which also does the job of the proportioning valve
 // (EBD: Bosch Automotive Handbook, "electronic brake-force distribution" replaces the mechanical valve), each axle is
