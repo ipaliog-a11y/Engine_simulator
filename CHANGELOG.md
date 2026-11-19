@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Spiral skid pad and a figure 8 (build 390)
+
+- **Spiral Skid Pad** (`spiral`): one counter-clockwise turn of an Archimedean spiral, from 12 m out to the skid pad's own radius (30.48 m). The line's speed is sqrt(ay × ρ), with ρ the local radius of curvature, so the car is asked to go faster as the bend opens. ay is searched. On an MX-5 the held run is 36 → 58 km/h, 0.86 g at the exit; 1 km/h faster it runs wide.
+- **Figure 8** (`fig8`): Bernoulli's lemniscate, one loop each way. Curvature is zero at the crossing and tightest at the outer bends, set to half the skid pad's radius (15.24 m). The score is the highest constant speed that stays in the 1 m lane. An MX-5 holds 43 km/h (0.95 g at the bend, 0.55 g averaged over the whole figure, because the crossing is straight).
+- Same driver and the same 1 m lane as the skid pad. The speed loop still sits a little under a rising target, so the spiral's exit g is under the g it was asked. TIGHT is left of the line (toward the centre on the spiral); WIDE is right.
+
 ### The VE table's mixture is read at its own exhaust, to convergence (build 389)
 
 Step 14 of `plans/small-physics.md`.

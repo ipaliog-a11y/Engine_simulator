@@ -824,7 +824,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 389</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 390</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3276,12 +3276,12 @@ Each round calls <i>simulateRace</i> with the season's seed offset by the round 
 </div>
 <div class="guide-see">See also: <a data-gp="race">The race</a> · <a data-gp="challenges">Challenges</a></div>
 </section>
-<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
+<section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g spiral figure 8 lemniscate" hidden>
 <h4 class="guide-title">Challenges</h4>
 <div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
-<canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Three ways to test a whole car on a road: how little it burns at a set pace, whether it beats a set time, and how fast it can swerve round a moose.</div>
+<canvas class="gart" data-art="challenge"></canvas><div class="gart-cap">Solved tests of a whole car: economy and a set time on a road, a moose swerve, a skid pad, a spiral that opens, and a figure 8.</div>
 <div class="guide-body" data-gk="chalReal">
-<b>Eco-rallies</b> give each car a time to keep and score the fuel it burns. Good eco drivers do not creep: they accelerate firmly at low engine speed, change up early, look far ahead and lift off long before a corner so the brakes are hardly needed, because braking turns fuel already burnt into heat. In an electric car the motor slows the car as a generator (<b>regen</b>) and puts part of that energy back in the pack, so the trick is to slow within what regen can take. <b>Rally stages</b> are run against the clock, point to point; a car that cannot make the time is out. The <b>moose test</b> (ISO 3888-2) is a sudden double lane change between cones: the highest entry speed with no cone touched. A <b>powerslide</b> links two drifts through an S: the rear tyres past their grip peak, the car held at an angle by throttle and opposite lock.
+<b>Eco-rallies</b> give each car a time to keep and score the fuel it burns. Good eco drivers do not creep: they accelerate firmly at low engine speed, change up early, look far ahead and lift off long before a corner so the brakes are hardly needed, because braking turns fuel already burnt into heat. In an electric car the motor slows the car as a generator (<b>regen</b>) and puts part of that energy back in the pack, so the trick is to slow within what regen can take. <b>Rally stages</b> are run against the clock, point to point; a car that cannot make the time is out. The <b>moose test</b> (ISO 3888-2) is a sudden double lane change between cones: the highest entry speed with no cone touched. A <b>powerslide</b> links two drifts through an S: the rear tyres past their grip peak, the car held at an angle by throttle and opposite lock. A <b>spiral skid pad</b> starts on a tight bend and asks the car to go faster as the bend opens. A <b>figure 8</b> is one loop each way, so the weight has to cross from one side to the other.
 </div>
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
@@ -3291,8 +3291,10 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
 <b>S-Route Powerslide</b>: ESP and TC off; the best of the plans (entry speed, target body slip β, initiation, radius). <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD and FWD only); AUTO tries them all, the handbrake last. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The grid gives each corner's peak β and slide time.<br>
-<b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.
-<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad.
+<b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.<br>
+<b>Spiral Skid Pad</b>: one turn from 12 m out to that same radius. The target speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens; the score is the exit speed. <b>TIGHT</b> is toward the centre, <b>WIDE</b> the outside.<br>
+<b>Figure 8</b>: a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight. The score is the highest speed held for the whole figure. <b>BEND g</b> is that speed as <i>v²/(g·ρ)</i> at the tight bend; <b>MEAN ay</b> is lower, because the crossing asks nothing sideways. <b>TIGHT</b> is left of the line, <b>WIDE</b> is right.<br>
+<b>RANK CARS</b>: add cars (this build, the garage's or factory cars) and press RANK; each runs the selected challenge with the settings above, one car at a time (CANCEL stops before the next). The table puts passes first, then sorts by the challenge's own score: least energy for economy (fuel as litres × density × heating value, an EV's pack kWh, both in MJ, so engine cars and EVs share one scale), shortest time for a stage, highest clear speed for the moose test, largest peak β for the powerslide, highest steady g for the skid pad, highest exit speed for the spiral, highest held speed for the figure 8.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3300,10 +3302,11 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Fastest time</b> on an open road is the lap solver's method without the wrap: corner ceilings from the tyres' grip, a braking pass backwards and a drive pass forwards from rest, with grade and crests.<br>
 <b>The eco driver</b> limits both passes. Drive: at each speed, the gear and torque with the lowest BSFC on the engine's own fuel map (the "pulse" of pulse-and-glide, Li et al. 2011), so the shift speed comes out of the map; for an EV the motor torque with the highest <i>T·ω / (T·ω + losses)</i>. Slowing: lift, with engine braking in fuel cut in the gear that brakes most (no fuel), or the regen table on an EV, plus drag, rolling resistance and grade. A blend <i>s</i> adds <i>s</i> × 30 m/s² of drive and <i>s</i> × 12 m/s² of brake back toward the car's own limits. For each blend (0, 5, 20, 100%), a speed cap is searched so the finish lands on the target, and the run that burns least is kept.<br>
 <b>Fuel</b> is read off the fuel map at each step in the gear that burns least for the force needed; <b>EV energy</b> is motor losses, pack heat and 250 W of auxiliaries, less regen.<br>
-<b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.
+<b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.<br>
+<b>Spiral</b>: an Archimedean spiral r = 12 m + bθ for one turn, out to the skid pad's radius. Its radius of curvature is ρ = (r² + b²)^(3/2) / (r² + 2b²), and the line's speed is sqrt(ay·ρ); ay is searched. <b>Figure 8</b>: Bernoulli's lemniscate, curvature 0 where it crosses and ρ = a/3 at the two outer bends, with a chosen so that bend is half the skid pad's radius. The speed is constant, and searched.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
+The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone. The spiral and the figure 8 use the skid pad's driver and its 1 m lane. That driver's speed loop sits a little under a rising target, so the spiral's exit g is under the g it was asked. The figure 8 crosses on the lemniscate's straight node, not on two circles with a step change in steer.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -18696,6 +18699,7 @@ function screechSlide(){
   if(vizMode!=='challenges'||!R||!R.ok)return 0;
   if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
   if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  if(R.kind==='spiral'||R.kind==='fig8')return driftSlide({pkR:screechPeak(R.mu,R)},driftSampleAt(R,chalMooseNow()));
   return 0;
 }
 function updateScreech(t){
@@ -25407,7 +25411,7 @@ function updateUI(){
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');
   else if(vizMode==='engine')legend.innerHTML=tr('THROTTLE makes power; LOAD (dyno brake) sets the hold RPM — more load = lower RPM, zero = free-rev to limiter.')+'<br>'+tr('Lift off at speed → engine braking + fuel cut. Detonation/overheat/lean-boost/valve float wear the engine.');
-  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.');
+  else if(vizMode==='challenges')legend.innerHTML=tr('Solved vehicle tests: economy, moose avoid, S-route powerslide, skid pad, spiral, figure 8.')+'<br>'+tr('Economy: green start, red finish; line colour is pace versus flat-out; hover for speed and incline; pace sets the target time.')+' '+tr('Wheel or pinch to zoom, drag to scroll, double-click to reset.')+' '+tr('Moose: ISO 3888-2 cones, frontal forces and body roll.')+' '+tr('Powerslide: S-route with linked drifts; CLEAR needs both corners.')+' '+tr('Skid pad: 61 m circle; steady lateral g from the lap time.')+' '+tr('Spiral: from a 12 m bend out to that circle, speed rising as it opens.')+' '+tr('Figure 8: both directions, tightest bend half that radius.');
   else legend.innerHTML=tr('Dyno shows full power & torque curves to redline.')+'<br>'+tr('Green line = current RPM. Peaks marked with dots.');
   updateDashLamps();
 }
@@ -30594,9 +30598,175 @@ function simulateSkidpadChallenge(){
     betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
     radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
 }
+// ====== SPIRAL SKID PAD AND FIGURE 8 (build 390) ======
+// Two courses for the same stepped car and driver as the skid pad (skidpad-run.js). The lane is that pad's
+// SKID_TOL (1 m either side of the line: this game's lane, not a standard). Outcomes use its words:
+//   SPIN   body slip β over 25°, or the nose more than 90° off the line
+//   WIDE   the CG more than SKID_TOL to the right of the line (on the spiral, the outside)
+//   TIGHT  more than SKID_TOL to the left (on the spiral, toward the centre)
+//   SLOW   still in the lane, but the course not finished in time
+//   HOLD   none of these
+// driveDriver's speed loop is proportional, so the car sits a little under a rising target. ESC stays as the car is set.
+//
+// SPIRAL. An Archimedean spiral r = r0 + b θ (the circle is the case b = 0), one turn, counter-clockwise.
+// The outer radius is the skid pad's own (SKID_R, a 200 ft circle). The inner radius is 12 m: a 2.9 m wheelbase
+// (the grand-tourer chassis) at the model's steering lock, δ = 8.5/steerRatio from 2.7 turns lock to lock
+// (driveCar, probable), has an Ackermann radius L/tan δ ≈ 4.6 m, and 12 m asks L/ρ ≈ 0.25 rad of road wheel,
+// under half that lock, so the stop is not what ends the run. The local radius of curvature is
+// ρ = (r² + b²)^(3/2) / (r² + 2 b²). The line's speed is sqrt(ay · ρ): the same lateral demand all the way,
+// and a faster bend as it opens. ay is searched. A short lead-in at the inner curvature lets the tyres and
+// the roll settle before the spiral is judged.
+//
+// FIGURE 8. Bernoulli's lemniscate, (x² + y²)² = 2 c² (x² − y²), in the form
+// x = a cos t / (1 + sin² t), y = a sin t cos t / (1 + sin² t). Curvature is 0 at the crossing and
+// tightest at the two outer vertices, where ρ = a/3. a is chosen so that bend is half the skid pad's
+// radius (SKID_R/2): one loop each way, the crossing straight, the highest constant speed that stays in the lane.
+const SPIRAL_R0=12,SPIRAL_TURNS=1;
+const FIG8_RHO=SKID_R/2,FIG8_A=3*FIG8_RHO;
+let spiralGeom=null,fig8Geom=null;
+function arcLead(p,dist){
+  const ds=0.5;let X=p.x,Y=p.y,P=p.psi+Math.PI,K=-p.kap,raw=[[X,Y]],n=Math.ceil(dist/ds);
+  for(let i=0;i<n;i++){P+=K*ds;X+=Math.cos(P)*ds;Y+=Math.sin(P)*ds;raw.push([X,Y]);}
+  raw.reverse();const line=[];
+  for(let i=0;i<raw.length-1;i++){const a=raw[i],b=raw[i+1];
+    line.push({x:a[0],y:a[1],v:p.v,grade:0,kv:0,psi:Math.atan2(b[1]-a[1],b[0]-a[0]),kap:p.kap});}
+  return line;
+}
+function spiralGeomBuild(){
+  const r0=SPIRAL_R0,r1=SKID_R,Th=SPIRAL_TURNS*2*Math.PI,b=(r1-r0)/Th,th0=-Math.PI/2,ds=0.5;
+  const rho=r=>{const r2=r*r,b2=b*b;return Math.pow(r2+b2,1.5)/(r2+2*b2);};
+  const at=th=>{const r=r0+b*th,ph=th0+th,dx=b*Math.cos(ph)-r*Math.sin(ph),dy=b*Math.sin(ph)+r*Math.cos(ph),rc=rho(r);
+    return {x:r*Math.cos(ph),y:r*Math.sin(ph),v:Math.sqrt(rc),grade:0,kv:0,psi:Math.atan2(dy,dx),kap:1/rc};};
+  const course=[];let th=0;
+  while(th<Th){course.push(at(th));th+=ds/Math.hypot(r0+b*th,b);}
+  course.push(at(Th));
+  const ext=[];let thE=Th,e=0;
+  while(e<30){const r=r0+b*thE;thE+=ds/Math.hypot(r,b);e+=ds;ext.push(at(thE));}
+  const lead=arcLead(course[0],20),course0=lead.length,end=lead.length+course.length;
+  return {line:lead.concat(course,ext),course0,end,rho0:rho(r0),rho1:rho(r1),b};
+}
+function fig8Point(a,t){
+  const s=Math.sin(t),c=Math.cos(t),d=1+s*s;
+  return {x:a*c/d,y:a*s*c/d};
+}
+function fig8Frame(a,t){
+  const dt=1e-4,p=fig8Point(a,t),p1=fig8Point(a,t+dt),m=fig8Point(a,t-dt);
+  const xp=(p1.x-m.x)/(2*dt),yp=(p1.y-m.y)/(2*dt),xpp=(p1.x-2*p.x+m.x)/(dt*dt),ypp=(p1.y-2*p.y+m.y)/(dt*dt);
+  const sp=Math.hypot(xp,yp)||1e-9;
+  return {x:p.x,y:p.y,v:1,grade:0,kv:0,psi:Math.atan2(yp,xp),kap:(xp*ypp-yp*xpp)/(sp*sp*sp),sp};
+}
+function fig8GeomBuild(){
+  const a=FIG8_A,ds=0.5,pts=[];
+  for(let t=-Math.PI;t<Math.PI-1e-4;){const f=fig8Frame(a,t);pts.push(f);t+=ds/f.sp;}
+  const leadN=Math.round(pts.length*0.28),lead=pts.slice(pts.length-leadN),ext=pts.slice(0,70);
+  const course0=lead.length,end=lead.length+pts.length;
+  return {line:lead.concat(pts,ext),course0,end,rho:FIG8_RHO,a};
+}
+function courseScaled(G,k){
+  return {line:G.line.map(p=>({x:p.x,y:p.y,v:p.v*k,grade:0,kv:0,psi:p.psi,kap:p.kap})),course0:G.course0,end:G.end};
+}
+function coursePlace(car,s,p){
+  s.x=p.x;s.y=p.y;s.psi=p.psi;s.vx=p.v;s.vy=0;s.yaw=p.v*(p.kap||0);
+  s.w=s.w.map(()=>p.v/Math.max(0.2,car.r));
+  const ratios=car.ratios.length?car.ratios:[1];s.gear=1;
+  for(let k=ratios.length;k>=1;k--){s.gear=k;if(p.v/car.r*ratios[k-1]*car.fd*30/Math.PI>=2500)break;}
+  s.we=Math.max((car.idle||0)*Math.PI/30,p.v/car.r*ratios[s.gear-1]*car.fd);
+}
+// Follow `line`: a lead-in, the judged course [course0, end), then a tail so the driver's lookahead,
+// which wraps, never lands back on the start.
+function courseRun(car,line,course0,end,sample){
+  const tol=SKID_TOL,N=line.length,s=driveState(car),d={i:0},p0=line[0];
+  coursePlace(car,s,p0);
+  const o={eMin:0,eMax:0,betaMax:0,ayMean:0,vMean:0,vEntry:0,vExit:0,lapT:0,steer:0,samples:sample?[]:null};
+  const dt=0.005,vRef=Math.max(4,line[course0].v),tMax=(end*0.5)/vRef*2.2+6;
+  let ayS=0,vS=0,stS=0,n=0,enS=0,enN=0,exS=0,exN=0,nextT=0,spin=false,done=false;
+  const span=Math.max(1,end-course0),entryTo=course0+Math.max(3,Math.round(span*0.08)),exitFrom=end-Math.max(3,Math.round(span*0.1));
+  while(s.t<tMax){
+    const u=driveDriver(car,s,line,d);stepCar(car,s,u,dt);
+    const i=Math.min(N-2,d.i||0),pA=line[i],pB=line[i+1],hp=Math.atan2(pB.y-pA.y,pB.x-pA.x);
+    const e=-(s.x-pA.x)*Math.sin(hp)+(s.y-pA.y)*Math.cos(hp);
+    let dh=s.psi-hp;dh-=2*Math.PI*Math.round(dh/(2*Math.PI));
+    const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+    if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2)spin=true;
+    const judged=i>=course0&&i<end;
+    if(judged){
+      o.eMax=Math.max(o.eMax,e);o.eMin=Math.min(o.eMin,e);o.betaMax=Math.max(o.betaMax,Math.abs(beta));
+      ayS+=Math.abs(s.ayF);vS+=s.speed;stS+=Math.abs(s.delta||0);n++;
+      if(i<entryTo){enS+=s.speed;enN++;}
+      if(i>=exitFrom){exS+=s.speed;exN++;}
+      if(sample&&s.t>=nextT){
+        o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,thr:u.throttle,brk:u.brake||0,
+          gear:s.gear,rpm:s.rpm,ax:s.ax||0,ay:s.ay||0,e,alpha:s.alpha.slice()});
+        nextT=s.t+0.04;
+      }
+    }
+    if(i>=end){done=true;o.lapT=s.t;break;}
+    if(spin)break;
+    if(!sample&&judged&&(o.eMin<-tol||o.eMax>tol))break;
+    if(s.t>3&&s.speed<0.8)break;
+  }
+  o.ayMean=n?ayS/n/DRIVE_G:0;o.vMean=n?vS/n:0;o.steer=n?stS/n:0;
+  o.vEntry=enN?enS/enN:o.vMean;o.vExit=exN?exS/exN:o.vMean;
+  o.outcome=spin?'SPIN':o.eMin<-tol?'WIDE':o.eMax>tol?'TIGHT':!done?'SLOW':'HOLD';
+  o.ok=o.outcome==='HOLD';
+  return o;
+}
+function coursePack(car,R,line,course0,end){
+  const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
+  R.samples=R.samples||[];
+  R.line=line.slice(course0,end);
+  R.trackW=D.w;R.body={f:car.a+D.ovF,r:car.b+D.ovR};R.drive=car.drive;R.mu=car.mu;R.tol=SKID_TOL;
+  R.betaMax*=180/Math.PI;R.steerDeg=R.steer*180/Math.PI;
+  R.entryKmh=R.vEntry*3.6;R.exitKmh=R.vExit*3.6;R.speedKmh=R.vMean*3.6;
+  return R;
+}
+function spiralBest(car){
+  if(!spiralGeom)spiralGeom=spiralGeomBuild();
+  const g0=(car.mu||0.9)*DRIVE_G,run=ay=>courseRun(car,courseScaled(spiralGeom,Math.sqrt(Math.max(0.2,ay))).line,spiralGeom.course0,spiralGeom.end,false);
+  let lo=0.45*g0,hi=1.05*g0;
+  while(lo>1.2&&!run(lo).ok)lo*=0.82;
+  if(!(lo>1.2))return null;
+  while(run(hi).ok&&hi<1.7*g0)hi*=1.08;
+  while(hi-lo>0.04){const m=(lo+hi)/2;if(run(m).ok)lo=m;else hi=m;}
+  return lo;
+}
+function simulateSpiralChallenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  if(!spiralGeom)spiralGeom=spiralGeomBuild();
+  const car=driveCar(),ay=spiralBest(car);
+  if(!ay)return {ok:false,reason:'no-hold',kind:'spiral'};
+  const G=spiralGeom,Sc=courseScaled(G,Math.sqrt(ay)),R=courseRun(car,Sc.line,G.course0,G.end,true);
+  const v1=Math.sqrt(ay*G.rho1),ayFail=Math.pow(v1+1/3.6,2)/G.rho1,F=courseRun(car,courseScaled(G,Math.sqrt(ayFail)).line,G.course0,G.end,false);
+  coursePack(car,R,Sc.line,G.course0,G.end);
+  R.ok=R.outcome==='HOLD';R.kind='spiral';R.failBy=F.outcome;R.gExit=R.vExit*R.vExit/(DRIVE_G*G.rho1);
+  R.r0=SPIRAL_R0;R.r1=SKID_R;R.rho1=G.rho1;R.ayTarget=ay/DRIVE_G;
+  return R;
+}
+function fig8Best(car){
+  if(!fig8Geom)fig8Geom=fig8GeomBuild();
+  const v0=Math.sqrt((car.mu||0.9)*DRIVE_G*FIG8_RHO),run=v=>courseRun(car,courseScaled(fig8Geom,v).line,fig8Geom.course0,fig8Geom.end,false);
+  let lo=0.5*v0,hi=1.05*v0;
+  while(lo>3&&!run(lo).ok)lo*=0.82;
+  if(!(lo>3))return null;
+  while(run(hi).ok&&hi<50)hi*=1.08;
+  while(hi-lo>0.06){const m=(lo+hi)/2;if(run(m).ok)lo=m;else hi=m;}
+  return lo;
+}
+function simulateFig8Challenge(){
+  const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
+  if(!fig8Geom)fig8Geom=fig8GeomBuild();
+  const car=driveCar(),v=fig8Best(car);
+  if(!v)return {ok:false,reason:'no-hold',kind:'fig8'};
+  const G=fig8Geom,Sc=courseScaled(G,v),R=courseRun(car,Sc.line,G.course0,G.end,true);
+  const F=courseRun(car,courseScaled(G,v+1/3.6).line,G.course0,G.end,false);
+  coursePack(car,R,Sc.line,G.course0,G.end);
+  R.ok=R.outcome==='HOLD';R.kind='fig8';R.failBy=F.outcome;R.gLap=R.vMean*R.vMean/(DRIVE_G*G.rho);R.rho=G.rho;R.a=G.a;
+  return R;
+}
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (368).
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358), skid pad (368),
+// spiral pad and figure 8 (course-pads.js).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -30637,7 +30807,11 @@ const RUN_CHALLENGES=[
   {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
     desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'},
   {id:'skidpad',kind:'skidpad',name:'Skid Pad',
-    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'}
+    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'},
+  {id:'spiral',kind:'spiral',name:'Spiral Skid Pad',
+    desc:'One turn out from a 12 m bend to the skid pad radius. The speed target rises as the bend opens.'},
+  {id:'fig8',kind:'fig8',name:'Figure 8',
+    desc:'A lemniscate, one loop each way. Highest speed held through both, tightest bend half the skid pad.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -30655,6 +30829,8 @@ function solveRunChallenge(id){
   if(ch.kind==='moose')return simulateMooseChallenge();
   if(ch.kind==='drift')return simulateDriftChallenge();
   if(ch.kind==='skidpad')return simulateSkidpadChallenge();
+  if(ch.kind==='spiral')return simulateSpiralChallenge();
+  if(ch.kind==='fig8')return simulateFig8Challenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
 // Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
@@ -30673,6 +30849,10 @@ const RUN_CHALLENGE_SCORES={
   moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
   // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
   skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
+  // Spiral: the speed it actually carries at the outer bend (the target climbs with the radius). Figure 8: the
+  // speed held through both loops. HOLD passes either.
+  spiral:R=>({v:R.exitKmh,higher:true,pass:R.outcome==='HOLD',text:R.exitKmh.toFixed(0)+' km/h · '+R.gExit.toFixed(2)+' g'}),
+  fig8:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='HOLD',text:R.speedKmh.toFixed(0)+' km/h · '+R.gLap.toFixed(2)+' g'}),
   drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
 };
 function runChallengeScore(ch,R){
@@ -30701,7 +30881,7 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -30761,6 +30941,27 @@ function renderChallenge(){
       cell('DIAMETER',(2*R.radius).toFixed(1)+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
     note.textContent=tr(ch.desc)+' '+tr('A 200 ft circle, as Motor Trend and Road & Track use (Car and Driver: 300 ft). The driver holds the circle while the speed is raised; the best is the fastest lap that stays within 1 m of the line with no spin. LATERAL g is the magazines\' figure from that lap\'s time, v²/(g·R); MEAN ay is the body\'s own. One step faster it runs WIDE (understeer), TIGHT (the tail steps out) or SPINs.');
+    return;
+  }
+  if(R.kind==='spiral'||R.kind==='fig8'){
+    const col=SKID_OUT_COL[R.outcome]||'#e0e0e0',sp=R.kind==='spiral';
+    head.innerHTML=sp
+      ?tr(ch.name)+' · <b>'+R.exitKmh.toFixed(0)+' km/h</b> · '+R.gExit.toFixed(2)+' g'
+      :tr(ch.name)+' · <b>'+R.speedKmh.toFixed(0)+' km/h</b>';
+    grid.innerHTML=(sp
+      ?cell('EXIT',R.exitKmh.toFixed(0)+' km/h')+cell('ENTRY',R.entryKmh.toFixed(0)+' km/h')+cell('LATERAL g',R.gExit.toFixed(2)+' g')
+      :cell('SPEED',R.speedKmh.toFixed(0)+' km/h')+cell('BEND g',R.gLap.toFixed(2)+' g')+cell('TIME',R.lapT.toFixed(1)+' s'))+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('FAILS AT','+1 km/h: '+tr(R.failBy))+
+      cell('MEAN ay',R.ayMean.toFixed(2)+' g')+
+      cell('PEAK β',R.betaMax.toFixed(1)+'°')+
+      cell('STEER',R.steerDeg.toFixed(1)+'°')+
+      cell('OFF LINE',Math.max(-R.eMin,R.eMax).toFixed(2)+' m')+
+      (sp?cell('INNER',R.r0.toFixed(0)+' m')+cell('OUTER',R.r1.toFixed(1)+' m'):cell('BEND',R.rho.toFixed(1)+' m'))+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+(sp
+      ?tr('An Archimedean spiral, one turn, counter-clockwise. The line speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens, from 12 m out to the skid pad radius. The best g that stays within 1 m is kept. TIGHT is toward the centre, WIDE is the outside. One step faster, 1 km/h at the exit, is how it fails.')
+      :tr('Bernoulli lemniscate: curvature is zero at the crossing and tightest at the two outer bends, at half the skid pad radius. The best constant speed that stays within 1 m for a full figure is kept. TIGHT is left of the line, WIDE is right. One step faster is how it fails.'));
     return;
   }
   if(R.kind==='stage'){
@@ -30951,6 +31152,45 @@ function drawSkidpadChallenge(g,R){
   }
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('SKID PAD')+' · '+(2*Rr).toFixed(1)+' m '+tr('circle')+' · ±'+tol+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
+}
+// Spiral and figure 8: the judged line from above, the 1 m lane, the car replaying the run.
+function drawCourseChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const line=R.line||[],tol=R.tol||1;
+  if(!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);}
+  const m=tol+4;minX-=m;maxX+=m;minY-=m;maxY+=m;
+  const pad=16,sc=Math.min((vizW-2*pad)/(maxX-minX||1),(vizH-2*pad)/(maxY-minY||1));
+  const MX=x=>pad+(x-minX)*sc,MY=y=>vizH-pad-(y-minY)*sc;
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(3,2*tol*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();g.setLineDash([]);
+  const vs=line.map(q=>q.v),lo=Math.min(...vs),hi=Math.max(...vs);
+  if(hi-lo>0.4){g.lineWidth=Math.max(2,(R.trackW||1.6)*sc*0.35);
+    for(let i=0;i<line.length-1;i++){const u=(line[i].v-lo)/(hi-lo);
+      g.strokeStyle=u<0.5?'#4aa3ff':'#55dd66';
+      g.beginPath();g.moveTo(MX(line[i].x),MY(line[i].y));g.lineTo(MX(line[i+1].x),MY(line[i+1].y));g.stroke();}}
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.35)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=SKID_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    g.fillText(Math.round((s.v||0)*3.6)+' km/h · '+(Math.abs(s.ay||0)/DRIVE_G).toFixed(2)+' g',10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  const cap=R.kind==='spiral'
+    ?(tr('SPIRAL')+' · '+R.r0.toFixed(0)+'→'+R.r1.toFixed(1)+' m · '+R.entryKmh.toFixed(0)+'→'+R.exitKmh.toFixed(0)+' km/h · ±'+tol+' m')
+    :(tr('FIGURE 8')+' · '+R.rho.toFixed(1)+' m '+tr('bends')+' · '+R.speedKmh.toFixed(0)+' km/h · ±'+tol+' m');
+  g.fillText(cap,10,vizH-10);
   if(s&&s.rpm!=null)drawDriftHud(s);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
@@ -31229,6 +31469,7 @@ function drawChallenge(){
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
   if(R&&R.kind==='skidpad'&&R.ok){drawSkidpadChallenge(g,R);return;}
+  if(R&&(R.kind==='spiral'||R.kind==='fig8')&&R.ok){drawCourseChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;
@@ -33433,7 +33674,7 @@ function bindControls(){
   const chalSel=document.getElementById('chalSel');
   if(chalSel){
     // One group per kind (build 352: the list grew past a dozen).
-    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD'},groups={};
+    const KIND={economy:'ECONOMY',stage:'FIXED-TIME STAGE',moose:'MOOSE TEST',drift:'POWERSLIDE',skidpad:'SKID PAD',spiral:'SPIRAL PAD',fig8:'FIGURE 8'},groups={};
     RUN_CHALLENGES.forEach(c=>{
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});

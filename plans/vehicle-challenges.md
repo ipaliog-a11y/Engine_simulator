@@ -101,6 +101,8 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
 1. ~~Skid-pad challenge.~~ Shipped in build 368 (`src/js/skidpad-run.js`, id `skidpad`): 61 m circle, steady g from the
    lap time, outcomes HOLD / WIDE / TIGHT / SPIN / SLOW. Open: the driver's speed loop is proportional, so it settles
    just under its target; ESC stays at the car's default.
+   ~~Spiral and figure 8.~~ Shipped in `src/js/course-pads.js` (`spiral`, `fig8`): Archimedean spiral from 12 m to the
+   skid-pad radius, speed sqrt(ay·ρ); Bernoulli lemniscate with tightest bend SKID_R/2. Same lane, same outcomes.
 2. ~~Multi-car ranking on a challenge.~~ Shipped in build 370: `src/js/chal-rank.js`. A new challenge registers its score
    in `RUN_CHALLENGE_SCORES[kind]` (or `score` on its entry): `{v, higher, pass, text}`; the ranking needs no change.
    Open: one car's solve still blocks the page (up to ~3 s, powerslide); a Worker would need the solvers split out.

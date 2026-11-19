@@ -19,7 +19,7 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
   renderChallenge();
 }
 function renderChallenge(){
@@ -79,6 +79,27 @@ function renderChallenge(){
       cell('DIAMETER',(2*R.radius).toFixed(1)+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase()));
     note.textContent=tr(ch.desc)+' '+tr('A 200 ft circle, as Motor Trend and Road & Track use (Car and Driver: 300 ft). The driver holds the circle while the speed is raised; the best is the fastest lap that stays within 1 m of the line with no spin. LATERAL g is the magazines\' figure from that lap\'s time, v²/(g·R); MEAN ay is the body\'s own. One step faster it runs WIDE (understeer), TIGHT (the tail steps out) or SPINs.');
+    return;
+  }
+  if(R.kind==='spiral'||R.kind==='fig8'){
+    const col=SKID_OUT_COL[R.outcome]||'#e0e0e0',sp=R.kind==='spiral';
+    head.innerHTML=sp
+      ?tr(ch.name)+' · <b>'+R.exitKmh.toFixed(0)+' km/h</b> · '+R.gExit.toFixed(2)+' g'
+      :tr(ch.name)+' · <b>'+R.speedKmh.toFixed(0)+' km/h</b>';
+    grid.innerHTML=(sp
+      ?cell('EXIT',R.exitKmh.toFixed(0)+' km/h')+cell('ENTRY',R.entryKmh.toFixed(0)+' km/h')+cell('LATERAL g',R.gExit.toFixed(2)+' g')
+      :cell('SPEED',R.speedKmh.toFixed(0)+' km/h')+cell('BEND g',R.gLap.toFixed(2)+' g')+cell('TIME',R.lapT.toFixed(1)+' s'))+
+      cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('FAILS AT','+1 km/h: '+tr(R.failBy))+
+      cell('MEAN ay',R.ayMean.toFixed(2)+' g')+
+      cell('PEAK β',R.betaMax.toFixed(1)+'°')+
+      cell('STEER',R.steerDeg.toFixed(1)+'°')+
+      cell('OFF LINE',Math.max(-R.eMin,R.eMax).toFixed(2)+' m')+
+      (sp?cell('INNER',R.r0.toFixed(0)+' m')+cell('OUTER',R.r1.toFixed(1)+' m'):cell('BEND',R.rho.toFixed(1)+' m'))+
+      cell('DRIVE',tr((R.drive||'').toUpperCase()));
+    note.textContent=tr(ch.desc)+' '+(sp
+      ?tr('An Archimedean spiral, one turn, counter-clockwise. The line speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens, from 12 m out to the skid pad radius. The best g that stays within 1 m is kept. TIGHT is toward the centre, WIDE is the outside. One step faster, 1 km/h at the exit, is how it fails.')
+      :tr('Bernoulli lemniscate: curvature is zero at the crossing and tightest at the two outer bends, at half the skid pad radius. The best constant speed that stays within 1 m for a full figure is kept. TIGHT is left of the line, WIDE is right. One step faster is how it fails.'));
     return;
   }
   if(R.kind==='stage'){
@@ -269,6 +290,45 @@ function drawSkidpadChallenge(g,R){
   }
   g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
   g.fillText(tr('SKID PAD')+' · '+(2*Rr).toFixed(1)+' m '+tr('circle')+' · ±'+tol+' m',10,vizH-10);
+  if(s&&s.rpm!=null)drawDriftHud(s);
+}
+// Spiral and figure 8: the judged line from above, the 1 m lane, the car replaying the run.
+function drawCourseChallenge(g,R){
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  const line=R.line||[],tol=R.tol||1;
+  if(!line.length)return;
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(const q of line){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);}
+  const m=tol+4;minX-=m;maxX+=m;minY-=m;maxY+=m;
+  const pad=16,sc=Math.min((vizW-2*pad)/(maxX-minX||1),(vizH-2*pad)/(maxY-minY||1));
+  const MX=x=>pad+(x-minX)*sc,MY=y=>vizH-pad-(y-minY)*sc;
+  g.strokeStyle='#1c2330';g.lineWidth=Math.max(3,2*tol*sc);g.lineJoin='round';g.lineCap='round';
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();
+  g.strokeStyle='#ffcc00';g.lineWidth=1;g.setLineDash([4,4]);
+  g.beginPath();for(let i=0;i<line.length;i++){const X=MX(line[i].x),Y=MY(line[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();g.setLineDash([]);
+  const vs=line.map(q=>q.v),lo=Math.min(...vs),hi=Math.max(...vs);
+  if(hi-lo>0.4){g.lineWidth=Math.max(2,(R.trackW||1.6)*sc*0.35);
+    for(let i=0;i<line.length-1;i++){const u=(line[i].v-lo)/(hi-lo);
+      g.strokeStyle=u<0.5?'#4aa3ff':'#55dd66';
+      g.beginPath();g.moveTo(MX(line[i].x),MY(line[i].y));g.lineTo(MX(line[i+1].x),MY(line[i+1].y));g.stroke();}}
+  const S=R.samples||[];
+  if(S.length>1){g.strokeStyle='rgba(85,221,102,0.35)';g.lineWidth=Math.max(2,(R.trackW||1.8)*sc);
+    g.beginPath();for(let i=0;i<S.length;i++){const X=MX(S[i].x),Y=MY(S[i].y);if(i)g.lineTo(X,Y);else g.moveTo(X,Y);}g.stroke();}
+  const s=driftSampleAt(R,chalMooseNow());
+  if(s){
+    const B=R.body||{f:2,r:2.3},c=Math.cos(s.psi||0),sn=Math.sin(s.psi||0),tw=(R.trackW||1.8)/2;
+    g.fillStyle=SKID_OUT_COL[R.outcome]||'#55dd66';g.beginPath();
+    [[B.f,tw],[B.f,-tw],[-B.r,-tw],[-B.r,tw]].forEach(([dx,dy],k)=>{const X=MX(s.x+dx*c-dy*sn),Y=MY(s.y+dx*sn+dy*c);if(k)g.lineTo(X,Y);else g.moveTo(X,Y);});
+    g.closePath();g.fill();
+    g.fillStyle='#e0e0e0';g.font='8px "Press Start 2P"';
+    g.fillText(Math.round((s.v||0)*3.6)+' km/h · '+(Math.abs(s.ay||0)/DRIVE_G).toFixed(2)+' g',10,20);
+  }
+  g.fillStyle='#9ab';g.font='7px "Press Start 2P"';
+  const cap=R.kind==='spiral'
+    ?(tr('SPIRAL')+' · '+R.r0.toFixed(0)+'→'+R.r1.toFixed(1)+' m · '+R.entryKmh.toFixed(0)+'→'+R.exitKmh.toFixed(0)+' km/h · ±'+tol+' m')
+    :(tr('FIGURE 8')+' · '+R.rho.toFixed(1)+' m '+tr('bends')+' · '+R.speedKmh.toFixed(0)+' km/h · ±'+tol+' m');
+  g.fillText(cap,10,vizH-10);
   if(s&&s.rpm!=null)drawDriftHud(s);
 }
 function drawMooseTopDown(g,R,x0,y0,w,h){
@@ -547,6 +607,7 @@ function drawChallenge(){
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
   if(R&&R.kind==='skidpad'&&R.ok){drawSkidpadChallenge(g,R);return;}
+  if(R&&(R.kind==='spiral'||R.kind==='fig8')&&R.ok){drawCourseChallenge(g,R);return;}
   if(!R||!R.road){g.fillStyle='#556';g.font='10px "Press Start 2P"';g.fillText(tr('CHALLENGES'),16,28);chalHover.map=null;return;}
   const map=chalMapProject(R),p=map.p,n=p.length,MX=map.MX,MY=map.MY,T=map.T;
   chalHover.map=map;

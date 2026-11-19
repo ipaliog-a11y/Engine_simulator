@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 389
+# PIXEL POWERTRAIN v0.8 build 390
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -328,6 +328,10 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     or viscous coupling sends torque forward as the rear slips. Loose surfaces are not modelled.
   - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
     magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
+  - **Spiral Skid Pad** — one turn from a 12 m bend out to that same radius. The target speed rises with the
+    bend's radius of curvature; the score is the exit speed. TIGHT is toward the centre, WIDE the outside.
+  - **Figure 8** — a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight.
+    The score is the highest speed held through both loops.
   - **RANK CARS** runs several cars (this build, garage builds, factory cars) through the selected challenge
     with the same settings, one car at a time with a progress bar and CANCEL, and lists them passes first,
     then by the challenge's own score (economy by tank or pack energy in MJ, so engine cars and EVs share a scale).

@@ -1,6 +1,7 @@
 // ====== VEHICLE RUN CHALLENGES (build 341; real roads 343; moose 345) ======
 // Dynamic tests on the CHALLENGES tab — not the ENGINE career/scorecard list in challenges.js.
-// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358) and skid pad (368).
+// Economy, fixed-time stages (build 352), moose (345), S-route powerslide (358), skid pad (368),
+// spiral pad and figure 8 (course-pads.js).
 const RUN_CHALLENGES=[
   {id:'economy',kind:'economy',name:'Mountain Economy',
     desc:'Open mountain road. Finish inside the time limit; burn as little fuel as you can.',
@@ -41,7 +42,11 @@ const RUN_CHALLENGES=[
   {id:'drift-s',kind:'drift',name:'S-Route Powerslide',
     desc:'Point-to-point S: two linked corners. Hold a controlled powerslide through both, or fail honestly.'},
   {id:'skidpad',kind:'skidpad',name:'Skid Pad',
-    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'}
+    desc:'A 200 ft (61 m) circle. Highest speed the car holds on it, as steady lateral g.'},
+  {id:'spiral',kind:'spiral',name:'Spiral Skid Pad',
+    desc:'One turn out from a 12 m bend to the skid pad radius. The speed target rises as the bend opens.'},
+  {id:'fig8',kind:'fig8',name:'Figure 8',
+    desc:'A lemniscate, one loop each way. Highest speed held through both, tightest bend half the skid pad.'}
 ];
 let activeRunChallenge='economy';
 let chalResult=null;
@@ -59,6 +64,8 @@ function solveRunChallenge(id){
   if(ch.kind==='moose')return simulateMooseChallenge();
   if(ch.kind==='drift')return simulateDriftChallenge();
   if(ch.kind==='skidpad')return simulateSkidpadChallenge();
+  if(ch.kind==='spiral')return simulateSpiralChallenge();
+  if(ch.kind==='fig8')return simulateFig8Challenge();
   return{ok:false,reason:'unimplemented',challenge:ch};
 }
 // Each challenge's own score, for the ranking (build 370, src/js/chal-rank.js). Keyed by kind; an entry may carry its
@@ -77,6 +84,10 @@ const RUN_CHALLENGE_SCORES={
   moose:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='CLEAR',text:R.speedKmh+' km/h · '+tr(R.outcome)}),
   // Skid pad (build 368): the magazines' figure v²/(g·R) from the held lap; HOLD passes.
   skidpad:R=>({v:R.gLap,higher:true,pass:R.outcome==='HOLD',text:R.gLap.toFixed(2)+' g · '+tr(R.outcome)}),
+  // Spiral: the speed it actually carries at the outer bend (the target climbs with the radius). Figure 8: the
+  // speed held through both loops. HOLD passes either.
+  spiral:R=>({v:R.exitKmh,higher:true,pass:R.outcome==='HOLD',text:R.exitKmh.toFixed(0)+' km/h · '+R.gExit.toFixed(2)+' g'}),
+  fig8:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='HOLD',text:R.speedKmh.toFixed(0)+' km/h · '+R.gLap.toFixed(2)+' g'}),
   drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
 };
 function runChallengeScore(ch,R){

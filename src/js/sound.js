@@ -888,6 +888,7 @@ function screechSlide(){
   if(vizMode!=='challenges'||!R||!R.ok)return 0;
   if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
   if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
+  if(R.kind==='spiral'||R.kind==='fig8')return driftSlide({pkR:screechPeak(R.mu,R)},driftSampleAt(R,chalMooseNow()));
   return 0;
 }
 function updateScreech(t){
