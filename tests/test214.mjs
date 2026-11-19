@@ -26,9 +26,9 @@ const r = await page.evaluate(async () => {
   const load = n => loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes(n)));
   const pair = road => {
     const eco = simulateEconomyChallenge(road, 1.25);
-    const keep = ECO_BLENDS.slice(); ECO_BLENDS.splice(0, ECO_BLENDS.length, 1);
+    const keep = ECO_BLENDS.slice(); ECO_BLENDS.splice(0, ECO_BLENDS.length, 1); ECO_DP.on = false;   // the plain cap (no DP, build 384)
     const cap = simulateEconomyChallenge(road, 1.25);
-    ECO_BLENDS.splice(0, ECO_BLENDS.length, ...keep);
+    ECO_BLENDS.splice(0, ECO_BLENDS.length, ...keep); ECO_DP.on = true;
     const q = R => R.ev ? R.kWh : R.fuelL;
     return { eco: q(eco), cap: q(cap), t: eco.time, target: eco.target, blend: eco.ecoBlend };
   };
