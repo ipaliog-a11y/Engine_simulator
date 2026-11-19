@@ -102,6 +102,8 @@ reporting its range. Sourcing is batched apart from physics.
     *Build 384:* rich cools ~45 K from λ 1 to 0.78; the ECU enriches (no boost cut) to hold 950 °C at the turbine
     inlet. Open: the boost cut, until EGT's load factor is derived; the shaft balance reads λ 1.
 14. **The scavenging term reads the burned mixture**, not the target, with the loop closed to convergence.
+    *Build 389:* done for the VE table's metering (the only place burned and target differ on AUTO): iterated to
+    1e-6 in λ, 3 iterations. Fingerprint identical. Open: the retard inside the loop reads the target's knock.
 15. **A compound's split off its design point.** The low-pressure stage lags the high-pressure one, from each stage's
     own map. No preset is a compound, so the fingerprint is identical.
     *Build 375:* done; each stage on its own map, the HP shaft settled at once, the LP the state. Fingerprint identical.

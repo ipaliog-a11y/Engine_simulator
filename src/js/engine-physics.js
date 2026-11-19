@@ -96,7 +96,7 @@ function computeVE(rpm,map){
   // These four lines replace EXHAUST{topGain,lowLoss} and CAM{scav,lowLoss} — four fitted numbers
   // for two physical effects. Both waves swing both ways, so a badly matched pipe COSTS VE here.
   if(engine.primL){
-    const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map);
+    const chargeK=effIAT(map,rpm)+273.15, Tex=egtAt(rpm,map,_veLam);   // _veLam: the burned mixture, inside the VE loop
     // The intake stroke, integrated (build 121, intakeFill): the late-IVC loss, the column's momentum and
     // the runner's tuning in one. Until build 121 the geometric trapping loss and a ram wave that could
     // only repay it.
@@ -691,10 +691,14 @@ function renderSparkMap(){
 // computeVE at each breakpoint and the engine reads no table at all, so it moves no number. Diesels meter fuel by
 // quantity, not by an air estimate, and show no table. (The owner's choice, November 2026; plans/road-to-v1.md, G.)
 const VE_TMIN=0.20,VE_TMAX=1.60;   // editable bounds of the table's VE: past these no real engine breathes
-// computeVE sets boostNow, and reads the exhaust's temperature (its scavenging), which reads the mixture: inside it the
-// mixture is the target's, so the loop closes once (open: the real VE at the burned mixture's exhaust temperature).
-let _veIn=false;
-const veTrue=(rpm,map)=>{const b=engine.boostNow;_veIn=true;try{return computeVE(rpm,map);}finally{_veIn=false;engine.boostNow=b;}};
+// computeVE sets boostNow, and its scavenging and residual terms read the exhaust's temperature, which reads the mixture.
+// Build 305 read it at the target's, so the loop closed once. Now (build 389, plans/small-physics.md 14) the mixture is the
+// one burned: lambda_b = target x VE(T_ex(lambda_b)) / table VE, iterated from the target until a step moves lambda by
+// less than VE_LOOP_TOL. A leaner mixture runs a hotter exhaust, which scavenges and leaves residual differently, so the
+// real VE (and the mixture) moves by ~0.1-1%; the loop contracts fast (2-4 iterations: veLoopLast holds the count).
+let _veIn=false,_veLam=null,veLoopLast=null;
+const VE_LOOP_TOL=1e-6,VE_LOOP_MAX=30;
+const veTrue=(rpm,map,lam)=>{const b=engine.boostNow,l=_veLam;_veIn=true;_veLam=lam>0?lam:null;try{return computeVE(rpm,map);}finally{_veIn=false;_veLam=l;engine.boostNow=b;}};
 function veTableAt(rpm,map){
   const fc=clamp((rpm-1000)/Math.max(1,engine.redline-1000)*(FM_COLS-1),0,FM_COLS-1),fr=fmRowOf(rpm,map);
   const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0,r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),t=fr-r0,g=veMap;
@@ -702,7 +706,11 @@ function veTableAt(rpm,map){
 }
 function veMeteredAFR(rpm,map,afr){
   if(!veMapCustom||!veMap||engine.ci||_veIn)return afr;
-  return afr*veTrue(rpm,map)/Math.max(0.05,veTableAt(rpm,map));
+  const st=engine.stoichAFR,k=afr/st/Math.max(0.05,veTableAt(rpm,map));
+  let lam=afr/st,d=Infinity,n=0;
+  while(n<VE_LOOP_MAX&&d>=VE_LOOP_TOL){const nx=k*veTrue(rpm,map,lam);d=Math.abs(nx-lam);lam=nx;n++;}
+  veLoopLast={iters:n,dLam:d,converged:d<VE_LOOP_TOL};
+  return lam*st;
 }
 function generateVeMap(){
   const g=[];for(let r=0;r<FM_ROWS;r++){const row=[];for(let c=0;c<FM_COLS;c++)row.push(+veTrue(fmRpmAt(c),fmMapAt(r)).toFixed(3));g.push(row);}

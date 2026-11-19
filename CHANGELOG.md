@@ -18,6 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The VE table's mixture is read at its own exhaust, to convergence (build 389)
+
+Step 14 of `plans/small-physics.md`.
+- With a hand-tuned VE table the burned mixture is target × real VE / table VE, and the real VE's scavenging and
+  residual terms read the exhaust temperature, which reads the mixture. Build 305 read that VE at the *target's*
+  exhaust (one pass). Now `veMeteredAFR` iterates from the target until a step moves λ by under 1e-6 (`VE_LOOP_TOL`),
+  and `computeVE` reads the burned λ inside the loop; `veLoopLast` keeps the iteration count.
+- Default build, 4543 rpm / 1.1 bar: table 15 points low, 3 iterations, AFR 14.9313 → 14.9301; 15 points high,
+  3 iterations. The engine's VE now equals the one its mixture was metered at (to 1e-5).
+- Fingerprint identical (5208 values): an untouched table burns the target, so no preset moves; mean error against
+  published power unchanged. `test187` updated.
+- Left open: inside the loop the spark retard behind the exhaust temperature still reads the target mixture's knock.
+
 ### Real circuits stop sticking on an old service-worker cache (build 388)
 
 - Returning visitors still saw 22 circuits after build 386 shipped 32: `sw.js` served
