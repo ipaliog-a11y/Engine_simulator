@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### A handbrake for the stepped car and the drift challenge (build 382)
+
+- `stepCar` takes `u.handbrake` (0–1): brake torque on the rear wheels only, which the ABS does not ease (a lever on the
+  rear calipers or a drum-in-hat sits outside it). Its force, `hbCap`, is the rear service brake's (PROBABLE: no maker
+  publishes a lever-brake torque), never under the UN ECE R13-H / FMVSS 135 parking floor of holding the laden car on a
+  20% grade (0.196 m g). Without `u.handbrake` nothing moves: the fingerprint is identical.
+- The S-Route Powerslide gains METHOD HANDBRAKE for RWD and FWD (Velenis et al., CDC 2011, handbrake cornering). RWD:
+  clutch down and lever up at turn-in until the rear passes its peak, then power holds the slide. FWD: the lever holds
+  the rears sliding while β is short of the target, with part throttle on the fronts. AUTO tries it last, so every car
+  that CLEARed before CLEARs on the same plan. A rear locked by the lever counts as past its peak.
+- Civic Type R: NO_SLIDE before, now CLEAR on AUTO by the handbrake (β 11.6° / 11.5°, 32 km/h). Power-over still
+  NO_SLIDE. MX-5 and Mustang also CLEAR on HANDBRAKE.
+- Left open: AWD has no handbrake (the lever on a coupled centre brakes the fronts too; a rally car's hydraulic lever
+  opens the centre first, not modelled), so it falls back to power-over. The tyre screech in the replay keys on slip
+  angle and does not yet hear a lever-locked rear.
+
 ### Grip by camber in the stepped car: tried, left named until after v1.0 (build 381)
 
 - Small-physics step 6 tried the lap's camber law (`latCamberF`) in the stepped car, now that the stability control judges by yaw rate. It still takes `test170`'s test driver past `OFF_KNOWN`: by each axle's outside wheel, as the lap has it, the 911 GT3 runs 11.8 m off the line and 41° sideways, the Model 3 9.5 m and 38°, the Civic 7.9 m, the WRX 6.6 m (caps 4–4.8 m); by each wheel's own lean the GT3 leaves the line.
