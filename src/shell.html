@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 384</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 388</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -69,6 +69,7 @@
 <button id="tabGarage" data-g="build">GARAGE</button>
 <button id="tabTrack" data-g="drive">TRACK</button>
 <button id="tabRace" data-g="drive">RACE</button>
+<button id="tabChamp" data-g="drive">CHAMP</button>
 <button id="tabChallenges" data-g="drive">CHALLENGES</button>
 <button id="tabEngine" data-g="test" class="active ing">LIVE</button>
 <button id="tabDyno" data-g="test" class="ing">DYNO</button>
@@ -786,6 +787,12 @@
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
+<div class="panel" id="champPanel" style="display:none">
+<h2>Championship</h2>
+<div class="perf-note">Seasons of races on the shipped circuits. Pick a series, fill a grid from the class, run round by round or the whole season. Points decide the champion; credits and tyres are a light economy on some cups. Nobody drives — each round is a computed race.</div>
+<div id="champHub"></div>
+<div id="champSeason" hidden></div>
+</div>
 <div class="panel" id="chalPanel" style="display:none">
 <h2>Challenges <button type="button" class="info-i" id="chalInfoBtn" title="About this challenge" aria-expanded="false" aria-controls="chalNote">i</button></h2>
 <div class="perf-note info-pop" id="chalNote" hidden></div>
@@ -981,6 +988,8 @@
 <!-- @include js/track-scene.js -->
 <!-- @include js/track-view.js -->
 <!-- @include js/race-tab.js -->
+<!-- @include js/championship.js -->
+<!-- @include js/champ-tab.js -->
 <!-- @include js/fullscreen-track.js -->
 <!-- @include js/dyno-ui.js -->
 <!-- @include js/parts.js -->

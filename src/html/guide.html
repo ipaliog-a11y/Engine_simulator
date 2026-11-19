@@ -71,6 +71,7 @@ A car company is split into departments that hand the same project along: <b>pow
 </div>
 <div class="guide-body" data-gk="tabsMore1">
 <b>RACE</b> — two to eight cars on one circuit, run to a lap count, with tyres that heat and wear, fuel that burns off, pit stops and traffic. Nobody drives; you set it up and watch. See <a data-gp="race">The race</a>.
+<br><b>CHAMP</b> — seasons of those races: classes, calendars, points and standings. See <a data-gp="champ">Championship</a>.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -2063,7 +2064,7 @@ Every built-in circuit carries its terrain, and imported GPX tracks bring their 
 <div class="guide-body" data-gk="elevationPhys">
 On a slope θ with vertical curvature κ<sub>v</sub> (positive in a dip), the load on the tyres and the force along the road are
 <span class="geq">N = m (g cos θ + v² κ<sub>v</sub>) + L(v) &nbsp;&nbsp; F<sub>slope</sub> = − m g sin θ</span>
-so a crest (κ<sub>v</sub> &lt; 0) takes load off exactly where speed is highest. On the test circuits a dip is worth about a third more corner speed than the same corner on a brow. The 22 real circuits carry measured width and terrain elevation.
+so a crest (κ<sub>v</sub> &lt; 0) takes load off exactly where speed is highest. On the test circuits a dip is worth about a third more corner speed than the same corner on a brow. The 32 real circuits carry measured width and terrain elevation.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="gpx">Importing a circuit</a></div>
@@ -2197,7 +2198,27 @@ slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rollin
 Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car within a second behind loses 1.5% in the spray; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Physics, not rules: the tow is the drag a following car loses in the wake, measured on model vans in a wind tunnel (Zabat et al. 1995), turned into speed through the car's own power; dirty air is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner speed through the car's own downforce; the pit lane's cost is its length (400 m where no circuit's own is published) at a 60 km/h limit, against the car's own speed past it, its braking into the lane and its launch out of the box: 11–19 s for a Civic Type R or a 911 GT3. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
 </div>
 </div>
-<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
+<div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a> · <a data-gp="champ">Championship</a></div>
+</section>
+<section class="guide-page" id="gp-champ" data-cat="track" data-title="Championship" data-tags="championship season series points standings class calendar career team vsc endurance" hidden>
+<h4 class="guide-title">Championship</h4>
+<div class="gtier gt-real"><div class="gtier-h">LV1 · REAL LIFE</div>
+<canvas class="gart" data-art="race"></canvas><div class="gart-cap">A championship is many races, one table of points, and rules that say who may race whom.</div>
+<div class="guide-body" data-gk="champReal">
+A racing championship strings races into a season. Cars race in a <b>class</b> (hot hatch, GT, electric cup) so the field is comparable. Each round pays <b>points</b> for finishing position; the driver (and often the team) with the most points at the end is champion. Sporting rules — virtual safety cars, blue flags, tyre sets, minimum pit stops on endurance races — sit beside the physics of the cars.
+</div>
+</div>
+<div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
+<div class="guide-body" data-gk="champ">
+The <b>CHAMP</b> tab (DRIVE) runs seasons on top of the same race engine as <b>RACE</b>. Pick a series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), a seed and a mode: <b>ROUND BY ROUND</b>, <b>INSTANT SEASON</b>, or <b>CAREER</b> (with unlocks). The grid is filled from the class's eligible factory cars; optionally include your saved team car. After each round the standings update; some cups spend credits on entry fees and pay prizes, and track tyre sets. Enduro rounds are timed with a minimum stop count. A virtual safety car can open after enough mistakes.
+</div>
+</div>
+<div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
+<div class="guide-body" data-gk="champPhys">
+Each round calls <i>simulateRace</i> with the season's seed offset by the round index. Class eligibility is a predicate on chassis, category and published power — not a retune of the engine. Soft BoP, where used, adds ballast kilograms so power/mass sits nearer the class median (a sporting rule). Points tables and VSC pace are named rules; lap times remain the derived race physics.
+</div>
+</div>
+<div class="guide-see">See also: <a data-gp="race">The race</a> · <a data-gp="challenges">Challenges</a></div>
 </section>
 <section class="guide-page" id="gp-challenges" data-cat="track" data-title="Challenges" data-tags="challenges economy eco driving fuel kwh regen stage fixed time dnf moose elk test iso 3888 lane change skid pad skidpad lateral g" hidden>
 <h4 class="guide-title">Challenges</h4>

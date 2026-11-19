@@ -1,0 +1,300 @@
+{
+  "quality_bar": {
+    "centreline_and_measured_width": "required",
+    "geographic_reference": "required",
+    "elevation_dem": "required",
+    "fit_rms_m_max": 15,
+    "notes": "Same three sources as tools/import-real-tracks.mjs (build 123). Tier B substitutes track-atlas measured edges for TUM width/centreline."
+  },
+  "already_shipped": {
+    "count": 22,
+    "tum_keys": [
+      "cota", "brands", "hungaro", "catalunya", "hockenheim", "indy",
+      "melbourne", "mexico", "montreal", "monza", "nurgp", "sakhir",
+      "interlagos", "sepang", "shanghai", "silverstone", "sochi", "spa",
+      "spielberg", "suzuka", "yasmarina", "zandvoort"
+    ],
+    "hand_built_not_this_tier": ["tech", "fast", "nord", "mixed"]
+  },
+  "tier_a_tum": [
+    {
+      "key": "moscow",
+      "status": "ready",
+      "label": "MOSCOW RACEWAY",
+      "place": "Volokolamsk, Russia",
+      "tum": "MoscowRaceway",
+      "tum_pts": 813,
+      "tum_length_m": 4063,
+      "tum_width_m": { "min": 9.72, "max": 19.53, "mean": 11.66 },
+      "official_length_m": {
+        "gp9": 3931,
+        "gp1": 3955,
+        "full": 4070,
+        "note": "TUM length matches the full / combined layout, not GP #9 alone. Wikipedia: Moscow Raceway."
+      },
+      "geo": [36.2503, 55.992, 36.2722, 56.0014],
+      "geo_kind": "osm_bbox",
+      "geo_check": "OSM map API returns highway=raceway ways named Moscow Raceway",
+      "dem": "srtm30m",
+      "road_guess": "smooth",
+      "import": {
+        "key": "moscow",
+        "tum": "MoscowRaceway",
+        "geo": [36.2503, 55.992, 36.2722, 56.0014],
+        "dem": "srtm30m",
+        "label": "MOSCOW RACEWAY",
+        "place": "Volokolamsk, Russia"
+      },
+      "sources": [
+        "https://github.com/TUMFTM/racetrack-database/blob/master/tracks/MoscowRaceway.csv",
+        "https://www.openstreetmap.org/",
+        "https://en.wikipedia.org/wiki/Moscow_Raceway"
+      ]
+    },
+    {
+      "key": "oschersleben",
+      "status": "ready",
+      "label": "OSCHERSLEBEN",
+      "place": "Oschersleben, Germany",
+      "tum": "Oschersleben",
+      "tum_pts": 739,
+      "tum_length_m": 3692,
+      "tum_width_m": { "min": 8.4, "max": 16.33, "mean": 10.6 },
+      "official_length_m": {
+        "gp": 3696,
+        "note": "Motorsport Arena Oschersleben Grand Prix circuit 3.696 km. TUM −0.1 %."
+      },
+      "geo": [11.2681, 52.0231, 11.2866, 52.0323],
+      "geo_kind": "osm_bbox",
+      "geo_check": "OSM map API returns highway=raceway ways (GP + kart; fit uses nearest points)",
+      "dem": "eudem25m",
+      "road_guess": "bumpy",
+      "import": {
+        "key": "oschersleben",
+        "tum": "Oschersleben",
+        "geo": [11.2681, 52.0231, 11.2866, 52.0323],
+        "dem": "eudem25m",
+        "label": "OSCHERSLEBEN",
+        "place": "Oschersleben, Germany"
+      },
+      "sources": [
+        "https://github.com/TUMFTM/racetrack-database/blob/master/tracks/Oschersleben.csv",
+        "https://www.openstreetmap.org/",
+        "https://en.wikipedia.org/wiki/Motorsport_Arena_Oschersleben"
+      ]
+    },
+    {
+      "key": "norisring",
+      "status": "blocked_geo",
+      "label": "NORISRING",
+      "place": "Nuremberg, Germany",
+      "tum": "Norisring",
+      "tum_pts": 460,
+      "tum_length_m": 2296,
+      "tum_width_m": { "min": 10.3, "max": 20.97, "mean": 15.88 },
+      "official_length_m": {
+        "approx": 2300,
+        "note": "Street circuit around Dutzendteich; TUM 2296 m."
+      },
+      "geo": null,
+      "geo_kind": "osm_relation",
+      "geo_relation_id": 1889538,
+      "geo_check": "Relation type=circuit name=Norisring; members are secondary/unclassified roads, not highway=raceway. Current importer OSM path finds zero ways.",
+      "blocker": "Extend import-real-tracks.mjs to load OSM relation members (or a local GeoJSON of that relation) as the geographic reference.",
+      "dem": "eudem25m",
+      "road_guess": "bumpy",
+      "import": null,
+      "sources": [
+        "https://github.com/TUMFTM/racetrack-database/blob/master/tracks/Norisring.csv",
+        "https://www.openstreetmap.org/relation/1889538",
+        "https://en.wikipedia.org/wiki/Norisring"
+      ]
+    }
+  ],
+  "tier_b_track_atlas": [
+    {
+      "key": "daytona",
+      "status": "adapter_needed",
+      "priority": 1,
+      "label": "DAYTONA",
+      "place": "Daytona Beach, Florida",
+      "atlas_id": "daytona",
+      "atlas_layout": "gp",
+      "midline_length_m": 5740.6,
+      "width_m": { "p05": 9.07, "median": 12.49, "p95": 19.02 },
+      "seen_fraction_both": 0.856,
+      "ce95_m": 0.797,
+      "imagery": "fdep-2021",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/daytona/raw/layers/gp.surface.geojson",
+      "note": "Road course (not the pure oval)."
+    },
+    {
+      "key": "lime_rock",
+      "status": "adapter_needed",
+      "priority": 1,
+      "label": "LIME ROCK",
+      "place": "Lakeville, Connecticut",
+      "atlas_id": "lime-rock",
+      "atlas_layout": "gp",
+      "midline_length_m": 2368.9,
+      "width_m": { "p05": 8.84, "median": 11.7, "p95": 13.99 },
+      "seen_fraction_both": 0.908,
+      "ce95_m": 0.327,
+      "imagery": "ct-2023",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/lime-rock/raw/layers/gp.surface.geojson"
+    },
+    {
+      "key": "laguna",
+      "status": "adapter_needed",
+      "priority": 1,
+      "label": "LAGUNA SECA",
+      "place": "Monterey, California",
+      "atlas_id": "laguna-seca",
+      "atlas_layout": "gp",
+      "midline_length_m": 3600.4,
+      "width_m": { "p05": 10.39, "median": 13.0, "p95": 19.06 },
+      "seen_fraction_both": 0.804,
+      "ce95_m": 1.544,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/laguna-seca/raw/layers/gp.surface.geojson"
+    },
+    {
+      "key": "vir",
+      "status": "adapter_needed",
+      "priority": 1,
+      "label": "VIR",
+      "place": "Alton, Virginia",
+      "atlas_id": "virginia-international-raceway",
+      "atlas_layout": "gp",
+      "midline_length_m": 5260.1,
+      "width_m": { "p05": 9.41, "median": 10.86, "p95": 13.5 },
+      "seen_fraction_both": 0.796,
+      "ce95_m": 1.258,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/virginia-international-raceway/raw/layers/gp.surface.geojson"
+    },
+    {
+      "key": "indy_road",
+      "status": "adapter_needed",
+      "priority": 2,
+      "label": "INDIANAPOLIS ROAD",
+      "place": "Speedway, Indiana",
+      "atlas_id": "indianapolis",
+      "atlas_layout": "gp",
+      "midline_length_m": 3904.2,
+      "width_m": { "p05": 14.18, "median": 14.54, "p95": 22.25 },
+      "seen_fraction_both": 0.75,
+      "ce95_m": 0.373,
+      "imagery": "indiana-2025",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/indianapolis/raw/layers/gp.surface.geojson",
+      "note": "Road course; distinct from shipped indy oval (TUM IMS)."
+    },
+    {
+      "key": "lemans",
+      "status": "adapter_needed",
+      "priority": 2,
+      "label": "LE MANS",
+      "place": "Le Mans, France",
+      "atlas_id": "circuit-de-la-sarthe",
+      "atlas_layout": "24h",
+      "midline_length_m": 13642.8,
+      "width_m": { "p05": 8.5, "median": 11.93, "p95": 18.06 },
+      "seen_fraction_both": 0.702,
+      "ce95_m": 1.444,
+      "imagery": "ign-bdortho-2022",
+      "dem": "eudem25m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/circuit-de-la-sarthe/raw/layers/24h.surface.geojson",
+      "note": "Longest candidate; ODbL + IGN attribution. Curated edge bridges documented upstream."
+    },
+    {
+      "key": "road_atlanta",
+      "status": "adapter_needed",
+      "priority": 2,
+      "label": "ROAD ATLANTA",
+      "place": "Braselton, Georgia",
+      "atlas_id": "road-atlanta",
+      "atlas_layout": "gp",
+      "midline_length_m": 4084.3,
+      "width_m": { "p05": 11.94, "median": 12.53, "p95": 17.04 },
+      "seen_fraction_both": 0.614,
+      "ce95_m": 1.057,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "surface_url": "https://raw.githubusercontent.com/tobi/track-atlas/main/tracks/road-atlanta/raw/layers/gp.surface.geojson"
+    },
+    {
+      "key": "sebring",
+      "status": "hold_low_coverage",
+      "priority": 9,
+      "label": "SEBRING",
+      "place": "Sebring, Florida",
+      "atlas_id": "sebring",
+      "atlas_layout": "imsa",
+      "midline_length_m": 5841.7,
+      "width_m": { "p05": 10.07, "median": 14.56, "p95": 20.54 },
+      "seen_fraction_both": 0.445,
+      "ce95_m": 1.337,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "hold_reason": "seen_fraction.both < 0.6; many bridged edge spans"
+    },
+    {
+      "key": "watkins",
+      "status": "hold_low_coverage",
+      "priority": 9,
+      "label": "WATKINS GLEN",
+      "place": "Watkins Glen, New York",
+      "atlas_id": "watkins-glen",
+      "atlas_layout": "gp",
+      "midline_length_m": 5484.7,
+      "width_m": { "p05": 11.06, "median": 12.52, "p95": 18.93 },
+      "seen_fraction_both": 0.356,
+      "ce95_m": 1.164,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "hold_reason": "seen_fraction.both < 0.6"
+    },
+    {
+      "key": "long_beach",
+      "status": "hold_low_coverage",
+      "priority": 9,
+      "label": "LONG BEACH",
+      "place": "Long Beach, California",
+      "atlas_id": "long-beach",
+      "atlas_layout": "gp",
+      "midline_length_m": 3222.6,
+      "width_m": { "p05": 11.28, "median": 15.59, "p95": 20.61 },
+      "seen_fraction_both": 0.097,
+      "ce95_m": 1.111,
+      "imagery": "naip",
+      "dem": "ned10m",
+      "hold_reason": "seen_fraction.both ≈ 0.10; street circuit not ready"
+    }
+  ],
+  "rejected": [
+    {
+      "why": "centreline only, no measured width",
+      "examples": ["Monaco", "Imola", "Singapore", "Jeddah", "Miami", "Las Vegas", "Baku", "Mugello", "Paul Ricard", "Portimao", "Mosport", "Road America (atlas: not measured yet)"]
+    },
+    {
+      "why": "scaled / fixed-width toy data",
+      "examples": ["f1tenth/f1tenth_racetracks"]
+    },
+    {
+      "why": "commercial API, not the open pipeline",
+      "examples": ["Oversteer TrackAlign"]
+    }
+  ],
+  "adapter_notes_tier_b": [
+    "Parse role=midline, edge_left, edge_right from *.surface.geojson (lon/lat).",
+    "Resample midline to ~5–20 m; at each station, width = distance to left edge + distance to right edge along the local normal (same quantities TUM stores as w_tr_left_m / w_tr_right_m).",
+    "Skip rigid TUM↔geo fit; points are already geographic. Still pull dem heights via OpenTopoData and smooth as today.",
+    "Attribute ODbL (OSM seed) plus imagery/lidar per track-atlas ATTRIBUTION.md / docs/SOURCES.md.",
+    "Keep output in tracks/real-circuits.js (or a sibling LGPL/ODbL file) separate from MIT app sources, as with TUM."
+  ]
+}

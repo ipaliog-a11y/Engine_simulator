@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 384)
+### Off the track: gravel and grass roll against the car, bends get gravel traps, the ESP reads the surface (build 388)
 
 - The stepped car's wheels on soft ground now roll against it (`DRIVE_SOIL`, `driveRollF`). Gravel: Bekker's sinkage of
   a rigid wheel (Wong, *Theory of Ground Vehicles*, ch. 2), with Wong's dry sand (Table 2.3) as a stand-in for trap
@@ -28,12 +28,71 @@ they are accurate about *what* shipped but not about the day it shipped.
   3.15–8.4 m past the edge (`SCENE_TRAP`, with the picture's curvature now shared as `sceneCurv`). The grip there is
   gravel's (0.35/0.65), as before.
 - The ESP's yaw limit and the slip angles it judges "past the peak" now scale with the grip under the wheels. On wet
-  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 383:
+  grass, a sine with dwell at 6.5× from 60 km/h: the Model 3 with ESP yaws at 6% of its peak 1 s after (on build 387:
   89%, so the ESP did nothing). With ESP off: 98%.
 - Nothing in the app drives the stepped car on a surface yet, so the fingerprint is identical. In test206's driven lap
   of 'tech' on its surface, the lap went from 77.86 to 77.90 s (4.8 s with a wheel on grass).
 - Left open: a painted kerb's grip and ribs, the picture's narrow gravel verge along the edge (grass here), wet ground's
   own rolling resistance, and a tyre's stiffness on soft ground.
+
+### Championship seasons on top of RACE (build 387)
+
+Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
+- **CHAMP tab**: series (Pixel GT, Hot Hatch Cup, Sports Trophy, EV Series, Enduro Cup, Open Weekend), round-by-round or instant season, career unlocks, standings and history in `pes.champ.*`.
+- **Classes** filter factory cars by chassis / category / published power; optional soft BoP ballast (kg steps toward class median power/mass).
+- **Points** Top-8 table with optional fastest-lap point; constructor table when a team is entered; multi-class standings on Open Weekend.
+- **Economy** (selected cups): entry fee and finish prizes in credits; tyre-set counters per entrant.
+- **Race hooks**: virtual safety car after enough mistakes, blue-flag ignore time penalty, timed races with minimum pit stops (Enduro Cup).
+- `test236` checks eligibility, points, seeds, persistence and a short championship round. Physics fingerprint of a lone race is unchanged when VSC/duration are off.
+
+### Next 100 factory cars shortlisted (research batch 2)
+
+- `research/vehicles-batch-2/`: locked shortlist of 100 nameplates across existing picker categories (no new category, no `src/` presets yet).
+- `queue.json` + `validate.mjs` + `tests/test235.mjs`: 100 unique ids/names, chassis/cat checks, no collision with current `FACTORY_CARS`.
+- Wave-1 stubs under `research/vehicles/<id>/NOTES.md` for the first ten high-data combustion targets (R32 GT-R, Silvia S15, Golf R, i30 N, Alpine A110, GT350, Macan Turbo, Stelvio QF, FC RX-7, Escort Cosworth).
+- Full `vehicle.json` research and factory presets stay for later sessions (same gate as batch 1).
+
+### Ten more measured real circuits (build 386)
+
+- **+10 real circuits** (22 → 32): Moscow Raceway, Oschersleben and the Norisring from the remaining TUM
+  CSVs (OSM bbox or circuit relation for geo; DEM heights as before); Daytona road course, Lime Rock,
+  Laguna Seca, VIR, Indianapolis road course, Le Mans and Road Atlanta from track-atlas measured edges
+  (width = distance to left + right edge; already WGS84, no rigid fit).
+- Importer: OSM `type=circuit` relations; atlas `.surface.geojson` path. `test65` covers all 32.
+- Left open: Sebring / Watkins Glen / Long Beach (atlas seen-both edge coverage too low).
+
+### Vehicle-profile-art skill for factory showroom pictures (build 385)
+
+- New Cursor skill at `.cursor/skills/vehicle-profile-art/`: when a new factory car needs its
+  960×640 pixel-art side view, build the coastal-road prompt (S2000 style reference), generate,
+  post-process to PNG+WebP, and wire `CAR_ART` + both manifests.
+- Scripts: `build-prompt.mjs`, `postprocess.mjs` (classic 1152×864 crop or centre 3:2, nearest-neighbour
+  to 960×640), `validate-art.mjs`. Pairs with `import-vehicle` (that skill now points here for art).
+- `test234` checks the skill files and runs the three scripts against a temp frame and the S2000.
+
+### Rich mixtures cool the exhaust; the ECU enriches to hold the turbine at 950 °C (build 384)
+
+Step 13 of `plans/small-physics.md`, build 311's follow-up, on the owner's decisions.
+- **Rich cools the exhaust** (`exhaustGasT`): the gas heated is now the air and all the fuel supplied (it was the fuel
+  burned), and the excess fuel's evaporation comes out of it (Heywood App. D: gasoline 350 kJ/kg, methanol 1103, E85
+  ~756; PROBABLE). The release stays capped at stoichiometric. λ 1 → 0.78 on the 993 Turbo at 80% redline: 1211 → 1164 °C
+  (~45 K; the extra work alone gave ~25 K). λ ≥ 1 is unchanged to the bit.
+- **The turbine inlet** (`turbineInletT`, new): the port's gas cooled along a 0.30 m runner to a ~700 °C manifold wall,
+  Caton & Heywood's port correlation carried on (all PROBABLE). 80–110 K cooler than the port at full load.
+- **The ECU holds 950 °C there by enriching only** (`egtEnrichLambda`, to λ 0.78): AUTO turbo petrol ECUs on their
+  factory maps. No boost cut (owner's decision).
+- **What moved** (fingerprint against build 378: 2413 values; every car, by little). Peak power −1.6 to +0.2% (Alto
+  Works 64 → 63 hp; Golf GTI, Civic Type R, Supra, Integra −1 hp), peak torque −0.2 to +0.3%, port EGT 0 to −25 K
+  (NA cars ~−14 K), 0–100 −0.15 to +0.4%, tech lap −0.14 to +0.05%. Hybrid cycles: Prius 4.462 → 4.448 l/100 km.
+  Turbo archetypes 2.0 and 2.5 −1 hp. Mean error against the 92 engines' published power −0.74 → −0.77% (mean absolute
+  6.48 → 6.52%).
+- **Known-gap floors lowered** (owner's decision; the cooling is real physics, these engines already read too cool, a
+  missing heat term): test46 1.6 Sport NA I4 815 → 805 °C and Renesis 840 → 830 °C; test47 Renesis 840 → 830 °C and
+  500cc 2-stroke 760 → 750 °C. `test233` (new) checks the cooling, the inlet and the enrichment.
+- Left open: **the boost cut**. About 15 hot turbo presets stay over 950 °C at the turbine inlet at λ 0.78 (993 Turbo
+  ~1100 °C, R34 ~1030 °C); lowering their boost waits until EGT's load factor (map/mapMax) is replaced by a derived one,
+  since it, not the mixture, would do the cooling. Also open: the turbine's shaft balance still reads λ 1; rich products'
+  higher cp is not counted (errs warm).
 
 ### Hybrids on the economy roads run their own energy manager (build 383)
 

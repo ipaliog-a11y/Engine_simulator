@@ -91,9 +91,10 @@ node tools/class-medians.mjs   # if the car's class is derived (≥3 real cars)
 node tools/car-prices.mjs      # regenerates src/js/car-prices.js
 ```
 
-**Art:** owner-generated WebP in `assets/cars/`. Without it, finish research + presets +
-accuracy, leave art named open, and do not claim the PR merge-ready until art + `CAR_ART`
-land (showcase / `test147` need the file).
+**Art:** follow `.cursor/skills/vehicle-profile-art/` (prompt → generate with the S2000
+style reference → post-process → `CAR_ART` + manifests). Without the WebP, finish research
++ presets + accuracy, leave art named open, and do not claim the PR merge-ready until art
++ `CAR_ART` land (showcase / `test147` need the file).
 
 ### 3. Accuracy check
 

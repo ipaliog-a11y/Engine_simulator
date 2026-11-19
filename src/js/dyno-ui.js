@@ -405,11 +405,11 @@ function setTab(mode){
   if(mode!=='track'&&trackPage.open)closeTrackPage();
   vizMode=mode;
   if(mode!=='track'&&!racePage.open&&!trackPage.open&&vizW!==640){vizW=640;vizH=420;}   // the phone's TRACK grid is its own
-  ['Design','Vehicle','Parts','Garage','Track','Race','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
+  ['Design','Vehicle','Parts','Garage','Track','Race','Champ','Challenges','Engine','Dyno','Guide','Options'].forEach(m=>
     document.getElementById('tab'+m).classList.toggle('active',mode===m.toLowerCase()));
   // The four sections (build 261): BUILD, TEST, DRIVE, MORE. On a phone the tabs are one strip that slides to the open
   // section, over a bar of the four at the foot of the screen; a section opens on the tab last used in it.
-  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode[0].toUpperCase()+mode.slice(1);
+  const tabId=mode==='design'?'Design':mode==='engine'?'Engine':mode==='challenges'?'Challenges':mode==='champ'?'Champ':mode[0].toUpperCase()+mode.slice(1);
   const grp=document.getElementById('tab'+tabId).dataset.g;
   tabOfGroup[grp]=mode;
   document.querySelectorAll('.viz-tabs button').forEach(b=>b.classList.toggle('ing',b.dataset.g===grp));
@@ -444,12 +444,14 @@ function setTab(mode){
   document.getElementById('vehiclePanel').style.display=(mode==='vehicle')?'':'none';
   document.getElementById('trackPanel').style.display=(mode==='track')?'':'none';
   document.getElementById('racePanel').style.display=(mode==='race')?'':'none';
+  document.getElementById('champPanel').style.display=(mode==='champ')?'':'none';
   document.getElementById('chalPanel').style.display=(mode==='challenges')?'':'none';
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
   if(mode==='track'){buildVehicle();refreshLap();}
   if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
+  if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   updateUI();
 }
