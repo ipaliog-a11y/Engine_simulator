@@ -1,59 +1,50 @@
-// Rich mixtures cool the exhaust; the ECU holds the turbine's limit (plans/small-physics.md step 13).
+// Economy road: a hybrid on its own energy path (build 383).
 //
-// WHY THIS EXISTS. Until this build the exhaust rich of stoichiometric only lost the extra work, so enrichment barely
-// cooled it and the ECU never read it. What must hold:
-//   · exhaustGasT falls steadily from lambda 1 to 0.78, and the excess fuel's evaporation is part of it (a fuel with a
-//     larger heat of vaporization cools more rich, and not at all at lambda 1);
-//   · the gas at the turbine inlet is cooler than at the port, by the manifold's heat loss;
-//   · on the Golf GTI, the ECU enriches where its turbine inlet would pass TURB_T_LIMIT: at full load it holds the limit
-//     wherever its mixture is leaner than LAMBDA_KNOCK_MIN; on the 993 Turbo (hottest preset) it reaches LAMBDA_KNOCK_MIN;
-//   · the boost is never lowered for the exhaust (owner's decision: enrichment only until EGT's load factor is derived);
-//   · the guard is the ECU's only: a fixed mixture or an NA engine has none.
+// WHY THIS EXISTS. Until this build a hybrid on the economy challenge was priced as a plain engine (ecoFuelKg). Now the
+// WLTC's charge-sustaining energy manager (hybridCycle) runs on the road's own speed profile and grade. What must hold:
+//   · a hybrid's run is marked hybrid and reports fuel, the pack's energy out and back in (regen), and engine-off time;
+//   · the pack ends where it started (within 0.5% of its capacity), or the run says it was charge-corrected;
+//   · an engine car's run is still the engine path (no hybrid fields; its litres are ecoFuelKg's on its own profile);
+//   · the CHALLENGES head shows the hybrid's litres without a page error.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
+const fails = [];
+
 const r = await page.evaluate(() => {
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /\(993,/.test(p.name)));
-  const e = engine, rpm = 0.8 * e.redline, lams = [1, 0.95, 0.9, 0.85, 0.8, 0.78];
-  const T = l => exhaustGasT(1, rpm, l, 0);
-  const curve = lams.map(T);
-  const h0 = e.fuelHfg; e.fuelHfg = 2 * h0;
-  const hot = { l1: T(1), l8: T(0.8) }; e.fuelHfg = h0;
-  const pull = () => { let maxT = 0, minL = 9, over = 0, inlet = 1;
-    for (let n = 1500; n <= e.redline; n += 250) {
-      const m = wotMapAt(n), l = curAFR(n, m) / e.stoichAFR, Tp = egtAt(n, m), Ti = turbineInletT(n, m, l, Tp);
-      maxT = Math.max(maxT, Ti); minL = Math.min(minL, l); inlet = Math.min(inlet, Tp - Ti);
-      if (Ti > TURB_T_LIMIT + 2 && l > LAMBDA_KNOCK_MIN + 0.002) over++;
-    } return { maxT, minL, over, inlet }; };
-  const turbo = pull();
-  const cut = e.knockLimTable ? e.knockLimTable.some(x => x.bar < e.maxBoost) : false;
-  const guarded = ecuGuardsTurbine();
-  e.afrMode = 'fixed'; const fixed = ecuGuardsTurbine(); e.afrMode = 'auto';
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /Golf GTI \(Mk7/.test(p.name)));
-  const golf = pull();
-  loadVehiclePreset(VEHICLE_PRESETS.find(p => /S2000/.test(p.name)));
-  return { curve, hot, l1: curve[0], l8: curve[4], turbo, golf, cut, guarded, fixed, na: ecuGuardsTurbine(), lim: TURB_T_LIMIT, lmin: LAMBDA_KNOCK_MIN };
+  const out = {};
+  loadVehiclePreset(FACTORY_CARS.find(p => p.name.includes('MX-5')));
+  const ice = simulateEconomyChallenge('alpine');
+  const f = FUELS[engine.fuel] || FUELS.gasoline;
+  out.ice = { hybrid: !!ice.hybrid, L: ice.fuelL, Lice: ecoFuelKg(ice.road.line, ice.v) / f.density };
+  loadVehiclePreset(HYB_VEHICLE_PRESETS.find(p => p.name.includes('Prius')));
+  const h = simulateEconomyChallenge('alpine');
+  out.hy = { hybrid: !!h.hybrid, L: h.fuelL, l100: h.l100, out: h.packOutKWh, in: h.packInKWh, dSoc: h.dSocKWh, corr: h.corrected,
+    off: h.engOff, short: h.limitShare, kWh: engine.hy.pack.kWh, t: h.time, target: h.target };
+  activeRunChallenge = 'economy'; chalResult = h; renderChallenge();
+  out.head = (document.getElementById('chalHead') || {}).textContent || '';
+  return out;
 });
-await browser.close();
-const fails = [...errors], C = k => (k - 273.15).toFixed(0);
-console.log(`== 993 Turbo at 80% redline, EGT by lambda 1..0.78: ${r.curve.map(C).join(', ')} °C ==`);
-for (let i = 1; i < r.curve.length; i++) if (!(r.curve[i] < r.curve[i - 1])) fails.push(`EGT does not fall from lambda step ${i - 1} to ${i}`);
-console.log(`== twice the heat of vaporization: lambda 1 ${C(r.hot.l1)} (was ${C(r.l1)}), lambda 0.8 ${C(r.hot.l8)} (was ${C(r.l8)}) °C ==`);
-if (r.hot.l1 !== r.l1) fails.push('evaporation moves the exhaust at lambda 1');
-if (!(r.hot.l8 < r.l8 - 1)) fails.push('evaporation does not cool the rich exhaust');
-for (const [n, x] of [['993 Turbo', r.turbo], ['Golf GTI', r.golf]]) {
-  console.log(`== ${n} at full load: turbine inlet up to ${C(x.maxT)} °C (limit ${C(r.lim)}), richest λ ${x.minL.toFixed(3)}, manifold cools ≥ ${x.inlet.toFixed(0)} K ==`);
-  if (x.over) fails.push(`${n}: ${x.over} points pass the limit while the ECU could still enrich`);
-  if (!(x.inlet > 0)) fails.push(`${n}: the turbine inlet is not cooler than the port`);
+console.log(JSON.stringify(r, null, 2));
+if (r.ice.hybrid) fails.push('MX-5 run marked hybrid');
+if (!(Math.abs(r.ice.L - r.ice.Lice) < 1e-9)) fails.push('MX-5 litres are not the engine path: ' + r.ice.L + ' vs ' + r.ice.Lice);
+const h = r.hy;
+if (!h.hybrid) fails.push('Prius run not on the hybrid path');
+else {
+  if (!(h.L > 0.1)) fails.push('Prius fuel missing: ' + h.L);
+  if (!(h.out > 0 && h.in > 0)) fails.push('Prius pack energy out/in missing');
+  if (!(h.corr || Math.abs(h.dSoc) <= 0.005 * h.kWh + 1e-9)) fails.push('Prius pack not sustained: ' + h.dSoc + ' kWh');
+  if (!(h.off > 0 && h.off < 1)) fails.push('Prius engine-off share out of range: ' + h.off);
+  if (!(Math.abs(h.t - h.target) <= Math.max(2, 0.02 * h.target))) fails.push('Prius off target');
 }
-if (!(r.turbo.minL <= r.lmin + 1e-6)) fails.push('the 993 Turbo is never enriched to the floor');
-if (r.cut) fails.push('the boost is lowered on the 993 Turbo');
-if (!r.guarded || r.fixed || r.na) fails.push(`guard: ECU ${r.guarded}, fixed mixture ${r.fixed}, NA ${r.na}`);
-console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
-process.exit(fails.length ? 1 : 0);
+if (!/L\/100/.test(r.head)) fails.push('chalHead odd: ' + r.head);
+console.log(fails.length ? 'FAIL:\n  ' + fails.join('\n  ') : 'PASS');
+console.log('ERRORS:', errors.length ? errors : 'none');
+await browser.close();
+process.exit(fails.length || errors.length ? 1 : 0);

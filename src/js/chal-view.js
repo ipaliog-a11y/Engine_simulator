@@ -111,6 +111,8 @@ function renderChallenge(){
       cell('L/100 km',R.l100.toFixed(1))+
       cell('FLAT-OUT FUEL',R.fuelLMin.toFixed(2)+' L');
   }
+  if(R.hybrid)cells+=cell('ENGINE OFF',Math.round(R.engOff*100)+' %')+cell('PACK OUT',R.packOutKWh.toFixed(2)+' kWh')+
+    cell('PACK IN',R.packInKWh.toFixed(2)+' kWh')+(R.limitShare>0.005?cell('OVER HYBRID LIMITS',Math.round(R.limitShare*100)+' %'):'');
   if(!R.ev&&R.rpmDrive)cells+=cell('AVG RPM ON POWER',String(Math.round(R.rpmDrive)))+cell('TOP GEAR',String(R.topGear));
   cells+=cell('PEAK ACCEL',R.aUp.toFixed(1)+' m/s²')+cell('PEAK DECEL',R.aDn.toFixed(1)+' m/s²')+
     cell('ECO BLEND',(R.ecoBlend*100).toFixed(0)+' %');

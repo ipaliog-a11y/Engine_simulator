@@ -821,7 +821,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 384</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 383</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3278,7 +3278,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Moose</b>: the full vehicle model (stepCar) follows the best of 48 driver plans (when to turn in, how much of each lane's spare width to use, how tightly to track) with the throttle released; as in a real test the entry speed is raised 1 km/h at a time until no plan clears. <b>Rollover</b>: once both wheels on one side carry no load, the car is taken as one rigid body pivoting on its outer tyres, <i>I<sub>o</sub>·φ'' = m·(a·z − g·d)</i>, with <i>z</i> the CG's height and <i>d</i> its distance inside the pivot; it starts at the body's roll rate and has rolled over when <i>d</i> reaches 0, at <i>φ = atan(t/2h)</i>. From rest it can only start when <i>a &gt; g·t/2h</i>, the static stability factor (NHTSA): a sports car ~1.5, a tall SUV ~1.1. <b>Spin</b>: the car turned more than 90° from the course.
 </div>
 <div class="guide-limit" data-gk="chalLimit">
-The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. Hybrids use the engine-car fuel path. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
+The economy run is a search over a cap and four blends, not an optimal control plan; it does not pulse-and-glide on the flat. A hybrid runs its WLTC energy manager on the road (charge-sustaining); where a climb asks more than its motors allow at speed, the engine is charged for it anyway. The regen table's strength has not been checked against measured EVs (a field study reports about 2.5 m/s² on regen alone on mainstream EVs; some of the game's EVs reach more). Stage set times are authored from a reference car, not physics. The moose run is solved, not driven. The rigid tip is a check on top of the vehicle model, which does not carry it (its tyres simply see the lifted side's load as 0), and kerb-trip rollovers are not modelled. The stock cars clear 55–68 km/h, about 10 km/h below what magazines report (68–84), so at 72 and 77 km/h they all fail by a cone.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="elevation">Elevation, crests &amp; compressions</a> · <a data-gp="fuels">Fuels &amp; octane</a></div>
@@ -4192,15 +4192,12 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 // diesel: Heywood Internal Combustion Engine Fundamentals, typical CH1.87 / CH1.80. Methanol is
 // CH3OH. E85: 85/15 by volume ethanol/gasoline, converted to a C-basis average (ethanol dens
 // 0.789, gasoline 0.745; ethanol C2H6O → hc 3, oc 0.5 per C).
-// hfg = heat of vaporization, kJ/kg (build 384; what fuel rich of stoichiometric takes from the exhaust): Heywood,
-// Internal Combustion Engine Fundamentals, App. D, Table D.4: gasoline 350, methanol 1103, ethanol 840, light diesel
-// 270. Race gas taken as gasoline's, E85 as 0.83 ethanol by mass (PROBABLE).
 const FUELS={
-  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0,hc:1.87,oc:0,hfg:350},
-  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2,hc:1.87,oc:0,hfg:350},
-  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8,hc:2.80,oc:0.41,hfg:756},
-  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14,hc:4.00,oc:1,hfg:1103},
-  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0,hc:1.80,oc:0,hfg:270}   // compression-ignition; octane N/A (cetane)
+  gasoline:{label:'PUMP GAS',density:0.745,LHV:44.0,stoich:14.7,octane:null,chargeCool:0, knockBonus:0,hc:1.87,oc:0},
+  race:    {label:'RACE GAS',density:0.735,LHV:43.5,stoich:14.7,octane:105, chargeCool:2, knockBonus:2,hc:1.87,oc:0},
+  e85:     {label:'E85',     density:0.785,LHV:29.2,stoich:9.8, octane:102, chargeCool:15,knockBonus:8,hc:2.80,oc:0.41},
+  methanol:{label:'METHANOL',density:0.792,LHV:19.9,stoich:6.45,octane:109, chargeCool:25,knockBonus:14,hc:4.00,oc:1},
+  diesel:  {label:'DIESEL',  density:0.832,LHV:42.8,stoich:14.5,octane:null,chargeCool:0, knockBonus:0,hc:1.80,oc:0}   // compression-ignition; octane N/A (cetane)
 };
 // ---- Engine cycle / type ----
 // Each type reshapes the physics: strokeDiv is the power-stroke divisor in the torque
@@ -4576,16 +4573,10 @@ function exhaustGasT(load,rpm,lambda,retard){
   // stoichiometric amount. Without the cap a richer mixture came out HOTTER, the opposite of why a
   // turbo petrol ECU enriches under boost; it went unseen while this function was only ever called
   // at one assumed mixture per load.
-  // Per kg of air: the gas heated is the air AND all the fuel supplied (it was the air alone until build 101, and the
-  // fuel burned only until build 384), and the excess fuel's evaporation comes out of it (the burned share's is inside
-  // the LHV, a liquid fuel's). That is how a rich mixture cools the exhaust beyond the cap (Heywood, Internal
-  // Combustion Engine Fundamentals, ch. 4 on rich products and ch. 14 on exhaust temperature); the rest of the cooling
-  // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
-  // and H2, whose cp is higher, so this errs warm).
-  const st=e.stoichAFR||14.7, afr=Math.max(6,st*Math.max(1,lam)), heat=(e.fuelLHV||44)*1e6*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
-  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH);
-  const supplied=1/(st*Math.max(0.5,lam)), excess=supplied-1/st;   // kg of fuel per kg of air, and the part not burned
-  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH);
+  const afr=Math.max(6,(e.stoichAFR||14.7)*Math.max(1,lam));
+  // The gas heated is the air AND the fuel burned in it (afr + 1); it was the air alone until build 101.
+  const dT=(e.fuelLHV||44)*1e6/((afr+1)*CP_EXH)*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
+  return 300+dT;
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
 // leaves through the exhaust port, at the mixture lam.
@@ -4657,24 +4648,6 @@ function portLossShare(n,lam,f0){
   const Re=mdot/(Math.PI/4*D*D)*D/mu, h=0.0483*Math.pow(Re,0.783)*k/D;
   const q=h*Math.PI*D*L*nEx*(Tg-T_WALL)*open;                                       // W per cylinder
   return q/Math.max(1e-6,air/afr*(e.fuelLHV||44)*1e6);
-}
-// The gas at the turbine inlet (build 384): the port's gas cooled along the manifold runner to the turbine flange,
-// T = T_w + (T_port - T_w) exp(-h A / (m cp)), with h from the same Caton & Heywood correlation as the port (a runner is
-// the port's flow carried on; PROBABLE), the runner the port's bore and MANIFOLD_L long, its flow the port's while the
-// valve is open (portLossShare), at this manifold pressure. MANIFOLD_L 0.30 m: port face to turbine flange on a
-// production turbo manifold, 0.2-0.4 m (PROBABLE). MANIFOLD_TW: an uninsulated cast manifold's wall at full load, glowing
-// dull red, ~700 C (PROBABLE). The ECU's turbine limit reads this (egtEnrichLambda).
-const MANIFOLD_L=0.30, MANIFOLD_TW=700+273.15;
-function turbineInletT(rpm,map,lam,Tp){
-  const e=engine;
-  if(!e.ivDia_mm||!(Tp>MANIFOLD_TW))return Tp;
-  const nEx=Math.max(1,(e.valves||4)-e.ivCount), D=(e.evOwn?(e.throatRatio||THROAT_RATIO)*e.evDia_mm:(e.throatRatio||THROAT_RATIO)*EV_RATIO*e.ivDia_mm)/1000;
-  const afr=(e.stoichAFR||14.7)*lam, rho=Math.max(0.3,map)*1e5/(287*313);
-  const air=rho*(e.dispCyl_L/1000)*refFill(rpm)*rpm/60*(e.chargesPerRev||0.5);
-  const open=clamp((e.camDur||240)/720,0.2,1), mdot=air*(1+1/afr)/open/nEx;
-  const mu=1.716e-5*Math.pow(Tp/273,1.5)*(273+111)/(Tp+111), k=mu*CP_EXH/0.7;
-  const Re=mdot/(Math.PI/4*D*D)*D/mu, h=0.0483*Math.pow(Re,0.783)*k/D;
-  return MANIFOLD_TW+(Tp-MANIFOLD_TW)*Math.exp(-h*Math.PI*D*MANIFOLD_L/(mdot*CP_EXH));
 }
 // Share of the fuel's heat the walls take at this speed BEYOND what they take at the anchor speed
 // (wallRefRpm): positive below it (a slow cycle gives the walls longer), negative above.
@@ -5604,8 +5577,7 @@ function steadyBoost(rpm){
   // throttle wide open, while the live shaft (advanceShaft, load = throttle) got ~950 K at the same
   // point — so the dyno and the bench spooled on different physics. What really does make low-rpm
   // gas cooler is the extra time the walls get per cycle, and exhaustHeatFrac now carries that.
-  // A petrol engine's mixture is 1 here: rich of stoich cools it a little (exhaustGasT), which the shaft does not
-  // see yet (named open in build 384).
+  // Rich of stoich adds nothing (exhaustGasT caps the release), so a petrol engine's mixture is 1.
   const T3=exhaustGasT(1.0,rpm,e.ci?dieselLambdaFloor(rpm):1);
   const nMax=e.shaftMax||maxShaftRpm(e.compExd);
   const canHold=pr=>{
@@ -9895,7 +9867,7 @@ function buildEngineCore(prevStoich,quiet){
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
   engine.effOctane=fp.octane!=null?fp.octane:engine.octane;
-  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;engine.fuelHfg=fp.hfg;
+  engine.fuelKnockBonus=fp.knockBonus;engine.chargeCool=fp.chargeCool;
   engine.fuelHC=fp.hc;engine.fuelOC=fp.oc;   // atoms per C for exhaust composition (build 257)
   // Geometry → displacement (bore/stroke in mm → cm³ → L).
   // A Wankel chamber is not a cylinder. Its swept volume is the difference between the largest and
@@ -10520,8 +10492,8 @@ function baseFuelLambda(rpm,map){
 // on the way. Diesels are lean and carry no catalyst limit of this kind; carburetted engines have no ECU to enrich.
 // A ported engine (rotary, two-stroke) keeps it whatever its exhaust: its ECU enriches against detonation as much as
 // heat (a boosted rotary famously runs rich for it), and its knock here is the points score that reads the enrichment
-// (KNOCK_RICH), not the end-gas integral. Rich of stoichiometric the exhaust cools (exhaustGasT, build 384), but only by
-// ~20-45 K from lambda 1 to 0.78: the heat released is capped there, and only the extra mass and evaporation are new.
+// (KNOCK_RICH), not the end-gas integral. The exhaust model cannot tell either: rich of stoichiometric its temperature
+// is flat by construction (exhaustGasT caps the heat released and does not count the extra fuel's evaporation).
 const CAT_T_LIMIT=950+273.15;
 function wotNeedsEnrichment(){
   if(engine.ci||!engine.canAutoAFR||engine.ports)return true;
@@ -10541,7 +10513,7 @@ function mappedAFR(rpm,map){
     return st*lam;
   }
   if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
-  return st*egtEnrichLambda(rpm,map,knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map)));
+  return st*knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map));
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -10934,32 +10906,6 @@ function knockEnrichLambda(rpm,map,base){
   if(over(base,false)&&over(base,true)){
     if(over(LAMBDA_KNOCK_MIN,true))lam=LAMBDA_KNOCK_MIN;
     else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(over(m,true))hi=m;else lo=m;}lam=hi;}   // to ~0.001
-  }
-  _knockCache.m.set(key,lam);
-  return lam;
-}
-// ---- The turbine's temperature limit (build 384) ----
-// A turbo petrol ECU models the exhaust at the turbine and protects it: it enriches (the excess fuel's evaporation and
-// mass, and the extra work, cool the gas: exhaustGasT), down to LAMBDA_KNOCK_MIN. TURB_T_LIMIT is the owner's 950 C, a
-// cast turbine housing's usual continuous rating (PROBABLE: makers rate Ni-resist and cast-steel housings ~950-1050 C),
-// read at the turbine inlet (turbineInletT). The exhaust is read at the spark the ECU runs at each trial mixture. Only
-// the ECU that fuels the knock (ecuFuelsKnock), and only with a turbine. Owner's decision: no boost cut yet (EGT's load
-// factor, map/mapMax, is not derived, and would make the cut, not the mixture, do the cooling).
-const TURB_T_LIMIT=950+273.15;
-const ecuGuardsTurbine=()=>engine.intake==='turbo'&&ecuFuelsKnock();
-function egtOverAt(rpm,map,l){
-  _lamTrial=l;
-  try{return turbineInletT(rpm,map,l,egtAt(rpm,map,l,Math.max(0,mbtAdvance(rpm,map)-activeAdvance(rpm,map))))>TURB_T_LIMIT;}finally{_lamTrial=null;}
-}
-function egtEnrichLambda(rpm,map,base){
-  if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
-  if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
-  const hit=_knockCache.m.get(key);if(hit!=null)return hit;
-  let lam=base;
-  if(egtOverAt(rpm,map,base)){
-    if(egtOverAt(rpm,map,LAMBDA_KNOCK_MIN))lam=LAMBDA_KNOCK_MIN;
-    else{let lo=LAMBDA_KNOCK_MIN,hi=base;for(let i=0;i<8;i++){const m=(lo+hi)/2;if(egtOverAt(rpm,map,m))hi=m;else lo=m;}lam=lo;}   // the leanest that holds, to ~0.001
   }
   _knockCache.m.set(key,lam);
   return lam;
@@ -28855,10 +28801,12 @@ function engineCycleLine(v){
 // runs from what the pack can cover to what it can take back, so a larger pack spaced five points so far apart that
 // the Prius's cycle scattered ~2% either way (build 207: 4.24 and 4.34 L/100 km at five, 4.31 and 4.32 at 17 or 33).
 const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],splitsDirect:[0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1],ehr:0.15};
-function hybridCycle(v){
+// prof (build 383, the economy road): {segs:[{vm,a,dt,sinT,cosT}]} replaces the WLTC's 1 s steps with the road's own
+// (grade included), started warm; nothing cached, no plug-in cycles. Without it the cycle is exactly as before.
+function hybridCycle(v,prof){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
   const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug].join('|');
-  if(e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
+  if(!prof&&e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
@@ -28870,7 +28818,15 @@ function hybridCycle(v){
   const motUp=memo(rpm=>hybMotorTq(hy,rpm)),motDn=memo(rpm=>Math.min(motorMaxTorque(mot,Math.max(rpm,1),busV(HYB_SOC),60),pack.pChargeMax/Math.max(1,rpm*Math.PI/30)));
   // the pack's chemical energy for a motor torque at a speed for one second (+ drawn), with the 12 V load; Pin: what
   // else is on the bus (a power-split's MG1, generating)
-  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total:0)+C.auxW-Pin;
+  // On the road (prof) the losses and the engine's fuel are memoised on a 10 rpm × 1 Nm grid (0.5 Nm for the engine, the
+  // pack's charge to 1%), as ecoEnergyJ does: the bisection runs the same road ~20 times. The WLTC path is unchanged.
+  const mL=new Map(),mF=new Map();
+  const lossAt=prof?(T,rpm,soc)=>{const kt=Math.round(Math.abs(T)),kr=Math.round(Math.max(rpm,1)/10),ks=ps?0:Math.round(soc*100),k=(ks*1e4+kr)*1e5+kt;
+      let L=mL.get(k);if(L===undefined){L=motorLosses(mot,kt,Math.max(kr*10,1),busV(ks/100||soc),temp).total;mL.set(k,L);}return L;}
+    :(T,rpm,soc)=>motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total;
+  const fuelAt=prof?(rpm,T,oilT)=>{const kr=Math.round(rpm/10),kt=Math.max(1,Math.round(T*2)),k=kr*1e6+kt;
+      let g=mF.get(k);if(g===undefined){g=engineFuelAt(kr*10,kt/2,oilT);mF.set(k,g);}return g;}:engineFuelAt;
+  const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?lossAt(T,rpm,soc):0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
   const Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   // the HYBRID TUNE (build 192): the charge window, the regeneration, the motor's help, electric driving, load-point
@@ -28880,10 +28836,14 @@ function hybridCycle(v){
   const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
   // cd (build 194, a plug-in's charge-depleting cycles): start from cd.soc with the engine at cd.Tc, and do not run the
   // engine to warm it (a plug-in drives away on its pack; the engine starts when it is asked for, cold)
-  const run=(s,cd)=>{
-    let fuel=0,E=0,x=0,Tc=cd?cd.Tc:C.soak,evS=0,onS=0,stopS=0,warmS=null,firstOn=null;
-    for(let i=0;i<WLTC_3B.length-1;i++){
-      const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
+  const run0=(s,cd)=>{
+    let fuel=0,E=0,x=0,Tc=cd?cd.Tc:C.soak,evS=0,onS=0,stopS=0,warmS=null,firstOn=null,Jout=0,Jin=0,fbS=0;
+    const N=prof?prof.segs.length:WLTC_3B.length-1;
+    for(let i=0;i<N;i++){
+      let vm,a,dt=1,sinT=0,cosT=1;
+      if(prof){const q=prof.segs[i];vm=q.vm;a=q.a;dt=q.dt;sinT=q.sinT;cosT=q.cosT;}
+      else{const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36;vm=(v0+v1)/2;a=v1-v0;}
+      x+=vm*dt;
       const soc=(cd?cd.soc:soc0)+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=!cd&&Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
       let best=null;
       const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
@@ -28901,7 +28861,7 @@ function hybridCycle(v){
           if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60))continue;
           const T2=stand?0:T-Te*G.kr;
           if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),hybBusV(hy),60)))continue;
-          const gs=engineFuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
+          const gs=fuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
           const J=packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp));
           if(!tu.lps&&J<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
           consider(gs,J,true);
@@ -28914,7 +28874,7 @@ function hybridCycle(v){
       }else if(direct){   // the eCVT (build 189), or a series hybrid (193): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
         const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
         const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
         if(T<=0){const Tm=Math.max(T,-motDn(n2)*kRegen);consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
         else{
@@ -28924,7 +28884,7 @@ function hybridCycle(v){
       }else for(let g=0;g<v.ratios.length;g++){
         const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
         const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
         const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
         if(T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
           const Tm=Math.max(T,-motDn(rpm)*kRegen);
@@ -28937,20 +28897,30 @@ function hybridCycle(v){
           const Te=Math.max(0,T-help)+(Te0-Math.max(0,T-help))*k,Tm=T-Te;
           if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
           if(!tu.lps&&Tm<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
-          const gs=engineFuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
+          const gs=fuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
           consider(gs,packJ(Tm,rpm,soc),true);
         }
       }
-      if(!best)best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};   // flat out in first
-      fuel+=best.gs;E-=best.J;
-      if(best.on&&firstOn==null)firstOn=x-vm;
-      if(best.on){onS++;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
-      else if(vm<0.1)stopS++;else evS++;
+      if(!best&&prof){   // on the road: a climb asks more than the controller's machine limits allow (a power-split's MG1
+        // and MG2 at speed; a parallel's engine plus motor). The engine gives it on its best line up to 90% of its top,
+        // the pack the rest up to its power (above its floor) through a 90% electrical path (as the charge correction
+        // below). Energy is charged in full; only those limits are set aside. Time spent so: limitShare (named gap).
+        const Pw=Math.max(0,(m*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT)*vm/eff),O=psOol();
+        const Pe=Math.min(Pw,O.Pmax*C.reserve),Pp=soc>socLo?Math.min(Pbat,Pw-Pe):0;
+        best={gs:psOolAt(Pe).gs,J:Pp/0.9+C.auxW,on:true};fbS+=dt;
+      }
+      if(!best){best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,J:C.auxW,on:true};fbS+=dt;}   // flat out in first
+      fuel+=best.gs*dt;E-=best.J*dt;if(best.J>0)Jout+=best.J*dt;else Jin-=best.J*dt;
+      if(best.on&&firstOn==null)firstOn=x-vm*dt;
+      if(best.on){onS+=dt;if(Tc<stat)Tc=Math.min(stat,Tc+best.gs*dt/1000*(fp0.LHV||44)*1e6*(C.toCoolant+(Tc<H.warmC?H.ehr:0))/heatC);}
+      else if(vm<0.1)stopS+=dt;else evS+=dt;
     }
-    return {fuel,E,x,evS,onS,stopS,warmS,Tc,firstOn};
+    return {fuel,E,x,evS,onS,stopS,warmS,Tc,firstOn,Jout,Jin,fbS};
   };
   // the equivalence factor that sustains the charge: more s, the pack worth more, the controller charges more. A
   // bracketed secant on the pack's end energy, to within 0.5% of the pack's capacity.
+  // On the road (prof) the engine starts warm, at the tune's target charge: run0's cd start (no warm-up rule)
+  const cs0=prof?{soc:soc0,Tc:stat}:undefined,run=s=>run0(s,cs0);
   let lo=2e-5,hi=3e-4,Rlo=run(lo),Rhi=run(hi),R=Rlo,sBest=lo;
   // The bracket must hold the root (build 202): an engine efficient enough at high load charges the pack even at the
   // lowest factor (the Ioniq on a 75% target, once its ECU stopped enriching there), and the secant only pressed against
@@ -28978,8 +28948,11 @@ function hybridCycle(v){
   const bestBsfc=Math.min(...psOol().P.map((P,i)=>psOol().gs[i]*3.6e6/P));
   const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
   const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
+  if(prof){const tT=R.evS+R.onS+R.stopS;
+    return {km,l100:L/km*100,L,kg,evShare:R.evS/tT,onShare:R.onS/tT,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
+      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:R.fbS/tT};}
   const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
-  if(e.hyPlug)res.plug=plugCycles(run,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
+  if(e.hyPlug)res.plug=plugCycles(run0,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
   e._hcyc={score:e.score,key,res};return res;
 }
 // ---- a plug-in hybrid over WLTP (build 194, step 3.5a) ----
@@ -29184,7 +29157,7 @@ function buildRoad(key){
 // timeFactor × that car's Tmin (eco-rally style: use the allotted time, do not rush). A speed
 // cap on the open solve hits the target. ICE: fuel from engineFuelAt (warm oil). EV: pack energy
 // from motorLosses + packDraw + regen, same stack as evCycle / the lap (grade included here).
-// Named gap: speed cap is not optimal lift-coast DP.
+// Hybrid (build 383): hybridCycle on the road's profile (ecoHybrid below). Named gap: speed cap is not optimal lift-coast DP.
 // eco (build 352): {tab:ecoDriverTable(), s} limits the drive and the slowing to the eco driver's (below); s in [0,1]
 // blends both limits back toward the car's own when the eco driver alone cannot make the target.
 function ecoMinTime(line,speedCap,eco){
@@ -29400,6 +29373,19 @@ function ecoEnergyJ(line,v){
   }
   return{E,regenJ:back};
 }
+// A hybrid on the road (build 383): the speed profile as hybridCycle's steps (fuel-cycle.js), so the charge-sustaining
+// energy manager (ECMS: electric only, engine with load-point shifting, regen within the motor's and the pack's limits,
+// the same rule as hybRegenTable) runs on the road's own grade. Warm start at the tune's target charge; the pack ends
+// where it started (or the R154 charge correction is added as fuel, as on WLTC). Same mass and 12 V load as ecoFuelKg.
+function ecoHybrid(line,v){
+  if(!isHybrid())return null;
+  const segs=[];
+  for(let i=0;i<line.length-1;i++){
+    const ds=line[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2);
+    segs.push({vm,dt:ds/vm,a:(v1*v1-v0*v0)/(2*Math.max(0.05,ds)),sinT:line[i].sinT,cosT:line[i].cosT});
+  }
+  return hybridCycle(vehicle,{segs});
+}
 // Eco strategy (build 352): the eco driver (ecoDriverTable) on the open solve, then a speed cap so the finish time hits
 // the target (not early). If the eco driver alone is too slow for the target, its limits are blended back toward the
 // car's own (s) until it makes it. factorOpt (build 344): UI pace 1.25 / 1.5 / 2.0; else the road's timeFactor.
@@ -29420,7 +29406,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
     return best;
   };
-  const cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:ecoFuelKg(line,r.v);
+  const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
   let best=null,s=1,bestC=Infinity;
   for(const sk of ECO_BLENDS){const r=solveAt(sk);if(!r)continue;const c=cost(r);if(c<bestC){bestC=c;best=r;s=sk;}}
   if(!best){best=solveAt(1)||mt;s=1;}
@@ -29434,6 +29420,11 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     if(!en)return{ok:false,reason:'electric',road};
     const kWh=en.E/3.6e6,whkm=en.E/3600/km,kWhMin=enMin?enMin.E/3.6e6:null;
     return Object.assign(base,{kWh,whkm,regenKWh:en.regenJ/3.6e6,kWhMin});
+  }
+  if(hyb){   // fuel (charge-sustained) and the pack's energy out and back (build 383)
+    const h=ecoHybrid(line,v),hm=ecoHybrid(line,mt.v),L=h.kg/fp.density;
+    return Object.assign(base,{hybrid:true,fuelL:L,fuelKg:h.kg,l100:L/km*100,fuelLMin:hm.kg/fp.density,engOff:1-h.onShare,
+      packOutKWh:h.packOutKWh,packInKWh:h.packInKWh,dSocKWh:h.dSocKJ/3600,corrected:h.corrected,limitShare:h.limitShare});
   }
   const st={},kg=ecoFuelKg(line,v,st);
   const L=kg/fp.density,kgMin=ecoFuelKg(line,mt.v),Lmin=kgMin/fp.density;
@@ -30106,6 +30097,8 @@ function renderChallenge(){
       cell('L/100 km',R.l100.toFixed(1))+
       cell('FLAT-OUT FUEL',R.fuelLMin.toFixed(2)+' L');
   }
+  if(R.hybrid)cells+=cell('ENGINE OFF',Math.round(R.engOff*100)+' %')+cell('PACK OUT',R.packOutKWh.toFixed(2)+' kWh')+
+    cell('PACK IN',R.packInKWh.toFixed(2)+' kWh')+(R.limitShare>0.005?cell('OVER HYBRID LIMITS',Math.round(R.limitShare*100)+' %'):'');
   if(!R.ev&&R.rpmDrive)cells+=cell('AVG RPM ON POWER',String(Math.round(R.rpmDrive)))+cell('TOP GEAR',String(R.topGear));
   cells+=cell('PEAK ACCEL',R.aUp.toFixed(1)+' m/s²')+cell('PEAK DECEL',R.aDn.toFixed(1)+' m/s²')+
     cell('ECO BLEND',(R.ecoBlend*100).toFixed(0)+' %');
