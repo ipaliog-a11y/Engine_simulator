@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Real circuits stop sticking on an old service-worker cache (build 388)
+
+- Returning visitors still saw 22 circuits after build 386 shipped 32: `sw.js` served
+  `tracks/real-circuits.js` cache-first under `pixel-engine-sim-v5`, which never changed.
+- Cache bumped to `v6` (activate drops the stale store). That file is network-first like the
+  page; fonts and icons stay cache-first. `test237` locks it.
+- Immediate workaround without this build: hard-refresh the Pages site, or clear site data for it.
+
 ### Championship seasons on top of RACE (build 387)
 
 Post-v1.0 game layer from `plans/championship.md`: classes, calendars, points, teams, light economy, VSC and endurance hooks.
