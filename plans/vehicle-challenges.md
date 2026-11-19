@@ -95,7 +95,7 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
 
 ## Follow-ups
 
-1. ~~Skid-pad challenge.~~ Shipped in build 367 (`src/js/skidpad-run.js`, id `skidpad`): 61 m circle, steady g from the
+1. ~~Skid-pad challenge.~~ Shipped in build 368 (`src/js/skidpad-run.js`, id `skidpad`): 61 m circle, steady g from the
    lap time, outcomes HOLD / WIDE / TIGHT / SPIN / SLOW. Open: the driver's speed loop is proportional, so it settles
    just under its target; ESC stays at the car's default.
 2. Multi-car ranking on a challenge.

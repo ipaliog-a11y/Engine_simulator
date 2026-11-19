@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Skid pad challenge on the CHALLENGES page (build 367)
+### Skid pad challenge on the CHALLENGES page (build 368)
 
 - New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
   (60.96 m) circle, the pad Motor Trend and Road & Track report skidpad g on (Car and Driver uses 300 ft). The target
@@ -31,6 +31,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Left open: the driver's speed loop is proportional, so it settles just under its target (the lap time decides
   the score); ESC stays at each car's default; the 1 m lane is this game's, not a standard.
 - Fingerprint (lap, 0–100, dyno): identical.
+
+### A rain tyre's own wet grip (build 367)
+
+- A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
+  wet grip index (Regulation (EU) 2020/740, ISO 23671), a road tyre taken at class B's middle (G 1.47) and the
+  inter and full wet at class A's floor (1.55), both probable. Standing still on a properly wet track a rain tyre
+  keeps 0.749 of its dry grip, a road tyre 0.71 as before.
+- Only wet races move; dry laps, 0–100 and the dyno are unchanged. Open: each road compound by its own class, and a
+  race rain tyre's real figure above class A (no label grades it).
 
 ### Regen power against measured EVs, researched (build 366)
 

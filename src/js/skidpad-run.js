@@ -1,4 +1,4 @@
-// ====== SKID PAD (build 367) ======
+// ====== SKID PAD (build 368) ======
 // Steady cornering on a 200 ft (61 m) diameter circle, the pad Motor Trend and Road & Track report their skidpad g on
 // (Car and Driver uses a 300 ft circle). The magazines time laps at the highest speed the car holds on the circle and
 // give g = v²/(g·R) with v = 2πR / lap time; so does this. Physics: stepCar driven by driveDriver round a closed line

@@ -1,6 +1,6 @@
-// Challenges: skid pad (build 367).
+// Challenges: skid pad (build 368).
 //
-// WHY THIS EXISTS. Build 367 adds a skid-pad challenge: the stepped car round a 200 ft (61 m) circle, the speed
+// WHY THIS EXISTS. Build 368 adds a skid-pad challenge: the stepped car round a 200 ft (61 m) circle, the speed
 // raised until it leaves a 1 m lane, scored as the magazines do, v²/(g·R) from the held lap's time. What must hold:
 //   · the challenge is registered and the circle is 60.96 m across (200 ft);
 //   · every car tested HOLDs a lap, and the g from its lap time agrees with the body's own mean ay within 5%;

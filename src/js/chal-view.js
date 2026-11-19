@@ -244,7 +244,7 @@ function drawDriftHud(s){
   ctx.fillStyle='#667';ctx.font='5px '+PS;ctx.fillText(sw.road,x0+60,ys+24);
   drawSteerWheel(x0+150,ys+16,15,sw.wheel);
 }
-// Skid pad (build 367): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
+// Skid pad (build 368): the circle and its 1 m lane from above, the car replaying the judged lap, the dashboard.
 function drawSkidpadChallenge(g,R){
   chalHover.map=null;
   g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
