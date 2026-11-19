@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Skid pad challenge on the CHALLENGES page (build 368)
+
+- New challenge `skidpad` (`src/js/skidpad-run.js`): the stepped car (`stepCar`, `driveDriver`) round a 200 ft
+  (60.96 m) circle, the pad Motor Trend and Road & Track report skidpad g on (Car and Driver uses 300 ft). The target
+  speed is bisected until the car can no longer stay within 1 m of the line; the score is the magazines' figure,
+  v²/(g·R) from the held lap's time, with the body's mean ay beside it and how it fails 1 km/h faster
+  (WIDE / TIGHT / SPIN). Top-down replay of the judged lap with the powerslide's dashboard.
+- First figures (lap g): MX-5 NA 0.82, Model 3 0.82, Civic Type R FK8 0.76, 911 GT3 0.98; every one fails WIDE
+  one step up. Against the free references: Model 3 0.82 vs Car and Driver's 0.86 (their 300 ft pad), F-150 Raptor
+  0.89 vs C&D's ~0.72 (the all-terrain tyre gap named in build 354).
+- Left open: the driver's speed loop is proportional, so it settles just under its target (the lap time decides
+  the score); ESC stays at each car's default; the 1 m lane is this game's, not a standard.
+- Fingerprint (lap, 0–100, dyno): identical.
+
 ### A rain tyre's own wet grip (build 367)
 
 - A rain compound's rubber now grips the wet better than a road tyre's, not only its grooves: the EU tyre label's
