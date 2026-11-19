@@ -857,7 +857,7 @@ function driftSlide(R,s){
   let v=0;for(const al of a)if(al>pk)v=Math.max(v,(s.v||0)*Math.sin(al));
   return v;   // m/s of sliding at the worse axle, 0 while every tyre grips
 }
-// The moose test and the lap replay screech too (build 370), through the same voice.
+// The moose test and the lap replay screech too (build 371), through the same voice.
 // Moose: stepCar's samples carry the four slip angles, so the drift's own test runs on them, with the same rear peak
 // atan(3 mu / C) (drive-model's pkR, from the result's mu and the tyre's cornering coefficient).
 // Lap: the lap solver records no slip angle (it is quasi-steady: a speed profile at the grip limit, no yaw state), so
