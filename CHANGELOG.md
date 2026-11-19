@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Regen power against measured EVs, researched (build 364)
+
+- Research only; no number moves. `evRegenTable` (motor torque capped by the pack's charge power) against published
+  regen: at 20 km/h the presets regenerate 6.7 (Model 3), 7.1 (Model Y) and 14.1 m/s² (Plaid) against ~2.1 measured
+  on a Model 3 (SAE 2020-01-0883) and 2.5–4 on mainstream EVs (field study; E-GMP up to 0.4 g blended, MEB 0.3 g).
+  The power cap is 90 kW (Model 3) and 150 kW (Plaid) against ~77 and ~90 kW published (probable sources).
+- Left open, for the owner: the limit real cars hit is the maker's calibration, not the motor or the pack. A fix is a
+  sourced rule per maker and moves every EV (the economy run most), so it is not made here. Findings and sources in
+  `plans/vehicle-challenges.md`; `test220` prints the comparison and checks the gap stays named.
+
 ### v0.8, and the leftovers to v1.0 grouped (build 363)
 
 - The title reads v0.8, reached at build 338 (handling phase G); the owner tags it.
