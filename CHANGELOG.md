@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The plan from here to the v1.0 gate; the driving sim's heat, wear and aero move after v1.0 (build 406)
+
+- New `plans/v1-finish.md`: about 20 builds for the groups still open in the roadmap's leftovers. Engine: valves
+  for the 83 unsourced engines in four batches, the four V8s over 10%, water-to-air intercoolers (model, then per
+  car), the catalyst's back pressure. Vehicle parts: wing, splitter and floor, tyre pressure, spring, bar and damper
+  rates. Data: overhangs, tyre sizes, pit lanes. One review of the known-gap lists, then the gate.
+- Owner's decision: driving-sim H′ and I (tyre heat and wear in time, brake fade, aero by ride height) move after
+  v1.0, with phase J (decision 23 changed in `plans/road-to-v1.md`). Group 2's aero ships as static numbers.
+- Owner's decision: the 992 Turbo S's "500 Nm to the front" stays out (noted in `plans/small-physics.md`).
+- Left open: four questions for the owner at the end of the new plan (the finish line's wording, `catRampTop` if no
+  source, unsourced valves at v1.0, static aero enough).
+
 ### A limited-slip diff can lock differently on the coast than under power (build 405)
 
 - The stepped car's clutch-plate LSD now has a coast lock beside its drive lock (the two ramp angles), set per preset
