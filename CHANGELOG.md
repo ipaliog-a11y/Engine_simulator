@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 416)
+### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 417)
 
 Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
 
@@ -42,6 +42,18 @@ Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
   from the thesis's text and code.
 
 Tests: test193 (updated); test168 now averages the wheel loads over a crest or dip across the second second, because a single instant read the bounce's phase (with the softer tyre it read 1.56 against a 1.55 limit; averaged, main and this build both read 1.47; bands unchanged). 96 lap, brake, drive and tyre tests rerun.
+
+### Five more cars' overhang splits are sourced, not read from the side view (build 416)
+
+- The front/rear overhang split of the BMW M3 (E46), Golf 2.0 TDI (Mk7), BMW 330d (F30), 911 Carrera RS 2.7 and
+  BMW 330e now comes from auto-data.net: the page of another version of the same body, with the same length and
+  wheelbase (cited as `ovSrc` in `CAR_DIMS`). Splits read from the side view: 83 → 78 (`test171`'s budget shrinks).
+- Before → after front overhang (m): M3 0.881 → 0.774, Golf 0.777 → 0.855, 330d 0.871 → 0.776, RS 2.7 0.788 → 0.884,
+  330e 0.892 → 0.799. They move only the moose run's cones: 330d 77 → 75 km/h, RS 2.7 72 → 73; none has a published
+  moose figure. The fingerprint is identical, so no error against a real car moves.
+- Left open (78 cars): auto-data.net (every page in each car's generation) and conceptcarz give no overhangs for
+  them. Only makers' dimension drawings (press kits, workshop manuals) remain: plan build 13, second part.
+
 ### The kit wing is a wing part, from its span, chord, angle and camber (build 415)
 
 - The FRONT and REAR AERO kit WING no longer carries a fitted ClA (0.60 / 0.75 times the class's aero factor) and ΔCd

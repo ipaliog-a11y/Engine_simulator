@@ -319,7 +319,7 @@ function rollStiffness(v){
 // 4x the one before). Driven at v, the road is a white velocity input whose strength grows with v, so the tyre's
 // load swings by sigma = c sqrt(Gd(n0) v): c is worked out once per axle, from the quarter car's response.
 // The unsprung mass is the corner's own parts, weighed (unsprungMass, build 262); until then 12% of the corner's mass
-// for every car. The tyre's vertical stiffness is Rhyne's relation (build 416, retiring build 216's one 250 kN/m):
+// for every car. The tyre's vertical stiffness is Rhyne's relation (build 417, retiring build 216's one 250 kN/m):
 //   kt = 0.0274 p sqrt(Wf D) + 3.38   daN/mm, p the inflation pressure in bar, Wf the footprint width and D the outer
 // diameter in mm (Rhyne, Tire Sci. Tech. 33(3), 2005, fitted to a wide range of radials; as quoted with its units by
 // Redrouthu & Das, Chalmers MSc thesis 2014:24, sec. 3.4 and appendix; the same constants in kg/mm, 0.00028 p[kPa] and
@@ -329,15 +329,15 @@ const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, DAMPER_STEP=1.3, ISO_N0=0.1;
 function tyreKz(twMm,odMm,kPa){return (RHYNE_A*kPa/100*Math.sqrt(RHYNE_WF*twMm*odMm)+RHYNE_B)*1e4;}   // N/m
 // ---- tyre pressure as a part (build 313) ----
 // A designed pair of cold pressures (front, rear). Unfitted, every car stands for TYRE_P_REF. Fitted:
-//   stiffness   Rhyne's relation above at the set pressure (build 416).
-//   load        the tyre's load capacity (build 416): ETRTO's load formula is linear in the pressure, (p + P0), P0 the
+//   stiffness   Rhyne's relation above at the set pressure (build 417).
+//   load        the tyre's load capacity (build 417): ETRTO's load formula is linear in the pressure, (p + P0), P0 the
 //               structure's own capacity with no air (Malinverni, ETRTO, More than 50 years of standardisation, 2015).
 //               A standard-load tyre's load index is its load at 250 kPa, and no more above it. P0 = 44.5 kPa is the
 //               least-squares fit of ETRTO's standard-load table (Standards Manual 2005, LI 62-125 at 22-36 psi, as
 //               reprinted in Toyo's Load & Inflation Tables 2013): 0.7% rms, 2.2% at worst.
 //   grip        the grip's load sensitivity (tyreMu) reads the load against the tyre's capacity at its set pressure:
 //               the compound's mu stands at TYRE_REF_SHARE of the load index at TYRE_P_REF, and that reference load
-//               moves with the capacity (build 416). Less air, a given load is a larger share of what the tyre carries.
+//               moves with the capacity (build 417). Less air, a given load is a larger share of what the tyre carries.
 //   rolling     SAE J2452's form, Crr ~ p^alpha, alpha -0.4 for passenger radials (Grover, SAE 980251, 1998; PROBABLE).
 //   hot         the air at constant volume: p_hot + atm = (p_cold + atm)(273 + T_tyre)/(273 + 20), the cold set at 20 C.
 // Not modelled: the friction's own pressure term (Magic Formula 6.1's ppy3/ppy4), which measurements show to be tyre

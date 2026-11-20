@@ -53,7 +53,7 @@ recorded numbers reports its range and the mean error against the real cars.
 11. **Tyre pressure into grip, rated load and stiffness** (`TYRE_KZ`). Vertical stiffness from pressure and size
     (Rhyne; Pacejka, *Tyre and Vehicle Dynamics*), rated load from the ETRTO load index, grip's load sensitivity at
     the set pressure.
-    *Build 416:* Rhyne's stiffness (via Chalmers 2014:24; footprint 0.7 PROBABLE) replaces `TYRE_KZ`. The ETRTO
+    *Build 417:* Rhyne's stiffness (via Chalmers 2014:24; footprint 0.7 PROBABLE) replaces `TYRE_KZ`. The ETRTO
     capacity is (p + 44.5)/(250 + 44.5) of the load index, fitted to the standard-load table. Each axle's `FzRef`
     follows it from 230 kPa. Laps moved −0.21% to +0.10%; 0–100, 100–0 and skid-pad did not move. Open: the
     friction's own pressure term (tyre-dependent, Schmeitz et al. 2005), cornering stiffness against pressure, and
@@ -65,6 +65,9 @@ recorded numbers reports its range and the mean error against the real cars.
 ## Group 7: data (sourcing only)
 
 13. **83 overhang splits** (front/rear overhang from the maker's dimension drawing), in one or two builds.
+    *Build 416:* five splits from a same-body auto-data.net page (M3 E46, Golf TDI Mk7, 330d, 911 RS 2.7, 330e).
+    Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
+    build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
 
