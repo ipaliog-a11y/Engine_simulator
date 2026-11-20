@@ -815,7 +815,9 @@ body[data-group="more"] .mode-room{display:none}
 .ecu-led.on{color:#00ff88}.ecu-led.on i{background:#00ff88}
 .ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
 .ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
-.ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
+.ecu-chans{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.ecu-chans button{font-size:7px;padding:4px 5px;color:#8fb8a0}
+.ecu-keys button.on,.ecu-chans button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
 #ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
 .ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
 [data-ecu-hide]{display:none!important}
@@ -880,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 412</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 414</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -938,7 +940,7 @@ body[data-group="more"] .mode-room{display:none}
 <button type="button" data-ecu="diag">F3 OBD</button>
 <button type="button" data-ecu="delta">F4 DELTA</button>
 </div>
-<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="236" role="img" aria-label="Scope: each channel against time, with its scale and present value"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="236" role="img" aria-label="Scope: each channel against time, with its scale and present value"></canvas><div id="ecuChans" class="ecu-chans" role="group" aria-label="Scope signals: pick up to four"></div><button type="button" id="ecuFreeze">FREEZE</button></div>
 <div class="ecu-screen" data-ecu-screen="maps" hidden>
 <div class="ecu-keys">
 <button type="button" data-ecu-map="fuel">FUEL</button>
@@ -1336,7 +1338,7 @@ Cut a real engine in half and you can watch the parts that make it work: the pis
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="live">
-<b>The LIVE tab is a cutaway</b> of the engine you just designed. The manifold colour follows the exhaust temperature, and the ECU laptop under the picture is where the fuel map is tuned while the engine runs. Everything on it moves
+<b>The LIVE tab is a cutaway</b> of the engine you just designed. The manifold colour follows the exhaust temperature, and the ECU laptop under the picture is where the fuel map is tuned while the engine runs. Its scope plots up to four signals against time; the buttons under it choose which (engine speed, manifold pressure, lambda and knock by default; also the O2 sensor's voltage in mV, throttle, torque, power and coolant, or the pack, motor and charge on an electric car), and the choice is remembered. Everything on it moves
 because the simulation moved it. It is deliberately <b>not</b> drawn in real time: a crank at
 5000&nbsp;rpm turns 83 times a <i>second</i>, which at 60&nbsp;fps is a strobe rather than a
 picture — you could not watch a valve open. So the cycle runs at a pace you can read, between
@@ -34552,21 +34554,55 @@ function ecuHold(){
   if(vizMode!=='engine')setTab('engine');
   flash(tr('HOLD CELL')+' • '+Math.round(rpm)+' rpm');
 }
+// The scope's signals. Each is read from the running state; the picker below the scope chooses up to four, one lane
+// each. [key, name, unit, decimals, least scale span, reader]. O2 SENSOR is the zirconia cell's voltage from the
+// Nernst model in obd.js (lambdaSensorMv), what a narrowband sensor sends the ECU, beside the lambda it is read from.
+function ecuLam(){return state.fuelCut||(typeof obdRunning==='function'&&!obdRunning())?99:state.afr/(engine.stoichAFR||14.7);}
+const ECU_SIG={
+  ice:[['rpm','ENGINE SPEED','rpm',0,200,()=>state.rpm],['map','MANIFOLD PRESSURE','bar',2,0.1,()=>state.map||1],
+    ['lam','LAMBDA','',2,0.05,()=>engine.stoichAFR?state.afr/engine.stoichAFR:1],['knock','KNOCK RISK','%',0,10,()=>state.knockRisk],
+    ['o2','O2 SENSOR','mV',0,50,()=>lambdaSensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
+    ['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW],['clt','COOLANT','°C',0,5,()=>state.coolant]],
+  ev:[['v','PACK VOLTAGE','V',0,10,()=>state.systemVoltage],['a','PACK CURRENT','A',0,10,()=>state.battI],
+    ['wind','WINDING TEMP','°C',0,5,()=>state.mT?state.mT.w:0],['soc','CHARGE','%',0,2,()=>(state.soc||0)*100],
+    ['rpm','MOTOR SPEED','rpm',0,200,()=>state.rpm],['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW]]};
+const ECU_DEF={ice:['rpm','map','lam','knock'],ev:['v','a','wind','soc']},ECU_MAX=4;
+function ecuKind(){return typeof isElectric==='function'&&isElectric()?'ev':'ice';}
+function ecuPicked(kind){
+  let p=null;
+  try{p=JSON.parse(localStorage.getItem('pes.scopeCh')||'null');}catch(e){}
+  const keys=ECU_SIG[kind].map(s=>s[0]),l=p&&Array.isArray(p[kind])?p[kind].filter(k=>keys.includes(k)).slice(0,ECU_MAX):[];
+  return l.length?keys.filter(k=>l.includes(k)):ECU_DEF[kind];
+}
+function ecuPick(key){
+  const kind=ecuKind(),cur=ecuPicked(kind);
+  let next=cur.includes(key)?cur.filter(k=>k!==key):cur.concat(key);
+  if(!next.length)return;
+  if(next.length>ECU_MAX){flash(tr('Up to 4 traces')+' • '+tr('switch one off first'));return;}
+  let all={};
+  try{all=JSON.parse(localStorage.getItem('pes.scopeCh')||'{}')||{};}catch(e){}
+  all[kind]=next;
+  try{localStorage.setItem('pes.scopeCh',JSON.stringify(all));}catch(e){}
+  ecu.picked=null;ecuRenderPicker();
+}
+function ecuRenderPicker(){
+  const box=document.getElementById('ecuChans');if(!box)return;
+  const kind=ecuKind(),on=ecuPicked(kind);
+  if(ecu.picked===kind+on.join())return;
+  ecu.picked=kind+on.join();
+  box.innerHTML=ECU_SIG[kind].map(s=>'<button type="button" data-ch="'+s[0]+'" aria-pressed="'+on.includes(s[0])+'"'+(on.includes(s[0])?' class="on"':'')+'>'+tr(s[1])+'</button>').join('');
+}
 function ecuSample(){
   if(ecu.freeze||!engine)return;
-  const ev=typeof isElectric==='function'&&isElectric();
-  const row=ev
-    ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
-    :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
-  row.push(performance.now()/1000);   // [4]: seconds, for the time axis
+  const kind=ecuKind();
+  if(ecu.kind!==kind){ecu.kind=kind;ecu.buf=[];}
+  const row={t:performance.now()/1000};   // t: seconds, for the time axis
+  ECU_SIG[kind].forEach(s=>{let v=0;try{v=+s[5]();}catch(e){}row[s[0]]=isFinite(v)?v:0;});
   ecu.buf.push(row);
   if(ecu.buf.length>ECU_N)ecu.buf.shift();
 }
 // The scope draws each channel in its own lane: its name, unit and present value in its colour, its scale
-// on the right, and a shared time axis in seconds before now. One colour per channel, from the bench palette.
-const ECU_CH={
-  ice:[['ENGINE SPEED','rpm',0,200],['MANIFOLD PRESSURE','bar',2,0.1],['LAMBDA','',2,0.05],['KNOCK RISK','%',0,10]],
-  ev:[['PACK VOLTAGE','V',0,10],['PACK CURRENT','A',0,10],['WINDING TEMP','°C',0,5],['CHARGE','%',0,2]]};
+// on the right, and a shared time axis in seconds before now. One colour per lane, from the bench palette.
 function ecuNice(lo,hi,minSpan){
   if(hi-lo<minSpan){const m=(lo+hi)/2;lo=m-minSpan/2;hi=m+minSpan/2;}
   const raw=(hi-lo)/2,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,step=(f<=1?1:f<=2?2:f<=5?5:10)*p;
@@ -34583,18 +34619,18 @@ function ecuDrawScope(){
   g.fillStyle='#04140c';g.fillRect(0,0,w,h);
   const FONT=n=>n+'px "Press Start 2P", monospace';
   const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'],grid='#1c3a2a',ink='#8fb8a0';
-  const chans=ECU_CH[typeof isElectric==='function'&&isElectric()?'ev':'ice'];
-  const buf=ecu.buf,last=buf[buf.length-1],t1=last[4]||0,span=Math.max(1,t1-(buf[0][4]||0));
+  const kind=ecuKind(),on=ecuPicked(kind),chans=ECU_SIG[kind].filter(s=>on.includes(s[0]));
+  const buf=ecu.buf,last=buf[buf.length-1],t1=last.t||0,span=Math.max(1,t1-(buf[0].t||0));
   const src=still?[last]:buf;
-  const L=6,R=w-50,top=16,bot=h-22,lh=(bot-top)/4;
+  const L=6,R=w-50,top=16,bot=h-22,lh=(bot-top)/chans.length;
   g.textBaseline='top';g.font=FONT(7);g.fillStyle=ink;g.textAlign='left';
   g.fillText(tr(ecu.freeze?'FROZEN':'LIVE')+' • '+tr('last')+' '+Math.round(span)+' s',L,4);
   g.textAlign='right';g.fillText(tr('TIME (s)'),w-4,4);g.textAlign='left';
   const xOf=t=>R-(t1-t)/span*(R-L);
-  for(let ch=0;ch<4;ch++){
-    const [name,unit,dp,minSpan]=chans[ch],y0=top+ch*lh,y1=y0+lh-4;
+  for(let ch=0;ch<chans.length;ch++){
+    const [key,name,unit,dp,minSpan]=chans[ch],y0=top+ch*lh,y1=y0+lh-4;
     let lo=Infinity,hi=-Infinity;
-    buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    buf.forEach(row=>{lo=Math.min(lo,row[key]);hi=Math.max(hi,row[key]);});
     [lo,hi]=ecuNice(lo,hi,minSpan);
     const yOf=v=>y1-(v-lo)/(hi-lo)*(y1-y0-12)-1;
     // grid and scale: top, middle and bottom of the lane
@@ -34606,12 +34642,12 @@ function ecuDrawScope(){
     });
     // the trace
     g.strokeStyle=cols[ch];g.lineWidth=2;g.beginPath();
-    if(src.length<2){const y=yOf(last[ch]);g.moveTo(L,y);g.lineTo(R,y);}
-    else src.forEach((row,i)=>{const x=xOf(row[4]||t1),y=yOf(row[ch]);if(i)g.lineTo(x,y);else g.moveTo(x,y);});
+    if(src.length<2){const y=yOf(last[key]);g.moveTo(L,y);g.lineTo(R,y);}
+    else src.forEach((row,i)=>{const x=xOf(row.t||t1),y=yOf(row[key]);if(i)g.lineTo(x,y);else g.moveTo(x,y);});
     g.stroke();
-    g.fillStyle=cols[ch];g.fillRect(R-3,yOf(last[ch])-3,6,6);
+    g.fillStyle=cols[ch];g.fillRect(R-3,yOf(last[key])-3,6,6);
     // name, unit and present value, on a dark plate so the trace cannot hide it
-    const label=tr(name)+(unit?' ('+unit+')':'')+'  '+ecuFmt(last[ch],dp);
+    const label=tr(name)+(unit?' ('+unit+')':'')+'  '+ecuFmt(last[key],dp);
     g.font=FONT(7);
     const tw=g.measureText(label).width;
     g.fillStyle='rgba(4,20,12,0.85)';g.fillRect(L,y0,tw+6,10);
@@ -34678,7 +34714,7 @@ function ecuTick(){
   const el=document.getElementById('ecuComputer');
   if(!el||el.hidden)return;
   ecuSample();ecuLeds();
-  if(ecu.screen==='scope')ecuDrawScope();
+  if(ecu.screen==='scope'){ecuRenderPicker();ecuDrawScope();}
   if(ecu.screen==='maps'&&typeof updateFuelMapMarker==='function')updateFuelMapMarker();
 }
 function bindEcu(){
@@ -34686,6 +34722,7 @@ function bindEcu(){
   el.addEventListener('click',e=>{
     const scr=e.target.closest('[data-ecu]');if(scr){ecuScreen(scr.dataset.ecu);return;}
     const mp=e.target.closest('[data-ecu-map]');if(mp){ecu.map=mp.dataset.ecuMap;ecuPlaceMaps();return;}
+    const chb=e.target.closest('[data-ch]');if(chb){ecuPick(chb.dataset.ch);if(ecu.buf.length>1)ecuDrawScope();return;}
     const ff=e.target.closest('[data-ff]');if(ff)ecuReproduce(ff.dataset.ff);
   });
   document.getElementById('ecuFreeze').addEventListener('click',()=>{ecu.freeze=!ecu.freeze;document.getElementById('ecuFreeze').classList.toggle('on',ecu.freeze);});
