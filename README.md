@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 411
+# PIXEL POWERTRAIN v0.8 build 412
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -519,6 +519,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   Under each field, a goal hint says what the next value down and up do to the goal from the third question (power,
   mass or price; the 0–100 on a car step) and the limit it meets (knock, valve float, tyre rating, grip), worked out
   by the cards' own previews. It gives a direction, never a best value.
+  **FINISH** sets the build beside the car it started from (power, torque, 0–100, top speed, weight, price,
+  reliability, the goal's row lit), in the figures BUILD leaves, and names the limit it sits on in the cards' own
+  words. **DRIVE IT** opens the VEHICLE tab, **BACK TO STEPS** returns, **START OVER** reloads the factory car.
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

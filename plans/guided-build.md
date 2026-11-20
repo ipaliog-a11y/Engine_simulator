@@ -187,3 +187,14 @@ paused (AGENTS.md section 0): strings go through `tr()` only.
   no hint, since their neighbour would need `syncDesignEnable` on a trial form. The EV side has no current-density
   limit to name (the motor code has no threshold for it); it names the rim and the battery. No knock bar in the step
   yet (build 3 can add it with the finish screen).
+
+## Build 3 done (finish screen)
+
+- `src/js/guided-build.js` (`gf*`): FINISH (and SKIP TO FINISH) builds the engine if a field moved, then shows the
+  build against the factory car, snapshotted when SHAPE IT loads it (`gfFigures`: `engine.score`, `perf`, `vehicle`;
+  price is engine plus car, as the budget question counts it). The goal's row (0–100, weight or price) is lit. The
+  limit line is the ENGINE card's verdict if knock or valve float is lit, else the VEHICLE card's if tyre rating or
+  grip is; otherwise it says none is lit. DRIVE IT, BACK TO STEPS, START OVER (reloads the car, step 1). Test:
+  `tests/test253.mjs`.
+- Left open: current density (no threshold in the motor code, as in build 2), so an EV's line names only the car's
+  limits; the knock bar inside a step was not added.

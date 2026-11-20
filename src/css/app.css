@@ -540,6 +540,10 @@ body.guided-open{overflow:hidden}
 .gw-hint{grid-column:1/-1;font-size:7px;line-height:1.7;color:#7fd;margin:2px 0 0;white-space:pre-line;overflow-wrap:anywhere}
 .gw-note{color:#ffcc00;margin:0 0 12px}
 .gw-act{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
+.gf-tab{width:100%;border-collapse:collapse;font-size:7px;margin-bottom:10px}
+.gf-tab th,.gf-tab td{padding:6px 3px;border-bottom:2px solid #26263a;text-align:right;font-weight:normal;white-space:nowrap}
+.gf-tab th{text-align:left;color:#889;white-space:normal}.gf-tab thead td{color:#88aacc;white-space:normal}
+.gf-tab tr.on th,.gf-tab tr.on td{color:#ffcc00}.gf-tab .up{color:#00ff88}.gf-tab .dn{color:#ff5566}
 .sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
 .sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
 .sc-count{flex:1;font-size:7px;color:#667}

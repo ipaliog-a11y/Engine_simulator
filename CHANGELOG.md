@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The guided build's finish screen: the build beside the car it started from (build 412)
+
+- Build 3 of `plans/guided-build.md`. FINISH and SKIP TO FINISH now open a finish screen instead of the VEHICLE tab:
+  power, torque, 0–100, top speed, weight, price (engine plus car) and reliability, factory against yours, with the
+  change, and the goal's row lit (QUICKEST: 0–100, LIGHTEST: weight, CHEAPEST: price).
+- The figures are the scorecard's, `perf`'s and the car's after BUILD, not new estimates. One line names the limit the
+  build sits on, in the lit card's own verdict: knock or valve float (ENGINE), else tyre rating or grip (VEHICLE).
+- DRIVE IT opens the VEHICLE tab; BACK TO STEPS returns; START OVER reloads the factory car at step 1. README and the
+  guide's opening line say so. Fingerprint identical.
+- Left open: an EV's motor current density (no threshold in the motor code), and a knock bar inside a step.
+
 ### The guided build's goal hints: each step says what the next value down and up do to the goal (build 411)
 
 - Build 2 of `plans/guided-build.md`. Under each field of a SHAPE IT step, one line per neighbour (5% of the range, or
