@@ -105,18 +105,8 @@ const VCD_FIELDS={
     trade:'A double wishbone or multi-link holds the tyre flatter as the car rolls than a strut; a strut is cheaper and lighter. A solid axle is the simplest and the least precise.'},
   vhGeoR:{what:'How the rear wheels are located.',
     trade:'Independent geometry keeps each tyre on the road on its own; a twist beam or a solid axle is cheaper and ties the two sides together.'},
-  vhSpringF:{adv:true,what:'The front springs, softer or stiffer than the kit\'s.',
-    trade:'Stiffer at the front moves the balance toward understeer and rolls less; softer grips better over bumps.'},
-  vhSpringR:{adv:true,what:'The rear springs, softer or stiffer than the kit\'s.',
-    trade:'Stiffer at the rear moves the balance toward oversteer.'},
-  vhBarF:{adv:true,what:'The front anti-roll bar, softer or stiffer than the kit\'s.',
-    trade:'A stiffer front bar carries more of the load transfer at the front: more understeer, less roll.'},
-  vhBarR:{adv:true,what:'The rear anti-roll bar, softer or stiffer than the kit\'s.',
-    trade:'A stiffer rear bar carries more of the load transfer at the rear: more oversteer, less roll.'},
-  vhDamperF:{adv:true,guide:'dampers',what:'The front dampers, softer or stiffer than the kit\'s.',
-    trade:'Stiffer dampers settle the body faster after a bump, and pass more of the road through to the cabin.'},
-  vhDamperR:{adv:true,guide:'dampers',what:'The rear dampers, softer or stiffer than the kit\'s.',
-    trade:'Stiffer dampers settle the body faster after a bump, and pass more of the road through to the cabin.'}
+  vhSuspPart:{adv:true,guide:'dampers',what:'The springs, anti-roll bars and dampers: the kit\'s, or a set you design on the PARTS tab from their dimensions.',
+    trade:'Stiffer at the front (springs or bar) moves the balance toward understeer and rolls less; at the rear, toward oversteer. Stiffer dampers settle the body faster and pass more of the road to the cabin.'}
 };
 // Where a field's value lives on a factory car (vehicleFromPreset), and how a choice is written there.
 const VCD_KEY={vhChassis:'chassis',vhDrive:'drive',vhDiff:'diff',vhTC:'tc',vhLimiter:'governor',vhLimitKmh:'governor',vhGearbox:'gearbox',vhGears:'gears',

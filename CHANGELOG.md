@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Tyre sizes from the makers' sheets, and the two missing widths (build 420)
+### Tyre sizes from the makers' sheets, and the two missing widths (build 421)
 
 Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
 
@@ -34,15 +34,56 @@ Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
 - **Derived tables follow**: the light-roadster class's most common wheel is now 16-inch, not 15-inch (its six real
   cars, `tools/class-medians.mjs`; no recorded number moves). `CAR_PRICE` was rerun with `tools/car-prices.mjs`: the
   Diablo VT is −100, the BAC Mono +100 and the 911 RS −50.
-- **What moved** (fingerprint against build 418): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
-  +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.55% to
-  8.33%. The owner ruled that the sourced sizes ship.
+- **What moved** (fingerprint against build 420): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
+  +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.66% to
+  8.44%. The owner ruled that the sourced sizes ship.
 - **Named gap**: the Beat's top speed goes from 157 to 165 km/h (real 140), because its sourced rear tyre is 14-inch,
   not 13-inch. 0–100 gets worse on the AE86, Diablo VT, BAC Mono, Beat and Atom (by 0.6–1.4 points), and better on the
   911 RS.
 - **Left open**: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf GTI Mk1 and Amarok (no source reached). E-Type and
   Mustang 1965 came on cross-ply sizes (6.40-15, 6.95-14) that the size format can't hold. The Radical runs slicks
   (200/580-15, 265/605-16).
+
+### Springs, anti-roll bars and dampers are a part, their rates from their dimensions (build 420)
+
+`plans/v1-finish.md` build 12; retires `SPRING_STEP/BAR_STEP/DAMPER_STEP` from the fitted register (4 open, from 6).
+
+- **A new part, SPRINGS, BARS & DAMPERS** (PARTS tab, fitted from the VEHICLE tab), in place of the six SOFT −2 … STIFF +2 steps. Per axle:
+  - coil spring: wire, mean coil diameter, active coils; k = G d⁴ / (8 D³ n), G 77.2 GPa (chrome-silicon wire, Shigley table 10-5);
+  - anti-roll bar: diameter, arm, length; roll stiffness (G π d⁴/32 / L)(MR t / a)², G 79.3 GPa (Shigley table A-5; Milliken, RCVD ch. 16);
+  - damper: its bound slope (N·s/m, a dyno's figure) and rebound over bound, which the stepped car now reads (build 364's 3:1 when unfitted);
+  - motion ratios for the spring/damper and the bar: each at the wheel by MR².
+- **Unfitted cars keep the kit's rates**, so nothing moves: no preset carries a published spring, bar or damper rate, and none carries the part. START FROM writes the kit's rates on this car as a part (a 100 mm coil of 8 coils, a 1000 mm bar on 200 mm arms, motion ratio 1, the wire and bar sized to the rate): fitted as it starts, it moves nothing (≤ 6e-6). These starting dimensions are not any real car's.
+- **Cost:** the part replaces both axles' springs, bars and dampers, $2000 (the old per-axle step prices).
+- **Saves:** a build saved with steps or the old ROLL BALANCE now loads on the kit.
+- **Tests updated in the open:** `test85`, `test95`, `test127` and `test128` fit the part (the kit's, scaled to the old steps) where they set steps; the same behaviours hold, the numbers unchanged. `test127`'s part costs $2000, not one axle's $350; `test95`'s old save loads on the kit, not as a front bar; the Greek checks of the removed selects are dropped (Greek paused). `test157` checks the new select. `test166`: OPEN 6 → 4, also dropping `TYRE_KZ`, which build 418 retired but left in the register (test166 failed on `main`).
+- **New `test256`:** the formulas, motion ratios, the stepped car's rebound ratio, SAVE & FIT, the kit's part moving nothing.
+- **Left open:** hollow bars, the bar arms' bending and the bushes' give, progressive and preloaded springs, the damper's valve itself (shims and blow-off: its curve is taken as straight), and a separate damper motion ratio.
+
+### Seventeen more real engines get their own valves (build 419)
+
+`plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
+
+- **Sources:** BMW S62 (BMW training manual), Hellcat (Dodge Garage), Viper 8.4 (Chrysler press kit), Rover K 1.8 (Freelander workshop manual), Ford 289 (CarTech) and Ford 2.3 EcoBoost (Ford Performance plus stock-size valves). K20A, C30A, VR38DETT, VG30DETT and XU9JA come from stock-size replacement valves (std). B16B, VQ37VHR, EA888, M156, Buick LC2 and M102 are marked `unsure`.
+- **Owner's ruling:** a sourced valve is used whichever way it moves the engine, and none is held back for its result. The Rover K and the 289 move more than 5%, both toward their published power.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | Rover K 1.8 (Elise S1) | 137 → 112 (118), −18.2% | 167 → 167 |
+  | Ford 289 (Mustang 1965) | 286 → 261 (225), −8.7% | 408 → 412 |
+  | VW EA888 (Golf GTI Mk7) | 217 → 225 (220), +3.7% | 348 → 348 |
+  | Dodge Hellcat | 692 → 717 (707), +3.6% | 997 → 998 |
+  | Dodge Viper 8.4 | 626 → 647 (600), +3.4% | 788 → 789 |
+  | Ford 2.3 EcoBoost | 346 → 335 (350), −3.2% | 494 → 495 |
+  | Nissan VQ37VHR | 341 → 332 (332), −2.6% | 378 → 378 |
+  | Honda K20A | 205 → 210 (245), +2.4% | 185 → 186 |
+  | Nissan VR38DETT | 546 → 543 (565), −0.5% | 666 → 673 |
+  | the other eight | within ±1% | within ±1% |
+
+  Mean error of the 17 against published figures: power 8.2% → 7.1%, torque 7.9% → 8.0%.
+- **Two known gaps added on the owner's ruling** (named lists, shrink-only). test60 `KNOWN`: the Hellcat's 'limiter', the same missing top-end fade as the LS7 group; it peaks at 6200 rpm against the published 6000. test76: the Golf GTI Mk7 at 711 °C at Spa, which fails if it runs any hotter; the extra 8 hp from its EA888 valves causes it. The 710 °C line stays for every other light car.
+- **test176** now uses the GR Yaris (G16E, still on the rule) as its example of an unlisted engine, since the Golf Mk7 is now sourced.
+- **Left on the ratio**, because no usable source was found or the sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
 
 ### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
 

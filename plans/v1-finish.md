@@ -24,6 +24,10 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
+   *Build 419:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
+   ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+   Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
 2. **Valves, batch 2 of 4.**
 3. **Valves, batch 3 of 4.**
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
@@ -65,6 +69,10 @@ recorded numbers reports its range and the mean error against the real cars.
 12. **Spring, bar and damper rates from their parts** (`SPRING_STEP/BAR_STEP/DAMPER_STEP`). A coil spring's rate from
     wire diameter, coil diameter and active coils; a bar's from its diameter, arms and length; a damper's from its
     valve (the damper part's ratio, build 364). Presets keep their published rates where they exist.
+    *Build 420:* a SPRINGS, BARS & DAMPERS part replaces the six SOFT/STIFF steps: coil k = G d⁴/(8 D³ n), bar
+    (GJ/L)(MR t/a)², the damper's bound slope and rebound ratio, each at the wheel by MR². No preset carries a published
+    rate or the part, so unfitted cars keep the kit's and nothing moves (fingerprint identical). Open: hollow bars, arm
+    bending and bushes, progressive springs, the damper's valve (shims, blow-off).
 
 ## Group 7: data (sourcing only)
 
@@ -73,7 +81,7 @@ recorded numbers reports its range and the mean error against the real cars.
     Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
     build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
-    *Build 420:* 20 sizes sourced (6 from the maker, 14 probable), both widths (probable); six presets' fits follow,
+    *Build 421:* 20 sizes sourced (6 from the maker, 14 probable), both widths (probable); six presets' fits follow,
     and the Beat's top speed is a named gap (157→165 km/h, real 140). Open: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf
     GTI Mk1, Amarok (unsourced), E-Type and Mustang 1965 (cross-ply sizes), Radical (slicks).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
@@ -102,7 +110,7 @@ Then the owner checks the finish line and tags v1.0.
 - `test56`: the 13B's 90% boost at 3175 rpm (real ~3000; since build 290) stays a named gap until after v1.0
   (`SPOOL_KNOWN` in the test). Group 8's review build lists it.
 - Sourcing builds ship the sourced values with their gaps named, whichever way they move the numbers. They stop for
-  the owner only if a test needs a known-gap list widened or a limit loosened (build 420).
+  the owner only if a test needs a known-gap list widened or a limit loosened (build 421).
 - A build that lets the scope's signals be chosen and plots the simulated lambda sensor runs alongside.
 
 ## Open questions for the owner

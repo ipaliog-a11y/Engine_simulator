@@ -111,10 +111,6 @@ function readVehicleFromForm(){
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),200,450),suspension:g('vhSusp').value,
     // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
-    // each axle's springs and anti-roll bar, steps about the kit (build 174)
-    springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
-    // each axle's dampers, steps about the kit's damping ratio (build 216)
-    damperF:stepOf(g('vhDamperF').value),damperR:stepOf(g('vhDamperR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
     steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
@@ -155,8 +151,6 @@ function syncDimsForm(){
   g('vhWb').value=+F.wb.toFixed(3);g('vhTrackF').value=+F.trackF.toFixed(3);g('vhTrackR').value=+F.trackR.toFixed(3);
   g('vhCg').value=+F.cg.toFixed(3);g('vhFwt').value=+(F.fWtCar*100).toFixed(1);
 }
-// A spring or bar step from a form value or a record: an integer from -2 to 2, 0 when missing.
-function stepOf(x){return clamp(Math.round(+x||0),-2,2);}
 // The real car's body when one is loaded (see VEHICLE_PRESETS), else null and the archetype stands.
 // It has no form fields of its own yet, so it lives here and travels with every saved build.
 let vehBody=null, vehRatioSet=null, vehFinalDriveSet=0;
@@ -185,14 +179,10 @@ function applyVehicleToForm(v){
   applyAidsToForm(v.aids,v.tc!==false);
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
-  g('vhTire').value=v.tireType||'sport';g('vhTyreP').value='ref';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
+  g('vhTire').value=v.tireType||'sport';g('vhTyreP').value='ref';g('vhSuspPart').value='kit';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhBrakeBal').value='r13h';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
-  // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
-  g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
-  g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
-  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 216: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   // the chassis numbers and ballast (build 250); saves from before carry none: the factory's, and no ballast
   {const D=v.dims;g('vhDims').value=D?'design':'factory';
@@ -211,7 +201,7 @@ function applyChassisFit(key,body){
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
-  ['vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
+  g('vhSuspPart').value='kit';g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=FACTORY_CARS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}

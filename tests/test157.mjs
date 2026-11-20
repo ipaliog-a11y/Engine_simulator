@@ -96,8 +96,8 @@ if (!/▲/.test(warn.meta) || !warn.rail || !/rating/.test(warn.verdict)) fails.
 await page.click('#vcdRb-susp');
 const lv = await page.evaluate(() => {
   const vis = id => getComputedStyle(document.getElementById(id).closest('.field')).display !== 'none';
-  document.querySelector('#vcdLevel [data-lv="0"]').click(); const basic = vis('vhSpringF');
-  document.querySelector('#vcdLevel [data-lv="1"]').click(); const adv = vis('vhSpringF');
+  document.querySelector('#vcdLevel [data-lv="0"]').click(); const basic = vis('vhSuspPart');
+  document.querySelector('#vcdLevel [data-lv="1"]').click(); const adv = vis('vhSuspPart');
   document.querySelector('.evd-q[data-f="vhSusp"]').click();
   return { basic, adv, help: document.getElementById('vcdHelp').innerText };
 });

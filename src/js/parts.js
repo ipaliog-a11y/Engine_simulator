@@ -91,7 +91,14 @@ const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],bar_pct:[30,70],mcF_mm:[
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
   // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
-  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6]};
+  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6],
+  // springs, bars and dampers (build 420), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
+  // (a kei car's to a truck's), a solid bar 0 (none) to 45 mm on 80-400 mm arms, 300-1600 mm between them, motion ratios
+  // 0.2-1.2, a damper's low-speed slope 100-30000 N s/m in bound, its rebound 1-5 times that
+  wireD_mm:[5,25],coilD_mm:[40,250],coils:[2,20],mr:[0.3,1.2],barD_mm:[0,45],barArm_mm:[80,400],barL_mm:[300,1600],barMr:[0.2,1.2],damp:[100,30000],rb:[1,5]};
+// the editor's fields of a SPRINGS, BARS & DAMPERS part, each axle's: the part's key without its axle, and its limit's
+const SUSP_FIELDS=[['wireD','_mm'],['coilD','_mm'],['coils',''],['mr',''],['barD','_mm'],['barArm','_mm'],['barL','_mm'],['barMr',''],['damp',''],['rb','']];
+const suspKey=(f,ax)=>f[0]+ax+f[1];
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -248,6 +255,7 @@ const PART_KINDS=[
   {kind:'diff',   label:'DIFFERENTIAL',ready:true},
   {kind:'brake',  label:'BRAKE BALANCE',ready:true},
   {kind:'tyre',   label:'TYRE PRESSURE',ready:true},
+  {kind:'susp',   label:'SPRINGS, BARS & DAMPERS',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -312,7 +320,11 @@ const PART_DEF={
     label:()=>'BRAKE BALANCE',newName:'MY BRAKES',factory:['r13h']},
   // the tyre pressures (build 313): cold front and rear, fitted from TYRE PRESSURE; unfitted, the reference TYRE_P_REF
   tyre:   {on:'vehicle',field:'tyrePart',cls:'tyrePress',select:'vhTyreP',def:'ref',valid:k=>k==='ref',clsOf:()=>'ref',
-    label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']}
+    label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']},
+  // springs, bars and dampers (build 420): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
+  // unfitted, the kit's (SUSPENSION)
+  susp:   {on:'vehicle',field:'suspPart',cls:'suspSet',select:'vhSuspPart',def:'kit',valid:k=>k==='kit',clsOf:()=>'kit',
+    label:()=>"THE KIT'S",newName:'MY SUSPENSION',factory:['kit']}
 };
 const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
 const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
@@ -348,6 +360,9 @@ function normPart(p){
   if(p.kind==='brake')return {id,kind:'brake',name:String(p.name||'BRAKES').slice(0,40),bar_pct:n(p.bar_pct,'bar_pct',50),mcF_mm:n(p.mcF_mm,'mcF_mm',19.05),
     mcR_mm:n(p.mcR_mm,'mcR_mm',19.05),rearPistons:Math.round(n(p.rearPistons,'rearPistons',1)),rearPistonD_mm:n(p.rearPistonD_mm,'rearPistonD_mm',38),rearRotor_mm:n(p.rearRotor_mm,'rearRotor_mm',300)};
   if(p.kind==='tyre')return {id,kind:'tyre',name:String(p.name||'PRESSURES').slice(0,40),front_kPa:n(p.front_kPa,'front_kPa',TYRE_P_REF),rear_kPa:n(p.rear_kPa,'rear_kPa',TYRE_P_REF)};
+  if(p.kind==='susp'){const q={id,kind:'susp',name:String(p.name||'SUSPENSION').slice(0,40)};
+    for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax),lim=f[0]+f[1];q[k]=n(p[k],lim,PART_LIMITS[lim][0]);}
+    return q;}
   if(p.kind==='diff')return {id,kind:'diff',name:String(p.name||'DIFF').slice(0,40),preload_Nm:n(p.preload_Nm,'preload_Nm',60),
     ramp_deg:n(p.ramp_deg,'ramp_deg',45),faces:Math.round(n(p.faces,'faces',3)),rFace_mm:n(p.rFace_mm,'rFace_mm',40),rRamp_mm:n(p.rRamp_mm,'rRamp_mm',40)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
@@ -591,6 +606,22 @@ function partFromFactory(key,kind){
     return normPart({kind,name:tr('BRAKE BALANCE'),bar_pct:50,mcF_mm:BRAKE_MC_REF_MM,mcR_mm:BRAKE_MC_REF_MM,rearPistons:np,rearPistonD_mm:+(d/Math.sqrt(np)).toFixed(2),rearRotor_mm:Dr});}
   // the pressure every unfitted car stands for: fitted as it starts, it moves nothing
   if(kind==='tyre')return normPart({kind,name:tr('TYRE PRESSURE'),front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF});
+  // the kit's own rates on this car written as parts, at a motion ratio of 1 (each at the wheel): a coil of 8 active
+  // coils on a 100 mm coil, its wire sized to the rate; a bar on 200 mm arms, 1000 mm long, its diameter sized to the
+  // kit's bar; the kit's damper as bound and rebound at DAMPER_RB. A starting point, not any real car's springs: fitted
+  // as it starts, it moves nothing.
+  if(kind==='susp'){const V=vehicle||{},q={kind,name:tr("THE KIT'S")},L=PART_LIMITS,c=(x,k)=>clamp(x,L[k][0],L[k][1]);
+    const t0=Object.assign({},V,{suspPart:null}),K=V.mass?rollStiffness(t0):{F:0,R:0};
+    for(const ax of ['F','R']){
+      const Q=V.mass?quarterCar(t0,ax):{ks:25000,cs:2000},t=(ax==='F'?V.trackF:V.trackR)||1.55,D=100,a=200;
+      const d=c(Math.pow(8*Math.pow(D/1000,3)*8*Q.ks/SPRING_G,0.25)*1000,'wireD_mm');
+      const kb=V.mass?K[ax]-Q.ks*t*t/2:BAR_SHARE*Q.ks*t*t/2,J=kb*(a/1000)*(a/1000)/(BAR_G*t*t);   // per metre of bar
+      const bd=c(Math.pow(32*J/Math.PI,0.25)*1000,'barD_mm'),bL=c(bd>0?BAR_G*Math.PI*Math.pow(bd/1000,4)/32*t*t/(kb*(a/1000)*(a/1000))*1000:1000,'barL_mm');
+      Object.assign(q,{['wireD'+ax+'_mm']:+d.toFixed(4),['coilD'+ax+'_mm']:D,['coils'+ax]:+c(springRate(d,D,1)/Q.ks,'coils').toFixed(4),['mr'+ax]:1,
+        ['barD'+ax+'_mm']:+bd.toFixed(4),['barArm'+ax+'_mm']:a,['barL'+ax+'_mm']:+bL.toFixed(2),['barMr'+ax]:1,
+        ['damp'+ax]:+c(2*Q.cs/(1+DAMPER_RB),'damp').toFixed(2),['rb'+ax]:DAMPER_RB});
+    }
+    return normPart(q);}
   if(kind==='diff')return normPart({kind,name:tr('CLUTCH-PLATE LSD'),preload_Nm:60,ramp_deg:45,faces:3,rFace_mm:40,rRamp_mm:40});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
@@ -658,7 +689,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null,brake:null,tyre:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null,brake:null,tyre:null,susp:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -708,6 +739,10 @@ PART_UI.tyre={reset:'pyReset',box:'partsTyre',list:'pyList',from:'pyFrom',neu:'p
   none:"No tyre pressures set yet. Start from the reference pressure below.",
   fields:['pyName','pyFront','pyRear'],
   spec:p=>tr('front')+' '+p.front_kPa+' · '+tr('rear')+' '+p.rear_kPa+' kPa '+tr('cold')};
+PART_UI.susp={reset:'psReset',box:'partsSusp',list:'psList',from:'psFrom',neu:'psNew',save:'psSave',saveFit:'psSaveFit',guide:'psGuide',canvas:'psCanvas',legend:'psLegend',
+  none:"No springs, bars or dampers designed yet. Start from the kit's below.",
+  fields:['psName'].concat(['F','R'].flatMap(ax=>SUSP_FIELDS.map(f=>'ps_'+suspKey(f,ax)))),
+  spec:p=>['F','R'].map(ax=>tr(ax==='F'?'front':'rear')+' '+fmt(p['mr'+ax]*p['mr'+ax]*springRate(p['wireD'+ax+'_mm'],p['coilD'+ax+'_mm'],p['coils'+ax])/1000,1)+' N/mm, '+tr('bar')+' '+fmt(p['barD'+ax+'_mm'],1)+' mm').join(' · ')};
 // the front wing shares the rear wing's editor, with its height over the road
 PART_UI.fwing=Object.assign({},PART_UI.wing,{none:"No front wings designed yet. Start from a wing as wide as this car's front track below.",
   fields:PART_UI.wing.fields.concat('pwHeight'),spec:p=>PART_UI.wing.spec(p)+' · '+p.height_mm+' mm '+tr('up')});
@@ -754,6 +789,7 @@ function partToEditor(kind,p){
     pv('pkName').value=p.name;pv('pkBar').value=p.bar_pct;pv('pkMcF').value=p.mcF_mm;pv('pkMcR').value=p.mcR_mm;pv('pkPistons').value=p.rearPistons;pv('pkPistonD').value=p.rearPistonD_mm;pv('pkRotorR').value=p.rearRotor_mm;
     return;
   }
+  if(kind==='susp'){pv('psName').value=p.name;for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax);pv('ps_'+k).value=p[k];}return;}
   if(kind==='tyre'){pv('pyName').value=p.name;pv('pyFront').value=p.front_kPa;pv('pyRear').value=p.rear_kPa;return;}
   if(kind==='diff'){
     pv('pdName').value=p.name;pv('pdPreload').value=p.preload_Nm;pv('pdRamp').value=p.ramp_deg;pv('pdFaces').value=p.faces;pv('pdRFace').value=p.rFace_mm;pv('pdRRamp').value=p.rRamp_mm;
@@ -795,6 +831,9 @@ function partFromEditor(kind){
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
   if(kind==='brake')return normPart({kind,id:ed&&ed.id,name:pv('pkName').value.trim()||newName,bar_pct:pv('pkBar').value,mcF_mm:pv('pkMcF').value,
     mcR_mm:pv('pkMcR').value,rearPistons:pv('pkPistons').value,rearPistonD_mm:pv('pkPistonD').value,rearRotor_mm:pv('pkRotorR').value});
+  if(kind==='susp'){const q={kind,id:ed&&ed.id,name:pv('psName').value.trim()||newName};
+    for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax);q[k]=pv('ps_'+k).value;}
+    return normPart(q);}
   if(kind==='tyre')return normPart({kind,id:ed&&ed.id,name:pv('pyName').value.trim()||newName,front_kPa:pv('pyFront').value,rear_kPa:pv('pyRear').value});
   if(kind==='diff')return normPart({kind,id:ed&&ed.id,name:pv('pdName').value.trim()||newName,preload_Nm:pv('pdPreload').value,
     ramp_deg:pv('pdRamp').value,faces:pv('pdFaces').value,rFace_mm:pv('pdRFace').value,rRamp_mm:pv('pdRRamp').value});
@@ -825,7 +864,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
-      flash(tr(kind==='tyre'?'PART DELETED: THE CAR HAS THE REFERENCE TYRE PRESSURE':kind==='brake'?"PART DELETED: THE CAR'S REAR BRAKES ARE SIZED TO THE R13-H LINE AGAIN":kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='susp'?"PART DELETED: THE CAR HAS THE KIT'S SPRINGS, BARS AND DAMPERS":kind==='tyre'?'PART DELETED: THE CAR HAS THE REFERENCE TYRE PRESSURE':kind==='brake'?"PART DELETED: THE CAR'S REAR BRAKES ARE SIZED TO THE R13-H LINE AGAIN":kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -871,6 +910,7 @@ function previewPart(kind){
   if(kind==='diff')return previewDiff();
   if(kind==='brake')return previewBrake();
   if(kind==='tyre')return previewTyre();
+  if(kind==='susp')return previewSusp();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -1130,6 +1170,41 @@ function previewTyre(){
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }
+// SPRINGS, BARS & DAMPERS on this car (build 420): each axle's wheel rate, its body bounce on the spring, its damping
+// as a share of critical, and its roll stiffness from spring and bar; the car's roll per g and the front's share of
+// the roll stiffness (the roll balance), against the car as it is now.
+function suspReport(v,P){
+  const t=Object.assign({},v,{suspPart:P}),K=rollStiffness(t),o={K,ax:{}};
+  for(const ax of ['F','R']){const q=quarterCar(t,ax),tr_=ax==='F'?v.trackF:v.trackR;
+    o.ax[ax]={ks:q.ks,hz:Math.sqrt(q.ks/q.ms)/(2*Math.PI),zeta:q.cs/(2*Math.sqrt(q.ks*q.ms)),spr:q.ks*tr_*tr_/2,bar:K[ax]-q.ks*tr_*tr_/2};}
+  o.share=K.F/(K.F+K.R);o.roll=v.rollGrad*v.rollK/(K.F+K.R);   // the roll moment's arm unchanged
+  return o;
+}
+function previewSusp(){
+  const p=partFromEditor('susp'),V=vehicle,r=suspReport(V,p),now=suspReport(V,V.suspPart||null),lines=[],pc=x=>fmt(x*100,1)+'%';
+  partsUI.last={kind:'susp',p,r,now};
+  for(const ax of ['F','R']){const a=r.ax[ax],n=now.ax[ax];
+    lines.push('<b>'+tr(ax==='F'?'FRONT':'REAR')+'</b> '+tr('wheel rate')+' <b>'+fmt(a.ks/1000,1)+'</b> N/mm · '+tr('body bounce')+' '+fmt(a.hz,2)+' Hz · '+tr('damping')+' '+fmt(a.zeta,2)+' '+tr('of critical')
+      +' · '+tr('roll stiffness')+' '+fmt((a.spr+a.bar)/1000,1)+' kN m/rad ('+tr('bar')+' '+pc(a.bar/(a.spr+a.bar))+') <span class="dim">('+tr('now')+' '+fmt(n.ks/1000,1)+' N/mm, '+fmt(n.hz,2)+' Hz, '+fmt(n.zeta,2)+')</span>');}
+  lines.push(tr('Roll')+' <b>'+fmt(r.roll,2)+'</b> °/g · '+tr('front share of the roll stiffness')+' <b>'+pc(r.share)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.roll,2)+' °/g, '+pc(now.share)+')</span>');
+  lines.push('<span class="dim">'+tr("A coil's rate from its wire, coil and active coils, G d^4 / (8 D^3 n) (Shigley); a bar's from its diameter, length and arms, (G J / L) (MR t / a)^2 (Milliken); each at the wheel by its motion ratio squared. The damper's bound slope and its rebound ratio, as a damper dyno gives them.")+'</span>');
+  pv('psGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawSusp(partsUI.last);
+}
+// Each axle's roll stiffness, spring and bar, this part's against the car's now.
+function drawSusp(L){
+  const c=pv('psCanvas');if(!c||!L||!L.r)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const rows=[['F',L.r,'#6fc'],['F',L.now,'#889'],['R',L.r,'#6fc'],['R',L.now,'#889']];
+  const max=Math.max(...rows.map(([a,o])=>o.ax[a].spr+o.ax[a].bar))*1.05,X0=44,X1=w-12,bh=(h-24)/4-6;
+  g.font='8px monospace';
+  rows.forEach(([a,o,col],i)=>{const y=8+i*(bh+6),A=o.ax[a],xs=X0+A.spr/max*(X1-X0),xb=xs+A.bar/max*(X1-X0);
+    g.fillStyle=col;g.fillRect(X0,y,xs-X0,bh);g.fillStyle='#fa4';g.fillRect(xs,y,xb-xs,bh);
+    g.fillStyle='#667';g.fillText(tr(a==='F'?'front':'rear'),2,y+bh/2+3);});
+  pv('psLegend').innerHTML='<span style="color:#6fc">■ '+esc(tr('springs, this part'))+'</span> <span style="color:#889">■ '+esc(tr('springs, now'))+'</span> <span style="color:#fa4">■ '+esc(tr('bar'))+'</span> <span class="dim">'+esc(tr('each axle\'s roll stiffness'))+'</span>';
+}
 // The aquaplaning speed and the tyre's stiffness against the cold pressure, with this part's two axles marked.
 function drawTyre(p){
   const c=pv('pyCanvas');if(!c)return;
@@ -1182,6 +1257,7 @@ function drawPartCurves(kind,now,r){
   if(kind==='diff')return drawDiff(partsUI.last.p,r);
   if(kind==='brake')return drawBrake(r);
   if(kind==='tyre')return drawTyre(partsUI.last.p);
+  if(kind==='susp')return drawSusp(partsUI.last);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
