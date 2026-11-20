@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Six tests that failed on main, put right or reported (build 410)
+
+- **test36** (the lap-target card was empty): build 341 added a second global `renderChallenge` (CHALLENGES tab) that
+  replaced the build-challenge card's. It is now `renderRunChallenge`; a language change re-renders both. `test232`
+  calls the new name.
+- **test49** (vane blockage NaN): build 288 gave `vanePitchR(exd, k)` the turbine wheel's fraction `k`; the test still
+  called it with one argument. It now passes `engine.turbK`.
+- **test64** (no car sprite on the map): build 273 replaced the top-down map with the chase view, which paints the car
+  inside a closure. The test now gives the car a unique livery and checks the track view painted it.
+- **test92** (GEAR RATIOS button not visible): since build 247 the vehicle page shows one design card at a time. The
+  test opens the gearbox card first.
+- **test125** passes on main now; **test42** fails only for the three untranslated driving-sim strings (Greek paused).
+- **Left open, needs the owner — test56:** the 13B reaches 90% boost at 3175 rpm against a real FD's ~3000. It was
+  2975 until build 290 (each turbo of a sequential pair its own, its own bearings and charge fill), an intended physics
+  change. Closing it would move the fingerprint.
+- Fingerprint identical (5208 values).
+
 ### The plan from here to the v1.0 gate; the driving sim's heat, wear and aero move after v1.0 (build 407)
 
 - New `plans/v1-finish.md`: about 20 builds for the groups still open in the roadmap's leftovers. Engine: valves

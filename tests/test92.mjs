@@ -26,6 +26,8 @@ const open = () => page.evaluate(() => !document.getElementById('gearWin').hidde
 
 // 1. open and close
 await page.evaluate(() => { loadVehiclePreset(VEHICLE_PRESETS.find(p => p.name.includes('M3 (E46'))); setTab('vehicle'); });
+// since build 247 the vehicle page shows one design card at a time: open the gearbox card, which holds the button
+await page.click('#vcdRb-gearbox'); await page.waitForTimeout(100);
 await page.click('#btnGearRatios'); await page.waitForTimeout(300);
 const o1 = await open();
 await page.keyboard.press('Escape'); await page.waitForTimeout(100);

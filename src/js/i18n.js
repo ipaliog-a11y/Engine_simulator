@@ -2090,6 +2090,7 @@ function applyLang(lang){
   const chSel=document.getElementById('edChallenge');
   if(chSel)[...chSel.options].forEach(o=>{const c=CHALLENGES.find(x=>x.id===o.value);if(c)o.textContent=chName(c);});
   if(typeof renderChallenge==='function')renderChallenge();
+  if(typeof renderRunChallenge==='function')renderRunChallenge();
   if(vehicle&&vehicle.body&&vehicle.body.copyOf)vehicle.chLabel=carLabel(vehicle.body);
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
   if(typeof renderFuelMap==='function')renderFuelMap();
