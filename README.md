@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 407
+# PIXEL POWERTRAIN v0.8 build 408
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -513,6 +513,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   what matters most: the quickest, the lightest or the cheapest) give a real car, each of its parts explained, and
   **BUILD THIS CAR** loads it on the VEHICLE tab with every part open on its card. The budget is the sim's own build
   price, engine plus car, listed per car by `tools/car-prices.mjs` (`tests/test188.mjs` keeps it current).
+  **SHAPE IT** then walks through that car's design one decision per step (cylinders, bore and stroke, fuel,
+  compression, boost, head, redline, breathing, then body, mass, gearing and tyres; a drive's own steps for an EV or a
+  hybrid). Each step moves the cards' own inputs, so skipping every step gives back the factory car.
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

@@ -18,6 +18,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 408)
+
+- **SHAPE IT** beside BUILD THIS CAR loads the matched car and walks through its design, one step per decision, in the
+  plan's order (`plans/guided-build.md`, build 1 of 3): cylinders, bore and stroke, fuel, compression and air, boost,
+  head, redline, breathing, then body, mass, gearing and tyres. An EV gets its motor, winding, inverter, battery and
+  motors steps; a hybrid adds its layout, motor and pack after the engine. BACK, NEXT, SKIP TO FINISH and ADVANCED
+  (closes on that field's card) on every step.
+- Each step moves the cards' own inputs (with their real-engine ticks and help line), so previews, coupled fields and
+  BUILD work as on the cards. A step whose fields are all disabled drops out: BOOST on an NA engine (it comes back when
+  the intake changes), FUEL on a diesel, HEAD on a rotary or two-stroke. FINISH builds the engine only if an engine
+  field moved, so skipping every step leaves the factory car as it loaded. A car with FIXED timing keeps it, and the
+  fuel and compression steps say so. Fingerprint identical.
+- `CAR_PRICE` regenerated (`tools/car-prices.mjs`): 7 prices were already stale on `main` and failed `test188`. They
+  were stale at build 356 itself, the build that last wrote the list (no later build moved them; checked at 356, 363,
+  390, 400, 401, 402). Old → new: F-150 Raptor 44,350 → 44,550 (+0.5%); Tesla Model 3 RWD 33,150 → 33,547 (+1.2%);
+  Model Y LR 46,674 → 47,070 (+0.8%); Model S Plaid 76,613 → 76,604; Ioniq Hybrid 35,320 → 35,321; Qashqai e-POWER
+  31,912 → 32,313 (+1.3%); BMW 330e 37,773 → 37,774. None moves more than 1.3%.
+- Left open: goal hints (build 2) and the finish screen (build 3); FINISH opens the VEHICLE tab for now.
 ### The plan from here to the v1.0 gate; the driving sim's heat, wear and aero move after v1.0 (build 407)
 
 - New `plans/v1-finish.md`: about 20 builds for the groups still open in the roadmap's leftovers. Engine: valves

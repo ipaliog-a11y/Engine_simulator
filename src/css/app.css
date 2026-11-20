@@ -530,7 +530,15 @@ body.guided-open{overflow:hidden}
 .gb-parts{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:7px;line-height:1.7;color:#bbc}
 .gb-parts b{color:#00ff88;font-weight:normal}
 .gb-parts i{font-style:normal;color:#667}
-.gb-act{display:grid;margin:8px 0}
+.gb-act{display:grid;gap:8px;margin:8px 0}
+.gw-f{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:6px 10px;align-items:center;margin:0 0 14px}
+.gw-f label{grid-column:1/-1;font-size:8px;color:#00ff88}
+.gw-f select{grid-column:1/-1;min-width:0;font-size:8px}
+.gw-f .gw-track{grid-column:1}
+.gw-f input[type=number]{min-width:0;width:100%;box-sizing:border-box;font-size:8px}
+.gw-what{grid-column:1/-1;font-size:7px;line-height:1.7;color:#aab;margin:0}
+.gw-note{color:#ffcc00;margin:0 0 12px}
+.gw-act{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
 .sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
 .sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
 .sc-count{flex:1;font-size:7px;color:#667}
