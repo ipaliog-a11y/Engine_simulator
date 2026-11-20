@@ -24,9 +24,10 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
-   *Build 416:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   *Build 417:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
    way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
    ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+   Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
 2. **Valves, batch 2 of 4.**
 3. **Valves, batch 3 of 4.**
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
@@ -63,6 +64,9 @@ recorded numbers reports its range and the mean error against the real cars.
 ## Group 7: data (sourcing only)
 
 13. **83 overhang splits** (front/rear overhang from the maker's dimension drawing), in one or two builds.
+    *Build 416:* five splits from a same-body auto-data.net page (M3 E46, Golf TDI Mk7, 330d, 911 RS 2.7, 330e).
+    Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
+    build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
 

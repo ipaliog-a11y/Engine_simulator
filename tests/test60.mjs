@@ -78,6 +78,9 @@ const KNOWN = {
   'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)': ['limiter'],
   'BMW S14B23 (M3 E30)': ['limiter'],
   'Mercedes M102 2.3-16 (190E)': ['limiter'],
+  // build 417 (owner's ruling): the same missing top-end fade; with its sourced valves (Dodge Garage, 2.14 / 1.65 in) the
+  // Hellcat peaks at 6200 rpm against the published 6000 (717 hp vs 707)
+  'Dodge 6.2 Hellcat (Challenger SRT)': ['limiter'],
   'BMW S62 4.9 V8 (M5 E39)': ['limiter'],
   'Honda E07A MTREC (Beat)': ['limiter'],
   'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],

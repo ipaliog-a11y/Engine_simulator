@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Seventeen more real engines get their own valves (build 416)
+### Seventeen more real engines get their own valves (build 417)
 
 `plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
 
@@ -39,7 +39,20 @@ they are accurate about *what* shipped but not about the day it shipped.
   | the other eight | within ±1% | within ±1% |
 
   Mean error of the 17 against published figures: power 8.2% → 7.1%, torque 7.9% → 8.0%.
+- **Two known gaps added on the owner's ruling** (named lists, shrink-only). test60 `KNOWN`: the Hellcat's 'limiter', the same missing top-end fade as the LS7 group; it peaks at 6200 rpm against the published 6000. test76: the Golf GTI Mk7 at 711 °C at Spa, which fails if it runs any hotter; the extra 8 hp from its EA888 valves causes it. The 710 °C line stays for every other light car.
+- **test176** now uses the GR Yaris (G16E, still on the rule) as its example of an unlisted engine, since the Golf Mk7 is now sourced.
 - **Left on the ratio**, because no usable source was found or the sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+
+### Five more cars' overhang splits are sourced, not read from the side view (build 416)
+
+- The front/rear overhang split of the BMW M3 (E46), Golf 2.0 TDI (Mk7), BMW 330d (F30), 911 Carrera RS 2.7 and
+  BMW 330e now comes from auto-data.net: the page of another version of the same body, with the same length and
+  wheelbase (cited as `ovSrc` in `CAR_DIMS`). Splits read from the side view: 83 → 78 (`test171`'s budget shrinks).
+- Before → after front overhang (m): M3 0.881 → 0.774, Golf 0.777 → 0.855, 330d 0.871 → 0.776, RS 2.7 0.788 → 0.884,
+  330e 0.892 → 0.799. They move only the moose run's cones: 330d 77 → 75 km/h, RS 2.7 72 → 73; none has a published
+  moose figure. The fingerprint is identical, so no error against a real car moves.
+- Left open (78 cars): auto-data.net (every page in each car's generation) and conceptcarz give no overhangs for
+  them. Only makers' dimension drawings (press kits, workshop manuals) remain: plan build 13, second part.
 
 ### The kit wing is a wing part, from its span, chord, angle and camber (build 415)
 

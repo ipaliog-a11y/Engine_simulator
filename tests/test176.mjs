@@ -12,7 +12,7 @@
 //     one takes 0.83 of its intake;
 //   · a real engine whose valves are sourced (ENGINE_VALVES, build 287) has them; they go when its bore changes and
 //     stay through a save; an engine not listed (the GR Yaris's G16E) keeps the packing rule; every listed engine (build 330) reaches the
-//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 416);
+//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 417);
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
