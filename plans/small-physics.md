@@ -125,9 +125,16 @@ reporting its range. Sourcing is batched apart from physics.
 
 ## Sourcing batch (apart from physics)
 
-- Each all-wheel-drive preset's centre diff type (today every one is locked), then the centre coupling's own torque
-  capacity.
+- ~~Each all-wheel-drive preset's centre diff type~~ (build 320: Torsen, viscous, open sourced, the rest clutches).
+  Coupling limits (build 404): GT-R R35/R34 front at most 50% (Nissan), Focus RS rear at most 70% (Ford). Left open:
+  the 992 Turbo S's "500 Nm to the front" (Porsche), whose place of measure isn't published, and as 500 N m on the
+  propshaft it slows the stepped 0-100 from 2.87 to 3.24 s (Porsche 2.7): owner's call. No limit published for Haldex
+  (RS3, Huracán), xDrive, PTM (Cayenne), ACD, DCCD, GR-FOUR, Quadra-Trac, the Raptor's 4A.
+  Wiring note: a split of f 0 (all to one axle) in stepCar keeps the launch clutch from locking (the clutch sees one
+  axle's inertia while the centre takes torque away), so the limit bounds the secondary axle's torque instead.
 - LSD coast ramps (1-way, 1.5-way, 2-way) where published; this would close the Mustang GT in `LIFT_KNOWN`.
+  Next build. Note: the Mustang GT's preset diff is a friction LSD; Porsche quotes overrun locking above drive for the
+  GT3 (37%), the opposite of a 1.5-way, so check the Mustang's own unit before assuming a ramp closes `LIFT_KNOWN`.
 
 ## Open questions for the owner
 

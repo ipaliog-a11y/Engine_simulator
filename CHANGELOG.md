@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 404)
+### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 405)
 
 - **SHAPE IT** beside BUILD THIS CAR loads the matched car and walks through its design, one step per decision, in the
   plan's order (`plans/guided-build.md`, build 1 of 3): cylinders, bore and stroke, fuel, compression and air, boost,
@@ -30,9 +30,23 @@ they are accurate about *what* shipped but not about the day it shipped.
   the intake changes), FUEL on a diesel, HEAD on a rotary or two-stroke. FINISH builds the engine only if an engine
   field moved, so skipping every step leaves the factory car as it loaded. A car with FIXED timing keeps it, and the
   fuel and compression steps say so. Fingerprint identical.
-- `CAR_PRICE` regenerated (`tools/car-prices.mjs`): 7 cars were stale on `main` (Tesla Model 3 33,150 → 33,547, Model Y,
-  Model S Plaid, F-150 Raptor, Ioniq, Qashqai e-POWER, 330e), which failed `test188` before this change.
+- `CAR_PRICE` regenerated (`tools/car-prices.mjs`): 7 prices were already stale on `main` and failed `test188`. They
+  were stale at build 356 itself, the build that last wrote the list (no later build moved them; checked at 356, 363,
+  390, 400, 401, 402). Old → new: F-150 Raptor 44,350 → 44,550 (+0.5%); Tesla Model 3 RWD 33,150 → 33,547 (+1.2%);
+  Model Y LR 46,674 → 47,070 (+0.8%); Model S Plaid 76,613 → 76,604; Ioniq Hybrid 35,320 → 35,321; Qashqai e-POWER
+  31,912 → 32,313 (+1.3%); BMW 330e 37,773 → 37,774. None moves more than 1.3%.
 - Left open: goal hints (build 2) and the finish screen (build 3); FINISH opens the VEHICLE tab for now.
+### All-wheel-drive clutches pass at most their maker's published share (build 404)
+
+- The stepped car's centre clutch now honours a published limit: the GT-R R35 and R34 drive the rear and send the front
+  at most 50% (Nissan, ATTESA E-TS "0:100 up to 50:50"); the Focus RS drives the front and sends the rear at most 70%
+  (Ford). The other clutches still close on the first slip. Centre types were already sourced (build 320).
+- Stepped 0–100 (aids off): R35 3.275 s and R34 4.805 s unchanged (the limit doesn't bind on a launch); Focus RS
+  4.915 → 4.955 s (+0.8%; Ford 4.7). The fingerprint is identical: it records the quasi-static solvers only.
+- Left open, for the owner: the 992 Turbo S's "up to 500 Nm to the front wheels" (Porsche). Taken as 500 N m on the
+  propshaft it slows the stepped 0–100 from 2.87 to 3.24 s (+12.7%; Porsche 2.7), and where the 500 is measured isn't
+  published. No limit is published for Haldex, xDrive, the Cayenne's PTM, ACD, DCCD, GR-FOUR, Quadra-Trac or the 4A.
+- LSD coast ramps are the next build; `LIFT_KNOWN` is unchanged.
 
 ### Your own GPX road for the economy run (build 403)
 

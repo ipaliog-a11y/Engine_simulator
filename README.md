@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 404
+# PIXEL POWERTRAIN v0.8 build 405
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -330,7 +330,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car on
     power-over), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. An AWD car powers over as far
     as its centre coupling lets the rear spin faster than the front (DRIVE shows the coupling and split); a clutch
-    or viscous coupling sends torque forward as the rear slips. Loose surfaces are not modelled.
+    or viscous coupling sends torque forward as the rear slips, a clutch up to its maker's published limit (GT-R: front
+    at most 50%; Focus RS: rear at most 70%). Loose surfaces are not modelled.
   - **Skid Pad** — a 200 ft (61 m) circle. The speed is raised until the car leaves a 1 m lane; the score is the
     magazines' steady lateral g from the fastest held lap's time, with how it fails 1 km/h faster (WIDE, TIGHT, SPIN).
   - **Spiral Skid Pad** — one turn from a 12 m bend out to that same radius. The target speed rises with the
