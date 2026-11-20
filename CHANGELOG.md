@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Hybrid economy runs solve 2-12x faster, with the same numbers (build 405)
+
+- A hybrid's economy run took up to 38 s (Qashqai e-POWER on Route Napoléon) and froze the page. The time went to
+  `hybridCycle`'s ~20-50 passes per plan, each re-deriving every step's shaft torques, machine limits and MG1 power
+  (`motorMaxTorque`, `psMg1Elec`, `hybTune`) and re-pricing motor losses through a Map keyed by large doubles.
+- Now the charge-independent part of each step is worked out on the first pass and kept; fuel and the pre-pack-loss
+  power are kept per candidate while the oil temperature and the 1% charge bucket hold; the loss and fuel tables are
+  shared across one run's solves (same car); pack heat is `packDraw`'s formula written out; the kept plan is priced once.
+  Same arithmetic in the same order: all 30 hybrid × road results (L/100 km, pack in/out, engine off, over-limit,
+  time) identical to 12 significant figures; fingerprint identical.
+- Solve times (before → after): Qashqai Napoléon 38.4 → 3.3 s, Prius Highland 29.0 → 2.7 s, Prius Napoléon
+  22.6 → 2.9 s, Ioniq Napoléon 17.0 → 5.0 s, 330e Highland 15.8 → 6.2 s, 918 Napoléon 22.2 → 9.7 s.
+- Left open: parallel hybrids (918, 330e, Ioniq) stay above 3 s on the long roads. What remains is filling motor losses
+  per charge level (the inverter's loss reads the bus voltage, so levels cannot share) and the eco driver's min-time
+  solves (~2.4 s on the 918, shared with every car). Moving the solve off the main thread would end the freeze.
+- Test 249: the three drive types' figures equal build 403's to 1e-9; Qashqai on Napoléon under 15 s.
+
 ### All-wheel-drive clutches pass at most their maker's published share (build 404)
 
 - The stepped car's centre clutch now honours a published limit: the GT-R R35 and R34 drive the rear and send the front

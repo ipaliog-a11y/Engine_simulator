@@ -146,20 +146,57 @@ function hybridCycle(v,prof){
   // else is on the bus (a power-split's MG1, generating)
   // On the road (prof) the losses and the engine's fuel are memoised on a 10 rpm × 1 Nm grid (0.5 Nm for the engine, the
   // pack's charge to 1%), as ecoEnergyJ does: the bisection runs the same road ~20 times. The WLTC path is unchanged.
-  const mL=new Map(),mF=new Map();
-  const lossAt=prof?(T,rpm,soc)=>{const kt=Math.round(Math.abs(T)),kr=Math.round(Math.max(rpm,1)/10),ks=ps?0:Math.round(soc*100),k=(ks*1e4+kr)*1e5+kt;
-      let L=mL.get(k);if(L===undefined){L=motorLosses(mot,kt,Math.max(kr*10,1),busV(ks/100||soc),temp).total;mL.set(k,L);}return L;}
+  // Build 405: the two tables are kept on the engine while the car is the same (score, key, motor and pack), so the
+  // economy run's ~6 solves share them; a loss is kept by charge (bar a charge under 0.5% off a power-split's bus, which reads
+  // the exact charge), then speed and torque, and the fuel by the oil's temperature.
+  if(prof&&!(e._hmemo&&e._hmemo.score===e.score&&e._hmemo.key===key&&e._hmemo.mot===mot&&e._hmemo.pack===pack))
+    e._hmemo={score:e.score,key,mot,pack,mL:new Map(),mF:new Map()};
+  const mL=prof?e._hmemo.mL:null,mF=prof?e._hmemo.mF:null,mL0=new Map();
+  const lossAt=prof?(T,rpm,soc)=>{const kt=Math.round(Math.abs(T)),kr=Math.round(Math.max(rpm,1)/10),ks=ps?0:Math.round(soc*100),k=kr*1e5+kt;
+      const m=!ps&&ks===0?mL0:mL.get(ks)||(mL.set(ks,new Map()),mL.get(ks));   // small-integer keys: fast
+      let L=m.get(k);if(L===undefined){L=motorLosses(mot,kt,Math.max(kr*10,1),busV(ks/100||soc),temp).total;m.set(k,L);}return L;}
     :(T,rpm,soc)=>motorLosses(mot,Math.abs(T),Math.max(rpm,1),busV(soc),temp).total;
   const fuelAt=prof?(rpm,T,oilT)=>{const kr=Math.round(rpm/10),kt=Math.max(1,Math.round(T*2)),k=kr*1e6+kt;
-      let g=mF.get(k);if(g===undefined){g=engineFuelAt(kr*10,kt/2,oilT);mF.set(k,g);}return g;}:engineFuelAt;
+      const m=mF.get(oilT)||(mF.set(oilT,new Map()),mF.get(oilT));
+      let g=m.get(k);if(g===undefined){g=engineFuelAt(kr*10,kt/2,oilT);m.set(k,g);}return g;}:engineFuelAt;
   const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?lossAt(T,rpm,soc):0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
+  // packJ for a kept step (build 405): its power before the pack's own losses held while the charge's 1% (the losses'
+  // key on the road) is the same, and its fuel while the oil's temperature is
+  const tagOf=soc=>prof?(ps?0:Math.round(soc*100)):soc;
+  // ... and packDraw's heat written out (its 25 C resistance, the step's open-circuit voltage V0)
+  const pRes=packR(pack),heatAt=(P,V0)=>{const disc=V0*V0-4*pRes*P;if(disc<0)return 0;
+    const I=(V0-Math.sqrt(disc))/(2*pRes),V=V0-I*pRes;if(P>0&&(V<pack.vMin||I>pack.iMax))return 0;return I*I*pRes;};
+  const packJc=(q,T,rpm,soc,V0,Pin=0)=>{const t=tagOf(soc);let P;
+    if(q.pt===t)P=q.pP;else{P=T*(rpm*Math.PI/30)+(T||rpm>0?lossAt(T,rpm,soc):0)+C.auxW-Pin;q.pt=t;q.pP=P;}
+    return P+heatAt(P,V0);};
+  const fuelAtc=(q,rpm,T,oilT)=>q.ft===oilT?q.fg:(q.ft=oilT,q.fg=fuelAt(rpm,T,oilT));
   const Pbat=packMaxPower(pack,HYB_SOC),Pchg=pack.pChargeMax;
   // the HYBRID TUNE (build 192): the charge window, the regeneration, the motor's help, electric driving, load-point
   // shifting. Its defaults are the rules above, so an untuned build runs exactly as before.
   const tu=hybTune(e),socLo=tu.socLo/100,socHi=tu.socHi/100,soc0=tu.socT/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
   const evOk=(vm,P)=>(tu.evKmh<=0||vm*3.6<=tu.evKmh)&&(tu.evKw<=0||P<=tu.evKw*1000);
   const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
+  // Build 405: what a step offers that the charge and the engine's warmth do not change (its shaft speeds and torques,
+  // the machines' limits, MG1's electrical power) is worked out on the first pass and kept for the secant's other ~20,
+  // which then price only fuel and pack: the same arithmetic in the same order, so the same results, 5-10x sooner.
+  const segC=[];
+  // a power-split's (or series) engine candidates, as psOn below prices them
+  const psCands=(T,n2,stand)=>{
+    const out=[],nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
+    const Plo=Math.max(O.P[0],Pd-Pbat*assist(0,n2/mot.nMax,Pd/(O.Pmax+Pbat))),Phi=Math.min(O.Pmax,Pd+Pchg);
+    if(!(R.hi>R.lo)||!(Phi>=Plo))return out;
+    for(const k of H.splitsDirect){
+      const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
+      if(Te>Tmax(ne)*C.reserve)continue;
+      const G=hybGear(hy,ne,n2),ns=G.ns,Ts=Te*G.ks;   // the planetary, or a series hybrid's generator on the crank
+      if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60))continue;
+      const T2=stand?0:T-Te*G.kr;
+      if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),hybBusV(hy),60)))continue;
+      out.push({ne,Te,T2,Pin:psMg1Elec(hy,Ts,ns,temp)});
+    }
+    return out;
+  };
   // cd (build 194, a plug-in's charge-depleting cycles): start from cd.soc with the engine at cd.Tc, and do not run the
   // engine to warm it (a plug-in drives away on its pack; the engine starts when it is asked for, cold)
   const run0=(s,cd)=>{
@@ -170,25 +207,16 @@ function hybridCycle(v,prof){
       if(prof){const q=prof.segs[i];vm=q.vm;a=q.a;dt=q.dt;sinT=q.sinT;cosT=q.cosT;}
       else{const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36;vm=(v0+v1)/2;a=v1-v0;}
       x+=vm*dt;
-      const soc=(cd?cd.soc:soc0)+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=!cd&&Tc<H.warmC;if(!cold&&warmS==null)warmS=i;
-      let best=null;
-      const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!best||cost<best.cost)best={cost,gs,J,on};};
+      const soc=(cd?cd.soc:soc0)+E/capJ,oilT=Math.max(C.soak,Tc-C.oilLag),cold=!cd&&Tc<H.warmC,V0=packOcv(pack,soc);if(!cold&&warmS==null)warmS=i;
+      let best=null,bC=Infinity,bG=0,bJ=0,bOn=false,has=false;
+      const consider=(gs,J,on)=>{if(J>0&&soc<socLo)return;if(J<0&&soc>socHi)J=0;const cost=gs+s*J;if(!has||cost<bC){has=true;bC=cost;bG=gs;bJ=J;bOn=on;}};
       // a power-split's engine on its best line at powers from what the pack cannot give to what it can take back: the
       // engine's speed where MG1 lets it be, the ring's share of its torque to the wheels and MG2 carrying the rest
       // (standing, the brakes hold the ring and MG1 takes it all, charging)
-      const psOn=(T,n2,stand)=>{
-        const nr=n2/PS.k2,R=psEngineRange(hy,nr),Pd=Math.max(0,T*n2*Math.PI/30),O=psOol();
-        const Plo=Math.max(O.P[0],Pd-Pbat*assist(0,n2/mot.nMax,Pd/(O.Pmax+Pbat))),Phi=Math.min(O.Pmax,Pd+Pchg);
-        if(!(R.hi>R.lo)||!(Phi>=Plo))return;
-        for(const k of H.splitsDirect){
-          const Pe=Plo+(Phi-Plo)*k,ne=clamp(psOolAt(Pe).ne,Math.max(R.lo,rpmMin),R.hi),Te=Pe/(ne*Math.PI/30);
-          if(Te>Tmax(ne)*C.reserve)continue;
-          const G=hybGear(hy,ne,n2),ns=G.ns,Ts=Te*G.ks;   // the planetary, or a series hybrid's generator on the crank
-          if(Ts>motorMaxTorque(hy.mg1,Math.max(Math.abs(ns),1),hybBusV(hy),60))continue;
-          const T2=stand?0:T-Te*G.kr;
-          if(Math.abs(T2)>(T2>0?motUp(n2):motorMaxTorque(mot,Math.max(n2,1),hybBusV(hy),60)))continue;
-          const gs=fuelAt(ne,Te,oilT);if(!isFinite(gs))continue;
-          const J=packJ(T2,n2,soc,psMg1Elec(hy,Ts,ns,temp));
+      const psOn=(c,n2)=>{
+        for(const q of c){
+          const gs=fuelAtc(q,q.ne,q.Te,oilT);if(!isFinite(gs))continue;
+          const J=packJc(q,q.T2,n2,soc,V0,q.Pin);
           if(!tu.lps&&J<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
           consider(gs,J,true);
         }
@@ -196,37 +224,55 @@ function hybridCycle(v,prof){
       if(vm<0.1&&a<=0){   // standing: the engine stops when it is warm, or idles
         if(!cold)consider(0,packJ(0,0,soc),false);
         consider(M.idleGs,C.auxW,true);
-        if(direct)psOn(0,0,true);
+        if(direct)psOn(segC[i]||(segC[i]=psCands(0,0,true)),0);
       }else if(direct){   // the eCVT (build 189), or a series hybrid (193): MG2 alone, or the engine on its best line, MG1 and MG2 carrying the difference
-        const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
-        const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
-        const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
-        if(T<=0){const Tm=Math.max(T,-motDn(n2)*kRegen);consider(cold?M.idleGs:0,packJ(Tm,n2,soc),cold);}
+        let q=segC[i];
+        if(!q){
+          const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
+          const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
+          const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
+          const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
+          q=segC[i]=T<=0?{T,n2,Tm:Math.max(T,-motDn(n2)*kRegen)}:{T,n2,ev:T<=motUp(n2)&&evOk(vm,T*n2*Math.PI/30),c:psCands(T,n2,false)};
+        }
+        const n2=q.n2;
+        if(q.T<=0)consider(cold?M.idleGs:0,packJc(q,q.Tm,n2,soc,V0),cold);
         else{
-          if(!cold&&T<=motUp(n2)&&evOk(vm,T*n2*Math.PI/30))consider(0,packJ(T,n2,soc),false);
-          psOn(T,n2,false);
+          if(!cold&&q.ev)consider(0,packJc(q,q.T,n2,soc,V0),false);
+          psOn(q.c,n2);
         }
-      }else for(let g=0;g<v.ratios.length;g++){
-        const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
-        const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
-        const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
-        const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
-        if(T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
-          const Tm=Math.max(T,-motDn(rpm)*kRegen);
-          consider(cold?(rpm>C.cutRpm?0:M.idleGs):0,packJ(Tm,rpm,soc),cold);continue;
+      }else{
+        let gs0=segC[i];
+        if(!gs0){gs0=segC[i]=[];
+          for(let g=0;g<v.ratios.length;g++){
+            const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
+            const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
+            const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
+            const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
+            if(T<=0){gs0.push({rpm,T,Tm:Math.max(T,-motDn(rpm)*kRegen)});continue;}
+            const q={rpm,T,ev:T<=motUp(rpm)&&evOk(vm,T*rpm*Math.PI/30),c:[]};gs0.push(q);
+            if(rpm<rpmMin)continue;
+            const Te0=Math.min(Tmax(rpm)*C.reserve,T+motDn(rpm)),help=motUp(rpm)*assist(rpm,rpm/e.redline,T/(Tmax(rpm)+motUp(rpm)));
+            for(const k of H.splits){   // the engine from the least it can give with the motor's help to its most, charging
+              const Te=Math.max(0,T-help)+(Te0-Math.max(0,T-help))*k,Tm=T-Te;
+              if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
+              q.c.push({Te,Tm});
+            }
+          }
         }
-        if(!cold&&T<=motUp(rpm)&&evOk(vm,T*rpm*Math.PI/30))consider(0,packJ(T,rpm,soc),false);   // electric only
-        if(rpm<rpmMin)continue;
-        const Te0=Math.min(Tmax(rpm)*C.reserve,T+motDn(rpm)),help=motUp(rpm)*assist(rpm,rpm/e.redline,T/(Tmax(rpm)+motUp(rpm)));
-        for(const k of H.splits){   // the engine from the least it can give with the motor's help to its most, charging
-          const Te=Math.max(0,T-help)+(Te0-Math.max(0,T-help))*k,Tm=T-Te;
-          if(Te<=0||Te>Tmax(rpm)*C.reserve)continue;
-          if(!tu.lps&&Tm<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
-          const gs=fuelAt(rpm,Te,oilT);if(!isFinite(gs))continue;
-          consider(gs,packJ(Tm,rpm,soc),true);
+        for(const q of gs0){
+          const rpm=q.rpm;
+          if(q.T<=0){   // slowing: regenerate what the motor and pack can; the engine cut (or idling, cold)
+            consider(cold?(rpm>C.cutRpm?0:M.idleGs):0,packJc(q,q.Tm,rpm,soc,V0),cold);continue;
+          }
+          if(!cold&&q.ev)consider(0,packJc(q,q.T,rpm,soc,V0),false);   // electric only
+          for(const c of q.c){
+            if(!tu.lps&&c.Tm<0&&soc>=socLo)continue;   // no load-point shifting: the engine charges only a low pack
+            const gs=fuelAtc(c,rpm,c.Te,oilT);if(!isFinite(gs))continue;
+            consider(gs,packJc(c,c.Tm,rpm,soc,V0),true);
+          }
         }
       }
+      if(has)best={gs:bG,J:bJ,on:bOn};
       if(!best&&prof){   // on the road: a climb asks more than the controller's machine limits allow (a power-split's MG1
         // and MG2 at speed; a parallel's engine plus motor). The engine gives it on its best line up to 90% of its top,
         // the pack the rest up to its power (above its floor) through a 90% electrical path (as the charge correction
