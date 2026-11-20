@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 410
+# PIXEL POWERTRAIN v0.8 build 411
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -516,6 +516,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   **SHAPE IT** then walks through that car's design one decision per step (cylinders, bore and stroke, fuel,
   compression, boost, head, redline, breathing, then body, mass, gearing and tyres; a drive's own steps for an EV or a
   hybrid). Each step moves the cards' own inputs, so skipping every step gives back the factory car.
+  Under each field, a goal hint says what the next value down and up do to the goal from the third question (power,
+  mass or price; the 0–100 on a car step) and the limit it meets (knock, valve float, tyre rating, grip), worked out
+  by the cards' own previews. It gives a direction, never a best value.
 
   A generic chassis, or a copy, shows the picture of its **body class** (build 222): one unbranded car for
   each of the 14 classes, in `assets/cars/generic/`.

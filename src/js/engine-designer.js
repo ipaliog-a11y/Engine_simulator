@@ -161,7 +161,8 @@ function icdCompute(){
     e.afrMode=am;
     return {hp:s.peakHP,hpRpm:s.peakHPrpm,tq:s.peakTQ,tqRpm:s.peakTQrpm,disp:e.displacement_L,overall:s.overall,grade:s.grade,rel:s.reliability,
       safety:s.safety,knock:100-s.safety,cost:e.cost,redline:e.redline,float:e.floatRpm||0,ports:!!e.ports,rotary:e.type==='rotary',
-      piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar};
+      piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar,
+      ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
     for(const k of Object.keys(state))if(!(k in keep.state))delete state[k];

@@ -171,3 +171,19 @@ paused (AGENTS.md section 0): strings go through `tr()` only.
 - Skips come from the form's own disabled fields: diesel has no FUEL step; rotary and two-stroke no HEAD step; BOOST
   shows on the factory rotary (it is a turbo). Steps 3–4 say so when the car's timing is FIXED.
 - Left for builds 2–3: the goal hints, the knock bar in a step, the finish screen (FINISH now opens the VEHICLE tab).
+
+## Build 2 done (goal hints)
+
+- `src/js/guided-build.js` (`gwHint*`, `gwNear`, `gwCarAt`): under each field, one line per neighbour (5% of the range,
+  or the nearest real-example tick if closer; for a choice, the options either side), with the change in the goal's
+  measure, toward/away from it, and the limit met. Engine fields run `icdCompute`; EV and hybrid-motor fields
+  `evdCompute`; car fields rebuild the car (`buildVehicle`) and put `vehicle`, `perf` and the build strip back. One
+  preview per tick, cancelled when a field moves; rerun 150 ms after a change. Test: `tests/test252.mjs`.
+- LIGHTEST on an engine step: `icdCompute` now returns `mass`, the car's engine mass (`powertrain().mass()`), so no
+  full rebuild is needed. Diesel: knock is 0 for compression ignition, so its hint names reliability instead.
+- Measured: engine steps 0.2–1.0 s (the diesel BOOST step, 3 fields, is the slowest); EV steps under 0.6 s; car
+  steps 0.3–4 s, behind the "…" mark.
+- Left open: coupled fields (fuel, intake, exhaust, motor kind, front motor, hybrid layout and deploy, governor) get
+  no hint, since their neighbour would need `syncDesignEnable` on a trial form. The EV side has no current-density
+  limit to name (the motor code has no threshold for it); it names the rim and the battery. No knock bar in the step
+  yet (build 3 can add it with the finish screen).
