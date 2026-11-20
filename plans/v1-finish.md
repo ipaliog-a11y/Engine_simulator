@@ -1,10 +1,10 @@
 # Plan: from build 405 to the v1.0 gate
 
-Written at build 406 for the groups of *Leftovers to v1.0* in `plans/road-to-v1.md` that are still open: 1 (engine),
+Written at build 407 for the groups of *Leftovers to v1.0* in `plans/road-to-v1.md` that are still open: 1 (engine),
 2 (vehicle parts), 7 (data), 8 (known gaps) and 10 (the gate). Groups 4–6 were done in `plans/small-physics.md`
 (builds 364–405). Group 9 (game) ends with the guided build's three builds (G8–G10), already running.
 
-**Group 3 (driving sim H′ and I) moves after v1.0** (owner, build 406; reverses decision 23). Tyre heat, pressure and
+**Group 3 (driving sim H′ and I) moves after v1.0** (owner, build 407; reverses decision 23). Tyre heat, pressure and
 wear in `stepCar`, brake fade in time, aero by ride height and pitch, and the wake per axle wait with phase J. Group 2
 below therefore ships its aero parts as static (steady-state) numbers only.
 

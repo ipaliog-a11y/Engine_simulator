@@ -128,7 +128,7 @@ reporting its range. Sourcing is batched apart from physics.
 - ~~Each all-wheel-drive preset's centre diff type~~ (build 320: Torsen, viscous, open sourced, the rest clutches).
   Coupling limits (build 404): GT-R R35/R34 front at most 50% (Nissan), Focus RS rear at most 70% (Ford). Left open:
   the 992 Turbo S's "500 Nm to the front" (Porsche), whose place of measure isn't published, and as 500 N m on the
-  propshaft it slows the stepped 0-100 from 2.87 to 3.24 s (Porsche 2.7): left out (owner, build 406). No limit published for Haldex
+  propshaft it slows the stepped 0-100 from 2.87 to 3.24 s (Porsche 2.7): left out (owner, build 407). No limit published for Haldex
   (RS3, Huracán), xDrive, PTM (Cayenne), ACD, DCCD, GR-FOUR, Quadra-Trac, the Raptor's 4A.
   Wiring note: a split of f 0 (all to one axle) in stepCar keeps the launch clutch from locking (the clutch sees one
   axle's inertia while the centre takes torque away), so the limit bounds the secondary axle's torque instead.

@@ -45,7 +45,7 @@ revised with the owner's answers (see *Owner's decisions*). The order of the pha
 | 20 | Suspension geometry | By type for v1.0; a car's own only where published; never fitted (`plans/driving-sim.md`, decision 3). |
 | 21 | Phase E's four open entries (`DIFF_ASYM0`, `KVCAP`, `TYRE_SLIP`, `TYRE_CC`) | **Rules until after v1.0** (build 363): they retire only when the lap, 0–100 and race run on the stepped car (driving-sim J, after the graphics engine). |
 | 22 | Water-to-air intercoolers (B4) | **Before v1.0** (build 363; reverses build 319's deferral). |
-| 23 | Driving-sim H′ (heat and wear in time) and I (aero in motion) | ~~Before v1.0 (build 363)~~ **After v1.0** (owner, build 406), with phase J. H′ reuses the race's tyre heat, which stays a rule. |
+| 23 | Driving-sim H′ (heat and wear in time) and I (aero in motion) | ~~Before v1.0 (build 363)~~ **After v1.0** (owner, build 407), with phase J. H′ reuses the race's tyre heat, which stays a rule. |
 | 24 | Challenges and the guided build that sets values | **Before v1.0** (build 363). |
 
 ## Where it stands
@@ -301,7 +301,7 @@ The register: 6 open (`EV_RATIO`, `catRampTop`, and phase D's four), 33 rules.
 2. **Vehicle parts (D).** Splitter and chord-wise ground effect, each kit car's wing as a part (`AERO_FRONT/REAR`); a
    floor part (`AERO_FLOOR`); tyre pressure into grip, rated load and stiffness (`TYRE_KZ`); spring, bar and damper
    rates (`SPRING_STEP` etc.). *Scoreboard at the end.*
-3. **Driving sim H′ and I** (*after v1.0*, decision 23 as changed at build 406; `plans/driving-sim.md`): tyre temperature, pressure and wear in `stepCar`; brake fade;
+3. **Driving sim H′ and I** (*after v1.0*, decision 23 as changed at build 407; `plans/driving-sim.md`): tyre temperature, pressure and wear in `stepCar`; brake fade;
    aero by ride height and pitch (needs D's floor and splitter); the wake per axle.
 4. **Handling leftovers** (named in the CHANGELOG): bump stops and droop, anti-dive and anti-squat, bound and rebound
    apart, grip by camber, ESP by yaw rate, steering assist, the 100–0 stop pooling grip, AWD centre-diff types per car;
@@ -313,7 +313,7 @@ The register: 6 open (`EV_RATIO`, `catRampTop`, and phase D's four), 33 rules.
    term reading the target mixture.
    *Groups 4–6 are planned build by build in `plans/small-physics.md` (about 16 builds).*
    *Groups 4–6 were done in builds 364–405. Groups 1, 2, 7, 8 and 10 are planned build by build in
-   `plans/v1-finish.md` (build 406, about 20 builds).*
+   `plans/v1-finish.md` (build 407, about 20 builds).*
 7. **Data**: 83 overhang splits, 26 tyre sizes, two widths (`NO_WIDTH_KNOWN`), each real circuit's pit-lane length.
 8. **Known gaps to rule on or close**: `ACC_KNOWN` (Supra A80, WRX STI), `RATING_KNOWN` (Dino 246), `GAP_KNOWN`
    (Model 3 torque, Leaf), `AT_LIMITER_KNOWN`, the moose run ~10 km/h under the magazines. Approved: `OFF_KNOWN`,

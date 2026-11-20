@@ -382,7 +382,8 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,cap>0?Math.min(mid,cap):mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
     return best;
   };
-  const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
+  const hyb=isHybrid(),hybOf=new Map(),hybAt=vv=>hybOf.get(vv)||(hybOf.set(vv,ecoHybrid(line,vv)),hybOf.get(vv));   // a plan's hybrid result, priced once (build 406)
+  const cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?hybAt(r.v).kg:ecoFuelKg(line,r.v);
   // Engine cars and EVs: the distance DP (build 400). On the 190 runs measured at Alpine and the Dragon it beat the eco
   // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each
   // blend costs ~11 capped solves; running both pushed long roads past 4 s). Hybrids keep the blends.
@@ -404,7 +405,8 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     return Object.assign(base,{kWh,whkm,regenKWh:en.regenJ/3.6e6,kWhMin});
   }
   if(hyb){   // fuel (charge-sustained) and the pack's energy out and back (build 383)
-    const h=ecoHybrid(line,v),hm=ecoHybrid(line,mt.v),L=h.kg/fp.density;
+    const h=hybAt(v),hm=hybAt(mt.v),L=h.kg/fp.density;
+    if(engine)engine._hmemo=null;   // the shared loss and fuel tables (hybridCycle) are freed once the run is priced
     return Object.assign(base,{hybrid:true,fuelL:L,fuelKg:h.kg,l100:L/km*100,fuelLMin:hm.kg/fp.density,engOff:1-h.onShare,
       packOutKWh:h.packOutKWh,packInKWh:h.packInKWh,dSocKWh:h.dSocKJ/3600,corrected:h.corrected,limitShare:h.limitShare});
   }
