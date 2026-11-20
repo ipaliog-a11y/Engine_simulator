@@ -169,10 +169,40 @@ function psFuelRate(){
 }
 // What the engine does at a replay point, for the sound (build 297): null where the fuel has it stopped; else on the best
 // line at its power, as the fuel burns it, and its manifold the share of full-load torque it makes there (steadyMapAt's law).
-function psEngineSoundAt(L,i){
-  const Pe=psEnginePower(L,i,hybCurves());if(!(Pe>0))return null;
+// t (build 401): the replay's clock. A start is spun up unfuelled from rest (or from where the last run-down had it) to
+// idle, as hybStartStop integrates it, before the engine runs on its line; a stop runs down from the speed it ran at.
+// Both are {spin:true}: heard, with the fuel cut. The lap's fuel and time still have it fire at once (named gap).
+function psEngineSoundAt(L,i,t){
+  const c=hybCurves(),Pe=psEnginePower(L,i,c);
+  if(t!=null){
+    const T=psStartStopTimes(L,c),S=hybStartStop();
+    if(Pe>0){const el=t-T.t0[i],r=S.upAt(T.r0[i],el);if(el>=0&&r!=null)return {rpm:r,thr:0,map:1,spin:true};}
+    else{const el=t-T.t0[i],r=el>=0?S.downAt(T.r0[i],el):0;return r>=1?{rpm:r,thr:0,map:1,spin:true}:null;}
+  }
+  if(!(Pe>0))return null;
   const ne=psOolAt(Pe).ne,Te=Pe/(Math.max(ne,1)*Math.PI/30),thr=clamp(Te/Math.max(1,psOol().tqAt(ne)),0,1);
   return {rpm:ne,thr,map:steadyMapAt(ne,thr)};
+}
+// Per replay point (build 401): when the engine was last started (on) or stopped (off) (t0, the lap's clock, a moment
+// before the lap's start when it was the last lap's) and its speed then (r0: where the run-down had it, or the speed it ran at).
+function psStartStopTimes(L,c){
+  if(L._psSS)return L._psSS;
+  const R=L.replay,n=R.tAt.length,S=hybStartStop(),on=new Uint8Array(n),ne=new Float32Array(n);
+  for(let i=0;i<n;i++){const Pe=psEnginePower(L,i,c);on[i]=Pe>0?1:0;ne[i]=Pe>0?psOolAt(Pe).ne:0;}
+  const t0=new Float64Array(n),r0=new Float32Array(n);
+  let k=0;while(k<n&&on[k]===on[0])k++;
+  if(k<n){   // walk twice round from a change, so the first points carry the last lap's
+    let tc=0,rc=0,prevNe=0;
+    for(let q=0;q<2*n;q++){const i=(k+q)%n,p=(i+n-1)%n;
+      if(on[i]!==on[p]){tc=R.tAt[i];
+        if(on[i]){let off=tc-t0[p];if(off<0)off+=L.lap;rc=S.downAt(r0[p],off);}else rc=prevNe;}
+      if(on[i])prevNe=ne[i];
+      t0[i]=tc;r0[i]=rc;
+    }
+  }else for(let i=0;i<n;i++)t0[i]=-1e9;
+  // a change in the last lap: its clock a lap before this one's
+  for(let i=0;i<n;i++)if(t0[i]>R.tAt[i])t0[i]-=L.lap;
+  return (L._psSS={t0,r0});
 }
 // The driveline line of the VEHICLE summary.
 function psDrivelineLine(v){

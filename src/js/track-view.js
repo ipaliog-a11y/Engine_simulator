@@ -77,7 +77,7 @@ function replayAt(L,t){
   const i=t>=tt[n-1]?n-1:lo,j=(i+1)%n,tEnd=j?tt[j]:L.lap;
   const f=clamp((t-tt[i])/Math.max(1e-6,tEnd-tt[i]),0,1),mix=(a,b)=>a+(b-a)*f;
   const third=L.lineLength/3,sAt=mix(line[i].s,j?line[j].s:L.lineLength);
-  return {i,f,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
+  return {i,f,t,x:mix(line[i].x,line[j].x),y:mix(line[i].y,line[j].y),
     hd:Math.atan2(line[j].y-line[i].y,line[j].x-line[i].x),
     v:mix(L.v[i],L.v[j])*3.6,gear:L.gears[i]+1,rpm:mix(R.rpm[i],R.rpm[j]),map:R.map?mix(R.map[i],R.map[j]):1,
     thr:R.thr[i],brk:R.brk[i],gLat:mix(R.gLat[i],R.gLat[j]),gLong:mix(R.gLong[i],R.gLong[j]),
