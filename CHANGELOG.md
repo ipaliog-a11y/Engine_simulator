@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### All-wheel-drive clutches pass at most their maker's published share (build 404)
+
+- The stepped car's centre clutch now honours a published limit: the GT-R R35 and R34 drive the rear and send the front
+  at most 50% (Nissan, ATTESA E-TS "0:100 up to 50:50"); the Focus RS drives the front and sends the rear at most 70%
+  (Ford). The other clutches still close on the first slip. Centre types were already sourced (build 320).
+- Stepped 0–100 (aids off): R35 3.275 s and R34 4.805 s unchanged (the limit doesn't bind on a launch); Focus RS
+  4.915 → 4.955 s (+0.8%; Ford 4.7). The fingerprint is identical: it records the quasi-static solvers only.
+- Left open, for the owner: the 992 Turbo S's "up to 500 Nm to the front wheels" (Porsche). Taken as 500 N m on the
+  propshaft it slows the stepped 0–100 from 2.87 to 3.24 s (+12.7%; Porsche 2.7), and where the 500 is measured isn't
+  published. No limit is published for Haldex, xDrive, the Cayenne's PTM, ACD, DCCD, GR-FOUR, Quadra-Trac or the 4A.
+- LSD coast ramps are the next build; `LIFT_KNOWN` is unchanged.
+
 ### Your own GPX road for the economy run (build 403)
 
 - **IMPORT GPX ROAD** on the CHALLENGES tab reads a GPX file in the browser (no upload, no library) and adds it as
