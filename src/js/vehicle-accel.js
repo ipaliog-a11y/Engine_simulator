@@ -118,8 +118,9 @@ function buildVehicle(){
   vehicle.brakeDecelCap=brakeForceCap(vehicle)/vehicle.mass;
   // a designed rear wing (build 291, wingAero) takes the place of the REAR AERO kit: its own ClA and CdA, in m2, not scaled by the class
   // and a designed front wing (build 306) the FRONT AERO kit's, on the front axle
-  const wing=vehicle.wingPart?wingAero(vehicle.wingPart):null;vehicle.wing=wing;
-  const fwing=vehicle.fwingPart?wingAero(vehicle.fwingPart):null;vehicle.fwing=fwing;
+  // the kit WING is a wing part too (build 415, kitWing): the car's own geometry, else its class's
+  const wing=vehicle.wingPart?wingAero(vehicle.wingPart):vehicle.aeroRear==='wing'?wingAero(kitWing(vehicle,false)):null;vehicle.wing=wing;
+  const fwing=vehicle.fwingPart?wingAero(vehicle.fwingPart):vehicle.aeroFront==='wing'?wingAero(kitWing(vehicle,true)):null;vehicle.fwing=fwing;
   const af=fwing?AERO_FRONT.none:AERO_FRONT[vehicle.aeroFront]||AERO_FRONT.none, ar=wing?AERO_REAR.none:AERO_REAR[vehicle.aeroRear]||AERO_REAR.none, al=AERO_FLOOR[vehicle.aeroFloor]||AERO_FLOOR.none;
   // The class's aero factor scales the parts to the car (a prototype's wing works a bigger, faster body than a hatch's).
   // A real car whose class factor is not its own carries one in its body (build 201: the Radical SR3, a club racer on the

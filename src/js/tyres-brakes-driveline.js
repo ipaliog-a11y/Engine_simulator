@@ -57,8 +57,11 @@ const TIRE_TYPE={
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
-const AERO_FRONT={none:{cl:0,cd:0},splitter:{cl:0.25,cd:0.010},wing:{cl:0.60,cd:0.028}};
-const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0.75,cd:0.035}};
+// The kit WING (build 415) is no longer a table row: it is a wing part (wingAero below), drawn from the car's own wing
+// (fit.wingR / fit.wingF), else its class's, else the PARTS page's starting wing as wide as the car's track (kitWing).
+// Until then it was ClA 0.60 (front) and 0.75 (rear) times the class's aero factor, ΔCd 0.028 and 0.035: fitted.
+const AERO_FRONT={none:{cl:0,cd:0},splitter:{cl:0.25,cd:0.010},wing:{cl:0,cd:0,part:true}};
+const AERO_REAR ={none:{cl:0,cd:0},lip:{cl:0.20,cd:0.008},wing:{cl:0,cd:0,part:true}};
 // front = the share of a floor's downforce on the front axle: a flat undertray works the whole floor and
 // acts near mid-wheelbase; a diffuser's suction peaks at its throat, ahead of the rear axle.
 const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffuser:{cl:0.80,cd:0.014,front:0.35}};
@@ -91,6 +94,14 @@ function wingAero(p){
   const Cf=0.074*Math.pow(WING_V*c/AIR_NU,-0.2),cd0=2*Cf*(1+2*WING_TC+60*Math.pow(WING_TC,4)),cdi=CL*CL/(Math.PI*AR);
   const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
   return {S,AR0,AR,ge,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
+}
+// The geometry of the kit wing a car carries (build 415): the car's own, else its class's, else the starting wing of the
+// PARTS page (as wide as the track, 250 mm chord, 8 degrees (front 6), 6% camber; the front 100 mm off the road).
+function kitWing(v,front){
+  const ch=CHASSIS[v.chassis]||{},own=v.body&&v.body.fit&&v.body.fit[front?'wingF':'wingR'],cls=ch.fit&&ch.fit[front?'wingF':'wingR'];
+  if(own||cls)return own||cls;
+  const b=Math.round(((front?v.trackF:0)||v.track||ch.track||1.5)*100)*10;
+  return front?{span_mm:b,chord_mm:250,angle_deg:6,camber_pct:6,plate_mm:100,height_mm:100}:{span_mm:b,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150};
 }
 const AERO_COST={none:0,splitter:600,wing:1800,lip:400,undertray:900,diffuser:2200};
 // Weight reduction stages: kg removed and cost.

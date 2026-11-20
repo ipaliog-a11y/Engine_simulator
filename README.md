@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 415
+# PIXEL POWERTRAIN v0.8 build 416
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -168,7 +168,7 @@ and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
 The eighth, the first part of the car rather than the engine, is the rear wing (build 291): span, chord, angle,
 camber and end plates, by lifting-line theory. The ninth is the front wing (build 306): the same wing, with its height
-over the road. The tenth is the differential (build 310): a clutch-plate LSD from its preload, ramp angle and plates.
+over the road. Since build 415 the VEHICLE tab's kit WING is that same wing, from the car's own dimensions. The tenth is the differential (build 310): a clutch-plate LSD from its preload, ramp angle and plates.
 The eleventh is brake balance (build 312): a balance bar, two master cylinders and the rear caliper and rotor.
 The twelfth is tyre pressure (build 313): cold pressures front and rear, which set the tyres' stiffness, rolling
 resistance and aquaplaning speed.
