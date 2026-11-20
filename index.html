@@ -882,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 417</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 418</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2755,7 +2755,7 @@ The temperature window and wear rate matter in a <a data-gp="race">The race</a>,
 <div class="guide-body" data-gk="tyresPhys">
 <b>Load sensitivity.</b> Friction falls as the tyre is loaded harder:
 <span class="geq">μ = μ<sub>ref</sub> · (F<sub>z</sub> / F<sub>z,ref</sub>)<sup>−0.15</sup></span>
-about 10% less each time the load doubles, with the reference at 60% of the tyre's rated load. The rated load follows the tyre's air volume, <i>(π/4)(D² − d²)·w</i> at about 16,300 kg per m³, which matches real load indices within 3%. So a bigger tyre, a lighter car and less load transfer all grip harder, by one mechanism.<br>
+about 10% less each time the load doubles, with the reference at 60% of the tyre's rated load. The rated load follows the tyre's air volume, <i>(π/4)(D² − d²)·w</i> at about 16,300 kg per m³, which matches real load indices within 3%. That is the load at 250 kPa; at the pressure the tyre is set to it carries in proportion to the pressure plus 44.5 kPa (ETRTO's load tables), and the reference load moves with it. So a bigger tyre, a lighter car and less load transfer all grip harder, by one mechanism.<br>
 <b>Load transfer</b> in a corner moves <i>m · a<sub>y</sub> · h / t</i> from the inside tyres to the outside ones (h CG height, t track width), and the outside tyres, loaded harder, use their load less well.<br>
 <b>The friction ellipse.</b> A tyre pulls about 15% harder along its length than across it (Milliken), so braking and traction get 1.15 μ and combined use follows an ellipse.<br>
 <b>Cornering drag.</b> Side force comes from running at a slip angle, which leans the force back against travel: summed over four tyres it costs <i>(m a<sub>y</sub>)² / (C · N)</i>, C the tyre's cornering stiffness per unit load, by its compound: 0.28 per degree on a measured road tyre, 0.54 on a race slick (Milliken).<br>
@@ -3032,7 +3032,7 @@ The 0–100, braking and skidpad tests are run on a smooth surface, so the dampe
 <div class="gtab-wrap"><table class="gtab"><tr><th>setup</th><th>damping (share of critical)</th></tr>
 <tr><td>comfort</td><td>0.25</td></tr><tr><td>sport</td><td>0.30</td></tr><tr><td>coilovers</td><td>0.45</td></tr><tr><td>race</td><td>0.60</td></tr></table></div>
 Passenger cars are damped at 0.2–0.3 of critical, race cars at 0.5–0.7, and 0.45 is called the optimum for a racing car.<br>
-<b>The quarter car.</b> Each corner is the body's share on the spring and damper, the wheel (12% of the corner's mass) under it, and the tyre's vertical stiffness under that (250 kN/m for a 205/55R16, scaling with the root of the tyre's width times its diameter). That gives the 10–15 Hz wheel hop real cars have.<br>
+<b>The quarter car.</b> Each corner is the body's share on the spring and damper, the wheel (12% of the corner's mass) under it, and the tyre's vertical stiffness under that (Rhyne's relation: the air's share in proportion to the pressure times the root of the footprint's width times the diameter, plus the carcass's own; 224 kN/m for a 205/55R16 at 230 kPa). That gives the 10–15 Hz wheel hop real cars have.<br>
 <b>The road</b> is ISO 8608's: a profile whose spectrum falls as the square of the spatial frequency,
 <span class="geq">G<sub>d</sub>(n) = G<sub>d</sub>(n<sub>0</sub>) · (n / n<sub>0</sub>)<sup>−2</sup>, n<sub>0</sub> = 0.1 cycle/m</span>
 Class A, very good, runs up to 32×10⁻⁶ m³, and each class is four times the one before. Driven at speed v, that is a white velocity input, so the tyre's load swings by
@@ -9336,19 +9336,34 @@ function rollStiffness(v){
 // 4x the one before). Driven at v, the road is a white velocity input whose strength grows with v, so the tyre's
 // load swings by sigma = c sqrt(Gd(n0) v): c is worked out once per axle, from the quarter car's response.
 // The unsprung mass is the corner's own parts, weighed (unsprungMass, build 262); until then 12% of the corner's mass
-// for every car. TYRE_KZ: a road tyre's vertical stiffness,
-// 200-300 kN/m, taken as 250 kN/m for a 205/55R16 and scaled as the root of its width times its diameter (the form of
-// Rhyne's relation, Tire Sci. Tech. 33(3), 2005, at one inflation pressure). Together they give the 10-12 Hz wheel hop
-// a road car has.
-const TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+// for every car. The tyre's vertical stiffness is Rhyne's relation (build 418, retiring build 216's one 250 kN/m):
+//   kt = 0.0274 p sqrt(Wf D) + 3.38   daN/mm, p the inflation pressure in bar, Wf the footprint width and D the outer
+// diameter in mm (Rhyne, Tire Sci. Tech. 33(3), 2005, fitted to a wide range of radials; as quoted with its units by
+// Redrouthu & Das, Chalmers MSc thesis 2014:24, sec. 3.4 and appendix; the same constants in kg/mm, 0.00028 p[kPa] and
+// 3.45). The first term is the air's, the constant the carcass's own stiffness with no air. Wf = 0.7 of the section
+// width, the thesis's own assumption (PROBABLE). A 205/55R16 at 230 kPa: 224 kN/m, an 11-12 Hz wheel hop.
+const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, DAMPER_STEP=1.3, ISO_N0=0.1;
+function tyreKz(twMm,odMm,kPa){return (RHYNE_A*kPa/100*Math.sqrt(RHYNE_WF*twMm*odMm)+RHYNE_B)*1e4;}   // N/m
 // ---- tyre pressure as a part (build 313) ----
-// A designed pair of cold pressures (front, rear). Unfitted, every car keeps the reference above. Fitted:
-//   stiffness   the pressure term of Rhyne's relation, linear in the inflation pressure: kt x p/TYRE_P_REF. Its
-//               constant (the carcass's own stiffness with no air) is left out.
+// A designed pair of cold pressures (front, rear). Unfitted, every car stands for TYRE_P_REF. Fitted:
+//   stiffness   Rhyne's relation above at the set pressure (build 418).
+//   load        the tyre's load capacity (build 418): ETRTO's load formula is linear in the pressure, (p + P0), P0 the
+//               structure's own capacity with no air (Malinverni, ETRTO, More than 50 years of standardisation, 2015).
+//               A standard-load tyre's load index is its load at 250 kPa, and no more above it. P0 = 44.5 kPa is the
+//               least-squares fit of ETRTO's standard-load table (Standards Manual 2005, LI 62-125 at 22-36 psi, as
+//               reprinted in Toyo's Load & Inflation Tables 2013): 0.7% rms, 2.2% at worst.
+//   grip        the grip's load sensitivity (tyreMu) reads the load against the tyre's capacity at its set pressure:
+//               the compound's mu stands at TYRE_REF_SHARE of the load index at TYRE_P_REF, and that reference load
+//               moves with the capacity (build 418). Less air, a given load is a larger share of what the tyre carries.
 //   rolling     SAE J2452's form, Crr ~ p^alpha, alpha -0.4 for passenger radials (Grover, SAE 980251, 1998; PROBABLE).
 //   hot         the air at constant volume: p_hot + atm = (p_cold + atm)(273 + T_tyre)/(273 + 20), the cold set at 20 C.
-// TYRE_P_REF: the cold placard pressure TYRE_KZ and the compounds' Crr stand for, ~230 kPa on a 205/55R16 (PROBABLE,
+// Not modelled: the friction's own pressure term (Magic Formula 6.1's ppy3/ppy4), which measurements show to be tyre
+// dependent with no general sign (Schmeitz, Besselink & Jansen, VSD 43 suppl., 2005); the cornering stiffness's.
+// TYRE_P_REF: the cold placard pressure the compounds' mu and Crr stand for, ~230 kPa on a 205/55R16 (PROBABLE,
 // door placards of mid-size cars).
+const ETRTO_P0=44.5, ETRTO_P_LI=250;
+const tyreLoadShare=kPa=>Math.min(1,(kPa+ETRTO_P0)/(ETRTO_P_LI+ETRTO_P0));      // of the load index
+const tyreRefScale=kPa=>kPa?tyreLoadShare(kPa)/tyreLoadShare(TYRE_P_REF):1;      // FzRef's move from TYRE_P_REF
 const TYRE_P_REF=230, TYRE_P_ALPHA=-0.4, P_ATM_KPA=101.3;
 const tyreColdKPa=(v,front)=>v&&v.tyrePart?v.tyrePart[front?'front_kPa':'rear_kPa']:null;
 const tyreHotKPa=(cold,tC)=>(cold+P_ATM_KPA)*(273.15+tC)/293.15-P_ATM_KPA;
@@ -9390,7 +9405,7 @@ function quarterCar(v,ax){
   const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);
-  return {ms,mu,ks,cs,kt:TYRE_KZ*Math.sqrt(tw*od)/TYRE_KZ_REF*(p?p/TYRE_P_REF:1)};
+  return {ms,mu,ks,cs,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
 }
 // The quarter car's response to the road at frequency f (Hz), for a road movement of 1 m: the tyre's load swing (N)
 // and the body's acceleration (m/s2), as squared magnitudes.
@@ -14162,9 +14177,11 @@ function buildVehicle(){
   const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
   {const D=2*vehicle.rTire,d=vehicle.wheelDia*0.0254;
    vehicle.tyreRatedKg=TYRE_RATED_KG_M3*Math.PI/4*(D*D-d*d)*(vehicle.tireWidth/1000);}
-  vehicle.muRef=tt.mu;vehicle.FzRef=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  // the reference load moves with each axle's load capacity at its set pressure (ETRTO, build 418); 1 unfitted
+  const fz0=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  vehicle.muRef=tt.mu;vehicle.FzRef=fz0*tyreRefScale(tyreColdKPa(vehicle,false));
   // a staggered car's front tyres (build 157): their rated load scales with their width on the same wheel
-  vehicle.FzRefF=vehicle.FzRef*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
+  vehicle.FzRefF=fz0*tyreRefScale(tyreColdKPa(vehicle,true))*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
   vehicle.camber=susp.camber;
   vehicle.crr=tt.crr;vehicle.tyreCC=tyreCC(vehicle.tireType);
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
@@ -26879,7 +26896,8 @@ function drawBrake(r){
 // wheel hop it gives, the rolling resistance, and Horne's aquaplaning speed; against the car as it is now.
 function tyreAxleReport(v,cold,front){
   const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,q=quarterCar(Object.assign({},v,{tyrePart:{front_kPa:cold,rear_kPa:cold}}),front?'F':'R'),hot=tyreHotKPa(cold,tt.tOpt);
-  return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot)};
+  const w=front&&v.tireWidthF>0?v.tireWidthF/v.tireWidth:1;   // the load capacity at this pressure (ETRTO, build 418)
+  return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot),cap:(v.tyreRatedKg||0)*w*tyreLoadShare(cold)};
 }
 function previewTyre(){
   const p=partFromEditor('tyre'),V=vehicle,lines=[],nowP=V.tyrePart||{front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF};
@@ -26887,9 +26905,9 @@ function previewTyre(){
   for(const [ax,front] of [['FRONT',true],['REAR',false]]){
     const c=p[front?'front_kPa':'rear_kPa'],r=tyreAxleReport(V,c,front),n=tyreAxleReport(V,nowP[front?'front_kPa':'rear_kPa'],front);
     lines.push('<b>'+tr(ax)+'</b> '+fmt(c)+' kPa '+tr('cold')+' → '+fmt(r.hot)+' '+tr('hot')+' · '+tr('stiffness')+' <b>'+fmt(r.kt/1000)+'</b> kN/m · '+tr('wheel hop')+' '+fmt(r.hop,1)+' Hz · Crr '+fmt(r.crr,4)
-      +' · '+tr('aquaplanes at')+' <b>'+fmt(r.vp)+'</b> km/h <span class="dim">('+tr('now')+' '+fmt(n.kt/1000)+' kN/m, '+fmt(n.vp)+' km/h)</span>');
+      +' · '+tr('carries')+' '+fmt(r.cap)+' kg · '+tr('aquaplanes at')+' <b>'+fmt(r.vp)+'</b> km/h <span class="dim">('+tr('now')+' '+fmt(n.kt/1000)+' kN/m, '+fmt(n.cap)+' kg, '+fmt(n.vp)+' km/h)</span>');
   }
-  lines.push('<span class="dim">'+tr("Stiffness in proportion to the pressure (Rhyne); rolling resistance as pressure to the -0.4 (SAE J2452); aquaplaning from the hot pressure (Horne, NASA TN D-2056). The grip and the tyre's rated load do not read the pressure yet.")+'</span>');
+  lines.push('<span class="dim">'+tr("Stiffness from the pressure and size (Rhyne); the load the tyre carries from the pressure (ETRTO), and the grip's load sensitivity against it; rolling resistance as pressure to the -0.4 (SAE J2452); aquaplaning from the hot pressure (Horne, NASA TN D-2056).")+'</span>');
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }

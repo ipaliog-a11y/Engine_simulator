@@ -18,6 +18,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
+
+Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
+
+- **Stiffness**: build 216's single 250 kN/m (for a 205/55R16, scaled by √(width × diameter)) is replaced by Rhyne's
+  relation, kt = 0.0274 p √(0.7 w D) + 3.38 daN/mm, with p in bar and w, D in mm (Rhyne, *Tire Sci. Tech.* 33(3), 2005).
+  It is taken as quoted with its units in Redrouthu & Das, Chalmers MSc thesis 2014:24. The 0.7 footprint share of
+  the section width is the thesis's own assumption (PROBABLE). A 205/55R16 at 230 kPa goes from 250 to 224 kN/m, and
+  the E46 M3 from 268/285 to 237/250 kN/m. With the pressure part fitted, the stiffness follows the set pressure.
+- **Load capacity**: ETRTO's load formula is linear in (p + P0) (Malinverni, ETRTO, 2015). P0 = 44.5 kPa is the
+  least-squares fit to ETRTO's standard-load table (Standards Manual 2005, LI 62–125 at 22–36 psi; 0.7% rms, 2.2% at
+  worst). The load index is the load at 250 kPa, with no gain above that. The PARTS preview shows what each axle carries.
+- **Grip**: each axle's reference load for load sensitivity (`FzRef`, `FzRefF`) moves with that capacity, measured
+  from the 230 kPa placard pressure the compounds stand for. On the E46 M3 at 300/200 kPa: front ×1.073, rear ×0.891,
+  and 0–100 goes from 5.600 to 5.655 s.
+- **What moved** (fingerprint, 452 values): only the road's load swing. 0–100, 100–0 and skid-pad run on a smooth road,
+  and no preset carries pressures, so none of them moved. Laps on the tech circuit moved −0.21% to +0.10% (Renesis
+  archetype −0.21%, Land Cruiser −0.13%). Spa moved ≤0.02%. Race laps moved ±0.4%.
+- **Left open**: the friction's own pressure term (Magic Formula 6.1's ppy3/ppy4) and the cornering stiffness's are
+  not modelled. Measurements show them tyre-dependent with no general sign (Schmeitz, Besselink & Jansen, VSD 43,
+  2005). An XL tyre's load table (290 kPa) is not used. Rhyne's original paper was paywalled: its constants come
+  from the thesis's text and code.
+
+Tests: test193 (updated); test168 now averages the wheel loads over a crest or dip across the second second, because a single instant read the bounce's phase (with the softer tyre it read 1.56 against a 1.55 limit; averaged, main and this build both read 1.47; bands unchanged). 96 lap, brake, drive and tyre tests rerun.
+
 ### The floor and splitter wait until after v1.0, as named gaps (build 417)
 
 - Plan build 10 (`AERO_FLOOR`, the splitter) stopped before any change: the ground-effect measurements it was to be

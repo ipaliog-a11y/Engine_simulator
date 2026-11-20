@@ -319,19 +319,34 @@ function rollStiffness(v){
 // 4x the one before). Driven at v, the road is a white velocity input whose strength grows with v, so the tyre's
 // load swings by sigma = c sqrt(Gd(n0) v): c is worked out once per axle, from the quarter car's response.
 // The unsprung mass is the corner's own parts, weighed (unsprungMass, build 262); until then 12% of the corner's mass
-// for every car. TYRE_KZ: a road tyre's vertical stiffness,
-// 200-300 kN/m, taken as 250 kN/m for a 205/55R16 and scaled as the root of its width times its diameter (the form of
-// Rhyne's relation, Tire Sci. Tech. 33(3), 2005, at one inflation pressure). Together they give the 10-12 Hz wheel hop
-// a road car has.
-const TYRE_KZ=250e3, TYRE_KZ_REF=Math.sqrt(0.205*0.632), DAMPER_STEP=1.3, ISO_N0=0.1;
+// for every car. The tyre's vertical stiffness is Rhyne's relation (build 418, retiring build 216's one 250 kN/m):
+//   kt = 0.0274 p sqrt(Wf D) + 3.38   daN/mm, p the inflation pressure in bar, Wf the footprint width and D the outer
+// diameter in mm (Rhyne, Tire Sci. Tech. 33(3), 2005, fitted to a wide range of radials; as quoted with its units by
+// Redrouthu & Das, Chalmers MSc thesis 2014:24, sec. 3.4 and appendix; the same constants in kg/mm, 0.00028 p[kPa] and
+// 3.45). The first term is the air's, the constant the carcass's own stiffness with no air. Wf = 0.7 of the section
+// width, the thesis's own assumption (PROBABLE). A 205/55R16 at 230 kPa: 224 kN/m, an 11-12 Hz wheel hop.
+const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, DAMPER_STEP=1.3, ISO_N0=0.1;
+function tyreKz(twMm,odMm,kPa){return (RHYNE_A*kPa/100*Math.sqrt(RHYNE_WF*twMm*odMm)+RHYNE_B)*1e4;}   // N/m
 // ---- tyre pressure as a part (build 313) ----
-// A designed pair of cold pressures (front, rear). Unfitted, every car keeps the reference above. Fitted:
-//   stiffness   the pressure term of Rhyne's relation, linear in the inflation pressure: kt x p/TYRE_P_REF. Its
-//               constant (the carcass's own stiffness with no air) is left out.
+// A designed pair of cold pressures (front, rear). Unfitted, every car stands for TYRE_P_REF. Fitted:
+//   stiffness   Rhyne's relation above at the set pressure (build 418).
+//   load        the tyre's load capacity (build 418): ETRTO's load formula is linear in the pressure, (p + P0), P0 the
+//               structure's own capacity with no air (Malinverni, ETRTO, More than 50 years of standardisation, 2015).
+//               A standard-load tyre's load index is its load at 250 kPa, and no more above it. P0 = 44.5 kPa is the
+//               least-squares fit of ETRTO's standard-load table (Standards Manual 2005, LI 62-125 at 22-36 psi, as
+//               reprinted in Toyo's Load & Inflation Tables 2013): 0.7% rms, 2.2% at worst.
+//   grip        the grip's load sensitivity (tyreMu) reads the load against the tyre's capacity at its set pressure:
+//               the compound's mu stands at TYRE_REF_SHARE of the load index at TYRE_P_REF, and that reference load
+//               moves with the capacity (build 418). Less air, a given load is a larger share of what the tyre carries.
 //   rolling     SAE J2452's form, Crr ~ p^alpha, alpha -0.4 for passenger radials (Grover, SAE 980251, 1998; PROBABLE).
 //   hot         the air at constant volume: p_hot + atm = (p_cold + atm)(273 + T_tyre)/(273 + 20), the cold set at 20 C.
-// TYRE_P_REF: the cold placard pressure TYRE_KZ and the compounds' Crr stand for, ~230 kPa on a 205/55R16 (PROBABLE,
+// Not modelled: the friction's own pressure term (Magic Formula 6.1's ppy3/ppy4), which measurements show to be tyre
+// dependent with no general sign (Schmeitz, Besselink & Jansen, VSD 43 suppl., 2005); the cornering stiffness's.
+// TYRE_P_REF: the cold placard pressure the compounds' mu and Crr stand for, ~230 kPa on a 205/55R16 (PROBABLE,
 // door placards of mid-size cars).
+const ETRTO_P0=44.5, ETRTO_P_LI=250;
+const tyreLoadShare=kPa=>Math.min(1,(kPa+ETRTO_P0)/(ETRTO_P_LI+ETRTO_P0));      // of the load index
+const tyreRefScale=kPa=>kPa?tyreLoadShare(kPa)/tyreLoadShare(TYRE_P_REF):1;      // FzRef's move from TYRE_P_REF
 const TYRE_P_REF=230, TYRE_P_ALPHA=-0.4, P_ATM_KPA=101.3;
 const tyreColdKPa=(v,front)=>v&&v.tyrePart?v.tyrePart[front?'front_kPa':'rear_kPa']:null;
 const tyreHotKPa=(cold,tC)=>(cold+P_ATM_KPA)*(273.15+tC)/293.15-P_ATM_KPA;
@@ -373,7 +388,7 @@ function quarterCar(v,ax){
   const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);
-  return {ms,mu,ks,cs,kt:TYRE_KZ*Math.sqrt(tw*od)/TYRE_KZ_REF*(p?p/TYRE_P_REF:1)};
+  return {ms,mu,ks,cs,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
 }
 // The quarter car's response to the road at frequency f (Hz), for a road movement of 1 m: the tyre's load swing (N)
 // and the body's acceleration (m/s2), as squared magnitudes.

@@ -97,8 +97,12 @@ const R = await page.evaluate(() => {
   // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
   { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);
       for (let i = 0; i < 100; i++) stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); return s; };
-    const flat = run(null), fall = run({ sinT: -0.05 }), crest = run({ kv: -0.5 * 9.81 / (v0 * v0) }), dip = run({ kv: 0.5 * 9.81 / (v0 * v0) }), sum = s => s.Fz.reduce((a, b) => a + b, 0);
-    out.road = { want: 9.81 * 0.05 * car.m / (car.m + 4 * car.Iw / (car.r * car.r)), dA: (fall.vx - flat.vx) / 1.0, crest: sum(crest) / sum(flat), dip: sum(dip) / sum(flat), air: sum(run({ kv: -2 * 9.81 / (v0 * v0) })) / sum(flat) }; }
+    // the wheel loads over the second second (build 418): the body is still bouncing at 1 s, so one instant reads the
+    // bounce's phase (a softer tyre moved it by 0.02), not the steady m v2 kv the check is about
+    const sum = s => s.Fz.reduce((a, b) => a + b, 0), held = road => { const s = run(road); let m = 0;
+      for (let i = 0; i < 100; i++) { stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); m += sum(s) / 100; } return m; };
+    const flat = run(null), fall = run({ sinT: -0.05 }), fz0 = held(null);
+    out.road = { want: 9.81 * 0.05 * car.m / (car.m + 4 * car.Iw / (car.r * car.r)), dA: (fall.vx - flat.vx) / 1.0, crest: held({ kv: -0.5 * 9.81 / (v0 * v0) }) / fz0, dip: held({ kv: 0.5 * 9.81 / (v0 * v0) }) / fz0, air: held({ kv: -2 * 9.81 / (v0 * v0) }) / fz0 }; }
   // ---- the tyre's stiffness per unit load, at 2/3, 1 and 4/3 of its reference load (build 267)
   { const car = load('Subaru Impreza'), a = 1e-5; out.cc = [2 / 3, 1, 4 / 3].map(x => driveTyre(car, x * car.FzRef, 0, a, false)[1] / (x * car.FzRef * a));
     out.ccCar = car.cc; out.ccType = TIRE_TYPE[vehicle.tireType].cc * 180 / Math.PI; }
