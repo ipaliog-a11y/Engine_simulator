@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The scope shows the signals you pick, the O2 sensor's voltage among them (build NNN)
+
+- The ECU laptop's scope (build 409) gets a row of buttons under it: pick up to four signals, one lane each. The default is still engine speed, manifold pressure, lambda and knock risk.
+- New on combustion cars: **O2 SENSOR (mV)**, the zirconia cell's voltage from the Nernst model already in `obd.js` (`lambdaSensorMv`), so the step at lambda 1 shows beside the lambda it comes from; also throttle, torque, power and coolant. Electric cars have their own list: pack voltage, current, winding temperature and charge by default, plus motor speed, torque and power.
+- The choice is kept per kind of car in `localStorage` (`pes.scopeCh`). Interface only: the fingerprint is identical.
+- Guide (LIVE page) and README say so. New text is English only (Greek paused).
+
 ### The guided build's finish screen: the build beside the car it started from (build 412)
 
 - Build 3 of `plans/guided-build.md`. FINISH and SKIP TO FINISH now open a finish screen instead of the VEHICLE tab:

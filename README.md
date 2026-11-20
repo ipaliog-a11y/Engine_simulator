@@ -190,7 +190,7 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   scorecard, a static result sheet with run data, and a diagnosis of what keeps the engine from running smoothly), **GUIDE** (a wiki: 60 pages in 9 sections, each climbing from real life to the game to the physics, with 8-bit pictures drawn in code, search and cross-links) and **OPTIONS** (sound,
   wear and **language**). The right column is context-aware: runtime Engine Controls while
   driving/on the dyno, the live **Performance** panel on VEHICLE, the **Lap Time** panel on
-  TRACK and the race's setup, timing tower and telemetry on RACE. LIVE and DYNO carry an ECU laptop: a scope, the fuel, spark and VE tables, the fault list, and the difference from a logged pull. The track instruments include an eight-light shift bar and a brake-temperature mark once a rotor passes 450 °C.
+  TRACK and the race's setup, timing tower and telemetry on RACE. LIVE and DYNO carry an ECU laptop: a scope of up to four signals you choose (the O2 sensor's voltage among them), the fuel, spark and VE tables, the fault list, and the difference from a logged pull. The track instruments include an eight-light shift bar and a brake-temperature mark once a rotor passes 450 °C.
 - **Vehicle & performance (new)** — pick a **chassis** (13 archetypes, each with its own weight,
   size, drivetrain and grip) and it arrives on its **factory spec**: the tyres, wheels, brakes,
   suspension, aero and gearbox that car would really wear, so a kei car turns up on skinny eco
