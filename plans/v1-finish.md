@@ -76,6 +76,14 @@ recorded numbers reports its range and the mean error against the real cars.
 
 Then the owner checks the finish line and tags v1.0.
 
+## Owner's answers (build 413)
+
+- The plan's builds run autonomously: a new session per build, merged when green, stopping for the owner when numbers
+  move beyond the plan.
+- `test56`: the 13B's 90% boost at 3175 rpm (real ~3000; since build 290) stays a named gap until after v1.0
+  (`SPOOL_KNOWN` in the test). Group 8's review build lists it.
+- A build that lets the scope's signals be chosen and plots the simulated lambda sensor runs alongside.
+
 ## Open questions for the owner
 
 1. **The finish line's wording** (open since build 363). Proposed: register empty or signed off, every car under 10%

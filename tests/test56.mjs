@@ -61,10 +61,14 @@ for (const e of r.engines) {
 // per TWO shaft turns, a four-stroke's, and a rotor fills a chamber every turn. Half the exhaust flow
 // spooled half a turbo. With the rate right it lights at ~2400 rpm, so the check is now the real car:
 // no later than an FD's ~3000.
-const SPOOL_REAL = 3000;
-console.log(`\n== 13B: EGT ${r.b13.egt} C, 90% boost at ${r.b13.r90} rpm (real ~${SPOOL_REAL}), power peak ${r.b13.peak} of ${r.b13.redline} ==`);
+// Build 290 gave each turbo of a sequential pair its own wheel, an intended change, and the 13B's 90%
+// point moved from 2975 to 3175 rpm. The owner ruled it a named gap until after v1.0 (build 413).
+// SPOOL_KNOWN may only shrink: it fails if the gap grows, and is removed once the 13B is back at ~3000.
+const SPOOL_REAL = 3000, SPOOL_KNOWN = 3175;
+console.log(`\n== 13B: EGT ${r.b13.egt} C, 90% boost at ${r.b13.r90} rpm (real ~${SPOOL_REAL}, known gap to ${SPOOL_KNOWN}), power peak ${r.b13.peak} of ${r.b13.redline} ==`);
 if (!(r.b13.egt >= 850)) fails.push(`13B exhaust ${r.b13.egt} C is below a rotary's real 850+`);
-if (!(r.b13.r90 <= SPOOL_REAL)) fails.push(`13B reaches 90% boost only at ${r.b13.r90} rpm, later than a real FD's ~${SPOOL_REAL}`);
+if (!(r.b13.r90 <= SPOOL_KNOWN)) fails.push(`13B reaches 90% boost only at ${r.b13.r90} rpm, later than the known gap's ${SPOOL_KNOWN} (real FD ~${SPOOL_REAL})`);
+else if (r.b13.r90 > SPOOL_REAL) console.log(`KNOWN GAP: 13B spools ${r.b13.r90 - SPOOL_REAL} rpm later than a real FD (since build 290; owner, build 413)`);
 if (!(r.b13.peak < r.b13.redline)) fails.push('the 13B peaks at its limiter again');
 
 if (errors.length) fails.push(...errors);
