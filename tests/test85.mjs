@@ -24,8 +24,10 @@ const r = await page.evaluate(() => {
   load('Golf GTI'); out.golf = lap();
   load('911 GT3'); out.gt3 = lap();
   load('M3 (E46'); out.m3 = lap(); out.m3Stock = isFactoryFit(readVehicleFromForm());
-  set('vhBarF', 2); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
-  set('vhBarF', -2); out.m3Soft = lap();
+  // build 419: a SPRINGS, BARS & DAMPERS part, the kit's with the front bar 2.25x as stiff, or 1/2.25 (diameter by the 4th root)
+  const bar = k => { const p = Object.assign(partFromFactory('kit', 'susp'), { id: '', name: 'BAR ' + k }); p.barDF_mm *= k ** 0.25; set('vhSuspPart', 'part:' + ensurePart(p)); };
+  bar(2.25); out.m3Stiff = lap(); out.m3StiffStock = isFactoryFit(readVehicleFromForm());
+  bar(1 / 2.25); out.m3Soft = lap();
   load('Huracán LP610'); out.hur = lap();
   set('vhTireWF', 305); out.hurSquare = lap();
   // the axles at a corner, steady and on the brakes

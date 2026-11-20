@@ -69,6 +69,10 @@ recorded numbers reports its range and the mean error against the real cars.
 12. **Spring, bar and damper rates from their parts** (`SPRING_STEP/BAR_STEP/DAMPER_STEP`). A coil spring's rate from
     wire diameter, coil diameter and active coils; a bar's from its diameter, arms and length; a damper's from its
     valve (the damper part's ratio, build 364). Presets keep their published rates where they exist.
+    *Build 420:* a SPRINGS, BARS & DAMPERS part replaces the six SOFT/STIFF steps: coil k = G d⁴/(8 D³ n), bar
+    (GJ/L)(MR t/a)², the damper's bound slope and rebound ratio, each at the wheel by MR². No preset carries a published
+    rate or the part, so unfitted cars keep the kit's and nothing moves (fingerprint identical). Open: hollow bars, arm
+    bending and bushes, progressive springs, the damper's valve (shims, blow-off).
 
 ## Group 7: data (sourcing only)
 

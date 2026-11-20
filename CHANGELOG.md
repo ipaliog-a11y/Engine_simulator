@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Springs, anti-roll bars and dampers are a part, their rates from their dimensions (build 420)
+
+`plans/v1-finish.md` build 12; retires `SPRING_STEP/BAR_STEP/DAMPER_STEP` from the fitted register (4 open, from 6).
+
+- **A new part, SPRINGS, BARS & DAMPERS** (PARTS tab, fitted from the VEHICLE tab), in place of the six SOFT −2 … STIFF +2 steps. Per axle:
+  - coil spring: wire, mean coil diameter, active coils; k = G d⁴ / (8 D³ n), G 77.2 GPa (chrome-silicon wire, Shigley table 10-5);
+  - anti-roll bar: diameter, arm, length; roll stiffness (G π d⁴/32 / L)(MR t / a)², G 79.3 GPa (Shigley table A-5; Milliken, RCVD ch. 16);
+  - damper: its bound slope (N·s/m, a dyno's figure) and rebound over bound, which the stepped car now reads (build 364's 3:1 when unfitted);
+  - motion ratios for the spring/damper and the bar: each at the wheel by MR².
+- **Unfitted cars keep the kit's rates**, so nothing moves: no preset carries a published spring, bar or damper rate, and none carries the part. START FROM writes the kit's rates on this car as a part (a 100 mm coil of 8 coils, a 1000 mm bar on 200 mm arms, motion ratio 1, the wire and bar sized to the rate): fitted as it starts, it moves nothing (≤ 6e-6). These starting dimensions are not any real car's.
+- **Cost:** the part replaces both axles' springs, bars and dampers, $2000 (the old per-axle step prices).
+- **Saves:** a build saved with steps or the old ROLL BALANCE now loads on the kit.
+- **Tests updated in the open:** `test85`, `test95`, `test127` and `test128` fit the part (the kit's, scaled to the old steps) where they set steps; the same behaviours hold, the numbers unchanged. `test127`'s part costs $2000, not one axle's $350; `test95`'s old save loads on the kit, not as a front bar; the Greek checks of the removed selects are dropped (Greek paused). `test157` checks the new select. `test166`: OPEN 6 → 4, also dropping `TYRE_KZ`, which build 418 retired but left in the register (test166 failed on `main`).
+- **New `test256`:** the formulas, motion ratios, the stepped car's rebound ratio, SAVE & FIT, the kit's part moving nothing.
+- **Left open:** hollow bars, the bar arms' bending and the bushes' give, progressive and preloaded springs, the damper's valve itself (shims and blow-off: its curve is taken as straight), and a separate damper motion ratio.
+
 ### Seventeen more real engines get their own valves (build 419)
 
 `plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
