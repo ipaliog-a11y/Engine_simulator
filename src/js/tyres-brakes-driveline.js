@@ -756,10 +756,20 @@ const CENTRE_DIFF={
   // rear driven, a viscous coupling to the front, no centre differential (PROBABLE)
   'Porsche 911 Turbo (993, 1995)':{type:'visc',f:0,vcu:true},
   'Lamborghini Diablo VT (1993)':{type:'visc',f:0,vcu:true},
-  'Lamborghini Murciélago LP640 (2006)':{type:'visc',f:0,vcu:true}
-  // the rest ('lock'): Haldex (RS3, Huracán), xDrive (X5 M), PTM (Cayenne, 992 Turbo S), ATTESA E-TS (R34, R35),
-  // ACD (Evo IX), DCCD in its automatic mode (Impreza STI), GR-FOUR (GR Yaris), Quadra-Trac (Grand Cherokee SRT),
-  // the Raptor's 4A, the Focus RS's twin rear clutches: all electronically controlled clutches (PROBABLE).
+  'Lamborghini Murciélago LP640 (2006)':{type:'visc',f:0,vcu:true},
+  // Clutches with a published limit (build 403): f 0 or 1 names the primary axle; the clutch passes the other at most
+  // L x the drive torque.
+  // ATTESA E-TS: 0:100 in normal driving, "adjusted up to 50:50": Nissan Europe newsroom, 2017 GT-R
+  'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5},
+  // ATTESA E-TS Pro: the same 0:100 to 50:50 (Nissan; the ATTESA literature, PROBABLE for this car)
+  'Nissan Skyline GT-R V-spec (R34, 1999)':{type:'lock',f:0,L:0.5},
+  // front driven, "a maximum of 70% of drive torque to the rear axle": Ford of Europe, Focus RS AWD technical sheet
+  'Ford Focus RS (Mk3, 2016)':{type:'lock',f:1,L:0.7}
+  // Left open: the 992 Turbo S's PTM, "up to 500 Nm to the front wheels" (Porsche press kit), as 500 N m on the
+  // propshaft cuts its stepped 0-100 from 2.87 to 3.24 s (Porsche: 2.7); where the 500 is measured is not published.
+  // the rest ('lock', no limit published): Haldex (RS3, Huracán), xDrive (X5 M), PTM (Cayenne, 992), ACD (Evo IX),
+  // DCCD in its automatic mode (Impreza STI), GR-FOUR (GR Yaris: a mode's split, not a limit), Quadra-Trac (Grand Cherokee SRT),
+  // the Raptor's 4A: all electronically controlled clutches (PROBABLE).
 };
 function centreCoupling(v){
   const e=CENTRE_DIFF[v&&v.body&&v.body.name];

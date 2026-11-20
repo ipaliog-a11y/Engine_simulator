@@ -841,12 +841,16 @@ function stepCar(car,s,u,dt){
     // All-wheel drive: the centre coupling (build 320, by type: centreCoupling). 'lock', an electronically controlled
     // clutch: the two axles turn together, the clutch closed on the first slip (no maker publishes its control map, so
     // this is PROBABLE), the torque going to the axle that can use it; open under the brakes, as these systems are, so
-    // the anti-lock works on each axle alone. The others are mechanical and work on the brakes too: an open centre
+    // the anti-lock works on each axle alone; where a limit is published (build 403) the secondary axle gets at most
+    // that. The others are mechanical and work on the brakes too: an open centre
     // passes nothing between the axles beyond its split; a Torsen holds them up to lock x the input torque; a viscous
     // coupling passes c x the difference of the axles' mean speeds. Each as the axle's differential above: Karnopp's
     // stick torque, the one that leaves the two axles' mean speeds equal after this step, taken from the faster.
     if(car.centre&&nd===4&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
       let Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
+      const C=car.centre;if(!CD&&C.L>0){   // the limit: the secondary axle (front if f is 0) takes between nothing and it
+        const b=C.L*Tw,lo=Math.min(0,b),hi=Math.max(0,b);
+        Tc=C.f===0?Math.max(Tw/2-hi,Math.min(Tw/2-lo,Tc)):Math.max(lo-Tw/2,Math.min(hi-Tw/2,Tc));}
       if(CD&&CD.type==='fric'){const cap=(CD.pre||0)+CD.L*Math.abs(Tw);Tc=Math.max(-cap,Math.min(cap,Tc));}
       else if(CD&&CD.type==='visc'){const k=h*inv/4;Tc=CD.c*(Tc*k)/(1+CD.c*k);}
       for(let q=0;q<4;q++)s.w[q]+=(q<2?-1:1)*h*Tc/2/(car.Iw+h*car.r*dF[q]);}
