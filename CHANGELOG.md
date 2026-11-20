@@ -41,7 +41,7 @@ Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
   2005). An XL tyre's load table (290 kPa) is not used. Rhyne's original paper was paywalled: its constants come
   from the thesis's text and code.
 
-Tests: test193 (updated); 96 lap, brake, drive and tyre tests rerun.
+Tests: test193 (updated); test168 now averages the wheel loads over a crest or dip across the second second, because a single instant read the bounce's phase (with the softer tyre it read 1.56 against a 1.55 limit; averaged, main and this build both read 1.47; bands unchanged). 96 lap, brake, drive and tyre tests rerun.
 ### The kit wing is a wing part, from its span, chord, angle and camber (build 415)
 
 - The FRONT and REAR AERO kit WING no longer carries a fitted ClA (0.60 / 0.75 times the class's aero factor) and ΔCd
