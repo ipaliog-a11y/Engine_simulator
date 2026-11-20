@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### No picture strip under the menus, a two-row top menu and a compact challenge card on phones (build 419)
+
+- The picture strip under the BUILD / TEST / DRIVE bar (workshop, garage, pit) is gone in every mode. The title screen keeps its pictures.
+- On a phone (≤900 px wide) the top strip is two short rows: engine | car, then FILE · GUIDE · OPTIONS · MENU. The ENGINE and CAR labels are dropped there, and MENU no longer runs off the right edge.
+- On a phone the challenge result shows three smaller tiles to a row instead of two: 12 tiles take 4 rows, not 6.
+- `test240` now checks that the strip stays gone, instead of checking its pictures.
+
 ### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
 
 Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
