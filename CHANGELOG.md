@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### test72 opens DRIVE before it taps RACE on a phone (build 421)
+
+- `test72` failed on `main`: its phone pass tapped RACE while TEST was the open section. Since build 394 the bar shows only the open section's tabs on every screen, so RACE (under DRIVE) is hidden there. That was on purpose; the app is fine.
+- The test now opens DRIVE first, as a person would. No change to the app; fingerprint identical.
+
 ### Springs, anti-roll bars and dampers are a part, their rates from their dimensions (build 420)
 
 `plans/v1-finish.md` build 12; retires `SPRING_STEP/BAR_STEP/DAMPER_STEP` from the fitted register (4 open, from 6).
