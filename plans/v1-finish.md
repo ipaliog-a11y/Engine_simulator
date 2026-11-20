@@ -50,6 +50,10 @@ recorded numbers reports its range and the mean error against the real cars.
 10. **A splitter and the floor** (`AERO_FLOOR`). The splitter's lift from its area and height; the floor's downforce
     from its length, diffuser angle and ride height at the static height (Zhang, Toet & Zerihan, ground-effect
     measurements). Ride height in motion stays after v1.0.
+    **Moved after v1.0** (owner, build 417): the ground-effect measurements could not be reached (every copy returned
+    403) and no preset's floor or splitter geometry is sourced, so a model would have to pick geometry. `AERO_FLOOR`,
+    the splitter row and the Radical SR3's fitted `body.aero` 1.09 (now its diffuser only) stay named gaps at v1.0,
+    and come back with group 3's ride height in motion.
 11. **Tyre pressure into grip, rated load and stiffness** (`TYRE_KZ`). Vertical stiffness from pressure and size
     (Rhyne; Pacejka, *Tyre and Vehicle Dynamics*), rated load from the ETRTO load index, grip's load sensitivity at
     the set pressure.
@@ -97,4 +101,5 @@ Then the owner checks the finish line and tags v1.0.
    or on the named list with its reason.
 2. **`catRampTop`** (build 8): if no measured back pressure is found, does it stay a rule until after v1.0?
 3. **Valves** (builds 1–4): may an engine with no source stay on the ratio, named, at v1.0?
-4. **Group 2's aero**: with group 3 after v1.0, is a static floor and splitter enough for v1.0?
+4. ~~**Group 2's aero**: with group 3 after v1.0, is a static floor and splitter enough for v1.0?~~ Answered (build
+   417): no; the floor and splitter wait for group 3 and stay named gaps at v1.0 (build 10 above).
