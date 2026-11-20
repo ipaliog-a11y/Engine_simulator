@@ -388,7 +388,7 @@ bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
 bindShowcase();
-bindGuided();
+bindGuided();bindShape();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).

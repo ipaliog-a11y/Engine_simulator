@@ -141,14 +141,33 @@ paused (AGENTS.md section 0): strings go through `tr()` only.
 1. **The step list.** Is the order above right: engine first (block, fuel, compression, boost, head, redline,
    breathing), then the car (body, mass, gearing, tyres)? *Recommendation: yes. The car's steps are short, and
    the engine is what learners come for.*
+   **Owner: yes, as recommended, build 363 session.**
 2. **How many steps.** The NA list has 11 steps (12 with boost). Cut it to 7 by leaving breathing, mass and tyres to
    ADVANCED? *Recommendation: keep 11, with SKIP TO FINISH on every step.*
+   **Owner: yes, as recommended, build 363 session.**
 3. **Timing.** Keep `edTiming` AUTO in the walk-through, with FIXED only on the card? *Recommendation: yes.*
+   **Owner: yes, as recommended, build 363 session.**
 4. **Rotary and two-stroke.** Give them their own branch (as above), or offer them only on the cards?
    *Recommendation: their own branch. It costs only skip rules.*
+   **Owner: yes, as recommended, build 363 session.**
 5. **Hybrid.** Combustion steps, then the hybrid motor and pack (as above), or the engine only?
    *Recommendation: as above. The EV cards already have a hybrid branch.*
+   **Owner: yes, as recommended, build 363 session.**
 6. **Vehicle-step hints at ~1 s each.** Run them when the step opens (with a "working" mark), or only on a HINT
    button? *Recommendation: when the step opens, cancelled if a field moves.*
+   **Owner: yes, as recommended, build 363 session.**
 7. **The size of a hint's step.** 5% of the range, or the next real-engine tick? *Recommendation: whichever is
    closer, so the hint stays local and anchored to real parts.*
+   **Owner: yes, as recommended, build 363 session.**
+
+## Build 1 done (walk-through)
+
+- `src/js/guided-build.js`: **SHAPE IT** beside BUILD THIS CAR loads the car and opens the steps (`GW_STEPS`, `gwSteps`).
+  Each step proxies the card's own inputs (value + `input`/`change` events), with the card's ticks and its `what` line.
+  BACK, NEXT/FINISH, SKIP TO FINISH, ADVANCED (closes on that field's card). FINISH runs `buildEngine` only if an engine
+  or drive field moved. Test: `tests/test247.mjs`.
+- Detail not in the tables above: `edIntake` sits in step 4 (now "Compression and air"), not 4a, so that 4a ("Boost":
+  turbo size, supercharger, boost, intercooler) can drop out on an NA engine and come back when the intake changes.
+- Skips come from the form's own disabled fields: diesel has no FUEL step; rotary and two-stroke no HEAD step; BOOST
+  shows on the factory rotary (it is a turbo). Steps 3–4 say so when the car's timing is FIXED.
+- Left for builds 2–3: the goal hints, the knock bar in a step, the finish screen (FINISH now opens the VEHICLE tab).

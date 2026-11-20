@@ -542,7 +542,15 @@ body.guided-open{overflow:hidden}
 .gb-parts{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:7px;line-height:1.7;color:#bbc}
 .gb-parts b{color:#00ff88;font-weight:normal}
 .gb-parts i{font-style:normal;color:#667}
-.gb-act{display:grid;margin:8px 0}
+.gb-act{display:grid;gap:8px;margin:8px 0}
+.gw-f{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:6px 10px;align-items:center;margin:0 0 14px}
+.gw-f label{grid-column:1/-1;font-size:8px;color:#00ff88}
+.gw-f select{grid-column:1/-1;min-width:0;font-size:8px}
+.gw-f .gw-track{grid-column:1}
+.gw-f input[type=number]{min-width:0;width:100%;box-sizing:border-box;font-size:8px}
+.gw-what{grid-column:1/-1;font-size:7px;line-height:1.7;color:#aab;margin:0}
+.gw-note{color:#ffcc00;margin:0 0 12px}
+.gw-act{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
 .sc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,#1a1a2e 0%,#0a0a12 100%);border-bottom:4px solid #333}
 .sc-bar h2{font-size:12px;color:#ffcc00;text-shadow:2px 2px 0 #000,-1px -1px 0 #aa6600;font-weight:normal;letter-spacing:1px}
 .sc-count{flex:1;font-size:7px;color:#667}
@@ -1169,7 +1177,7 @@ This app is that whole workshop in one page. You are the engineer: you choose ev
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="loop">
-New to cars? <b>GUIDED BUILD</b> on the menu asks three questions and hands you a real car, each part explained. <b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
+New to cars? <b>GUIDED BUILD</b> on the menu asks three questions and hands you a real car, each part explained; <b>SHAPE IT</b> then walks you through its design one decision at a time. <b>1. ENGINE</b> — design an engine in six cards (block, head &amp; valves, air &amp; boost, intake &amp; exhaust, fuel &amp; spark, cooling &amp; electrics), then press <b>BUILD &amp; DYNO</b>. <b>2. DYNO</b> reads the full power/torque curve and a graded scorecard. <b>3. LIVE</b> is a running test bench: you set <b>THROTTLE</b> and <b>LOAD</b> and watch the engine respond in real time. You never set RPM directly — you drive it.<br>Then put it in a car on <b>VEHICLE</b> and take it to a circuit on <b>TRACK</b>. Every number in the app comes out of the same physics, so a change you make on the ENGINE tab shows up in the 0–100, the top speed and the lap time.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -34053,7 +34061,7 @@ const CAR_PRICE={
   "BAC Mono 2.3 (2011)":77200,
   "Nissan 370Z (Z34, 2009)":32950,
   "Honda NSX (NA1, 1991)":54550,
-  "Ford F-150 Raptor (2017)":44350,
+  "Ford F-150 Raptor (2017)":44550,
   "Nissan GT-R (R35, 2017)":52000,
   "Alfa Romeo Giulia Quadrifoglio (2017)":44500,
   "Nissan 300ZX Twin Turbo (Z32, 1990)":36500,
@@ -34094,13 +34102,13 @@ const CAR_PRICE={
   "Toyota Hilux 2.8 D-4D (2016)":36450,
   "Volkswagen Amarok 3.0 V6 TDI (2018)":45200,
   "Chevrolet Camaro ZL1 (2017)":47150,
-  "Tesla Model 3 RWD (2021)":33150,
-  "Tesla Model Y Long Range (2022)":46674,
-  "Tesla Model S Plaid (2021)":76613,
-  "Hyundai Ioniq Hybrid (2016)":35320,
+  "Tesla Model 3 RWD (2021)":33547,
+  "Tesla Model Y Long Range (2022)":47070,
+  "Tesla Model S Plaid (2021)":76604,
+  "Hyundai Ioniq Hybrid (2016)":35321,
   "Toyota Prius (2016)":24811,
-  "Nissan Qashqai e-POWER (2022)":31912,
-  "BMW 330e (2020)":37773,
+  "Nissan Qashqai e-POWER (2022)":32313,
+  "BMW 330e (2020)":37774,
   "Porsche 918 Spyder (2013)":129133
 };
 // ====== GUIDED BUILD (build 308, phase G) ======
@@ -34117,7 +34125,7 @@ const GB_BUDGETS=[20000,30000,45000,60000,80000,Infinity];
 const GB_GOALS={quick:{label:'QUICKEST',why:'the quickest 0–100 its maker published'},
   light:{label:'LIGHTEST',why:'the lightest, which is the easiest to learn on: less mass to stop and turn'},
   cheap:{label:'CHEAPEST',why:'the lowest build price'}};
-const guided={open:false,step:0,fam:null,budget:Infinity,goal:'quick',pick:0,from:null};
+const guided={open:false,step:0,fam:null,budget:Infinity,goal:'quick',pick:0,from:null,ws:0,dirty:false};
 const gbPrice=p=>CAR_PRICE[p.name];
 function gbCars(fam){return FACTORY_CARS.map((p,i)=>({p,i})).filter(x=>x.p.cat===fam);}
 // The cars that answer all three questions, best first. If none is within the budget, the cheapest of the family is
@@ -34185,7 +34193,8 @@ function gbResult(){
     '<h4>'+esc(tr('WHY THESE PARTS'))+'</h4><ul class="gb-parts">'+gbExplain(p).map(([tab,part,w])=>
       '<li><b>'+esc(part)+'</b> <i>'+esc(tr(tab))+'</i><br>'+esc(w)+'</li>').join('')+'</ul>'+
     '<p class="sc-src">'+esc(tr('Every part stays open on its card: change any of them once the car is built.'))+'</p>'+
-    '<div class="gb-act"><button type="button" id="gbBuild" class="sc-drive">'+esc(tr('BUILD THIS CAR'))+'</button></div>'+
+    '<div class="gb-act"><button type="button" id="gbBuild" class="sc-drive">'+esc(tr('BUILD THIS CAR'))+'</button>'+
+    '<button type="button" id="gbShape">'+esc(tr('SHAPE IT'))+'</button></div>'+
     (n>1?'<h4>'+esc(tr('OR'))+'</h4><div class="gb-opts">'+M.list.slice(0,4).map((y,k)=>k===guided.pick?'':
       gbChoice('pick',k,y.p.name,fmtCost(gbPrice(y.p)),false)).join('')+'</div>':'')+'</div>';
 }
@@ -34208,12 +34217,13 @@ function renderGuided(){
       return gbChoice('budget',b,b===Infinity?tr('NO LIMIT'):tr('UP TO')+' '+fmtCost(b),n+' '+tr(n===1?'car':'cars'),b===guided.budget);}).join(''));
   }else if(guided.step===2){
     html=gbQuestion(3,'What matters most?',Object.keys(GB_GOALS).map(k=>gbChoice('goal',k,tr(GB_GOALS[k].label),'',k===guided.goal)).join(''));
-  }else html=gbResult();
+  }else if(guided.step===3)html=gbResult();
+  else html=gwRender();
   box.innerHTML=html;
 }
 // each step opens at its top: the result's first control is below the car's picture and parts, so it takes focus unscrolled
 function gbFocus(){const box=document.getElementById('gbBody');if(box)box.scrollTop=0;
-  requestAnimationFrame(()=>{const b=document.querySelector(guided.step===3?'#gbBuild':'#gbBody .gb-opt');if(b)b.focus({preventScroll:true});});}
+  requestAnimationFrame(()=>{const b=document.querySelector(guided.step===3?'#gbBuild':guided.step===4?'#gwNext':'#gbBody .gb-opt');if(b)b.focus({preventScroll:true});});}
 function openGuided(from){
   const el=document.getElementById('guided');if(!el)return;
   guided.from=from||null;guided.step=0;guided.pick=0;
@@ -34225,7 +34235,7 @@ function closeGuided(stay){
   el.hidden=true;guided.open=false;document.body.classList.remove('guided-open');
   if(!stay&&guided.from==='title')openTitleScreen();
 }
-function gbBack(){if(guided.step>0){guided.step--;guided.pick=0;renderGuided();gbFocus();}else closeGuided();}
+function gbBack(){if(guided.step===4&&guided.ws>0){guided.ws--;renderGuided();gbFocus();}else if(guided.step>0){guided.step--;guided.pick=0;renderGuided();gbFocus();}else closeGuided();}
 // The same load as the FACTORY CAR picker, then the VEHICLE tab, where the car's parts are open on their cards.
 function gbBuild(){
   const x=gbMatches().list[guided.pick];if(!x)return;
@@ -34238,6 +34248,11 @@ function bindGuided(){
     const d=b.dataset;
     if(b.id==='gbClose')gbBack();
     else if(b.id==='gbBuild')gbBuild();
+    else if(b.id==='gbShape'){const x=gbMatches().list[guided.pick];if(x)gbShapeCar(x.i);return;}
+    else if(b.id==='gwNext'){const n=gwSteps().length;if(guided.ws<n-1)guided.ws++;else{gwFinish();return;}}
+    else if(b.id==='gwSkip'){gwFinish();return;}
+    else if(b.dataset.adv!=null){gwAdvanced(b.dataset.adv);return;}
+    else if(d.v!=null){const c=document.getElementById(d.f);if(c&&!c.disabled){c.value=d.v;gwSend(c,true);}}
     else if(d.fam!=null){guided.fam=d.fam;guided.budget=Infinity;guided.step=1;}
     else if(d.budget!=null){guided.budget=+d.budget;guided.step=2;}
     else if(d.goal!=null){guided.goal=d.goal;guided.pick=0;guided.step=3;}
@@ -34249,6 +34264,122 @@ function bindGuided(){
     if(el.hidden||e.key!=='Escape')return;
     gbBack();e.preventDefault();e.stopPropagation();
   },true);
+}
+
+// ====== SHAPE IT: the walk-through (build G8; plans/guided-build.md, build 1) ======
+// After the three questions, SHAPE IT loads the matched car and walks through its design one decision at a time. Each step
+// shows one to four fields of one card, and edits the real form: a change here writes the card's own input and sends it
+// the events a person's change would, so the card's preview, its coupled fields (syncDesignEnable) and the VEHICLE
+// tab's live rebuild all run as they do on the cards. Nothing is computed here. A step whose fields are all disabled is
+// skipped, and the list is worked out again after every change. FINISH builds the engine only if an engine field moved,
+// so skipping every step leaves the factory car exactly as it loaded. Timing stays as the car has it (AUTO or FIXED):
+// it is set on the FUEL & SPARK card only.
+const GW_STEPS={
+  cyl:{t:'Cylinders and layout',rot:'Rotors',f:['edCyl','edLayout']},
+  bore:{t:'Bore and stroke',rot:'Rotor size',f:['edBore','edStroke','edEcc']},
+  fuel:{t:'Fuel',f:['edFuel','edOctane'],timing:1},
+  cr:{t:'Compression and air',f:['edCR','edIntake'],timing:1},   // the intake comes before the boost it enables
+  boost:{t:'Boost',f:['edTurboSize','edScType','edBoost','edIntercooler']},
+  head:{t:'Head and cam',f:['edValves','edCam','edVVT']},
+  redline:{t:'Redline',f:['edRedline','edGovRpm']},
+  breath:{t:'Breathing',f:['edRunner','edExhaust']},
+  hybrid:{t:'Hybrid layout',f:['edHybrid','edHyDeploy','edHyPlug']},
+  motor:{t:'Motor kind',f:['evMotorType']},
+  msize:{t:'Motor size',f:['evRotorD','evStack']},
+  wind:{t:'Winding',f:['evTurns']},
+  amps:{t:'Inverter current',f:['evAmps']},
+  pack:{t:'Battery',f:['evChem','evSeries','evKWh']},
+  more:{t:'More motors',f:['evFront','evRearCount']},
+  body:{t:'Body and drive',f:['vhChassis','vhDrive']},
+  mass:{t:'Mass',f:['vhWeight']},
+  gears:{t:'Gearbox and gearing',f:['vhGearbox','vhGears','vhGearing']},
+  fd:{t:'Final drive',f:['vhGearing']},
+  tyres:{t:'Tyres',f:['vhTire','vhTireW']}
+};
+const gwEl=id=>document.getElementById(id);
+const gwOn=id=>{const c=gwEl(id);return !!c&&!c.disabled;};
+// The steps for the car in the form, in order: the engine (or the drive), then the car.
+function gwSteps(){
+  const ev=(gwEl('edType')||{}).value==='electric',hy=!ev&&(gwEl('edHybrid')||{}).value!=null&&gwEl('edHybrid').value!=='none';
+  const keys=ev?['motor','msize','wind','amps','pack','more','body','mass','fd','tyres']:
+    ['cyl','bore','fuel','cr','boost','head','redline','breath'].concat(hy?['hybrid','msize','amps','pack']:[],['body','mass','gears','tyres']);
+  return keys.filter(k=>GW_STEPS[k].f.some(gwOn));
+}
+const gwCards=id=>id.startsWith('ev')?EVD:id.startsWith('vh')?VCD:ICD;
+// One field as the card has it: its label, a slider with the real examples' ticks for a number, the list for a choice,
+// and the card's own line on what it is.
+function gwField(id){
+  const c=gwEl(id),f=c&&c.closest('.field'),dc=gwCards(id),spec=dc.cfg.fields[id]||{};
+  const lab=f&&f.querySelector('label'),name=lab?lab.textContent:id;
+  let h='<div class="gw-f"><label for="gw-'+id+'">'+esc(name)+'</label>';
+  if(c.tagName==='SELECT'){
+    h+='<select id="gw-'+id+'" data-f="'+id+'">'+[...c.options].filter(o=>!o.disabled||o.selected).map(o=>
+      '<option value="'+esc(o.value)+'"'+(o.value===c.value?' selected':'')+'>'+esc(o.textContent)+'</option>').join('')+'</select>';
+  }else{
+    const lo=+c.min,hi=+c.max,v=+c.value,log=!!spec.log&&c.type==='number';
+    const pos=x=>Math.max(0,Math.min(100,log?Math.log(Math.max(x,lo)/lo)/Math.log(hi/lo)*100:(x-lo)/(hi-lo)*100));
+    let ticks=[];if(c.type==='number')try{ticks=dc.cfg.ticks(id)||[];}catch(e){ticks=[];}
+    h+='<div class="evd-track gw-track">'+(ticks.length?'<span class="evd-band" style="left:'+pos(ticks[0].v)+'%;width:'+
+      Math.max(1.5,pos(ticks[ticks.length-1].v)-pos(ticks[0].v))+'%"></span>':'')+
+      '<input type="range" min="0" max="1000" step="1" value="'+Math.round(pos(v)*10)+'" data-f="'+id+'" data-k="1"'+(log?' data-log="1"':'')+
+      ' aria-label="'+esc(name)+'">'+ticks.map(t=>'<button type="button" class="evd-tick" style="left:'+pos(t.v)+'%" data-f="'+id+'" data-v="'+t.v+
+      '" title="'+esc(t.names.slice(0,4).join(', ')+': '+dcFmt(t.v,t.v%1?2:0))+'" aria-label="'+esc(tr('Set to')+' '+t.names[0]+': '+dcFmt(t.v,t.v%1?2:0))+'"></button>').join('')+'</div>'+
+      (c.type==='number'?'<input type="number" id="gw-'+id+'" data-f="'+id+'" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+esc(c.value)+'">':'');
+  }
+  return h+(spec.what?'<p class="gw-what">'+esc(tr(spec.what))+'</p>':'')+'</div>';
+}
+function gwRender(){
+  const L=gwSteps();guided.ws=Math.max(0,Math.min(guided.ws,L.length-1));
+  const k=L[guided.ws],S=GW_STEPS[k],rot=(gwEl('edType')||{}).value==='rotary',last=guided.ws===L.length-1;
+  const fixed=S.timing&&gwOn('edTiming')&&gwEl('edTiming').value==='fixed';
+  return '<p class="gb-step" id="gwStep" data-k="'+k+'">'+esc(tr('STEP'))+' '+(guided.ws+1)+' / '+L.length+'</p>'+
+    '<h3>'+esc(tr(rot&&S.rot||S.t))+'</h3>'+S.f.filter(gwOn).map(gwField).join('')+
+    (fixed?'<p class="gw-what gw-note">'+esc(tr('This car\'s spark timing is FIXED, so the ECU does not advance it to the knock limit. Timing is set on the FUEL & SPARK card.'))+'</p>':'')+
+    '<div class="gw-act"><button type="button" id="gwNext" class="sc-drive">'+esc(tr(last?'FINISH':'NEXT'))+'</button>'+
+    (last?'':'<button type="button" id="gwSkip">'+esc(tr('SKIP TO FINISH'))+'</button>')+
+    '<button type="button" data-adv="'+S.f.find(gwOn)+'">'+esc(tr('ADVANCED'))+'</button></div>';
+}
+// Write the card's input as a person would: input while a slider moves, change (and a fresh step list) when it settles.
+function gwSend(c,done){
+  if(!c.id.startsWith('vh'))guided.dirty=true;
+  c.dispatchEvent(new Event('input',{bubbles:true}));
+  if(!done)return;
+  c.dispatchEvent(new Event('change',{bubbles:true}));
+  const a=document.activeElement,fid=a&&a.dataset&&a.dataset.f,kind=a&&a.dataset&&a.dataset.k;
+  renderGuided();
+  const back=fid&&document.querySelector('#gbBody [data-f="'+fid+'"]'+(kind?'[data-k]':':not([data-k]):not(.evd-tick)'));if(back)back.focus({preventScroll:true});
+}
+function gwInput(e,done){
+  const t=e.target,c=t.dataset&&t.dataset.f?gwEl(t.dataset.f):null;if(!c||c.disabled||guided.step!==4)return;
+  if(t.dataset.k){
+    const lo=+c.min,hi=+c.max,x=t.dataset.log?lo*Math.pow(hi/lo,t.value/1000):lo+(hi-lo)*t.value/1000,s=+c.step||1;
+    c.value=+(Math.round(x/s)*s).toFixed(4);
+    const box=document.getElementById('gw-'+c.id);if(box)box.value=c.value;
+  }else if(t.tagName==='SELECT'){if(!done)return;c.value=t.value;}
+  else{if(t.value==='')return;c.value=t.value;}
+  gwSend(c,done);
+}
+function gbShapeCar(i){
+  setTab('vehicle');loadFactoryCarUI(i);
+  guided.step=4;guided.ws=0;guided.dirty=false;
+  if(guided.open){renderGuided();gbFocus();}
+}
+// The full card for a step's field: the dialog closes on that card, opened.
+function gwAdvanced(id){
+  const c=gwEl(id),card=c&&c.closest('.evd-card'),dc=gwCards(id);
+  closeGuided(true);setTab(id.startsWith('vh')?'vehicle':'design');
+  if(card&&dc.st.ready){dc.st.card=card.id.slice((dc.p+'Card-').length);dc.layout();card.scrollIntoView({block:'nearest'});}
+}
+// FINISH: build the engine (and so the car) only if an engine field moved; then the car on the VEHICLE tab.
+function gwFinish(){
+  closeGuided(true);
+  if(guided.dirty){buildEngine();guided.dirty=false;}
+  setTab('vehicle');
+}
+function bindShape(){
+  const el=document.getElementById('guided');if(!el)return;
+  el.addEventListener('input',e=>gwInput(e,false));
+  el.addEventListener('change',e=>gwInput(e,true));
 }
 // The bench laptop: a scope, the fuel/spark/VE tables, the fault list and a pull or lap delta.
 // It reads the running state. It does not change the engine model.
@@ -34805,7 +34936,7 @@ bindTrackPage();
 sizeCanvas();updatePhysics();updateUI();requestAnimationFrame(loop);
 bindTitleScreen();
 bindShowcase();
-bindGuided();
+bindGuided();bindShape();
 if(titleOnLoad())openTitleScreen();
 
 // Register service worker for offline/installable PWA (no-op on file://).
