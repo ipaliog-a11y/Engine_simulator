@@ -107,6 +107,7 @@ function renderGuided(){
   }else if(guided.step===3)html=gbResult();
   else html=gwRender();
   box.innerHTML=html;
+  gwHintQueue();
 }
 // each step opens at its top: the result's first control is below the car's picture and parts, so it takes focus unscrolled
 function gbFocus(){const box=document.getElementById('gbBody');if(box)box.scrollTop=0;
@@ -213,7 +214,7 @@ function gwField(id){
       '" title="'+esc(t.names.slice(0,4).join(', ')+': '+dcFmt(t.v,t.v%1?2:0))+'" aria-label="'+esc(tr('Set to')+' '+t.names[0]+': '+dcFmt(t.v,t.v%1?2:0))+'"></button>').join('')+'</div>'+
       (c.type==='number'?'<input type="number" id="gw-'+id+'" data-f="'+id+'" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+esc(c.value)+'">':'');
   }
-  return h+(spec.what?'<p class="gw-what">'+esc(tr(spec.what))+'</p>':'')+'</div>';
+  return h+(spec.what?'<p class="gw-what">'+esc(tr(spec.what))+'</p>':'')+(gwHintable(id)?'<p class="gw-hint" data-h="'+id+'">…</p>':'')+'</div>';
 }
 function gwRender(){
   const L=gwSteps();guided.ws=Math.max(0,Math.min(guided.ws,L.length-1));
@@ -230,7 +231,7 @@ function gwRender(){
 function gwSend(c,done){
   if(!c.id.startsWith('vh'))guided.dirty=true;
   c.dispatchEvent(new Event('input',{bubbles:true}));
-  if(!done)return;
+  if(!done){gwHintCancel();return;}
   c.dispatchEvent(new Event('change',{bubbles:true}));
   const a=document.activeElement,fid=a&&a.dataset&&a.dataset.f,kind=a&&a.dataset&&a.dataset.k;
   renderGuided();
@@ -267,4 +268,99 @@ function bindShape(){
   const el=document.getElementById('guided');if(!el)return;
   el.addEventListener('input',e=>gwInput(e,false));
   el.addEventListener('change',e=>gwInput(e,true));
+}
+
+// ====== Goal hints (build G9; plans/guided-build.md, build 2) ======
+// Under each field of a step, one line: what the next value down and the next value up do to the goal chosen in the
+// three questions, worked out by the card's own preview (icdCompute, evdCompute, or the car rebuilt as the VEHICLE tab
+// builds it), and the limit that value meets. A neighbour is 5% of the field's range away, or the nearest real
+// example's tick if that is closer; for a choice, the options either side of it. Nothing searches for a best value.
+// The form is put back after every run, and so are the engine (icdCompute does that) and the car (gwCarAt).
+// Fields that enable or disable others (fuel, intake, motor kind, hybrid layout...) get no hint: their neighbour would
+// be worked out on a form that syncDesignEnable has not set for it.
+const GW_COUPLED=ICD_DEPS.concat(EVD_SPEED_FIELDS,['edGovRpm','edHybrid','edHyDeploy']);
+// The goal's measures in each preview's result: [key, unit, decimals, which way is better].
+const GW_MEASURE={
+  ice:{quick:[['hp',' hp',0,1],['tq',' Nm',0,1]],light:[['mass',' kg',0,-1]],cheap:[['cost','$',0,-1]]},
+  ev:{quick:[['pk',' kW',0,1],['tq',' Nm',0,1]],light:[['kg',' kg',0,-1]],cheap:[['cost','$',0,-1]]},
+  car:{quick:[['t100',' s',2,-1]],light:[['mass',' kg',0,-1]],cheap:[['cost','$',0,-1]]}};
+const gwKind=id=>id.startsWith('vh')?'car':id.startsWith('ev')||id.startsWith('edHy')?'ev':'ice';
+const gwHintable=id=>!GW_COUPLED.includes(id);
+// The car as the VEHICLE tab would build it from the form now, with the live car and its run put back after.
+function gwCarAt(){
+  const keep={vehicle,perf,rev:vehRev,viz:vizMode};
+  try{vizMode='';buildVehicle();return vcdCompute();}
+  finally{vehicle=keep.vehicle;perf=keep.perf;vehRev=keep.rev;vizMode=keep.viz;if(typeof updateBuildStrip==='function')updateBuildStrip();}
+}
+function gwPreview(kind){
+  if(kind==='car')return gwCarAt();
+  if(kind==='ev'){const r=evdCompute();return r&&Object.assign(r,{kg:r.mass+r.packMass});}
+  return icdCompute();
+}
+// The value next to the field's own, one way (dir -1 or +1), or null at the end of its range.
+function gwNear(c,dir){
+  if(c.tagName==='SELECT'){
+    const o=[...c.options].filter(x=>!x.disabled||x.selected),i=o.findIndex(x=>x.value===c.value),n=o[i+dir];
+    return n?{v:n.value,t:n.textContent}:null;
+  }
+  const lo=+c.min,hi=+c.max,v=+c.value,s=+c.step||1;let x=v+dir*0.05*(hi-lo),t=[];
+  try{t=gwCards(c.id).cfg.ticks(c.id)||[];}catch(e){t=[];}
+  for(const k of t)if(dir>0?k.v>v&&k.v<x:k.v<v&&k.v>x)x=k.v;
+  x=Math.max(lo,Math.min(hi,+(Math.round(x/s)*s).toFixed(4)));
+  return (dir>0?x>v:x<v)?{v:x,t:dcFmt(x,s<1?(String(s).split('.')[1]||'').length:0)}:null;
+}
+// The limit a result meets, in the cards' own terms; '' if none.
+function gwLimit(kind,r){
+  if(kind==='ice'){
+    if(icdFloatShort(r))return tr('meets valve float at {f} rpm').replace('{f}',dcFmt(Math.round(r.float/100)*100));
+    if(icdKnockOver(r))return tr('knocks past its limit');
+  }else if(kind==='ev'){
+    if(r.nTip<Math.min(r.maxRpm||Infinity,r.nFreq)-1)return tr('the rotor rim stops the motor at {n} rpm').replace('{n}',dcFmt(Math.round(r.nTip/100)*100));
+    if(r.pk<r.pkM*0.99)return tr('the battery sets the peak');
+  }else{
+    if(vcdTyresShort(r))return tr('past the tyres\' speed rating');
+    if(vcdGripBound(r))return tr('grip-bound launch');
+  }
+  return '';
+}
+const gwSigned=(d,u,dp)=>(d>0?'+':d<0?'−':'±')+(u==='$'?'$':'')+dcFmt(Math.abs(d),dp)+(u==='$'?'':u);
+// One side of a field's hint: "Higher (7,000): +14 hp, +6 Nm, toward QUICKEST · meets valve float at 6,800 rpm".
+function gwHintSide(kind,dir,n,r0,r){
+  const M=GW_MEASURE[kind][guided.goal]||GW_MEASURE[kind].quick,head=tr(dir>0?'Higher':'Lower')+' ('+n.t+'): ';
+  if(!r)return head+tr('no result');
+  const parts=[],m=M[0],d0=r[m[0]]!=null&&r0[m[0]]!=null?+(r[m[0]]-r0[m[0]]).toFixed(m[2]):0;
+  for(const x of M){const d=r[x[0]]!=null&&r0[x[0]]!=null?+(r[x[0]]-r0[x[0]]).toFixed(x[2]):0;if(d)parts.push(gwSigned(d,x[1],x[2]));}
+  if(kind==='ice'&&r.ci&&r.rel!==r0.rel)parts.push(tr('reliability')+' '+gwSigned(r.rel-r0.rel,'',0));   // a diesel has no knock limit
+  const way=d0?tr(d0*m[3]>0?'toward {g}':'away from {g}').replace('{g}',tr(GB_GOALS[guided.goal].label)):'';
+  const lim=gwLimit(kind,r),txt=parts.concat(way?[way]:[]).join(', ');
+  return head+(txt||tr('no change'))+(lim?' · '+lim:'');
+}
+// Run the hints of the step on screen: one preview per job, a tick apart, so a moved field (gwHintCancel) stops them.
+let gwHintT=0;
+function gwHintCancel(){guided.hint=(guided.hint||0)+1;clearTimeout(gwHintT);}
+function gwHintQueue(){
+  gwHintCancel();
+  const box=document.getElementById('gbBody');if(box)box.dataset.hints=guided.open&&guided.step===4?'working':'';
+  if(!guided.open||guided.step!==4)return;
+  const tok=guided.hint;gwHintT=setTimeout(()=>gwHintRun(tok),150);   // the cards' own delay after a change
+}
+function gwHintRun(tok){
+  const box=document.getElementById('gbBody'),ps=box?[...box.querySelectorAll('.gw-hint[data-h]')]:[];
+  if(!ps.length){if(box)box.dataset.hints='done';return;}
+  box.dataset.hints='working';const t0=performance.now(),jobs=[];let r0={};
+  const kinds=[...new Set(ps.map(p=>gwKind(p.dataset.h)))];
+  kinds.forEach(k=>jobs.push(()=>{r0[k]=gwPreview(k);}));
+  for(const p of ps){
+    const id=p.dataset.h,c=gwEl(id),k=gwKind(id),out=[];
+    for(const dir of [-1,1]){const n=gwNear(c,dir);if(!n)continue;
+      jobs.push(()=>{const keep=c.value;let r=null;try{c.value=n.v;r=gwPreview(k);}catch(e){r=null;}finally{c.value=keep;}
+        out.push(r0[k]?gwHintSide(k,dir,n,r0[k],r):'');p.textContent=out.filter(Boolean).join('\n');});}
+  }
+  const step=()=>{
+    if(guided.hint!==tok||!guided.open||guided.step!==4)return;
+    const j=jobs.shift();if(j)j();
+    if(jobs.length)gwHintT=setTimeout(step,0);
+    else{box.dataset.hints='done';guided.hintMs=performance.now()-t0;ps.forEach(p=>{if(p.textContent==='…')p.textContent='';});}
+  };
+  step();
 }

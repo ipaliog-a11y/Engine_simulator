@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The guided build's goal hints: each step says what the next value down and up do to the goal (build 411)
+
+- Build 2 of `plans/guided-build.md`. Under each field of a SHAPE IT step, one line per neighbour (5% of the range, or
+  the nearest real-example tick if closer; for a choice, the options either side): the change in the goal from the
+  third question (QUICKEST: power and torque, or the 0–100 on a car step; LIGHTEST: mass; CHEAPEST: price), toward
+  or away from it, and the limit that value meets (valve float, knock, tyre rating, grip-bound launch, the rotor rim,
+  the battery). It gives a direction, never a best value.
+- Worked out by the cards' own previews (`icdCompute`, `evdCompute`, the car rebuilt as the VEHICLE tab builds it),
+  with the form, engine, car and run put back after each. `icdCompute` now also returns the engine mass the car
+  takes, for LIGHTEST. Measured: engine steps 0.2–1.0 s, car steps up to ~4 s behind a "…" mark, cancelled when a
+  field moves. Fingerprint identical.
+- Left open: fields that enable others (fuel, intake, motor kind, hybrid layout...) get no hint; a diesel names
+  reliability instead of knock (knock is 0 for compression ignition); no current-density limit on the EV side, as
+  the motor code has none to name.
+
 ### Six tests that failed on main, put right or reported (build 410)
 
 - **test36** (the lap-target card was empty): build 341 added a second global `renderChallenge` (CHALLENGES tab) that
