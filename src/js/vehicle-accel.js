@@ -36,7 +36,7 @@ function computeVehicleCost(ch,tt,wr){
   {const fg=factoryGeo(vehicle);
    if(vehicle.suspFront&&vehicle.suspFront!==fg.f)c+=(SUSP_GEO[vehicle.suspFront]||{cost:0}).cost;
    if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
-  // a SPRINGS, BARS & DAMPERS part: new springs, bars and dampers on both axles (build 419)
+  // a SPRINGS, BARS & DAMPERS part: new springs, bars and dampers on both axles (build 420)
   if(vehicle.suspPart)c+=2*(STIFF_STEP_COST.spring+STIFF_STEP_COST.bar+STIFF_STEP_COST.damper);
   c+=Math.max(0,vehicle.rotor-320)*6;
   if(vehicle.brakePart)c+=800;   // a pedal box with a balance bar and two master cylinders (~$500-900 in race catalogues; PROBABLE)

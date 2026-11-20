@@ -1,4 +1,4 @@
-// Springs, bars and dampers as a part (build 419).
+// Springs, bars and dampers as a part (build 420).
 //
 // WHY THIS EXISTS. Build 174's springs and bars, and build 216's dampers, were SOFT -2 .. STIFF +2 steps about the kit
 // (SPRING_STEP 1.3, BAR_STEP 1.5, DAMPER_STEP 1.3: fitted numbers). They are now a SPRINGS, BARS & DAMPERS part whose

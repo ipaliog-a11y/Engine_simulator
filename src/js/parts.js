@@ -92,7 +92,7 @@ const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],bar_pct:[30,70],mcF_mm:[
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
   // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
   compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6],
-  // springs, bars and dampers (build 419), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
+  // springs, bars and dampers (build 420), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
   // (a kei car's to a truck's), a solid bar 0 (none) to 45 mm on 80-400 mm arms, 300-1600 mm between them, motion ratios
   // 0.2-1.2, a damper's low-speed slope 100-30000 N s/m in bound, its rebound 1-5 times that
   wireD_mm:[5,25],coilD_mm:[40,250],coils:[2,20],mr:[0.3,1.2],barD_mm:[0,45],barArm_mm:[80,400],barL_mm:[300,1600],barMr:[0.2,1.2],damp:[100,30000],rb:[1,5]};
@@ -321,7 +321,7 @@ const PART_DEF={
   // the tyre pressures (build 313): cold front and rear, fitted from TYRE PRESSURE; unfitted, the reference TYRE_P_REF
   tyre:   {on:'vehicle',field:'tyrePart',cls:'tyrePress',select:'vhTyreP',def:'ref',valid:k=>k==='ref',clsOf:()=>'ref',
     label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']},
-  // springs, bars and dampers (build 419): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
+  // springs, bars and dampers (build 420): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
   // unfitted, the kit's (SUSPENSION)
   susp:   {on:'vehicle',field:'suspPart',cls:'suspSet',select:'vhSuspPart',def:'kit',valid:k=>k==='kit',clsOf:()=>'kit',
     label:()=>"THE KIT'S",newName:'MY SUSPENSION',factory:['kit']}
@@ -1170,7 +1170,7 @@ function previewTyre(){
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }
-// SPRINGS, BARS & DAMPERS on this car (build 419): each axle's wheel rate, its body bounce on the spring, its damping
+// SPRINGS, BARS & DAMPERS on this car (build 420): each axle's wheel rate, its body bounce on the spring, its damping
 // as a share of critical, and its roll stiffness from spring and bar; the car's roll per g and the front's share of
 // the roll stiffness (the roll balance), against the car as it is now.
 function suspReport(v,P){

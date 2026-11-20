@@ -297,7 +297,7 @@ const SUSPENSION={
 // K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that: a third of the total roll stiffness, which
 // brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 / 2.4 / 1.5 deg/g. Both
 // axles share the kit's frequency, so the roll stiffness splits as m t^2, the weight split on equal tracks: NEUTRAL.
-// SPRINGS, BARS & DAMPERS as a part (build 419, in place of build 174's SOFT/STIFF steps): each axle's rates from
+// SPRINGS, BARS & DAMPERS as a part (build 420, in place of build 174's SOFT/STIFF steps): each axle's rates from
 // their dimensions (suspAxle below).
 const BAR_SHARE=0.55;
 //   spring  a helical coil's rate k = G d^4 / (8 D^3 n): d the wire, D the mean coil diameter, n the active coils
@@ -404,7 +404,7 @@ function unsprungMass(v,front){
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
   const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,P=suspAxle(v,ax);   // the rate rollStiffness uses
-  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 419)
+  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 420)
   const ks=P?P.ks:k0,cs=P?P.cs:2*kit.zeta*Math.sqrt(k0*ms);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);

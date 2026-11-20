@@ -882,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 419</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 420</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6229,7 +6229,26 @@ const ENGINE_VALVES={
   'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'},
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
   // cam or intake, not the valves (named in the CHANGELOG).
-  'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'}
+  'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'},
+  // Build 419 (plans/v1-finish.md, valves batch 1 of 4). unsure: true marks a size that is probable, not the maker's sheet.
+  // Owner's rule (build 419): a sourced valve is used whichever way it moves the engine; none is held back for its result.
+  'BMW S62 4.9 V8 (M5 E39)':{iv:35,ev:30.5,src:'BMW ST038 Z8 training manual, S62B50: valves 35 / 30.5 mm; BMW TIS E39 M5 the same'},
+  'Dodge 6.2 Hellcat (Challenger SRT)':{iv:54.36,ev:41.91,src:'Dodge Garage, Gen III HEMI quick reference guide part III: 6.2 Hellcat 2.14 / 1.65 in'},
+  'Dodge Viper 8.4 V10 (SRT-10)':{iv:52.8,ev:40.8,src:'Chrysler press kit, 8.4 V10: hollow-stem intake 52.8 mm, sodium-filled exhaust 40.8 mm'},
+  'Ford 2.3 EcoBoost (Focus RS Mk3)':{iv:32.5,ev:30,src:'Ford Performance M-6049-20EBIP: 2.3 exhaust valve 30 mm; Ferrea and Supertech stock-size intake 32.5 mm (std)'},
+  'Honda K20A tuned (Ariel Atom 3.5)':{iv:35,ev:30,src:'Ferrea 6000 stock-size valves, K20A2/A3/Z1 and JDM K20A Type R: 35 / 30 mm (std)'},
+  'Honda B16B (Civic Type R EK9)':{iv:33,ev:28,unsure:true,src:'Honda, B16A engine page: 33 / 28 mm; Ferrea and Brian Crower stock-size B16A/B18C valves the same (std). The B16B is taken to share them'},
+  'Honda C30A V6 (NSX NA1)':{iv:35,ev:30,src:'ScienceofSpeed NSX valve set: standard 3.0 intake 35 mm, exhaust 30 mm; Ferrea stock exhaust 30.05 mm (std)'},
+  'Nissan VR38DETT (GT-R R35 2017)':{iv:37,ev:32.2,src:'Ferrea stock-size VR38DETT valves 37 / 32.2 mm; Supertech and Tomei +1 mm 38.15 / 33.15 (std)'},
+  'Nissan VG30DETT (300ZX Z32)':{iv:34,ev:30,src:'Ferrea stock-size intake 34 mm; Tomei oversize set: exhaust 30.0 + 0.5 mm (std)'},
+  'Nissan VQ37VHR (370Z)':{iv:36.6,ev:30.2,unsure:true,src:'ThinkTuning VQ37VHR guide: 36.6 / 30.2 mm; Supertech +1 mm 37.70 / 31.40 (std)'},
+  'VW EA888 2.0 TSI (Golf GTI Mk7)':{iv:33.85,ev:28,unsure:true,src:'Ferrea EA888 Gen 3 stock exhaust 28 mm; intake from Supertech +1 mm 34.85 mm (std)'},
+  'Mercedes-AMG M156 6.2 V8 (C63 W204)':{iv:40,ev:34,unsure:true,src:'australiancar.reviews and 8020 Automotive M156 guides: 40 / 34 mm, not a Mercedes sheet'},
+  'Buick LC2 turbo V6 (GNX)':{iv:43.43,ev:38.1,unsure:true,src:'turbobuick.com owners: stock Grand National head 1.71 / 1.50 in'},
+  'Peugeot XU9JA 1.9 (205 GTI)':{iv:41.6,ev:34.5,src:'FEBI and gt2i replacement valves, 205 GTI 1.9: 41.6 / 34.5 mm (std)'},
+  'Mercedes M102 2.3-16 (190E)':{iv:38,ev:33,unsure:true,src:'RPM Depot M102 16V overhaul valves, 190E 2.3-16: 38 and 33 mm (std; which is which not stated)'},
+  'Ford Windsor 289 4-bbl (Mustang 1965)':{iv:45.21,ev:36.83,src:'CarTech, Ford Small-Block General Data: every 289 head 1.780 / 1.450 in'},
+  'Rover K-series 1.8 (Elise S1)':{iv:27.7,ev:24.1,src:'Land Rover Freelander workshop manual, K 1.8 general data: inlet 27.6-27.8, exhaust 24.0-24.2 mm'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
@@ -9349,7 +9368,7 @@ const SUSPENSION={
 // K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that: a third of the total roll stiffness, which
 // brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 / 2.4 / 1.5 deg/g. Both
 // axles share the kit's frequency, so the roll stiffness splits as m t^2, the weight split on equal tracks: NEUTRAL.
-// SPRINGS, BARS & DAMPERS as a part (build 419, in place of build 174's SOFT/STIFF steps): each axle's rates from
+// SPRINGS, BARS & DAMPERS as a part (build 420, in place of build 174's SOFT/STIFF steps): each axle's rates from
 // their dimensions (suspAxle below).
 const BAR_SHARE=0.55;
 //   spring  a helical coil's rate k = G d^4 / (8 D^3 n): d the wire, D the mean coil diameter, n the active coils
@@ -9456,7 +9475,7 @@ function unsprungMass(v,front){
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
   const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,P=suspAxle(v,ax);   // the rate rollStiffness uses
-  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 419)
+  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 420)
   const ks=P?P.ks:k0,cs=P?P.cs:2*kit.zeta*Math.sqrt(k0*ms);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);
@@ -14196,7 +14215,7 @@ function computeVehicleCost(ch,tt,wr){
   {const fg=factoryGeo(vehicle);
    if(vehicle.suspFront&&vehicle.suspFront!==fg.f)c+=(SUSP_GEO[vehicle.suspFront]||{cost:0}).cost;
    if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
-  // a SPRINGS, BARS & DAMPERS part: new springs, bars and dampers on both axles (build 419)
+  // a SPRINGS, BARS & DAMPERS part: new springs, bars and dampers on both axles (build 420)
   if(vehicle.suspPart)c+=2*(STIFF_STEP_COST.spring+STIFF_STEP_COST.bar+STIFF_STEP_COST.damper);
   c+=Math.max(0,vehicle.rotor-320)*6;
   if(vehicle.brakePart)c+=800;   // a pedal box with a balance bar and two master cylinders (~$500-900 in race catalogues; PROBABLE)
@@ -14875,7 +14894,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          c = bump + xb, and at full droop, the wheel is stopped on the body: its speed on the body there is held at
 //          zero, and what that takes passes to the body (at droop the wheel hangs from it, off the road if need be).
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
-//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 419), their mean the kit's cs, so the lap's quarter car, which
+//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 420), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
 //   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
 //          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
@@ -25916,7 +25935,7 @@ const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],bar_pct:[30,70],mcF_mm:[
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
   // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
   compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6],
-  // springs, bars and dampers (build 419), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
+  // springs, bars and dampers (build 420), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
   // (a kei car's to a truck's), a solid bar 0 (none) to 45 mm on 80-400 mm arms, 300-1600 mm between them, motion ratios
   // 0.2-1.2, a damper's low-speed slope 100-30000 N s/m in bound, its rebound 1-5 times that
   wireD_mm:[5,25],coilD_mm:[40,250],coils:[2,20],mr:[0.3,1.2],barD_mm:[0,45],barArm_mm:[80,400],barL_mm:[300,1600],barMr:[0.2,1.2],damp:[100,30000],rb:[1,5]};
@@ -26145,7 +26164,7 @@ const PART_DEF={
   // the tyre pressures (build 313): cold front and rear, fitted from TYRE PRESSURE; unfitted, the reference TYRE_P_REF
   tyre:   {on:'vehicle',field:'tyrePart',cls:'tyrePress',select:'vhTyreP',def:'ref',valid:k=>k==='ref',clsOf:()=>'ref',
     label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']},
-  // springs, bars and dampers (build 419): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
+  // springs, bars and dampers (build 420): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
   // unfitted, the kit's (SUSPENSION)
   susp:   {on:'vehicle',field:'suspPart',cls:'suspSet',select:'vhSuspPart',def:'kit',valid:k=>k==='kit',clsOf:()=>'kit',
     label:()=>"THE KIT'S",newName:'MY SUSPENSION',factory:['kit']}
@@ -26994,7 +27013,7 @@ function previewTyre(){
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }
-// SPRINGS, BARS & DAMPERS on this car (build 419): each axle's wheel rate, its body bounce on the spring, its damping
+// SPRINGS, BARS & DAMPERS on this car (build 420): each axle's wheel rate, its body bounce on the spring, its damping
 // as a share of critical, and its roll stiffness from spring and bar; the car's roll per g and the front's share of
 // the roll stiffness (the roll balance), against the car as it is now.
 function suspReport(v,P){

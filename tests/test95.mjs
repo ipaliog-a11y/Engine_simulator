@@ -1,7 +1,7 @@
 // Springs and anti-roll bars per axle (build 174). The body's roll is the car's own: its roll moment about the roll axis,
 // m g (h - z_axis) per g, over the roll stiffness of its two axles, each the springs (from the kit's ride frequency,
 // m_axle (2 pi f)^2 t^2 / 4) plus a bar of BAR_SHARE of that. The front's share of that stiffness is the elastic part
-// of the load transfer split. Build 419: stiffer or softer springs and bars are a SPRINGS, BARS & DAMPERS part (here
+// of the load transfer split. Build 420: stiffer or softer springs and bars are a SPRINGS, BARS & DAMPERS part (here
 // the kit's, its wires and bars scaled to build 174's old steps: a spring step 1.3x, a bar step 1.5x); an old save's
 // steps or ROLL BALANCE load on the kit.
 import { chromium } from './pw.mjs';

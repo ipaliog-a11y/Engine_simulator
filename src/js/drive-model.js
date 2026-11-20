@@ -122,7 +122,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          c = bump + xb, and at full droop, the wheel is stopped on the body: its speed on the body there is held at
 //          zero, and what that takes passes to the body (at droop the wheel hangs from it, off the road if need be).
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
-//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 419), their mean the kit's cs, so the lap's quarter car, which
+//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 420), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
 //   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
 //          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
