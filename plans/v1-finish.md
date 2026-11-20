@@ -60,6 +60,9 @@ recorded numbers reports its range and the mean error against the real cars.
 ## Group 7: data (sourcing only)
 
 13. **83 overhang splits** (front/rear overhang from the maker's dimension drawing), in one or two builds.
+    *Build 416:* five splits from a same-body auto-data.net page (M3 E46, Golf TDI Mk7, 330d, 911 RS 2.7, 330e).
+    Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
+    build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
 
