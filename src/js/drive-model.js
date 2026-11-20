@@ -215,7 +215,7 @@ function driveCar(){
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     ...body,
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df,v.body&&v.body.name),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
     rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
@@ -830,12 +830,12 @@ function stepCar(car,s,u,dt){
     // The axle's differential (build 318), after the wheels have moved, as the centre coupling below: the torque that
     // would bring the two wheels to one speed in this step (Karnopp's stick condition), taken from the faster wheel and
     // given to the slower. A spool always passes it; a friction pack passes it up to its capacity, preload + lock x the
-    // axle's input torque (the ramp's statics, the same on drive and coast: a 2-way), and slides at that; a viscous
+    // axle's input torque (the ramp's statics: L on drive, Lc on the coast, the same for a 2-way), and slides at that; a viscous
     // coupling passes c x dw, taken implicitly so that any c is stable. See diffCoupling.
     if(car.diff.type!=='open')for(let ax=0;ax<2;ax++){const i=ax*2,j=i+1;if(!drv[i])continue;
       const Ii=car.Iw+h*car.r*dF[i],Ij=car.Iw+h*car.r*dF[j],dw=s.w[i]-s.w[j],k=h*(1/Ii+1/Ij),D=car.diff;
       let Tc=dw/k;
-      if(D.type==='fric'){const cap=D.pre+D.L*Math.abs(Tw)*(sg?sg[i]+sg[j]:2/nd);Tc=Math.max(-cap,Math.min(cap,Tc));}
+      if(D.type==='fric'){const cap=D.pre+(Tw<0?D.Lc:D.L)*Math.abs(Tw)*(sg?sg[i]+sg[j]:2/nd);Tc=Math.max(-cap,Math.min(cap,Tc));}
       else if(D.type==='visc')Tc=D.c*dw/(1+D.c*k);
       s.w[i]-=h*Tc/Ii;s.w[j]+=h*Tc/Ij;}
     // All-wheel drive: the centre coupling (build 320, by type: centreCoupling). 'lock', an electronically controlled
