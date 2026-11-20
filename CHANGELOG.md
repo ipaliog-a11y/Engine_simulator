@@ -18,6 +18,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The kit wing is a wing part, from its span, chord, angle and camber (build 415)
+
+- The FRONT and REAR AERO kit WING no longer carries a fitted ClA (0.60 / 0.75 times the class's aero factor) and ΔCd
+  (0.028 / 0.035). It is the lifting-line wing of build 291 (`wingAero`). Its dimensions come from the car's own wing,
+  else its class's, else the PARTS page's starting wing, which is as wide as the track (`kitWing`). The designer starts
+  from the same wing.
+- Rear wings written for the three kit cars, all PROBABLE:
+  - Huracán STO: 1600 × 350 mm, measured from photos.
+  - Radical SR3: 1555 × 283 + 130 mm, from a used-parts listing of a Radical wing.
+  - TRACK PROTOTYPE class: an LMP2-sized 1600 × 450 mm wing.
+  - Every angle and camber is the designer's starting value, unsourced. The front wings are the starting wing.
+- What moved (fingerprint against build 414); nothing else changed:
+  - STO: ClA 1.20 → 0.97 m², top speed 305.4 → 307.2 km/h (real 310), tech lap +0.42%.
+  - Radical: top speed 236.0 → 236.5 km/h (real 240), tech lap +0.80%.
+  - Both top-speed errors shrink. Other cars' lap hashes change only through the track's line cache; their times are
+    unchanged.
+- **Known gaps, by the owner's ruling (`test116`, `AERO_KNOWN`, shrink-only):**
+  - Radical: 1.93 g at 180 km/h against Radical's 2 g.
+  - STO: about 361 kg at 280 km/h against Lamborghini's 420 kg at the wing's high setting (Lamborghini's range is
+    324–420 kg). Reaching either figure would mean picking the unsourced angle.
+  - The Radical's `body.aero` 1.09, fitted in build 201 to reach 2 g, now scales only its diffuser. It is kept until
+    the floor build (plan build 10), where the diffuser becomes a part; changing it now would move the floor too.
+- Left open: the splitter and the rear lip stay table rows (`AERO_FRONT/REAR`), for build 10. A two-element wing is
+  modelled as one element with the 1.5 stall.
+
 ### The scope shows the signals you pick, the O2 sensor's voltage among them (build 414)
 
 - The ECU laptop's scope (build 409) gets a row of buttons under it: pick up to four signals, one lane each. The default is still engine speed, manifold pressure, lambda and knock risk.
