@@ -59,28 +59,75 @@ function ecuSample(){
   const row=ev
     ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
     :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
+  row.push(performance.now()/1000);   // [4]: seconds, for the time axis
   ecu.buf.push(row);
   if(ecu.buf.length>ECU_N)ecu.buf.shift();
 }
+// The scope draws each channel in its own lane: its name, unit and present value in its colour, its scale
+// on the right, and a shared time axis in seconds before now. One colour per channel, from the bench palette.
+const ECU_CH={
+  ice:[['ENGINE SPEED','rpm',0,200],['MANIFOLD PRESSURE','bar',2,0.1],['LAMBDA','',2,0.05],['KNOCK RISK','%',0,10]],
+  ev:[['PACK VOLTAGE','V',0,10],['PACK CURRENT','A',0,10],['WINDING TEMP','°C',0,5],['CHARGE','%',0,2]]};
+function ecuNice(lo,hi,minSpan){
+  if(hi-lo<minSpan){const m=(lo+hi)/2;lo=m-minSpan/2;hi=m+minSpan/2;}
+  const raw=(hi-lo)/2,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,step=(f<=1?1:f<=2?2:f<=5?5:10)*p;
+  const a=Math.floor(lo/step),n=Math.ceil(hi/step)-a;
+  return [a*step,(a+n+(n%2))*step];   // an even count of steps, so the middle line is on a step too
+}
+function ecuFmt(v,dp){return dp?v.toFixed(dp):Math.round(v).toLocaleString('en-US');}
 function ecuDrawScope(){
   const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
-  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(260,Math.round(c.clientWidth||480)),h=236;
+  if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}
+  const g=c.getContext('2d'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  g.setTransform(dpr,0,0,dpr,0,0);
   g.fillStyle='#04140c';g.fillRect(0,0,w,h);
-  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
-  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
+  const FONT=n=>n+'px "Press Start 2P", monospace';
+  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'],grid='#1c3a2a',ink='#8fb8a0';
+  const chans=ECU_CH[typeof isElectric==='function'&&isElectric()?'ev':'ice'];
+  const buf=ecu.buf,last=buf[buf.length-1],t1=last[4]||0,span=Math.max(1,t1-(buf[0][4]||0));
+  const src=still?[last]:buf;
+  const L=6,R=w-50,top=16,bot=h-22,lh=(bot-top)/4;
+  g.textBaseline='top';g.font=FONT(7);g.fillStyle=ink;g.textAlign='left';
+  g.fillText(tr(ecu.freeze?'FROZEN':'LIVE')+' • '+tr('last')+' '+Math.round(span)+' s',L,4);
+  g.textAlign='right';g.fillText(tr('TIME (s)'),w-4,4);g.textAlign='left';
+  const xOf=t=>R-(t1-t)/span*(R-L);
   for(let ch=0;ch<4;ch++){
+    const [name,unit,dp,minSpan]=chans[ch],y0=top+ch*lh,y1=y0+lh-4;
     let lo=Infinity,hi=-Infinity;
-    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
-    if(!(hi>lo)){lo-=1;hi+=1;}
-    g.strokeStyle=cols[ch];g.beginPath();
-    src.forEach((row,i)=>{
-      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
-      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
-      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+    buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    [lo,hi]=ecuNice(lo,hi,minSpan);
+    const yOf=v=>y1-(v-lo)/(hi-lo)*(y1-y0-12)-1;
+    // grid and scale: top, middle and bottom of the lane
+    g.strokeStyle=grid;g.lineWidth=1;g.font=FONT(6);g.fillStyle=ink;g.textAlign='left';
+    [hi,(lo+hi)/2,lo].forEach(v=>{
+      const y=Math.round(yOf(v))+0.5;
+      g.beginPath();g.moveTo(L,y);g.lineTo(R,y);g.stroke();
+      g.fillText(ecuFmt(v,dp||((hi-lo)/2<1?1:0)),R+4,Math.max(y0,Math.min(y1-6,y-3)));
     });
-    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
+    // the trace
+    g.strokeStyle=cols[ch];g.lineWidth=2;g.beginPath();
+    if(src.length<2){const y=yOf(last[ch]);g.moveTo(L,y);g.lineTo(R,y);}
+    else src.forEach((row,i)=>{const x=xOf(row[4]||t1),y=yOf(row[ch]);if(i)g.lineTo(x,y);else g.moveTo(x,y);});
     g.stroke();
+    g.fillStyle=cols[ch];g.fillRect(R-3,yOf(last[ch])-3,6,6);
+    // name, unit and present value, on a dark plate so the trace cannot hide it
+    const label=tr(name)+(unit?' ('+unit+')':'')+'  '+ecuFmt(last[ch],dp);
+    g.font=FONT(7);
+    const tw=g.measureText(label).width;
+    g.fillStyle='rgba(4,20,12,0.85)';g.fillRect(L,y0,tw+6,10);
+    g.fillStyle=cols[ch];g.fillText(label,L+2,y0+1);
   }
+  // time axis: seconds before now
+  const steps=[1,2,5,10,20,30,60,120],step=steps.find(s=>span/s<=5)||120;
+  g.strokeStyle=ink;g.lineWidth=1;g.beginPath();g.moveTo(L,bot+0.5);g.lineTo(R,bot+0.5);g.stroke();
+  g.font=FONT(6);g.fillStyle=ink;g.textAlign='center';
+  for(let s=0;s<=span+1e-6;s+=step){
+    const x=Math.round(R-s/span*(R-L))+0.5;
+    g.beginPath();g.moveTo(x,bot);g.lineTo(x,bot+4);g.stroke();
+    g.fillText(s?'-'+s:tr('NOW'),Math.max(L+12,x),bot+7);
+  }
+  g.textAlign='left';
 }
 function ecuLeds(){
   const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};

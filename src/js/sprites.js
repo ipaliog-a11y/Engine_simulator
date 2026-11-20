@@ -473,21 +473,9 @@ function renderEnginePreview(){
   const pt=e.type==='electric'?'ev':'ice';
   paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
 }
-function paintVehicleBay(){
-  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
-  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
-  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
-  const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
-  const buf=new PixBuf(CAR_GW,CAR_GH);
-  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
-  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
-  cv.dataset.bay='car:'+card;
-}
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
-  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -504,12 +492,6 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
-}
-{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
-  if(photo&&bayBtn&&cv){
-    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
-    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
-  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;

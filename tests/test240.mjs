@@ -3,7 +3,7 @@
 // WHY THIS EXISTS. The engine preview was a dot grid, the same in every section. What must hold:
 //   · BUILD shows the workshop, TEST the garage and DRIVE the pit;
 //   · switching an engine card changes the bay key and the preview is not empty;
-//   · the vehicle BAY draws a car, and a phone width does too;
+//   · VEHICLE has no drawn car beside its showroom picture (build 224's rule), and a phone width keeps a bay;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -48,11 +48,10 @@ const air = await page.evaluate(() => document.getElementById('enginePreview').d
 if (air !== 'ice:air') fails.push('air card bay is ' + air);
 
 await page.evaluate(() => setTab('vehicle'));
-await page.click('#btnVhBay');
 await page.waitForTimeout(250);
-const car = await page.evaluate(() => document.getElementById('vhBay').dataset.bay);
-console.log('car bay', car);
-if (!/^car:/.test(car || '')) fails.push('vehicle bay is ' + car);
+const vhCanvases = await page.evaluate(() => document.querySelectorAll('#vehiclePanelTab canvas.pix-preview').length);
+console.log('vehicle drawn cars', vhCanvases);
+if (vhCanvases) fails.push('VEHICLE draws the car again: ' + vhCanvases);
 
 await page.setViewportSize({ width: 390, height: 800 });
 await page.waitForTimeout(300);
