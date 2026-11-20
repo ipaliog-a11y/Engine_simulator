@@ -38,7 +38,11 @@ const CHASSIS={
   hyper:    {label:'CARBON HYPERCAR',  mass:1144,area:1.825,cd:0.35,wb:2.684,cg:0.44,fWt:0.42,track:1.70,drive:'rwd',aero:1.6,cost:60000,
              fit:{tire:'sport',tw:335,ta:35,wheel:18,brake:'carbon', rotor:355,susp:'coilover',aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:56,gearbox:'manual',diff:'clsd',geoF:'wishbone',geoR:'wishbone'}},
   proto:    {label:'TRACK PROTOTYPE',   mass:620, area:1.55,cd:0.60,wb:2.80,cg:0.32,fWt:0.46,track:1.75,drive:'rwd',aero:3.0,cost:45000,
-             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool',geoF:'wishbone',geoR:'wishbone'}},
+             fit:{tire:'slick',tw:305,ta:30,wheel:18,brake:'carbon', rotor:380,susp:'race',    aF:'wing',    aR:'wing',aFl:'diffuser', weight:'race',  gears:6,gearing:50,gearbox:'sequential',diff:'spool',geoF:'wishbone',geoR:'wishbone',
+               // its rear wing (build BUILDNO, kitWing): an LMP2-sized two-element wing, ~1.6 m wide (the 2017 cars' box) and
+               // ~450 mm main plane and flap together. PROBABLE: read from the cars, not from the ACO's text; angle and camber
+               // are a high-downforce setting, unsourced. The front kit wing is the PARTS page's starting wing.
+               wingR:{span_mm:1600,chord_mm:450,angle_deg:10,camber_pct:8,plate_mm:300}}},
   pickup:   {label:'PICKUP TRUCK',     mass:2392,area:3.5,cd:0.42,wb:3.683,cg:0.68,fWt:0.57,track:1.75,drive:'rwd',aero:0.2,cost:11000,
              fit:{tire:'eco',  tw:265,ta:70,wheel:18,brake:'hd',     rotor:350,susp:'comfort', aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:8,gearing:42,gearbox:'auto',diff:'open',geoF:'wishbone',geoR:'solid'}},
   suv:      {label:'PERFORMANCE SUV',  mass:2105,area:2.93,cd:0.38,wb:2.916,cg:0.66,fWt:0.55,track:1.65,drive:'awd',aero:0.4,cost:16000,
@@ -172,9 +176,13 @@ const VEHICLE_PRESETS=[
    body:{kg:1640,cd:0.33,area:2.10,wb:2.45,fWt:0.39,engPos:'rear',h:1.289},fit:{drive:'awd',tire:'sport',tw:315,twF:255,ta:30,wheel:21,brake:'carbon',rotor:420,susp:'sport',gears:8,gearbox:'dct',diff:'clsd'},
    real:{t100:2.7,top:330},unsure:['h','area','fWt']},
   // 1339 kg dry; its fixed wing and splitter are part of the measured drag
+  // Its rear wing (build BUILDNO): a slotted two-element wing (Lamborghini), ~1600 mm wide and ~350 mm deep with its flap,
+  // read from photos against the car's 1945 mm width (PROBABLE); angle and camber the PARTS page's starting wing. Lamborghini
+  // quotes 324-420 kg of downforce at 280 km/h by the flap's setting (evo, 2021); the model reads ~350 (see CHANGELOG).
   {cat:'Supercar',era:'2020s',name:'Lamborghini Huracán STO (2021)',engine:'Lamborghini 5.2 V10 (Huracán STO)',chassis:'super',
-   body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41,h:1.165},fit:{drive:'rwd',tire:'semi',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'wing'},
-   real:{t100:3.0,top:310},unsure:['h','kg','cd','area','fWt']},
+   body:{kg:1450,cd:0.40,area:1.95,wb:2.62,fWt:0.41,h:1.165},fit:{drive:'rwd',tire:'semi',tw:305,twF:245,ta:30,wheel:20,brake:'carbon',rotor:390,susp:'coilover',gears:7,gearbox:'dct',diff:'clsd',aF:'splitter',aR:'wing',
+     wingR:{span_mm:1600,chord_mm:350,angle_deg:8,camber_pct:6,plate_mm:200}},
+   real:{t100:3.0,top:310},unsure:['h','kg','cd','area','fWt','wing']},
   // GM quotes 0-60 mph in 2.6 s
   // t100 2.8 is unsure: it reads as GM's 0-60 mph claim, timed with a 1 ft rollout as US magazines do. The one
   // rollout-free 0-100 km/h found is AutoTopNL's 3.54 s on the road (build 153 tyre review); the model reads ~3.5.
@@ -210,7 +218,10 @@ const VEHICLE_PRESETS=[
   // build 201: the Radical's aero factor is its own (body.aero), fitted to Radical's claim of up to 2 g sustained at high
   // speed (2.0 g at 180 km/h): the TRACK PROTOTYPE class's 3.0 is an LMP car's and gave it 6.45 m2 of ClA. Radical
   // publishes no downforce figure. The Huracán STO's splitter and wing: 420 kg at 280 km/h is ClA 1.11; these give 1.20.
-  {cat:'Track',era:'2010s',name:'Radical SR3 RSX 1500 (2015)',engine:'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)',chassis:'proto',body:{kg:580,cd:0.45,area:1.4,wb:2.37,fWt:0.46,aero:1.09},fit:{drive:'rwd',tire:'slick',tw:275,twF:200,ta:50,wheel:15,brake:'big',rotor:280,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'wing',aR:'wing',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone'},real:{t100:3.2,top:240,limited:false},confidence:'low',unsure:['aero','kg','cd','area','wb','fWt','t100','top','tw','twF','ta','rotor','bore_mm','stroke_mm','compression','redline','hp','tq','gearset']},
+  // Its rear wing (build BUILDNO): 1555 mm wide, a 283 mm main plane and a 130 mm flap (a Radical high-downforce wing in
+  // a used-parts listing, racecarsdirect.com advert 76925; PROBABLE for the RSX's). Angle, camber and plates are the PARTS
+  // page's starting wing, unsourced; its front wing is that starting wing too.
+  {cat:'Track',era:'2010s',name:'Radical SR3 RSX 1500 (2015)',engine:'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)',chassis:'proto',body:{kg:580,cd:0.45,area:1.4,wb:2.37,fWt:0.46,aero:1.09},fit:{drive:'rwd',tire:'slick',tw:275,twF:200,ta:50,wheel:15,brake:'big',rotor:280,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'wing',aR:'wing',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone',wingR:{span_mm:1555,chord_mm:413,angle_deg:8,camber_pct:6,plate_mm:250}},real:{t100:3.2,top:240,limited:false},confidence:'low',unsure:['aero','wing','kg','cd','area','wb','fWt','t100','top','tw','twF','ta','rotor','bore_mm','stroke_mm','compression','redline','hp','tq','gearset']},
   // build 201: a street-legal car in Track runs on semi-slicks (the Mono's road tyres are Pirelli P Zero Trofeo R); the
   // pack fitted slicks. The Radical SR3 RSX is a race car, not road legal, and keeps them.
   {cat:'Track',era:'2010s',name:'BAC Mono 2.3 (2011)',engine:'Ford Duratec 2.3 Cosworth (BAC Mono)',chassis:'openwheel',body:{kg:540,cd:0.55,area:1.15,wb:2.56,fWt:0.45,engPos:'mid'},fit:{drive:'rwd',tire:'semi',tw:250,twF:200,ta:45,wheel:16,brake:'big',rotor:295,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'none',aR:'none',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone'},real:{t100:3,top:274,limited:false},confidence:'low',unsure:['kg','cd','area','wb','fWt','t100','top','tw','twF','rotor','compression','hpRpm','tq','tqRpm','gearset']},

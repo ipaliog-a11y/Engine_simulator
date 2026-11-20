@@ -576,9 +576,10 @@ function partFromFactory(key,kind){
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
   });
   // a starting point, not a factory part: as wide as the car's track, a quarter of a metre deep, at a moderate angle
-  if(kind==='wing')return normPart({kind,name:tr('REAR WING'),span_mm:Math.round((vehicle&&vehicle.track||1.5)*100)*10,chord_mm:250,angle_deg:8,camber_pct:6,plate_mm:150});
+  // (build BUILDNO: the kit WING's geometry, kitWing, so a car that carries its own starts from that)
+  if(kind==='wing')return normPart(Object.assign({kind,name:tr('REAR WING')},kitWing(vehicle||{},false)));
   // the front one as wide as the front track, its quarter chord 100 mm off the road, as a club racer's low front wing
-  if(kind==='fwing')return normPart({kind,name:tr('FRONT WING'),span_mm:Math.round((vehicle&&(vehicle.trackF||vehicle.track)||1.5)*100)*10,chord_mm:250,angle_deg:6,camber_pct:6,plate_mm:100,height_mm:100});
+  if(kind==='fwing')return normPart(Object.assign({kind,name:tr('FRONT WING')},kitWing(vehicle||{},true)));
   // a starting point, not a factory part (the factory diffs are a table with no dimensions): a 1.5-way clutch-plate LSD
   // as sold for a road car, 60 N m of preload, 45 degree ramps, three friction faces a side (PROBABLE, typical units)
   // the car's own brakes written as the part: a 50/50 bar on two reference cylinders (each line at BRAKE_LINE_BAR, as
