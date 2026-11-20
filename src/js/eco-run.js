@@ -382,7 +382,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
     for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,cap>0?Math.min(mid,cap):mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
     return best;
   };
-  const hyb=isHybrid(),hybOf=new Map(),hybAt=vv=>hybOf.get(vv)||(hybOf.set(vv,ecoHybrid(line,vv)),hybOf.get(vv));   // a plan's hybrid result, priced once (build 405)
+  const hyb=isHybrid(),hybOf=new Map(),hybAt=vv=>hybOf.get(vv)||(hybOf.set(vv,ecoHybrid(line,vv)),hybOf.get(vv));   // a plan's hybrid result, priced once (build 406)
   const cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?hybAt(r.v).kg:ecoFuelKg(line,r.v);
   // Engine cars and EVs: the distance DP (build 400). On the 190 runs measured at Alpine and the Dragon it beat the eco
   // driver every time, by 9-32%, so the eco driver's blends run only when the DP finds no plan for the target (each

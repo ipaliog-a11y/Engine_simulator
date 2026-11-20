@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Hybrid economy runs solve 2-12x faster, with the same numbers (build 405)
+### Hybrid economy runs solve 2-12x faster, with the same numbers (build 406)
 
 - A hybrid's economy run took up to 38 s (Qashqai e-POWER on Route Napoléon) and froze the page. The time went to
   `hybridCycle`'s ~20-50 passes per plan, each re-deriving every step's shaft torques, machine limits and MG1 power
@@ -33,7 +33,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Left open: parallel hybrids (918, 330e, Ioniq) stay above 3 s on the long roads. What remains is filling motor losses
   per charge level (the inverter's loss reads the bus voltage, so levels cannot share) and the eco driver's min-time
   solves (~2.4 s on the 918, shared with every car). Moving the solve off the main thread would end the freeze.
-- Test 249: the three drive types' figures equal build 403's to 1e-9; Qashqai on Napoléon under 15 s.
+- Test 250: the three drive types' figures equal build 403's to 1e-9; Qashqai on Napoléon under 15 s.
+
+### A limited-slip diff can lock differently on the coast than under power (build 405)
+
+- The stepped car's clutch-plate LSD now has a coast lock beside its drive lock (the two ramp angles), set per preset
+  where the maker publishes both. Only one preset's own unit has them: the 718 Cayman GT4 manual, 22% under power and
+  27% on overrun (Porsche Newsroom, 2020). It was 37% both ways. Its stepped 0–100 is unchanged (4.06 s); its
+  ISO 9816 lift-off goes from x0.960 to x0.980 curvature (still slightly wide). Every other preset stays a 2-way at
+  37%; the fingerprint is identical.
+- The Mustang GT gap in `LIFT_KNOWN` stays open: the preset is the Performance Pack car, whose diff is a Torsen
+  (Ford: 3.73 Torsen with the manual), not a clutch pack. A Torsen also biases on the coast, and Ford publishes no
+  bias ratio, so no coast ramp closes it. Its reason in test204 now says so.
+- Left open: the 911 GT3 (991.2) preset is the PDK car, whose rear lock is electronic (Porsche's 30/37 is the
+  manual's); the ND MX-5's asymmetric LSD is the 2024 car's, with no ratios published; no other drive/coast figures
+  were found for a preset's factory unit.
 
 ### All-wheel-drive clutches pass at most their maker's published share (build 404)
 

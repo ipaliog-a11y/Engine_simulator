@@ -19,8 +19,9 @@ import path from 'path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 // Named gaps (may only shrink). The friction diff is modelled 2-way (diffCoupling: the same locking on coast as on
 // drive), so under engine braking it holds the rear wheels to one speed and the braked outer wheel pushes the line wide.
-// A 1.5-way or 1-way ramp locks less on the coast; no ramp angles are published for this car's diff.
-const LIFT_KNOWN = { 'Ford Mustang GT (2018': 'friction diff locks on the coast as on drive (2-way)' };
+// The real car (the Performance Pack preset) has a Torsen (Ford), which also biases on the coast; Ford publishes no
+// bias ratio, so no coast ramp closes this (build 405).
+const LIFT_KNOWN = { 'Ford Mustang GT (2018': 'diff locks on the coast as on drive (a friction 2-way; the real unit is a Torsen, no bias ratio published)' };
 const CARS = ['Mazda MX-5 1.6', 'Ford Mustang GT (2018', 'Honda Civic Type R (FK8', 'VW Golf GTI (Mk7', 'Subaru Impreza WRX STI'];
 const browser = await chromium.launch();
 const page = await browser.newPage();

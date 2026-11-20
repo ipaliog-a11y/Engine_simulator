@@ -146,7 +146,7 @@ function hybridCycle(v,prof){
   // else is on the bus (a power-split's MG1, generating)
   // On the road (prof) the losses and the engine's fuel are memoised on a 10 rpm × 1 Nm grid (0.5 Nm for the engine, the
   // pack's charge to 1%), as ecoEnergyJ does: the bisection runs the same road ~20 times. The WLTC path is unchanged.
-  // Build 405: the two tables are kept on the engine while the car is the same (score, key, motor and pack), so the
+  // Build 406: the two tables are kept on the engine while the car is the same (score, key, motor and pack), so the
   // economy run's ~6 solves share them; a loss is kept by charge (bar a charge under 0.5% off a power-split's bus, which reads
   // the exact charge), then speed and torque, and the fuel by the oil's temperature.
   if(prof&&!(e._hmemo&&e._hmemo.score===e.score&&e._hmemo.key===key&&e._hmemo.mot===mot&&e._hmemo.pack===pack))
@@ -161,7 +161,7 @@ function hybridCycle(v,prof){
       let g=m.get(k);if(g===undefined){g=engineFuelAt(kr*10,kt/2,oilT);m.set(k,g);}return g;}:engineFuelAt;
   const packJ=(T,rpm,soc,Pin=0)=>{const w=rpm*Math.PI/30,P=T*w+(T||rpm>0?lossAt(T,rpm,soc):0)+C.auxW-Pin;
     const d=packDraw(pack,soc,P);return P+(d?d.heat:0);};
-  // packJ for a kept step (build 405): its power before the pack's own losses held while the charge's 1% (the losses'
+  // packJ for a kept step (build 406): its power before the pack's own losses held while the charge's 1% (the losses'
   // key on the road) is the same, and its fuel while the oil's temperature is
   const tagOf=soc=>prof?(ps?0:Math.round(soc*100)):soc;
   // ... and packDraw's heat written out (its 25 C resistance, the step's open-circuit voltage V0)
@@ -177,7 +177,7 @@ function hybridCycle(v,prof){
   const tu=hybTune(e),socLo=tu.socLo/100,socHi=tu.socHi/100,soc0=tu.socT/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
   const evOk=(vm,P)=>(tu.evKmh<=0||vm*3.6<=tu.evKmh)&&(tu.evKw<=0||P<=tu.evKw*1000);
   const assist=(rpm,nf,dfrac)=>hybAssistWindow(e,rpm)*hybAssistShare(nf,dfrac,tu);
-  // Build 405: what a step offers that the charge and the engine's warmth do not change (its shaft speeds and torques,
+  // Build 406: what a step offers that the charge and the engine's warmth do not change (its shaft speeds and torques,
   // the machines' limits, MG1's electrical power) is worked out on the first pass and kept for the secant's other ~20,
   // which then price only fuel and pack: the same arithmetic in the same order, so the same results, 5-10x sooner.
   const segC=[];

@@ -132,9 +132,11 @@ reporting its range. Sourcing is batched apart from physics.
   (RS3, Huracán), xDrive, PTM (Cayenne), ACD, DCCD, GR-FOUR, Quadra-Trac, the Raptor's 4A.
   Wiring note: a split of f 0 (all to one axle) in stepCar keeps the launch clutch from locking (the clutch sees one
   axle's inertia while the centre takes torque away), so the limit bounds the secondary axle's torque instead.
-- LSD coast ramps (1-way, 1.5-way, 2-way) where published; this would close the Mustang GT in `LIFT_KNOWN`.
-  Next build. Note: the Mustang GT's preset diff is a friction LSD; Porsche quotes overrun locking above drive for the
-  GT3 (37%), the opposite of a 1.5-way, so check the Mustang's own unit before assuming a ramp closes `LIFT_KNOWN`.
+- ~~LSD coast ramps (1-way, 1.5-way, 2-way) where published~~ (build 405: `DIFF_CLSD_RAMPS`, the 718 Cayman GT4
+  manual's 22/27 from Porsche; the rest stay 2-way at 0.37). Left open: the Mustang GT preset is the Performance Pack
+  car, whose diff is a Torsen (no bias ratio published), so no ramp closes it in `LIFT_KNOWN`; modelling a Torsen axle
+  needs its bias ratio. The GT3 preset is the PDK car (electronic lock; the 30/37 is the manual's). No other maker's
+  drive/coast figures were found for a preset's unit. The GT4 also runs slightly wide on lift-off (x0.98).
 
 ## Open questions for the owner
 
