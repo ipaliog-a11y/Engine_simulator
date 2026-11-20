@@ -11,8 +11,8 @@
 //   · the exhaust valve is the part's own (build 286): a wider one leaves the gas hotter, and a part saved without
 //     one takes 0.83 of its intake;
 //   · a real engine whose valves are sourced (ENGINE_VALVES, build 287) has them; they go when its bore changes and
-//     stay through a save; an engine not listed keeps the packing rule; every listed engine (build 330) reaches the
-//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule;
+//     stay through a save; an engine not listed (the GR Yaris's G16E) keeps the packing rule; every listed engine (build 330) reaches the
+//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 419);
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -49,7 +49,7 @@ const r = await page.evaluate(() => {
     applyBuild(JSON.parse(JSON.stringify(b))); o.own.back = [engine.ivDia_mm, engine.evDia_mm]; }
   o.own.miss = Object.entries(ENGINE_VALVES).filter(([n, v]) => { const c = FACTORY_CARS.find(c => c.engine === n);
     if (!c) return true; loadVehiclePreset(c); return engine.ivDia_mm !== v.iv || engine.evDia_mm !== v.ev; }).map(([n]) => n);
-  load('Golf GTI (Mk7'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
+  load('GR Yaris'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
   // 2. the physics, on the M3
   load('BMW M3 (E46');
   const base = partFromFactory('stock', 'head'), R = x => headReport(Object.assign({}, base, x));
