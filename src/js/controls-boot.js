@@ -143,6 +143,7 @@ function bindControls(){
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
   if(typeof bindChalRank==='function')bindChalRank();
+  bindUserRoad();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
   if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}

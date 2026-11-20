@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### All-wheel-drive clutches pass at most their maker's published share (build 403)
+### All-wheel-drive clutches pass at most their maker's published share (build 404)
 
 - The stepped car's centre clutch now honours a published limit: the GT-R R35 and R34 drive the rear and send the front
   at most 50% (Nissan, ATTESA E-TS "0:100 up to 50:50"); the Focus RS drives the front and sends the rear at most 70%
@@ -29,6 +29,20 @@ they are accurate about *what* shipped but not about the day it shipped.
   propshaft it slows the stepped 0–100 from 2.87 to 3.24 s (+12.7%; Porsche 2.7), and where the 500 is measured isn't
   published. No limit is published for Haldex, xDrive, the Cayenne's PTM, ACD, DCCD, GR-FOUR, Quadra-Trac or the 4A.
 - LSD coast ramps are the next build; `LIFT_KNOWN` is unchanged.
+
+### Your own GPX road for the economy run (build 403)
+
+- **IMPORT GPX ROAD** on the CHALLENGES tab reads a GPX file in the browser (no upload, no library) and adds it as
+  **My Road Economy**. Track points (else route points) become metres leg by leg, are resampled every 10 m, the plan
+  lightly smoothed (two 1-2-1 passes) and the height averaged over ±50 m, so GPS jitter reads neither as bends nor as
+  grade; `buildRoad` then derives radius, grade and crest curvature as for the built-in roads. Kept at `pes.userRoad`.
+- **Speed limit**: GPX carries none, so 90 km/h is assumed (the usual rural limit in Italy, Spain and Greece; France
+  80, Germany 100), settable 30–130 km/h. It caps the economy run's min-time and every planned speed. The built-in
+  roads carry no limit, so their numbers do not move.
+- Bad files are refused with a message (no points, under 0.5 km, over 200 km). Test 247 imports an inline sample
+  (3 km, 100 m bend, 5% climb with ±1 m height jitter): 2.999 km, tightest radius 93 m, mean grade 5.00%, steepest 6.3%.
+- Left open: one user road at a time; no fixed-time stage on it (no reference target); a file without elevation
+  is run flat; width is modelled at 7.5 m.
 
 ### The 100–0 stop brakes per axle, with ABS or a proportioning valve (build 402)
 

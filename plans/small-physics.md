@@ -126,7 +126,7 @@ reporting its range. Sourcing is batched apart from physics.
 ## Sourcing batch (apart from physics)
 
 - ~~Each all-wheel-drive preset's centre diff type~~ (build 320: Torsen, viscous, open sourced, the rest clutches).
-  Coupling limits (build 403): GT-R R35/R34 front at most 50% (Nissan), Focus RS rear at most 70% (Ford). Left open:
+  Coupling limits (build 404): GT-R R35/R34 front at most 50% (Nissan), Focus RS rear at most 70% (Ford). Left open:
   the 992 Turbo S's "500 Nm to the front" (Porsche), whose place of measure isn't published, and as 500 N m on the
   propshaft it slows the stepped 0-100 from 2.87 to 3.24 s (Porsche 2.7): owner's call. No limit published for Haldex
   (RS3, Huracán), xDrive, PTM (Cayenne), ACD, DCCD, GR-FOUR, Quadra-Trac, the Raptor's 4A.

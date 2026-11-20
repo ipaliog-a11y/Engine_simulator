@@ -841,7 +841,7 @@ function stepCar(car,s,u,dt){
     // All-wheel drive: the centre coupling (build 320, by type: centreCoupling). 'lock', an electronically controlled
     // clutch: the two axles turn together, the clutch closed on the first slip (no maker publishes its control map, so
     // this is PROBABLE), the torque going to the axle that can use it; open under the brakes, as these systems are, so
-    // the anti-lock works on each axle alone; where a limit is published (build 403) the secondary axle gets at most
+    // the anti-lock works on each axle alone; where a limit is published (build 404) the secondary axle gets at most
     // that. The others are mechanical and work on the brakes too: an open centre
     // passes nothing between the axles beyond its split; a Torsen holds them up to lock x the input torque; a viscous
     // coupling passes c x the difference of the axles' mean speeds. Each as the axle's differential above: Karnopp's

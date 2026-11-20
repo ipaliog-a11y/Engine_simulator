@@ -5,7 +5,7 @@
 // centre with its split, a Torsen ('fric', lock x input torque) or a viscous coupling. What must hold:
 //   · the sourced presets get their type (Torsen: Land Cruiser 200, Amarok, Urus; viscous: Delta Integrale, 993 Turbo,
 //     Diablo VT, Murciélago; open: Sport quattro), every other all-wheel-drive preset 'lock';
-//   · build 403: the clutches with a published limit carry it (GT-R R35 and R34: front at most 50%; Focus RS: rear at
+//   · build 404: the clutches with a published limit carry it (GT-R R35 and R34: front at most 50%; Focus RS: rear at
 //     most 70%), and a limit the launch exceeds lets the axles part;
 //   · on a full-throttle launch of one car (GR Yaris, aids off), the axles' mean speeds part by nothing locked, most
 //     open, and in between for a Torsen and a viscous coupling (Torsen < viscous < open);

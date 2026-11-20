@@ -757,7 +757,7 @@ const CENTRE_DIFF={
   'Porsche 911 Turbo (993, 1995)':{type:'visc',f:0,vcu:true},
   'Lamborghini Diablo VT (1993)':{type:'visc',f:0,vcu:true},
   'Lamborghini Murciélago LP640 (2006)':{type:'visc',f:0,vcu:true},
-  // Clutches with a published limit (build 403): f 0 or 1 names the primary axle; the clutch passes the other at most
+  // Clutches with a published limit (build 404): f 0 or 1 names the primary axle; the clutch passes the other at most
   // L x the drive torque.
   // ATTESA E-TS: 0:100 in normal driving, "adjusted up to 50:50": Nissan Europe newsroom, 2017 GT-R
   'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5},

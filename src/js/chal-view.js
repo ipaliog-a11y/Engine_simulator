@@ -14,6 +14,7 @@ function refreshChallenge(){
   chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
+  if(typeof syncUserRoadUi==='function')syncUserRoadUi();
   const ms=document.getElementById('chalMooseSpeed');
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
