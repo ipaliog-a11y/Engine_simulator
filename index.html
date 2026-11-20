@@ -805,12 +805,13 @@ body[data-group="more"] .mode-room{display:none}
 .ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
 .ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
 .ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
-#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+#ecuScope{display:block;width:100%;height:190px;background:#04140c;border:2px solid #143;margin-bottom:6px}
 .ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
 [data-ecu-hide]{display:none!important}
 #btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
 @media(max-width:900px),(max-height:520px){
-  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0;padding-bottom:44px}
+  #ecuScope{height:150px}
 }
 @media(pointer:coarse){
   .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}
@@ -869,7 +870,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 403</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 404</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -927,7 +928,7 @@ body[data-group="more"] .mode-room{display:none}
 <button type="button" data-ecu="diag">F3 OBD</button>
 <button type="button" data-ecu="delta">F4 DELTA</button>
 </div>
-<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="190" role="img" aria-label="Rolling ten-second scope of four live channels"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
 <div class="ecu-screen" data-ecu-screen="maps" hidden>
 <div class="ecu-keys">
 <button type="button" data-ecu-map="fuel">FUEL</button>
@@ -25651,7 +25652,6 @@ function updateUI(){
     if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
     chips.textContent=bits.join(' · ');
   }
-  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
@@ -34228,34 +34228,83 @@ function ecuHold(){
   if(vizMode!=='engine')setTab('engine');
   flash(tr('HOLD CELL')+' • '+Math.round(rpm)+' rpm');
 }
+// Scope channels: name, unit, decimals and the scale the trace is drawn on. A fixed physical scale (0 to redline, 0 to
+// 100 %) keeps a steady value flat instead of stretching noise across the screen; a reading outside it widens it.
+function ecuChannels(ev){
+  const e=engine||{};
+  return ev
+    ?[{n:'VOLT',u:'V',d:0,lo:0,hi:null},{n:'AMPS',u:'A',d:0,lo:0,hi:(e.pack&&e.pack.iMax)||null},
+      {n:'WIND',u:'°C',d:0,lo:0,hi:200},{n:'SOC',u:'%',d:0,lo:0,hi:100}]
+    :[{n:'RPM',u:'',d:0,lo:0,hi:e.redline||null},{n:'MAP',u:'bar',d:2,lo:0,hi:Math.max(1.05,e.mapMax||1)},
+      {n:'LAMBDA',u:'',d:2,lo:0.7,hi:1.3},{n:'KNOCK',u:'%',d:0,lo:0,hi:100}];
+}
+const ECU_COLS=['#00ff88','#ffcc00','#00ccff','#ff6666'],ECU_SPAN=10;
 function ecuSample(){
   if(ecu.freeze||!engine)return;
-  const ev=typeof isElectric==='function'&&isElectric();
-  const row=ev
+  const ev=typeof isElectric==='function'&&isElectric(),now=performance.now()/1000;
+  const last=ecu.buf[ecu.buf.length-1];
+  // A new powertrain, or a gap while the laptop was shut, starts a fresh trace rather than joining unlike samples.
+  if(ecu.ev!==ev||(last&&now-last.t>0.5)){ecu.buf=[];ecu.ev=ev;}
+  const v=ev
     ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
     :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
-  ecu.buf.push(row);
-  if(ecu.buf.length>ECU_N)ecu.buf.shift();
+  ecu.buf.push({t:now,v});
+  while(ecu.buf.length>ECU_N||(ecu.buf.length>2&&now-ecu.buf[0].t>ECU_SPAN))ecu.buf.shift();
 }
 function ecuDrawScope(){
-  const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
-  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const c=document.getElementById('ecuScope');if(!c)return;
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches,now=performance.now();
+  if(still&&ecu.drawnAt&&now-ecu.drawnAt<1000)return;   // reduced motion: a still picture, refreshed once a second
+  ecu.drawnAt=now;
+  const dpr=Math.min(2,window.devicePixelRatio||1),cw=Math.round((c.clientWidth||480)*dpr),ch=Math.round((c.clientHeight||160)*dpr);
+  if(c.width!==cw||c.height!==ch){c.width=cw;c.height=ch;}
+  const g=c.getContext('2d'),w=cw,h=ch,k=dpr,fs=Math.round(7*k);
   g.fillStyle='#04140c';g.fillRect(0,0,w,h);
-  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
-  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
-  for(let ch=0;ch<4;ch++){
-    let lo=Infinity,hi=-Infinity;
-    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
-    if(!(hi>lo)){lo-=1;hi+=1;}
-    g.strokeStyle=cols[ch];g.beginPath();
-    src.forEach((row,i)=>{
-      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
-      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
-      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+  g.font=fs+"px 'Press Start 2P',monospace";g.textBaseline='top';
+  const chans=ecuChannels(!!ecu.ev),buf=ecu.buf,cur=buf.length?buf[buf.length-1]:null;
+  // legend: one column per channel, its live value and the scale its trace uses
+  const top=Math.round(26*k),bot=h-Math.round(14*k),L=Math.round(4*k),R=w-Math.round(4*k),colW=(R-L)/4;
+  const fmt=(x,d)=>(Math.abs(x)>=1000?Math.round(x).toString():x.toFixed(d));
+  const scales=chans.map((cd,i)=>{
+    let lo=cd.lo,hi=cd.hi;
+    buf.forEach(r=>{const x=r.v[i];if(hi==null||x>hi)hi=x;if(x<lo)lo=x;});
+    if(hi==null||!(hi>lo))hi=lo+1;
+    if(cd.hi==null)hi*=1.1;   // headroom on a channel with no natural ceiling
+    return {lo,hi};
+  });
+  chans.forEach((cd,i)=>{
+    const x=L+i*colW;
+    g.fillStyle=ECU_COLS[i];g.fillRect(x,Math.round(2*k),Math.round(6*k),Math.round(6*k));
+    g.fillText(tr(cd.n),x+Math.round(9*k),Math.round(1*k));
+    g.fillStyle='#e8e8f0';
+    g.fillText(cur?fmt(cur.v[i],cd.d)+(cd.u?' '+cd.u:''):'--',x,Math.round(11*k));
+    g.fillStyle='#5a7a68';
+    const sc=fmt(scales[i].lo,cd.d)+'-'+fmt(scales[i].hi,cd.d);
+    g.save();g.font=Math.round(6*k)+"px 'Press Start 2P',monospace";g.fillText(sc,x,Math.round(19*k));g.restore();
+  });
+  // grid: four bands up, one division per second across, labelled from -10 s to now
+  g.strokeStyle='#123a24';g.lineWidth=1;g.beginPath();
+  for(let j=0;j<=4;j++){const y=Math.round(top+(bot-top)*j/4)+0.5;g.moveTo(L,y);g.lineTo(R,y);}
+  for(let s=0;s<=ECU_SPAN;s++){const x=Math.round(R-(R-L)*s/ECU_SPAN)+0.5;g.moveTo(x,top);g.lineTo(x,bot);}
+  g.stroke();
+  g.fillStyle='#5a7a68';g.textBaseline='bottom';
+  [ECU_SPAN,5,0].forEach(s=>{
+    const lab=s?'-'+s+' s':tr('NOW'),tw=g.measureText(lab).width;
+    const x=R-(R-L)*s/ECU_SPAN;g.fillText(lab,Math.max(L,Math.min(R-tw,x-tw/2)),h-Math.round(1*k));
+  });
+  if(ecu.freeze){g.fillStyle='#ffcc00';const t=tr('FROZEN');g.fillText(t,R-g.measureText(t).width,bot-Math.round(2*k));}
+  if(buf.length<2)return;
+  const tNow=cur.t;
+  g.lineWidth=Math.max(1,Math.round(1.5*k));
+  chans.forEach((cd,i)=>{
+    const {lo,hi}=scales[i];
+    g.strokeStyle=ECU_COLS[i];g.beginPath();
+    buf.forEach((r,j)=>{
+      const x=R-(tNow-r.t)/ECU_SPAN*(R-L),y=bot-(r.v[i]-lo)/(hi-lo)*(bot-top);
+      if(j)g.lineTo(x,y);else g.moveTo(x,y);
     });
-    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
     g.stroke();
-  }
+  });
 }
 function ecuLeds(){
   const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};
@@ -34309,6 +34358,13 @@ function ecuTick(){
   ecuSample();ecuLeds();
   if(ecu.screen==='scope')ecuDrawScope();
   if(ecu.screen==='maps'&&typeof updateFuelMapMarker==='function')updateFuelMapMarker();
+  // the text screens follow the bench too, a few times a second
+  const now=performance.now();
+  if(now-(ecu.textAt||0)>250){
+    ecu.textAt=now;
+    if(ecu.screen==='delta')ecuRenderDelta();
+    else if(ecu.screen==='diag'&&now-(ecu.diagAt||0)>1000){ecu.diagAt=now;ecuRenderDiag();}
+  }
 }
 function bindEcu(){
   const el=document.getElementById('ecuComputer');if(!el)return;

@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The ECU scope reads out (build 404)
+
+- F1 SCOPE names each trace and shows its live value, unit and scale, over a grid with a ten-second time axis. RPM, MAP, lambda and knock (or volts, amps, winding and charge) sit on fixed physical scales, so a steady value lies flat. F3 and F4 now follow the bench instead of showing the moment they were opened.
+- The trace starts afresh on a new powertrain or after the laptop was shut, and stays sharp on any screen. On a phone the ECU button no longer covers the drawer.
+
 ### Your own GPX road for the economy run (build 403)
 
 - **IMPORT GPX ROAD** on the CHALLENGES tab reads a GPX file in the browser (no upload, no library) and adds it as

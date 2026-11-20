@@ -793,12 +793,13 @@ body[data-group="more"] .mode-room{display:none}
 .ecu-led#ecuLedKnock.on{color:#ffaa00}.ecu-led#ecuLedKnock.on i{background:#ffaa00}
 .ecu-led#ecuLedMil.on{color:#ff4444}.ecu-led#ecuLedMil.on i{background:#ff4444}
 .ecu-keys button.on{border-color:var(--mode-accent);color:var(--mode-accent)}
-#ecuScope{width:100%;height:auto;background:#04140c;border:2px solid #143}
+#ecuScope{display:block;width:100%;height:190px;background:#04140c;border:2px solid #143;margin-bottom:6px}
 .ecu-read,.ecu-find{font-size:8px;line-height:1.6;color:#c8c8d8}
 [data-ecu-hide]{display:none!important}
 #btnEcu{position:fixed;right:8px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:32}
 @media(max-width:900px),(max-height:520px){
-  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0}
+  #ecuComputer.open{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:31;max-height:58vh;overflow:auto;margin:0;padding-bottom:44px}
+  #ecuScope{height:150px}
 }
 @media(pointer:coarse){
   .viz-tabs button,.viz-groups button,.build-strip button,.build-row button,.btn-row button,.field input,.field select{min-height:40px}

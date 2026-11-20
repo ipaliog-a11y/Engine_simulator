@@ -406,7 +406,6 @@ function updateUI(){
     if(typeof obdLamp==='function'&&obdLamp())bits.push(tr('MIL'));
     chips.textContent=bits.join(' · ');
   }
-  if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
 }
 
 const tabOfGroup={build:'design',test:'engine',drive:'track',more:'guide'};
