@@ -22,7 +22,7 @@ const CHASSIS={
   hatch:    {label:'HOT HATCH',        mass:983,area:2.12,cd:0.33,wb:2.62,cg:0.52,fWt:0.62,track:1.53,drive:'fwd',aero:0.6,cost:8000,
              fit:{tire:'sport',tw:195,ta:45,wheel:16,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open',geoF:'strut',geoR:'twist'}},
   roadster: {label:'LIGHT ROADSTER',   mass:735,area:1.585,cd:0.37,wb:2.305,cg:0.46,fWt:0.51,track:1.42,drive:'rwd',aero:0.6,cost:9000,
-             fit:{tire:'sport',tw:205,ta:55,wheel:15,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'}},
+             fit:{tire:'sport',tw:205,ta:55,wheel:16,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'}},
   coupe:    {label:'SPORTS COUPE',     mass:1222,area:1.94,cd:0.32,wb:2.575,cg:0.48,fWt:0.53,track:1.55,drive:'rwd',aero:0.8,cost:11000,
              fit:{tire:'sport',tw:245,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd',geoF:'strut',geoR:'multilink'}},
   sedan:    {label:'SPORTS SEDAN',     mass:1397,area:2.17,cd:0.31,wb:2.81,cg:0.52,fWt:0.521,track:1.56,drive:'rwd',aero:0.7,cost:12000,

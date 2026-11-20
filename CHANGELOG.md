@@ -31,6 +31,9 @@ Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
   Both are probable (`wSrc`, `unsure` w). `NO_WIDTH_KNOWN` is empty, and `test171`'s unsure budget goes from 37 to 33.
 - **Presets**: six cars' fits follow the sourced size: AE86, Diablo VT (17-inch, 335/35 rear), BAC Mono (205/45R17,
   255/40R17), 911 RS 2.7, Beat (14-inch rear), Atom 3.5 (225/45R16 rear).
+- **Derived tables follow**: the light-roadster class's most common wheel is now 16-inch, not 15-inch (its six real
+  cars, `tools/class-medians.mjs`; no recorded number moves). `CAR_PRICE` was rerun with `tools/car-prices.mjs`: the
+  Diablo VT is −100, the BAC Mono +100 and the 911 RS −50.
 - **What moved** (fingerprint against build 418): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
   +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.55% to
   8.33%. The owner ruled that the sourced sizes ship.
