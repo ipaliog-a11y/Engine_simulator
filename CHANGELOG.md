@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Seventeen more real engines get their own valves (build 417)
+### Seventeen more real engines get their own valves (build 418)
 
 `plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
 
@@ -42,6 +42,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Two known gaps added on the owner's ruling** (named lists, shrink-only). test60 `KNOWN`: the Hellcat's 'limiter', the same missing top-end fade as the LS7 group; it peaks at 6200 rpm against the published 6000. test76: the Golf GTI Mk7 at 711 °C at Spa, which fails if it runs any hotter; the extra 8 hp from its EA888 valves causes it. The 710 °C line stays for every other light car.
 - **test176** now uses the GR Yaris (G16E, still on the rule) as its example of an unlisted engine, since the Golf Mk7 is now sourced.
 - **Left on the ratio**, because no usable source was found or the sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+
+### The floor and splitter wait until after v1.0, as named gaps (build 417)
+
+- Plan build 10 (`AERO_FLOOR`, the splitter) stopped before any change: the ground-effect measurements it was to be
+  derived from (Zhang, Toet & Zerihan; Ruhrmann & Zhang 2003) could not be reached, and no preset's floor length,
+  diffuser angle, ride height or splitter size is sourced. A model would have had to choose them.
+- The owner ruled: the floor and splitter come back after v1.0 with the driving sim's ride height in motion (group 3).
+  `AERO_FLOOR`, the splitter row and the Radical SR3's fitted `body.aero` 1.09 (its diffuser only, since build 415)
+  stay named gaps at v1.0. This answers the plan's question 4. No numbers move.
 
 ### Five more cars' overhang splits are sourced, not read from the side view (build 416)
 

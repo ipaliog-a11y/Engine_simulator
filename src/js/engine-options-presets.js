@@ -278,8 +278,8 @@ const ENGINE_VALVES={
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
   // cam or intake, not the valves (named in the CHANGELOG).
   'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'},
-  // Build 417 (plans/v1-finish.md, valves batch 1 of 4). unsure: true marks a size that is probable, not the maker's sheet.
-  // Owner's rule (build 417): a sourced valve is used whichever way it moves the engine; none is held back for its result.
+  // Build 418 (plans/v1-finish.md, valves batch 1 of 4). unsure: true marks a size that is probable, not the maker's sheet.
+  // Owner's rule (build 418): a sourced valve is used whichever way it moves the engine; none is held back for its result.
   'BMW S62 4.9 V8 (M5 E39)':{iv:35,ev:30.5,src:'BMW ST038 Z8 training manual, S62B50: valves 35 / 30.5 mm; BMW TIS E39 M5 the same'},
   'Dodge 6.2 Hellcat (Challenger SRT)':{iv:54.36,ev:41.91,src:'Dodge Garage, Gen III HEMI quick reference guide part III: 6.2 Hellcat 2.14 / 1.65 in'},
   'Dodge Viper 8.4 V10 (SRT-10)':{iv:52.8,ev:40.8,src:'Chrysler press kit, 8.4 V10: hollow-stem intake 52.8 mm, sodium-filled exhaust 40.8 mm'},

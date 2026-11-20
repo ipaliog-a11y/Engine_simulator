@@ -24,7 +24,7 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
-   *Build 417:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   *Build 418:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
    way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
    ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
    Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
@@ -54,6 +54,10 @@ recorded numbers reports its range and the mean error against the real cars.
 10. **A splitter and the floor** (`AERO_FLOOR`). The splitter's lift from its area and height; the floor's downforce
     from its length, diffuser angle and ride height at the static height (Zhang, Toet & Zerihan, ground-effect
     measurements). Ride height in motion stays after v1.0.
+    **Moved after v1.0** (owner, build 417): the ground-effect measurements could not be reached (every copy returned
+    403) and no preset's floor or splitter geometry is sourced, so a model would have to pick geometry. `AERO_FLOOR`,
+    the splitter row and the Radical SR3's fitted `body.aero` 1.09 (now its diffuser only) stay named gaps at v1.0,
+    and come back with group 3's ride height in motion.
 11. **Tyre pressure into grip, rated load and stiffness** (`TYRE_KZ`). Vertical stiffness from pressure and size
     (Rhyne; Pacejka, *Tyre and Vehicle Dynamics*), rated load from the ETRTO load index, grip's load sensitivity at
     the set pressure.
@@ -101,4 +105,5 @@ Then the owner checks the finish line and tags v1.0.
    or on the named list with its reason.
 2. **`catRampTop`** (build 8): if no measured back pressure is found, does it stay a rule until after v1.0?
 3. **Valves** (builds 1–4): may an engine with no source stay on the ratio, named, at v1.0?
-4. **Group 2's aero**: with group 3 after v1.0, is a static floor and splitter enough for v1.0?
+4. ~~**Group 2's aero**: with group 3 after v1.0, is a static floor and splitter enough for v1.0?~~ Answered (build
+   417): no; the floor and splitter wait for group 3 and stay named gaps at v1.0 (build 10 above).
