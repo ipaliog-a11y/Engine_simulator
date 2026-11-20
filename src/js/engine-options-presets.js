@@ -277,7 +277,25 @@ const ENGINE_VALVES={
   'Honda K20C1 (Civic Type R FK8)':{iv:35,ev:29,src:'Ferrea and Skunk2 stock-size valves: 35 / 29 mm (std)'},
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
   // cam or intake, not the valves (named in the CHANGELOG).
-  'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'}
+  'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'},
+  // Build N (plans/v1-finish.md, valves batch 1 of 4). unsure: true marks a size that is probable, not the maker's sheet.
+  'BMW S62 4.9 V8 (M5 E39)':{iv:35,ev:30.5,src:'BMW ST038 Z8 training manual, S62B50: valves 35 / 30.5 mm; BMW TIS E39 M5 the same'},
+  'Dodge 6.2 Hellcat (Challenger SRT)':{iv:54.36,ev:41.91,src:'Dodge Garage, Gen III HEMI quick reference guide part III: 6.2 Hellcat 2.14 / 1.65 in'},
+  'Dodge Viper 8.4 V10 (SRT-10)':{iv:52.8,ev:40.8,src:'Chrysler press kit, 8.4 V10: hollow-stem intake 52.8 mm, sodium-filled exhaust 40.8 mm'},
+  'Ford 2.3 EcoBoost (Focus RS Mk3)':{iv:32.5,ev:30,src:'Ford Performance M-6049-20EBIP: 2.3 exhaust valve 30 mm; Ferrea and Supertech stock-size intake 32.5 mm (std)'},
+  'Honda K20A tuned (Ariel Atom 3.5)':{iv:35,ev:30,src:'Ferrea 6000 stock-size valves, K20A2/A3/Z1 and JDM K20A Type R: 35 / 30 mm (std)'},
+  'Honda B16B (Civic Type R EK9)':{iv:33,ev:28,unsure:true,src:'Honda, B16A engine page: 33 / 28 mm; Ferrea and Brian Crower stock-size B16A/B18C valves the same (std). The B16B is taken to share them'},
+  'Honda C30A V6 (NSX NA1)':{iv:35,ev:30,src:'ScienceofSpeed NSX valve set: standard 3.0 intake 35 mm, exhaust 30 mm; Ferrea stock exhaust 30.05 mm (std)'},
+  'Nissan VR38DETT (GT-R R35 2017)':{iv:37,ev:32.2,src:'Ferrea stock-size VR38DETT valves 37 / 32.2 mm; Supertech and Tomei +1 mm 38.15 / 33.15 (std)'},
+  'Nissan VG30DETT (300ZX Z32)':{iv:34,ev:30,src:'Ferrea stock-size intake 34 mm; Tomei oversize set: exhaust 30.0 + 0.5 mm (std)'},
+  'Nissan VQ37VHR (370Z)':{iv:36.6,ev:30.2,unsure:true,src:'ThinkTuning VQ37VHR guide: 36.6 / 30.2 mm; Supertech +1 mm 37.70 / 31.40 (std)'},
+  'VW EA888 2.0 TSI (Golf GTI Mk7)':{iv:33.85,ev:28,unsure:true,src:'Ferrea EA888 Gen 3 stock exhaust 28 mm; intake from Supertech +1 mm 34.85 mm (std)'},
+  'Mercedes-AMG M156 6.2 V8 (C63 W204)':{iv:40,ev:34,unsure:true,src:'australiancar.reviews and 8020 Automotive M156 guides: 40 / 34 mm, not a Mercedes sheet'},
+  'Buick LC2 turbo V6 (GNX)':{iv:43.43,ev:38.1,unsure:true,src:'turbobuick.com owners: stock Grand National head 1.71 / 1.50 in'},
+  'Peugeot XU9JA 1.9 (205 GTI)':{iv:41.6,ev:34.5,src:'FEBI and gt2i replacement valves, 205 GTI 1.9: 41.6 / 34.5 mm (std)'},
+  'Mercedes M102 2.3-16 (190E)':{iv:38,ev:33,unsure:true,src:'RPM Depot M102 16V overhaul valves, 190E 2.3-16: 38 and 33 mm (std; which is which not stated)'},
+  'Ford Windsor 289 4-bbl (Mustang 1965)':{iv:45.21,ev:36.83,src:'CarTech, Ford Small-Block General Data: every 289 head 1.780 / 1.450 in'},
+  'Rover K-series 1.8 (Elise S1)':{iv:27.7,ev:24.1,src:'Land Rover Freelander workshop manual, K 1.8 general data: inlet 27.6-27.8, exhaust 24.0-24.2 mm'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
