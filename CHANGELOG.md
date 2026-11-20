@@ -34,6 +34,16 @@ Step 9 of `plans/small-physics.md`.
   published figure in the code, the E46 M3's ~38.6 m (161 ft from 70 mph), goes 35.7 → 36.6 m (error −7.5% → −5.1%).
 - Fingerprint identical (it records no 100–0; the lap and race don't call this stop).
 - Left open: presets carry no published 100–0, so the mean error is over one car; the valve's knee is not a maker's.
+### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 401)
+
+Step 11 of `plans/small-physics.md`.
+- **Bench:** a start's crank energy comes from the pack (MG1's, or a P2 motor's through its clutch, with losses) and a stop's comes back. On a power-split, MG2 cancels the ring's reaction to MG1 (kr of its crank torque), so the shaft feels none of it. Prius bench start draws 1.16 kJ, stop from 876 rpm returns 0.77 kJ (was 0 both).
+- **`hybStartStop`** integrates the start (rest to idle) and stop at 2 ms: Prius 1.14 kJ in 0.17 s, 0.72 kJ back from idle; Qashqai e-POWER 0.88 kJ in 0.06 s, 0.31 kJ back.
+- **Lap:** each power-split or series start costs the pack its draw less the stop's return from idle. Prius tech lap 88.96 → 89.60 s (+0.71%), Qashqai e-POWER +0.01%; P2s (Ioniq, 330e, 918) do not stop on a lap and do not move.
+- **Lap balance:** a lap whose deploy does not settle in twelve rounds now bisects the share between none and the last tried, keeping the largest that settles. The Prius's deploy over its share is not monotonic near 5%, and with its starts' ~8 kJ no share there balances; it settles at 0 (motor regenerating, not deploying). Laps that settled before are unchanged.
+- **Replay sound:** a start is spun up unfuelled from rest to idle, a stop runs down unfuelled from the speed it ran at; a restart before the run-down ends refires at once.
+- Left open: `hybridCycle` (WLTC, economy roads) has no start cost: its per-second choice has no memory of the engine's state, and ~0.4 kJ net a start is under its 0.5%-of-pack tolerance; WLTC and economy figures do not move. The lap's fuel and time still fire at once; its engine speeds above idle carry no inertia.
+
 ### The economy run plans its own speed: a distance DP, and honest fuel at full load (build 400)
 
 - Engine cars and EVs on the economy roads now get their speed plan from a dynamic programme over distance (`ecoDP`,

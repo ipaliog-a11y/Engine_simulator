@@ -195,9 +195,19 @@ function hybLapEnergy(L){
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
+  // a power-split's or series hybrid's engine stops off the power and starts on it (build 401): each start draws its crank
+  // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
+  // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
+  let ssJ=0,starts=0;
+  if(hy.mode!=='p2'){
+    const S=hybStartStop(),back=S.stopJ(engine.idleRpmEff);
+    for(let i=0;i<n;i++){const j=(i+1)%n,a=R.pwr[i]>0,b=R.pwr[j]>0;
+      if(!a&&b){ssJ+=S.startJ-back;starts++;}}
+    deployJ+=ssJ;
+  }
   // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
   const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
-  return {pm,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
+  return {pm,starts,startStopKJ:ssJ/1000,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
@@ -218,10 +228,19 @@ function hybridLap(key,opts){
     for(let it=0;it<12;it++){
       used=k;hybDeployShare=k;L=simulateLapRun(key,opts);if(!L)return null;E=hybLapEnergy(L);B=hybDeployBudget(E,extra);
       if(E.deployKJ<=B||E.deployKJ<1e-6)break;
-      k=clamp(k*B/E.deployKJ*0.995,0,1);
+      const ss=Math.max(0,E.startStopKJ||0);   // the engine's starts (build 401) do not scale with the share
+      k=clamp(k*Math.max(0,B-ss)/Math.max(1e-6,E.deployKJ-ss)*0.995,0,1);
+    }
+    // not settled in twelve (build 401: a Prius whose starts cost the pack a fixed 8 kJ, where the deploy over the share is
+    // not monotonic near 5%): bisect the share between none and the last tried, keeping the largest that settles
+    if(E.deployKJ>B&&E.deployKJ>=1e-6){
+      let lo=0,hi=used,ok=null;
+      for(let it=0;it<10;it++){const m=it?(lo+hi)/2:0;hybDeployShare=m;const Lm=simulateLapRun(key,opts);if(!Lm)return null;const Em=hybLapEnergy(Lm),Bm=hybDeployBudget(Em,extra);
+        if(Em.deployKJ<=Bm||Em.deployKJ<1e-6){lo=m;ok={m,Lm,Em,Bm};}else if(it)hi=m;else break;}
+      if(ok){used=ok.m;L=ok.Lm;E=ok.Em;B=ok.Bm;}
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
+  L.hy={share:used,pm:E.pm,starts:E.starts,startStopKJ:E.startStopKJ,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
   return L;
 }
 // The design summary's line for a hybrid.
