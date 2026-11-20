@@ -27,7 +27,7 @@ const r = await page.evaluate(() => {
   const h = simulateEconomyChallenge('alpine');
   out.hy = { hybrid: !!h.hybrid, L: h.fuelL, l100: h.l100, out: h.packOutKWh, in: h.packInKWh, dSoc: h.dSocKWh, corr: h.corrected,
     off: h.engOff, short: h.limitShare, kWh: engine.hy.pack.kWh, t: h.time, target: h.target };
-  activeRunChallenge = 'economy'; chalResult = h; renderChallenge();
+  activeRunChallenge = 'economy'; chalResult = h; renderRunChallenge();   // the CHALLENGES tab's renderer, renamed in build 410 (it shadowed the build card's renderChallenge)
   out.head = (document.getElementById('chalHead') || {}).textContent || '';
   return out;
 });

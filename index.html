@@ -875,7 +875,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 409</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 410</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -8340,6 +8340,7 @@ function applyLang(lang){
   const chSel=document.getElementById('edChallenge');
   if(chSel)[...chSel.options].forEach(o=>{const c=CHALLENGES.find(x=>x.id===o.value);if(c)o.textContent=chName(c);});
   if(typeof renderChallenge==='function')renderChallenge();
+  if(typeof renderRunChallenge==='function')renderRunChallenge();
   if(vehicle&&vehicle.body&&vehicle.body.copyOf)vehicle.chLabel=carLabel(vehicle.body);
   if(typeof updateVehicleSummary==='function'&&vehicle&&vehicle.chLabel)updateVehicleSummary();
   if(typeof renderFuelMap==='function')renderFuelMap();
@@ -31527,9 +31528,9 @@ function refreshChallenge(){
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
-  renderChallenge();
+  renderRunChallenge();
 }
-function renderChallenge(){
+function renderRunChallenge(){
   const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
   if(!head)return;
   const ch=runChallengeById(activeRunChallenge);

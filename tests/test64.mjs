@@ -131,14 +131,19 @@ const thumbs = await page.evaluate(() => {
 console.log(`== garage: ${thumbs.n} thumbnails, the car its class picture and the engine drawn: ${thumbs.ok} ==`);
 if (thumbs.n < 2 || !thumbs.ok) fails.push('saved cars and engines do not all get a thumbnail');
 
-// ---- 5. the car on the track map is drawn where the replay puts it ----
-await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(800);
-const onMap = await page.evaluate(() => {
-  const k = typeof topCarSprite === 'function' && Object.keys(topCarCache).length;
-  return { cached: k };
+// ---- 5. the car on the track view is drawn, in its own livery ----
+// Build 273 replaced the top-down map (topCarSprite) with the chase view, which paints the car inside a closure
+// (track-scene.js drawCar) with col = carLivery(vehicle). So the livery is swapped for a colour nothing else uses,
+// and the check is that the track view filled with it.
+await page.evaluate(() => {
+  window.__fills = new Set(); const P = CanvasRenderingContext2D.prototype, d = Object.getOwnPropertyDescriptor(P, 'fillStyle');
+  Object.defineProperty(P, 'fillStyle', { get() { return d.get.call(this); }, set(v) { if (typeof v === 'string') window.__fills.add(v.toLowerCase()); d.set.call(this, v); }, configurable: true });
+  window.carLivery = () => '#123457';
 });
-console.log(`== track: car sprites built ${onMap.cached} ==`);
-if (!onMap.cached) fails.push('the track map never drew the car sprite');
+await page.evaluate(() => document.getElementById('tabTrack').click()); await page.waitForTimeout(800);
+const onMap = await page.evaluate(() => ({ drawn: window.__fills.has('#123457') }));
+console.log(`== track: car drawn in its livery ${onMap.drawn} ==`);
+if (!onMap.drawn) fails.push('the track view never drew the car');
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');

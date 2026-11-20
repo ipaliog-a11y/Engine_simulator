@@ -53,10 +53,11 @@ const geom = await page.evaluate(() => ['small', 'medium', 'large'].map(sz => {
     boost_bar: 1.0, turboSize: sz, vgt: true })); buildEngine();
   // build 168: the ring is sized by its own radius and height, not off the volute's A/R, so the blockage is the
   // vanes' share of the ring's own open circumference, and the ring is compared with the volute for the record
-  const r2 = vanePitchR(engine.compExd), clear = VANE_H * TURB_WHEEL * engine.compExd * 2 * Math.PI * r2 * Math.sin(VANE_BETA_MAX * Math.PI / 180);
+  // build 288: vanePitchR takes the turbine wheel as a fraction k of the exducer (engine.turbK; TURB_WHEEL for a factory frame)
+  const r2 = vanePitchR(engine.compExd, engine.turbK), clear = VANE_H * engine.turbK * engine.compExd * 2 * Math.PI * r2 * Math.sin(VANE_BETA_MAX * Math.PI / 180);
   return { sz, fixed: +(fixed * 1e6).toFixed(1), open: +(engine.turbineArea * 1e6).toFixed(1),
     shut: +(engine.vgtShut * 1e6).toFixed(1), sweep: +(engine.turbineArea / engine.vgtShut).toFixed(2),
-    blockage: +(1 - engine.turbineArea / clear).toFixed(3), r2ratio: r2 / (TURB_WHEEL * engine.compExd / 2) };
+    blockage: +(1 - engine.turbineArea / clear).toFixed(3), r2ratio: r2 / (engine.turbK * engine.compExd / 2) };
 }));
 console.log('frame    fixed throat   vanes open   vanes shut   sweep   blockage at full open');
 for (const g of geom)

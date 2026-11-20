@@ -21,9 +21,9 @@ function refreshChallenge(){
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
-  renderChallenge();
+  renderRunChallenge();
 }
-function renderChallenge(){
+function renderRunChallenge(){
   const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
   if(!head)return;
   const ch=runChallengeById(activeRunChallenge);
