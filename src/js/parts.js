@@ -1115,7 +1115,7 @@ function drawBrake(r){
 // wheel hop it gives, the rolling resistance, and Horne's aquaplaning speed; against the car as it is now.
 function tyreAxleReport(v,cold,front){
   const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,q=quarterCar(Object.assign({},v,{tyrePart:{front_kPa:cold,rear_kPa:cold}}),front?'F':'R'),hot=tyreHotKPa(cold,tt.tOpt);
-  const w=front&&v.tireWidthF>0?v.tireWidthF/v.tireWidth:1;   // the load capacity at this pressure (ETRTO, build 417)
+  const w=front&&v.tireWidthF>0?v.tireWidthF/v.tireWidth:1;   // the load capacity at this pressure (ETRTO, build 418)
   return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot),cap:(v.tyreRatedKg||0)*w*tyreLoadShare(cold)};
 }
 function previewTyre(){

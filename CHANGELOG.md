@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 417)
+### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
 
 Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
 
@@ -42,6 +42,15 @@ Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
   from the thesis's text and code.
 
 Tests: test193 (updated); test168 now averages the wheel loads over a crest or dip across the second second, because a single instant read the bounce's phase (with the softer tyre it read 1.56 against a 1.55 limit; averaged, main and this build both read 1.47; bands unchanged). 96 lap, brake, drive and tyre tests rerun.
+
+### The floor and splitter wait until after v1.0, as named gaps (build 417)
+
+- Plan build 10 (`AERO_FLOOR`, the splitter) stopped before any change: the ground-effect measurements it was to be
+  derived from (Zhang, Toet & Zerihan; Ruhrmann & Zhang 2003) could not be reached, and no preset's floor length,
+  diffuser angle, ride height or splitter size is sourced. A model would have had to choose them.
+- The owner ruled: the floor and splitter come back after v1.0 with the driving sim's ride height in motion (group 3).
+  `AERO_FLOOR`, the splitter row and the Radical SR3's fitted `body.aero` 1.09 (its diffuser only, since build 415)
+  stay named gaps at v1.0. This answers the plan's question 4. No numbers move.
 
 ### Five more cars' overhang splits are sourced, not read from the side view (build 416)
 

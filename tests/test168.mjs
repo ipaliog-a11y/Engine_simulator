@@ -97,7 +97,7 @@ const R = await page.evaluate(() => {
   // ---- the road under the car (build 268): coasting in neutral on a 5% fall, and the wheel loads over a crest and in a dip
   { const car = load('Subaru Impreza'), v0 = 30, run = road => { const s = driveState(car); s.vx = v0; s.w = s.w.map(() => v0 / car.r);
       for (let i = 0; i < 100; i++) stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); return s; };
-    // the wheel loads over the second second (build 417): the body is still bouncing at 1 s, so one instant reads the
+    // the wheel loads over the second second (build 418): the body is still bouncing at 1 s, so one instant reads the
     // bounce's phase (a softer tyre moved it by 0.02), not the steady m v2 kv the check is about
     const sum = s => s.Fz.reduce((a, b) => a + b, 0), held = road => { const s = run(road); let m = 0;
       for (let i = 0; i < 100; i++) { stepCar(car, s, { gear: 0, clutch: 1, road }, 0.01); m += sum(s) / 100; } return m; };
