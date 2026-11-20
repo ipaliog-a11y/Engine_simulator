@@ -3,7 +3,7 @@
 //   · each powertrain's start car (NA, turbo, diesel, rotary, two-stroke, EV, hybrid) shows its steps in the plan's order;
 //   · an NA engine skips BOOST, and choosing a turbo in the walk-through adds it;
 //   · a slider in a step sets the card's own form field;
-//   · SKIP TO FINISH on an untouched car leaves the factory engine and form exactly as they loaded;
+//   · SKIP TO FINISH on an untouched car leaves the factory engine and form exactly as they loaded (then DRIVE IT);
 //   · no sideways scroll at phone width.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -85,7 +85,9 @@ const snap = () => page.evaluate(() => JSON.stringify({ e: [engine.displacement_
 await page.evaluate(i => gbShapeCar(i), cars.boosted);
 const s0 = await snap(), e0 = await page.evaluate(() => { window.__e0 = engine; return 1; });
 await page.click('#gwSkip');
-const s1 = await snap(), same = await page.evaluate(() => window.__e0 === engine && document.getElementById('guided').hidden && vizMode === 'vehicle');
+// FINISH opens the finish screen (build 3), and its DRIVE IT the VEHICLE tab
+const s1 = await snap(), same = await page.evaluate(() => { const r = window.__e0 === engine && guided.step === 5;
+  document.getElementById('gfDrive').click(); return r && document.getElementById('guided').hidden && vizMode === 'vehicle'; });
 console.log(`SKIP TO FINISH: form ${s0 === s1 ? 'unchanged' : 'CHANGED'}, engine ${same ? 'the same' : 'REBUILT'}`);
 if (s0 !== s1 || !same) fails.push('SKIP TO FINISH changed the factory car');
 

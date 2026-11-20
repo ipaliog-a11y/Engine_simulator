@@ -105,13 +105,14 @@ function renderGuided(){
   }else if(guided.step===2){
     html=gbQuestion(3,'What matters most?',Object.keys(GB_GOALS).map(k=>gbChoice('goal',k,tr(GB_GOALS[k].label),'',k===guided.goal)).join(''));
   }else if(guided.step===3)html=gbResult();
+  else if(guided.step===5)html=gfRender();
   else html=gwRender();
   box.innerHTML=html;
   gwHintQueue();
 }
 // each step opens at its top: the result's first control is below the car's picture and parts, so it takes focus unscrolled
 function gbFocus(){const box=document.getElementById('gbBody');if(box)box.scrollTop=0;
-  requestAnimationFrame(()=>{const b=document.querySelector(guided.step===3?'#gbBuild':guided.step===4?'#gwNext':'#gbBody .gb-opt');if(b)b.focus({preventScroll:true});});}
+  requestAnimationFrame(()=>{const b=document.querySelector(guided.step===3?'#gbBuild':guided.step===4?'#gwNext':guided.step===5?'#gfDrive':'#gbBody .gb-opt');if(b)b.focus({preventScroll:true});});}
 function openGuided(from){
   const el=document.getElementById('guided');if(!el)return;
   guided.from=from||null;guided.step=0;guided.pick=0;
@@ -123,7 +124,7 @@ function closeGuided(stay){
   el.hidden=true;guided.open=false;document.body.classList.remove('guided-open');
   if(!stay&&guided.from==='title')openTitleScreen();
 }
-function gbBack(){if(guided.step===4&&guided.ws>0){guided.ws--;renderGuided();gbFocus();}else if(guided.step>0){guided.step--;guided.pick=0;renderGuided();gbFocus();}else closeGuided();}
+function gbBack(){if(guided.step===5){guided.step=4;renderGuided();gbFocus();}else if(guided.step===4&&guided.ws>0){guided.ws--;renderGuided();gbFocus();}else if(guided.step>0){guided.step--;guided.pick=0;renderGuided();gbFocus();}else closeGuided();}
 // The same load as the FACTORY CAR picker, then the VEHICLE tab, where the car's parts are open on their cards.
 function gbBuild(){
   const x=gbMatches().list[guided.pick];if(!x)return;
@@ -139,6 +140,9 @@ function bindGuided(){
     else if(b.id==='gbShape'){const x=gbMatches().list[guided.pick];if(x)gbShapeCar(x.i);return;}
     else if(b.id==='gwNext'){const n=gwSteps().length;if(guided.ws<n-1)guided.ws++;else{gwFinish();return;}}
     else if(b.id==='gwSkip'){gwFinish();return;}
+    else if(b.id==='gfDrive'){closeGuided(true);setTab('vehicle');return;}
+    else if(b.id==='gfSteps'){guided.step=4;}
+    else if(b.id==='gfOver'){gbShapeCar(guided.car);return;}
     else if(b.dataset.adv!=null){gwAdvanced(b.dataset.adv);return;}
     else if(d.v!=null){const c=document.getElementById(d.f);if(c&&!c.disabled){c.value=d.v;gwSend(c,true);}}
     else if(d.fam!=null){guided.fam=d.fam;guided.budget=Infinity;guided.step=1;}
@@ -249,7 +253,7 @@ function gwInput(e,done){
 }
 function gbShapeCar(i){
   setTab('vehicle');loadFactoryCarUI(i);
-  guided.step=4;guided.ws=0;guided.dirty=false;
+  guided.step=4;guided.ws=0;guided.dirty=false;guided.car=i;guided.base=gfFigures();
   if(guided.open){renderGuided();gbFocus();}
 }
 // The full card for a step's field: the dialog closes on that card, opened.
@@ -258,11 +262,11 @@ function gwAdvanced(id){
   closeGuided(true);setTab(id.startsWith('vh')?'vehicle':'design');
   if(card&&dc.st.ready){dc.st.card=card.id.slice((dc.p+'Card-').length);dc.layout();card.scrollIntoView({block:'nearest'});}
 }
-// FINISH: build the engine (and so the car) only if an engine field moved; then the car on the VEHICLE tab.
+// FINISH: build the engine (and so the car) only if an engine field moved; then the finish screen (gfRender).
 function gwFinish(){
-  closeGuided(true);
   if(guided.dirty){buildEngine();guided.dirty=false;}
-  setTab('vehicle');
+  guided.step=5;
+  if(guided.open){renderGuided();gbFocus();}
 }
 function bindShape(){
   const el=document.getElementById('guided');if(!el)return;
@@ -363,4 +367,38 @@ function gwHintRun(tok){
     else{box.dataset.hints='done';guided.hintMs=performance.now()-t0;ps.forEach(p=>{if(p.textContent==='…')p.textContent='';});}
   };
   step();
+}
+
+// ====== The finish screen (build G10; plans/guided-build.md, build 3) ======
+// The build against the factory car it started from, in the figures BUILD left: the scorecard's (engine.score), the car's
+// run (perf) and its price (engine plus car, as the budget question counts it). No new estimate is made here.
+function gfFigures(){
+  const s=(engine&&engine.score)||{},P=perf||{};
+  return {hp:s.peakHP,tq:s.peakTQ,t100:P.t100,top:P.topSpeed,mass:vehicle&&vehicle.mass,
+    cost:((engine&&engine.cost)||0)+((vehicle&&vehicle.cost)||0),rel:s.reliability};
+}
+// [key, label, unit, decimals, which way is better, the goal it answers]
+const GF_ROWS=[['hp','PEAK POWER',' hp',0,1],['tq','TORQUE',' Nm',0,1],['t100','0–100 km/h',' s',2,-1,'quick'],['top','TOP SPEED',' km/h',0,1],
+  ['mass','WEIGHT',' kg',0,-1,'light'],['cost','PRICE','$',0,-1,'cheap'],['rel','RELIABILITY','',0,1]];
+// The limit the build sits on: the first lit of knock and valve float (the ENGINE card), then tyre rating and grip
+// (the VEHICLE card), in that card's own verdict; '' if none is lit.
+function gfLimit(){
+  const ri=typeof icdCompute==='function'?icdCompute():null;
+  if(ri&&(icdKnockOver(ri)||icdFloatShort(ri)))return ICD.cfg.limits(ri).verdict;
+  const rc=vehicle?vcdCompute():null;
+  if(rc&&(vcdTyresShort(rc)||vcdGripBound(rc)))return VCD.cfg.limits(rc).verdict;
+  return '';
+}
+function gfRender(){
+  const a=guided.base||{},b=gfFigures(),fmt=(v,u,dp)=>v==null||!isFinite(v)?'—':(u==='$'?'$':'')+dcFmt(v,dp)+(u==='$'?'':u);
+  const rows=GF_ROWS.map(([k,l,u,dp,good,goal])=>{
+    const d=a[k]!=null&&b[k]!=null?+(b[k]-a[k]).toFixed(dp):0;
+    const dd=d?'<span class="'+(Math.sign(d)===good?'up':'dn')+'">'+gwSigned(d,u,dp)+'</span>':'';
+    return '<tr data-k="'+k+'"'+(goal===guided.goal?' class="on"':'')+'><th>'+esc(tr(l))+'</th><td>'+fmt(a[k],u,dp)+'</td><td>'+fmt(b[k],u,dp)+'</td><td>'+dd+'</td></tr>';}).join('');
+  const lim=gfLimit(),p=FACTORY_CARS[guided.car];
+  return '<p class="gb-step">'+esc(tr('FINISH'))+'</p><h3>'+esc(tr('Your build against the car it started from'))+'</h3>'+
+    '<table class="gf-tab"><thead><tr><th></th><td>'+esc(p?p.name:tr('FACTORY'))+'</td><td>'+esc(tr('YOUR BUILD'))+'</td><td></td></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<p class="gw-what" id="gfLimit">'+esc(lim||tr('No limit on the cards is lit: no knock, valve float, tyre rating or grip holds it back.'))+'</p>'+
+    '<div class="gw-act"><button type="button" id="gfDrive" class="sc-drive">'+esc(tr('DRIVE IT'))+'</button>'+
+    '<button type="button" id="gfSteps">'+esc(tr('BACK TO STEPS'))+'</button><button type="button" id="gfOver">'+esc(tr('START OVER'))+'</button></div>';
 }
