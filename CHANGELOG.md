@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The floor and splitter wait until after v1.0, as named gaps (build 417)
+
+- Plan build 10 (`AERO_FLOOR`, the splitter) stopped before any change: the ground-effect measurements it was to be
+  derived from (Zhang, Toet & Zerihan; Ruhrmann & Zhang 2003) could not be reached, and no preset's floor length,
+  diffuser angle, ride height or splitter size is sourced. A model would have had to choose them.
+- The owner ruled: the floor and splitter come back after v1.0 with the driving sim's ride height in motion (group 3).
+  `AERO_FLOOR`, the splitter row and the Radical SR3's fitted `body.aero` 1.09 (its diffuser only, since build 415)
+  stay named gaps at v1.0. This answers the plan's question 4. No numbers move.
+
 ### Five more cars' overhang splits are sourced, not read from the side view (build 416)
 
 - The front/rear overhang split of the BMW M3 (E46), Golf 2.0 TDI (Mk7), BMW 330d (F30), 911 Carrera RS 2.7 and
