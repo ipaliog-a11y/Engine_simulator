@@ -18,6 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Tyre sizes from the makers' sheets, and the two missing widths (build 420)
+
+Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
+
+- **Tyre sizes** (`CAR_DIMS`): 20 of the 26 cars that had no published size now carry one, with its source in a new
+  `tySrc`. Six come from the maker or the maker's catalogue and lose `unsure`: Alto Works (Suzuki sheet), AE86
+  (185/70R13, Toyota catalogue), S2000 (front 205/55R16, Honda factsheet), Murciélago LP640 (Lamborghini press
+  release), 911 Carrera RS 2.7 (185/70R15 and 215/60R15, Porsche media kit), Beat (155/65R13 and 165/60R14, Honda
+  catalogue). Fourteen are probable (fitment databases, dealers, period road tests) and stay `unsure`.
+- **Widths**: Radical SR3 RSX 1.799 m (dealer ad, topspeed.com), Ram 2500 2.019 m (autopadre.com, without mirrors).
+  Both are probable (`wSrc`, `unsure` w). `NO_WIDTH_KNOWN` is empty, and `test171`'s unsure budget goes from 37 to 33.
+- **Presets**: six cars' fits follow the sourced size: AE86, Diablo VT (17-inch, 335/35 rear), BAC Mono (205/45R17,
+  255/40R17), 911 RS 2.7, Beat (14-inch rear), Atom 3.5 (225/45R16 rear).
+- **What moved** (fingerprint against build 418): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
+  +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.55% to
+  8.33%. The owner ruled that the sourced sizes ship.
+- **Named gap**: the Beat's top speed goes from 157 to 165 km/h (real 140), because its sourced rear tyre is 14-inch,
+  not 13-inch. 0–100 gets worse on the AE86, Diablo VT, BAC Mono, Beat and Atom (by 0.6–1.4 points), and better on the
+  911 RS.
+- **Left open**: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf GTI Mk1 and Amarok (no source reached). E-Type and
+  Mustang 1965 came on cross-ply sizes (6.40-15, 6.95-14) that the size format can't hold. The Radical runs slicks
+  (200/580-15, 265/605-16).
+
 ### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
 
 Group 2, build 11 of `plans/v1-finish.md` (register `TYRE_KZ`).
