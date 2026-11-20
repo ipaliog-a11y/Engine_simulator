@@ -61,7 +61,7 @@ for (const x of r.rows) {
   // Build 169: the Golf GTI sat at 699 C against this 700 C line; with its family's average gearbox (its own is not
   // published in the file) it is 701. The line is 1 C from where the model already was, finer than the data it stands
   // for (owners' readings 300-550 C, surface peaks to ~800 C): 710.
-  // Build 418 (owner's ruling), a known gap that may only shrink: the Golf GTI Mk7 gains 8 hp from its sourced EA888
+  // Build 419 (owner's ruling), a known gap that may only shrink: the Golf GTI Mk7 gains 8 hp from its sourced EA888
   // valves and its brakes run 711 C at Spa. The 710 C line stays for every other light car.
   const SPA_LIGHT_KNOWN = { 'VW Golf GTI (Mk7, 2013)': 711 };
   if (x.grp === 'light' && !(x.name in SPA_LIGHT_KNOWN ? Math.round(x.spa) <= SPA_LIGHT_KNOWN[x.name] : x.spa <= 710)) fails.push(`${x.name}: ${Math.round(x.spa)} C at Spa, hotter than a light car's brakes run`);

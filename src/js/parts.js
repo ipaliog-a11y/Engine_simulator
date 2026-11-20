@@ -1115,7 +1115,8 @@ function drawBrake(r){
 // wheel hop it gives, the rolling resistance, and Horne's aquaplaning speed; against the car as it is now.
 function tyreAxleReport(v,cold,front){
   const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,q=quarterCar(Object.assign({},v,{tyrePart:{front_kPa:cold,rear_kPa:cold}}),front?'F':'R'),hot=tyreHotKPa(cold,tt.tOpt);
-  return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot)};
+  const w=front&&v.tireWidthF>0?v.tireWidthF/v.tireWidth:1;   // the load capacity at this pressure (ETRTO, build 418)
+  return {hot,kt:q.kt,hop:Math.sqrt((q.ks+q.kt)/q.mu)/(2*Math.PI),crr:tt.crr*Math.pow(cold/TYRE_P_REF,TYRE_P_ALPHA),vp:6.35*Math.sqrt(hot),cap:(v.tyreRatedKg||0)*w*tyreLoadShare(cold)};
 }
 function previewTyre(){
   const p=partFromEditor('tyre'),V=vehicle,lines=[],nowP=V.tyrePart||{front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF};
@@ -1123,9 +1124,9 @@ function previewTyre(){
   for(const [ax,front] of [['FRONT',true],['REAR',false]]){
     const c=p[front?'front_kPa':'rear_kPa'],r=tyreAxleReport(V,c,front),n=tyreAxleReport(V,nowP[front?'front_kPa':'rear_kPa'],front);
     lines.push('<b>'+tr(ax)+'</b> '+fmt(c)+' kPa '+tr('cold')+' → '+fmt(r.hot)+' '+tr('hot')+' · '+tr('stiffness')+' <b>'+fmt(r.kt/1000)+'</b> kN/m · '+tr('wheel hop')+' '+fmt(r.hop,1)+' Hz · Crr '+fmt(r.crr,4)
-      +' · '+tr('aquaplanes at')+' <b>'+fmt(r.vp)+'</b> km/h <span class="dim">('+tr('now')+' '+fmt(n.kt/1000)+' kN/m, '+fmt(n.vp)+' km/h)</span>');
+      +' · '+tr('carries')+' '+fmt(r.cap)+' kg · '+tr('aquaplanes at')+' <b>'+fmt(r.vp)+'</b> km/h <span class="dim">('+tr('now')+' '+fmt(n.kt/1000)+' kN/m, '+fmt(n.cap)+' kg, '+fmt(n.vp)+' km/h)</span>');
   }
-  lines.push('<span class="dim">'+tr("Stiffness in proportion to the pressure (Rhyne); rolling resistance as pressure to the -0.4 (SAE J2452); aquaplaning from the hot pressure (Horne, NASA TN D-2056). The grip and the tyre's rated load do not read the pressure yet.")+'</span>');
+  lines.push('<span class="dim">'+tr("Stiffness from the pressure and size (Rhyne); the load the tyre carries from the pressure (ETRTO), and the grip's load sensitivity against it; rolling resistance as pressure to the -0.4 (SAE J2452); aquaplaning from the hot pressure (Horne, NASA TN D-2056).")+'</span>');
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }

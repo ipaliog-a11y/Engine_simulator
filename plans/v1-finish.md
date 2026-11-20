@@ -24,7 +24,7 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
-   *Build 418:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   *Build 419:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
    way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
    ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
    Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
@@ -61,6 +61,11 @@ recorded numbers reports its range and the mean error against the real cars.
 11. **Tyre pressure into grip, rated load and stiffness** (`TYRE_KZ`). Vertical stiffness from pressure and size
     (Rhyne; Pacejka, *Tyre and Vehicle Dynamics*), rated load from the ETRTO load index, grip's load sensitivity at
     the set pressure.
+    *Build 418:* Rhyne's stiffness (via Chalmers 2014:24; footprint 0.7 PROBABLE) replaces `TYRE_KZ`. The ETRTO
+    capacity is (p + 44.5)/(250 + 44.5) of the load index, fitted to the standard-load table. Each axle's `FzRef`
+    follows it from 230 kPa. Laps moved −0.21% to +0.10%; 0–100, 100–0 and skid-pad did not move. Open: the
+    friction's own pressure term (tyre-dependent, Schmeitz et al. 2005), cornering stiffness against pressure, and
+    XL tyres.
 12. **Spring, bar and damper rates from their parts** (`SPRING_STEP/BAR_STEP/DAMPER_STEP`). A coil spring's rate from
     wire diameter, coil diameter and active coils; a bar's from its diameter, arms and length; a damper's from its
     valve (the damper part's ratio, build 364). Presets keep their published rates where they exist.
