@@ -53,6 +53,11 @@ recorded numbers reports its range and the mean error against the real cars.
 11. **Tyre pressure into grip, rated load and stiffness** (`TYRE_KZ`). Vertical stiffness from pressure and size
     (Rhyne; Pacejka, *Tyre and Vehicle Dynamics*), rated load from the ETRTO load index, grip's load sensitivity at
     the set pressure.
+    *Build 416:* Rhyne's stiffness (via Chalmers 2014:24; footprint 0.7 PROBABLE) replaces `TYRE_KZ`. The ETRTO
+    capacity is (p + 44.5)/(250 + 44.5) of the load index, fitted to the standard-load table. Each axle's `FzRef`
+    follows it from 230 kPa. Laps moved −0.21% to +0.10%; 0–100, 100–0 and skid-pad did not move. Open: the
+    friction's own pressure term (tyre-dependent, Schmeitz et al. 2005), cornering stiffness against pressure, and
+    XL tyres.
 12. **Spring, bar and damper rates from their parts** (`SPRING_STEP/BAR_STEP/DAMPER_STEP`). A coil spring's rate from
     wire diameter, coil diameter and active coils; a bar's from its diameter, arms and length; a damper's from its
     valve (the damper part's ratio, build 364). Presets keep their published rates where they exist.
