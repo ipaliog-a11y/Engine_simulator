@@ -4,6 +4,8 @@
 // (width/aspect R rim, in inches); rimF, rimR: the rim's width in inches, where the page pairs one with that tyre.
 // ovF: the front overhang in m, only where the source publishes both overhangs and they add up with its
 // wheelbase to its length; elsewhere carDims() splits (len - wheelbase) as CAR_PROFILES reads the side view.
+// ovSrc: the overhangs are from that page instead: another version of the same body, with the same length and
+// wheelbase on the page (build 416).
 // src: 'ad:<page>' is auto-data.net/en/<page>, the car's own page on a database of makers' figures;
 // 'wp:<Article>' is the spec box of that English Wikipedia article. Read in November 2026.
 // unsure names what is not that page's figure for this car:
@@ -24,7 +26,7 @@ const CAR_DIMS={
   'Mazda MX-5 1.6 (NA, 1989)':{len:3.975,w:1.675,h:1.230,tyF:'185/60R14',tyR:'185/60R14',rimF:5.5,rimR:5.5,src:'ad:mazda-mx-5-i-na-1.6-115hp-11261'},
   'Toyota Corolla Levin GT-APEX (AE86)':{len:4.200,w:1.645,h:1.335,tyF:'185/60R14',tyR:'185/60R14',src:'ad:toyota-corolla-coupe-v-e80-1.6-gt-16v-124hp-3403',unsure:['h','tyres']},
   'Honda S2000 (AP1, 2000)':{len:4.135,w:1.750,h:1.270,tyF:'205/50R16',tyR:'225/50R16',src:'ad:honda-s2000-ap1-2.0-240hp-12368',unsure:['tyres']},
-  'BMW M3 (E46, 2000)':{len:4.492,w:1.780,h:1.372,tyF:'225/45R18',tyR:'255/40R18',rimF:8,rimR:9,src:'ad:bmw-m3-coupe-e46-3.2i-24v-343hp-9872'},
+  'BMW M3 (E46, 2000)':{len:4.492,w:1.780,h:1.372,ovF:0.774,tyF:'225/45R18',tyR:'255/40R18',rimF:8,rimR:9,src:'ad:bmw-m3-coupe-e46-3.2i-24v-343hp-9872',ovSrc:'ad:bmw-m3-coupe-e46-3.2-333hp-53858'},
   'Porsche 911 GT3 (991.2, 2017)':{len:4.562,w:1.852,h:1.271,tyF:'245/35R20',tyR:'305/30R20',rimF:9,rimR:12,src:'ad:porsche-911-991-ii-gt3-4.0-500hp-29495'},
   'Toyota Supra RZ (A80, 1993)':{len:4.520,w:1.810,h:1.275,tyF:'235/40R17',tyR:'255/40R17',src:'ad:toyota-supra-iv-a80-3.0i-24v-t-turbo-330hp-3454',unsure:['tyres','wb']},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{len:4.600,w:1.785,h:1.360,tyF:'245/40R18',tyR:'245/40R18',src:'ad:nissan-skyline-gt-r-x-r34-2.6-i-24v-turbo-4wd-280hp-360'},
@@ -53,8 +55,8 @@ const CAR_DIMS={
   'McLaren 750S (2023)':{len:4.569,w:1.930,h:1.196,tyF:'245/35R19',tyR:'305/30R20',rimF:9,rimR:11,src:'ad:mclaren-750s-4.0-v8-750hp-ssg-48465'},
   'Mazda RX-7 (FD, 1993)':{len:4.295,w:1.760,h:1.230,tyF:'225/55R16',tyR:'225/55R16',src:'ad:mazda-rx-7-iii-fd-wankel-twin-turbo-255hp-11128'},
   'Mazda RX-8 (2004)':{len:4.430,w:1.770,h:1.340,tyF:'225/45R18',tyR:'225/45R18',rimF:8,rimR:8,src:'ad:mazda-rx-8-1.3-wankel-231hp-43373'},
-  'VW Golf 2.0 TDI 150 (Mk7, 2013)':{len:4.255,w:1.799,h:1.452,tyF:'205/55R16',tyR:'205/55R16',src:'ad:volkswagen-golf-vii-5-door-2.0-tdi-150hp-17894',unsure:['tyres']},
-  'BMW 330d (F30, 2012)':{len:4.624,w:1.811,h:1.429,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-f30-330d-258hp-steptronic-17737'},
+  'VW Golf 2.0 TDI 150 (Mk7, 2013)':{len:4.255,w:1.799,h:1.452,ovF:0.855,tyF:'205/55R16',tyR:'205/55R16',src:'ad:volkswagen-golf-vii-5-door-2.0-tdi-150hp-17894',ovSrc:'ad:volkswagen-golf-vii-5-door-1.8-tsi-170hp-tiptronic-51967',unsure:['tyres']},
+  'BMW 330d (F30, 2012)':{len:4.624,w:1.811,h:1.429,ovF:0.776,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-f30-330d-258hp-steptronic-17737',ovSrc:'ad:bmw-3-series-sedan-f30-activehybrid-3.0-340hp-steptronic-44479'},
   'Chevrolet Silverado 2500HD Duramax (2020)':{len:6.349,w:2.079,h:2.027,tyF:'265/70R17',tyR:'265/70R17',rimF:7.5,rimR:7.5,src:'ad:chevrolet-silverado-2500-hd-iv-t1xx-crew-cab-standard-bed-6.6-duramax-v8-445hp-4wd-automatic-37541',unsure:['wb']},
   'BMW X5 M (F85, 2015)':{len:4.880,w:1.985,h:1.754,tyF:'285/40R20',tyR:'325/35R20',rimF:10,rimR:11.5,src:'ad:bmw-x5-m-f85-4.4-v8-575hp-xdrive-steptronic-25270'},
   'Porsche Cayenne Turbo (958.2, 2014)':{len:4.855,w:1.939,h:1.702,tyF:'265/50R19',tyR:'265/50R19',rimF:8.5,rimR:8.5,src:'ad:porsche-cayenne-ii-facelift-2014-turbo-4.8-v8-520hp-tiptronic-21439'},
@@ -74,7 +76,7 @@ const CAR_DIMS={
   'Ferrari F40 (1987)':{len:4.358,w:1.970,h:1.124,ovF:1.048,tyF:'245/40R17',tyR:'335/35R17',rimF:8,rimR:13,src:'ad:ferrari-f40-2.9-i-v8-32v-478hp-6524',unsure:['len']},
   'Jaguar E-Type 3.8 FHC (Series 1, 1961)':{len:4.453,w:1.657,h:1.222,tyF:'185/80R15',tyR:'185/80R15',src:'wp:Jaguar_E-Type',unsure:['tyres']},
   'Ford Mustang Fastback 289 (1965)':{len:4.613,w:1.732,h:1.298,tyF:'175/80R14',tyR:'175/80R14',src:'ad:ford-mustang-i-hardtop-4.7-v8-210hp-7807',unsure:['tyres']},
-  'Porsche 911 Carrera RS 2.7 Sport (1973)':{len:4.147,w:1.652,h:1.320,tyF:'215/60R15',tyR:'235/60R15',src:'ad:porsche-911-coupe-f-carrera-rs-2.7-210hp-6643',unsure:['tyres']},
+  'Porsche 911 Carrera RS 2.7 Sport (1973)':{len:4.147,w:1.652,h:1.320,ovF:0.884,tyF:'215/60R15',tyR:'235/60R15',src:'ad:porsche-911-coupe-f-carrera-rs-2.7-210hp-6643',ovSrc:'ad:porsche-911-coupe-f-2.3-t-130hp-6638',unsure:['tyres']},
   'BMW M3 (E30, 1986)':{len:4.345,w:1.680,h:1.370,tyF:'205/55R15',tyR:'205/55R15',rimF:7,rimR:7,src:'ad:bmw-m3-coupe-e30-2.3-200hp-30376'},
   'Volkswagen Golf GTI (Mk1, 1976)':{len:3.723,w:1.610,h:1.410,tyF:'175/70R13',tyR:'175/70R13',src:'ad:volkswagen-golf-i-3-door-1.8-gti-112hp-8798',unsure:['tyres']},
   'Ferrari 365 GTB/4 Daytona (1968)':{len:4.425,w:1.760,h:1.245,tyF:'215/70R15',tyR:'215/70R15',rimF:7.5,rimR:7.5,src:'ad:ferrari-365-gtb4-daytona-4.4-v12-352hp-47117'},
@@ -112,7 +114,7 @@ const CAR_DIMS={
   'Hyundai Ioniq Hybrid (2016)':{len:4.470,w:1.820,h:1.450,tyF:'195/65R15',tyR:'195/65R15',rimF:6,rimR:6,src:'ad:hyundai-ioniq-1.6-gdi-141hp-hybrid-dct-30706'},
   'Toyota Prius (2016)':{len:4.540,w:1.760,h:1.470,tyF:'195/65R15',tyR:'195/65R15',rimF:6.5,rimR:6.5,src:'ad:toyota-prius-iv-xw50-1.8-vvt-i-122hp-hybrid-e-cvt-22776'},
   'Nissan Qashqai e-POWER (2022)':{len:4.425,w:1.835,h:1.625,tyF:'235/55R18',tyR:'235/55R18',rimF:7.5,rimR:7.5,src:'ad:nissan-qashqai-iii-j12-e-power-1.5-vc-t-190hp-full-hybrid-automatic-46241'},
-  'BMW 330e (2020)':{len:4.709,w:1.827,h:1.444,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-g20-330e-292hp-plug-in-hybrid-steptronic-37654'},
+  'BMW 330e (2020)':{len:4.709,w:1.827,h:1.444,ovF:0.799,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-g20-330e-292hp-plug-in-hybrid-steptronic-37654',ovSrc:'ad:bmw-3-series-sedan-g20-330i-258hp-xdrive-steptronic-37973'},
   'Porsche 918 Spyder (2013)':{len:4.643,w:1.940,h:1.167,tyF:'265/35R20',tyR:'325/30R21',rimF:9.5,rimR:12.5,src:'ad:porsche-918-spyder-4.6-v8-887hp-hybrid-pdk-21380'},
 };
 // Everything a 3D body needs for one real car (a preset), in metres: plain data, no page needed.
