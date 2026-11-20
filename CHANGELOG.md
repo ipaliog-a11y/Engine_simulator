@@ -34,6 +34,18 @@ they are accurate about *what* shipped but not about the day it shipped.
   2975 until build 290 (each turbo of a sequential pair its own, its own bearings and charge fill), an intended physics
   change. Closing it would move the fingerprint.
 - Fingerprint identical (5208 values).
+### One car picture, a still cutaway, and a scope with values (build 409)
+
+- **VEHICLE shows only the car profile.** Build 391 brought back the drawn car (the BAY lift view) that build 224 had
+  removed, and its CSS (`display:block`) beat `hidden`, so it always sat under the profile. The BAY button and canvas
+  are gone; test251 fails if a second car picture appears.
+- **The engine cutaway no longer turns.** Build 392 leaned it with torque and rocked it with valve overlap, which read
+  as the drawing spinning as you rev. The rotation is removed; the knock flash, blow-off, nitrous and soot flags stay.
+- **The F1 scope is readable.** Each channel has its own lane with its name, unit and present value in its colour
+  (rpm, manifold pressure in bar, lambda, knock risk in %; on an electric drive pack V, A, winding °C, charge %), a
+  scale (top, middle, bottom) on the right, and a time axis in seconds before NOW. It is drawn at the screen's pixel
+  density, so the text stays sharp at 390 px.
+- UI only: the fingerprint is identical.
 
 ### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 408)
 

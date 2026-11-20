@@ -788,8 +788,6 @@ body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/la
 body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
 body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
 body[data-group="more"] .mode-room{display:none}
-.vh-view{display:flex;gap:6px;margin:0 0 8px}
-.vh-view button.on{border-color:#ffcc00;color:#ffcc00}
 .viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
 .viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
 .viz-groups button[data-g="more"]{flex:0.72}
@@ -935,7 +933,7 @@ body[data-group="more"] .mode-room{display:none}
 <button type="button" data-ecu="diag">F3 OBD</button>
 <button type="button" data-ecu="delta">F4 DELTA</button>
 </div>
-<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="236" role="img" aria-label="Scope: each channel against time, with its scale and present value"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
 <div class="ecu-screen" data-ecu-screen="maps" hidden>
 <div class="ecu-keys">
 <button type="button" data-ecu-map="fuel">FUEL</button>
@@ -3683,9 +3681,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
-<div class="vh-view"><button type="button" id="btnVhPhoto" class="on">SHOWROOM</button><button type="button" id="btnVhBay">BAY</button></div>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
-<canvas id="vhBay" class="pix-preview" hidden role="img" aria-label="The car on the workshop lift"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
@@ -21352,21 +21348,9 @@ function renderEnginePreview(){
   const pt=e.type==='electric'?'ev':'ice';
   paintEngine(cv,e,{t:previewT,bay:pt+':'+card,caption:true,title:engineCaption(e),sub:tr(e.type==='electric'?'ELECTRIC':(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label)});
 }
-function paintVehicleBay(){
-  const cv=document.getElementById('vhBay');if(!cv||cv.hidden)return;
-  const card=(typeof VCD!=='undefined'&&VCD.st&&VCD.st.card)||'chassis';
-  const F=fitPixCanvas(cv,CAR_GW,CAR_GH);if(!F)return;
-  const {g,k,ox,bw,bh}=F;
-  pixBackdrop(g,bw,bh,k,ox,CAR_GY,'car:'+card);
-  const buf=new PixBuf(CAR_GW,CAR_GH);
-  if(typeof vehicle!=='undefined'&&vehicle)drawCarSprite(buf,vehicle,engine,previewT);
-  g.drawImage(buf.canvas(),ox,0,CAR_GW*k,CAR_GH*k);
-  cv.dataset.bay='car:'+card;
-}
 function stepPreviews(dt){
   if(!previewStill)previewT+=dt;
   if(vizMode==='design')renderEnginePreview();
-  if(vizMode==='vehicle')paintVehicleBay();
 }
 // ---- top-down car for the track map ----
 // 14 x 8 cells, built once per livery and pedal state and then rotated: a car you can see turning,
@@ -21383,12 +21367,6 @@ function topCarSprite(col,state){
   b.rect(0,2,1,2,state==='brk'?'#ff2222':'#882222');b.rect(0,6,1,2,state==='brk'?'#ff2222':'#882222');
   b.outline('#000000');
   const cv=b.canvas();topCarCache[key]=cv;return cv;
-}
-{const photo=document.getElementById('btnVhPhoto'),bayBtn=document.getElementById('btnVhBay'),cv=document.getElementById('vhBay'),fig=document.getElementById('vhShowroom');
-  if(photo&&bayBtn&&cv){
-    photo.addEventListener('click',()=>{cv.hidden=true;photo.classList.add('on');bayBtn.classList.remove('on');if(typeof syncCarArt==='function')syncCarArt();});
-    bayBtn.addEventListener('click',()=>{cv.hidden=false;bayBtn.classList.add('on');photo.classList.remove('on');if(fig)fig.hidden=true;paintVehicleBay();});
-  }
 }
 function drawTopCar(g,x,y,heading,col,state){
   const spr=topCarSprite(col,state),s=1.5;
@@ -21519,10 +21497,8 @@ function drawEngine(dt){
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
   const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const twist=still?0:clamp((state.torque||0)/Math.max(1,e.loadRefTq||1),-1,1)*0.04;
-  const lope=still?0:Math.sin(crankAngle*2)*clamp((e.overlap||0)/90,0,1)*0.02;
+  // The block stays upright: the build-392 lean with torque read as the drawing spinning with rpm.
   ctx.save();
-  ctx.translate(px(280),py(200));ctx.rotate(twist+lope);ctx.translate(-px(280),-py(200));
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
   if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
@@ -34442,28 +34418,75 @@ function ecuSample(){
   const row=ev
     ?[state.systemVoltage||0,state.battI||0,state.mT?state.mT.w:0,(state.soc||0)*100]
     :[state.rpm||0,state.map||1,(engine.stoichAFR?state.afr/engine.stoichAFR:1),state.knockRisk||0];
+  row.push(performance.now()/1000);   // [4]: seconds, for the time axis
   ecu.buf.push(row);
   if(ecu.buf.length>ECU_N)ecu.buf.shift();
 }
+// The scope draws each channel in its own lane: its name, unit and present value in its colour, its scale
+// on the right, and a shared time axis in seconds before now. One colour per channel, from the bench palette.
+const ECU_CH={
+  ice:[['ENGINE SPEED','rpm',0,200],['MANIFOLD PRESSURE','bar',2,0.1],['LAMBDA','',2,0.05],['KNOCK RISK','%',0,10]],
+  ev:[['PACK VOLTAGE','V',0,10],['PACK CURRENT','A',0,10],['WINDING TEMP','°C',0,5],['CHARGE','%',0,2]]};
+function ecuNice(lo,hi,minSpan){
+  if(hi-lo<minSpan){const m=(lo+hi)/2;lo=m-minSpan/2;hi=m+minSpan/2;}
+  const raw=(hi-lo)/2,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,step=(f<=1?1:f<=2?2:f<=5?5:10)*p;
+  const a=Math.floor(lo/step),n=Math.ceil(hi/step)-a;
+  return [a*step,(a+n+(n%2))*step];   // an even count of steps, so the middle line is on a step too
+}
+function ecuFmt(v,dp){return dp?v.toFixed(dp):Math.round(v).toLocaleString('en-US');}
 function ecuDrawScope(){
   const c=document.getElementById('ecuScope');if(!c||ecu.buf.length<2)return;
-  const g=c.getContext('2d'),w=c.width,h=c.height,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(260,Math.round(c.clientWidth||480)),h=236;
+  if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}
+  const g=c.getContext('2d'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  g.setTransform(dpr,0,0,dpr,0,0);
   g.fillStyle='#04140c';g.fillRect(0,0,w,h);
-  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'];
-  const src=still?[ecu.buf[ecu.buf.length-1]]:ecu.buf;
+  const FONT=n=>n+'px "Press Start 2P", monospace';
+  const cols=['#00ff88','#ffcc00','#00ccff','#ff6666'],grid='#1c3a2a',ink='#8fb8a0';
+  const chans=ECU_CH[typeof isElectric==='function'&&isElectric()?'ev':'ice'];
+  const buf=ecu.buf,last=buf[buf.length-1],t1=last[4]||0,span=Math.max(1,t1-(buf[0][4]||0));
+  const src=still?[last]:buf;
+  const L=6,R=w-50,top=16,bot=h-22,lh=(bot-top)/4;
+  g.textBaseline='top';g.font=FONT(7);g.fillStyle=ink;g.textAlign='left';
+  g.fillText(tr(ecu.freeze?'FROZEN':'LIVE')+' • '+tr('last')+' '+Math.round(span)+' s',L,4);
+  g.textAlign='right';g.fillText(tr('TIME (s)'),w-4,4);g.textAlign='left';
+  const xOf=t=>R-(t1-t)/span*(R-L);
   for(let ch=0;ch<4;ch++){
+    const [name,unit,dp,minSpan]=chans[ch],y0=top+ch*lh,y1=y0+lh-4;
     let lo=Infinity,hi=-Infinity;
-    ecu.buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
-    if(!(hi>lo)){lo-=1;hi+=1;}
-    g.strokeStyle=cols[ch];g.beginPath();
-    src.forEach((row,i)=>{
-      const x=src.length<2?w/2:i/(src.length-1)*(w-8)+4;
-      const y=h-8-(row[ch]-lo)/(hi-lo)*(h-16);
-      if(i)g.lineTo(x,y);else g.moveTo(x,y);
+    buf.forEach(row=>{lo=Math.min(lo,row[ch]);hi=Math.max(hi,row[ch]);});
+    [lo,hi]=ecuNice(lo,hi,minSpan);
+    const yOf=v=>y1-(v-lo)/(hi-lo)*(y1-y0-12)-1;
+    // grid and scale: top, middle and bottom of the lane
+    g.strokeStyle=grid;g.lineWidth=1;g.font=FONT(6);g.fillStyle=ink;g.textAlign='left';
+    [hi,(lo+hi)/2,lo].forEach(v=>{
+      const y=Math.round(yOf(v))+0.5;
+      g.beginPath();g.moveTo(L,y);g.lineTo(R,y);g.stroke();
+      g.fillText(ecuFmt(v,dp||((hi-lo)/2<1?1:0)),R+4,Math.max(y0,Math.min(y1-6,y-3)));
     });
-    if(src.length<2){g.lineTo(w-4,h/2);g.moveTo(4,h/2);}
+    // the trace
+    g.strokeStyle=cols[ch];g.lineWidth=2;g.beginPath();
+    if(src.length<2){const y=yOf(last[ch]);g.moveTo(L,y);g.lineTo(R,y);}
+    else src.forEach((row,i)=>{const x=xOf(row[4]||t1),y=yOf(row[ch]);if(i)g.lineTo(x,y);else g.moveTo(x,y);});
     g.stroke();
+    g.fillStyle=cols[ch];g.fillRect(R-3,yOf(last[ch])-3,6,6);
+    // name, unit and present value, on a dark plate so the trace cannot hide it
+    const label=tr(name)+(unit?' ('+unit+')':'')+'  '+ecuFmt(last[ch],dp);
+    g.font=FONT(7);
+    const tw=g.measureText(label).width;
+    g.fillStyle='rgba(4,20,12,0.85)';g.fillRect(L,y0,tw+6,10);
+    g.fillStyle=cols[ch];g.fillText(label,L+2,y0+1);
   }
+  // time axis: seconds before now
+  const steps=[1,2,5,10,20,30,60,120],step=steps.find(s=>span/s<=5)||120;
+  g.strokeStyle=ink;g.lineWidth=1;g.beginPath();g.moveTo(L,bot+0.5);g.lineTo(R,bot+0.5);g.stroke();
+  g.font=FONT(6);g.fillStyle=ink;g.textAlign='center';
+  for(let s=0;s<=span+1e-6;s+=step){
+    const x=Math.round(R-s/span*(R-L))+0.5;
+    g.beginPath();g.moveTo(x,bot);g.lineTo(x,bot+4);g.stroke();
+    g.fillText(s?'-'+s:tr('NOW'),Math.max(L+12,x),bot+7);
+  }
+  g.textAlign='left';
 }
 function ecuLeds(){
   const set=(id,on)=>{const n=document.getElementById(id);if(n)n.classList.toggle('on',!!on);};

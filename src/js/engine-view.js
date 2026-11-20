@@ -119,10 +119,8 @@ function drawEngine(dt){
   ctx.fillStyle=rf>0.92?C.red:C.green;ctx.fillRect(px(tbX),py(tbY),tbW*rf*S,tbH*S);
 
   const still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const twist=still?0:clamp((state.torque||0)/Math.max(1,e.loadRefTq||1),-1,1)*0.04;
-  const lope=still?0:Math.sin(crankAngle*2)*clamp((e.overlap||0)/90,0,1)*0.02;
+  // The block stays upright: the build-392 lean with torque read as the drawing spinning with rpm.
   ctx.save();
-  ctx.translate(px(280),py(200));ctx.rotate(twist+lope);ctx.translate(-px(280),-py(200));
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
   if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}

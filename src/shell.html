@@ -104,7 +104,7 @@
 <button type="button" data-ecu="diag">F3 OBD</button>
 <button type="button" data-ecu="delta">F4 DELTA</button>
 </div>
-<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="140"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
+<div class="ecu-screen" data-ecu-screen="scope"><canvas id="ecuScope" width="480" height="236" role="img" aria-label="Scope: each channel against time, with its scale and present value"></canvas><button type="button" id="ecuFreeze">FREEZE</button></div>
 <div class="ecu-screen" data-ecu-screen="maps" hidden>
 <div class="ecu-keys">
 <button type="button" data-ecu-map="fuel">FUEL</button>
@@ -357,9 +357,7 @@
 <!-- VEHICLE: drop the engine into a car and read its acceleration & top speed -->
 <div class="design-panel vehicle-panel" id="vehiclePanelTab">
 <h3>VEHICLE DESIGN</h3>
-<div class="vh-view"><button type="button" id="btnVhPhoto" class="on">SHOWROOM</button><button type="button" id="btnVhBay">BAY</button></div>
 <figure class="car-showroom" id="vhShowroom" hidden><img id="vhArt" alt="" decoding="async"><figcaption id="vhArtCap"></figcaption></figure>
-<canvas id="vhBay" class="pix-preview" hidden role="img" aria-label="The car on the workshop lift"></canvas>
 <div class="hint">Pick a chassis and it arrives on its factory spec — matching tyres, wheels, brakes, suspension and aero. Swap any part from there; your current engine is dropped in and the performance is computed live.</div>
 
 <div class="pick-row">
