@@ -62,9 +62,11 @@ function buildVehicle(){
   const susp=SUSPENSION[vehicle.suspension]||SUSPENSION.sport;
   {const D=2*vehicle.rTire,d=vehicle.wheelDia*0.0254;
    vehicle.tyreRatedKg=TYRE_RATED_KG_M3*Math.PI/4*(D*D-d*d)*(vehicle.tireWidth/1000);}
-  vehicle.muRef=tt.mu;vehicle.FzRef=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  // the reference load moves with each axle's load capacity at its set pressure (ETRTO, build 418); 1 unfitted
+  const fz0=TYRE_REF_SHARE*vehicle.tyreRatedKg*G;
+  vehicle.muRef=tt.mu;vehicle.FzRef=fz0*tyreRefScale(tyreColdKPa(vehicle,false));
   // a staggered car's front tyres (build 157): their rated load scales with their width on the same wheel
-  vehicle.FzRefF=vehicle.FzRef*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
+  vehicle.FzRefF=fz0*tyreRefScale(tyreColdKPa(vehicle,true))*((vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth)/vehicle.tireWidth);
   vehicle.camber=susp.camber;
   vehicle.crr=tt.crr;vehicle.tyreCC=tyreCC(vehicle.tireType);
   vehicle.speedRating=document.getElementById('vhRating').value||tt.rating;
