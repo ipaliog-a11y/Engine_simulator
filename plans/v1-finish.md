@@ -24,6 +24,9 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
+   *Build 415:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
+   ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
 2. **Valves, batch 2 of 4.**
 3. **Valves, batch 3 of 4.**
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.

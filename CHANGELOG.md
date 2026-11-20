@@ -18,6 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Seventeen more real engines get their own valves (build 415)
+
+`plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
+
+- **Sources:** BMW S62 (BMW training manual), Hellcat (Dodge Garage), Viper 8.4 (Chrysler press kit), Rover K 1.8 (Freelander workshop manual), Ford 289 (CarTech) and Ford 2.3 EcoBoost (Ford Performance plus stock-size valves). K20A, C30A, VR38DETT, VG30DETT and XU9JA come from stock-size replacement valves (std). B16B, VQ37VHR, EA888, M156, Buick LC2 and M102 are marked `unsure`.
+- **Owner's ruling:** a sourced valve is used whichever way it moves the engine, and none is held back for its result. The Rover K and the 289 move more than 5%, both toward their published power.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | Rover K 1.8 (Elise S1) | 137 → 112 (118), −18.2% | 167 → 167 |
+  | Ford 289 (Mustang 1965) | 286 → 261 (225), −8.7% | 408 → 412 |
+  | VW EA888 (Golf GTI Mk7) | 217 → 225 (220), +3.7% | 348 → 348 |
+  | Dodge Hellcat | 692 → 717 (707), +3.6% | 997 → 998 |
+  | Dodge Viper 8.4 | 626 → 647 (600), +3.4% | 788 → 789 |
+  | Ford 2.3 EcoBoost | 346 → 335 (350), −3.2% | 494 → 495 |
+  | Nissan VQ37VHR | 341 → 332 (332), −2.6% | 378 → 378 |
+  | Honda K20A | 205 → 210 (245), +2.4% | 185 → 186 |
+  | Nissan VR38DETT | 546 → 543 (565), −0.5% | 666 → 673 |
+  | the other eight | within ±1% | within ±1% |
+
+  Mean error of the 17 against published figures: power 8.2% → 7.1%, torque 7.9% → 8.0%.
+- **Left on the ratio**, because no usable source was found or the sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+
 ### The scope shows the signals you pick, the O2 sensor's voltage among them (build 414)
 
 - The ECU laptop's scope (build 409) gets a row of buttons under it: pick up to four signals, one lane each. The default is still engine speed, manifold pressure, lambda and knock risk.
