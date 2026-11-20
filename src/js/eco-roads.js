@@ -145,7 +145,7 @@ function buildRoad(key){
     let isMin=true;for(let d=-4;d<=4;d++)if(p[i+d].r<p[i].r-1e-9){isMin=false;break;}
     if(isMin&&p[i].r<COR)corners++;
   }
-  const T={key,label:def.label,blurb:def.blurb,open:true,timeFactor:def.timeFactor||1.25,
+  const T={key,label:def.label,blurb:def.blurb,open:true,timeFactor:def.timeFactor||1.25,vLimit:def.vLimit||0,
     pts:p,line:p,length,corners,width:W0,wMin:W0,wMax:W0,wLabel:Math.round(W0)+' m',
     minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
   roadCache[key]=T;return T;

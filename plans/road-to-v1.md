@@ -316,7 +316,7 @@ The register: 6 open (`EV_RATIO`, `catRampTop`, and phase D's four), 33 rules.
 8. **Known gaps to rule on or close**: `ACC_KNOWN` (Supra A80, WRX STI), `RATING_KNOWN` (Dino 246), `GAP_KNOWN`
    (Model 3 torque, Leaf), `AT_LIMITER_KNOWN`, the moose run ~10 km/h under the magazines. Approved: `OFF_KNOWN`,
    `LIFT_KNOWN`. Check `test125`, logged as failing on `main`.
-9. **Game (decision 24)**: challenges (skid-pad, multi-car ranking, economy DP, hybrid economy, GPX import, drift by
+9. **Game (decision 24)**: challenges (skid-pad, multi-car ranking, economy DP, hybrid economy, GPX import (user roads shipped, see `vehicle-challenges.md` 4), drift by
    handbrake and FWD/AWD, screech on the track and moose replays); the guided build that sets values (3 builds,
    `plans/guided-build.md`, its 7 questions to the owner first).
 10. **The gate (H)**: full suite, scoreboard, the sweep for absurd builds, guide and README pass.

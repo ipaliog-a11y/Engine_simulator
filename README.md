@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 402
+# PIXEL POWERTRAIN v0.8 build 403
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -308,6 +308,9 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     blend toward the car's full grip and power (shown as ECO BLEND) make the time. Engine cars and EVs also get
     a **distance DP**: an optimal speed plan over the whole road (least fuel or energy for the time), which can
     pulse-and-glide and lift before climbs and corners (shown as ECO DRIVER DP); the eco driver is its fallback.
+    **IMPORT GPX ROAD** adds your own open road (read in the browser, kept in `localStorage`, never uploaded):
+    distance and bends from the trace (resampled to 10 m, lightly smoothed), grade from its heights (±50 m
+    average; flat if the file has none), and a speed limit the run never exceeds (GPX has none: 90 km/h unless set).
   - **Fixed-time stage** — the same set time for every car on each road (a Golf GTI Mk7's best plus 2%).
     The car's fastest run from a standing start either makes it or is a **DNF**.
   - **Moose avoidance** — the ISO 3888-2 double lane change, at the **best clear speed** (raised until a cone
