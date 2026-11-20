@@ -117,7 +117,10 @@ little, its stops ask < 1.5 m/s²). Not changed in this build.
    MG1/MG2 (power-split) or engine + motor (parallel) allow, the engine is charged for it on its best line
    (`limitShare`, 7–37% of the Alpine run); plug-ins run charge-sustaining; WLTC still hits its old flat-out-in-first
    fallback on its hardest steps (most on the Prius), left so the WLTC figures do not move.
-4. Open GPX import for user roads (do not reuse closed `gpxToTrack` blindly).
+4. ~~Open GPX import for user roads.~~ Shipped (`src/js/user-road.js`, `gpxToRoad`): track (else route) points, metres
+   leg by leg, 10 m resample, plan smoothed, height ±50 m average, the road's speed limit as the economy run's cap
+   (90 km/h assumed, 30–130 settable), challenge `economy-user`, stored at `pes.userRoad`. Open: one user road at a
+   time; no fixed-time stage on it (no reference target); missing elevation is flat; width modelled 7.5 m.
 5. Drift: handbrake initiation; tighter road once the hold is stronger.
 6. ~~Screech on the track and moose replays (open since build 362).~~ Shipped in build 371: the moose replay uses the
    drift's past-the-peak test on its slip angles; the lap records no slip angle, so it screeches where its grip use is

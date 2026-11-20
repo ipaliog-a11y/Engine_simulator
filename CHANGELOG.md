@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Your own GPX road for the economy run (build NNN)
+
+- **IMPORT GPX ROAD** on the CHALLENGES tab reads a GPX file in the browser (no upload, no library) and adds it as
+  **My Road Economy**. Track points (else route points) become metres leg by leg, are resampled every 10 m, the plan
+  lightly smoothed (two 1-2-1 passes) and the height averaged over ±50 m, so GPS jitter reads neither as bends nor as
+  grade; `buildRoad` then derives radius, grade and crest curvature as for the built-in roads. Kept at `pes.userRoad`.
+- **Speed limit**: GPX carries none, so 90 km/h is assumed (the usual rural limit in Italy, Spain and Greece; France
+  80, Germany 100), settable 30–130 km/h. It caps the economy run's min-time and every planned speed. The built-in
+  roads carry no limit, so their numbers do not move.
+- Bad files are refused with a message (no points, under 0.5 km, over 200 km). Test 247 imports an inline sample
+  (3 km, 100 m bend, 5% climb with ±1 m height jitter): 2.999 km, tightest radius 93 m, mean grade 5.00%, steepest 6.3%.
+- Left open: one user road at a time; no fixed-time stage on it (no reference target); a file without elevation
+  is run flat; width is modelled at 7.5 m.
+
 ### A hybrid's engine start and stop are paid from its pack, and the lap replay plays them (build 401)
 
 Step 11 of `plans/small-physics.md`.

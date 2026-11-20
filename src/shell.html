@@ -875,10 +875,12 @@
 <option value="0.5">0.5×</option>
 <option value="0.25">0.25×</option>
 </select></div>
+<div class="field" style="display:none"><label for="chalRoadLimit">LIMIT km/h</label><input type="number" id="chalRoadLimit" min="30" max="130" step="5" value="90" title="Speed limit on your road (GPX carries none; 90 km/h assumed)"></div>
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
-<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button></div>
+<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button><button id="btnImportRoad" title="Load an open road for the economy run from your own GPX file">IMPORT GPX ROAD</button></div>
+<input type="file" id="roadGpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 <h3 class="chal-rank-h">RANK CARS</h3>
 <div id="chalRankCars"></div>
 <div class="race-add"><select id="chalRankAddSel" class="opt-select" aria-label="Car to add"></select><button id="chalRankAddBtn">ADD</button></div>
@@ -1059,6 +1061,7 @@
 <!-- @include js/skidpad-run.js -->
 <!-- @include js/course-pads.js -->
 <!-- @include js/run-challenges.js -->
+<!-- @include js/user-road.js -->
 <!-- @include js/chal-view.js -->
 <!-- @include js/chal-rank.js -->
 <!-- @include js/electric-presets.js -->

@@ -367,7 +367,8 @@ function ecoDP(line,env,target){
 function simulateEconomyChallenge(roadKey,factorOpt){
   const road=buildRoad(roadKey||'alpine');if(!road)return null;
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
-  const line=road.line,mt=ecoMinTime(line);if(!mt)return null;
+  // cap: the road's speed limit, m/s (a user GPX road; the built-in roads carry none, 0 = no cap).
+  const line=road.line,cap=road.vLimit||0,mt=ecoMinTime(line,cap);if(!mt)return null;
   const factor=factorOpt>0?factorOpt:(road.timeFactor||1.25),target=mt.t*factor;
   const tab=ecoDriverTable(),km=road.length/1000,fp=FUELS[engine.fuel]||FUELS.gasoline;
   // For a blend s of the eco limits, the speed cap that finishes on the target (or, if the eco limits are too slow
@@ -375,10 +376,10 @@ function simulateEconomyChallenge(roadKey,factorOpt){
   // cap that shipped in build 341, so the search can only match or beat it.
   const vC0=mt.vC;
   const solveAt=s=>{
-    const eo={tab,s,vC0:vC0};let best=ecoMinTime(line,0,eo);
+    const eo={tab,s,vC0:vC0};let best=ecoMinTime(line,cap,eo);
     if(best.t>target)return null;
     let lo=15/3.6,hi=Math.max(...best.v)+1;
-    for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
+    for(let k=0;k<10;k++){const mid=(lo+hi)/2,r=ecoMinTime(line,cap>0?Math.min(mid,cap):mid,eo);if(r.t>target)lo=mid;else{hi=mid;best=r;}}
     return best;
   };
   const hyb=isHybrid(),cost=r=>isElectric()?(ecoEnergyJ(line,r.v)||{E:Infinity}).E:hyb?ecoHybrid(line,r.v).kg:ecoFuelKg(line,r.v);
@@ -417,7 +418,7 @@ function simulateEconomyChallenge(roadKey,factorOpt){
 function simulateStageChallenge(roadKey,target){
   const road=buildRoad(roadKey||'alpine');if(!road)return null;
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
-  const mt=ecoMinTime(road.line);if(!mt)return null;
+  const mt=ecoMinTime(road.line,road.vLimit||0);if(!mt)return null;
   const km=road.length/1000;
   return{ok:true,kind:'stage',road,time:mt.t,target,tMin:mt.t,margin:mt.t-target,dnf:mt.t>target,v:mt.v,vMin:mt.v,
     lengthKm:km,avgKmh:km/(mt.t/3600),vTop:Math.max(...mt.v)*3.6};
