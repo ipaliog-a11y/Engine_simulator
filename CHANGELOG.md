@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 404)
+
+- **SHAPE IT** beside BUILD THIS CAR loads the matched car and walks through its design, one step per decision, in the
+  plan's order (`plans/guided-build.md`, build 1 of 3): cylinders, bore and stroke, fuel, compression and air, boost,
+  head, redline, breathing, then body, mass, gearing and tyres. An EV gets its motor, winding, inverter, battery and
+  motors steps; a hybrid adds its layout, motor and pack after the engine. BACK, NEXT, SKIP TO FINISH and ADVANCED
+  (closes on that field's card) on every step.
+- Each step moves the cards' own inputs (with their real-engine ticks and help line), so previews, coupled fields and
+  BUILD work as on the cards. A step whose fields are all disabled drops out: BOOST on an NA engine (it comes back when
+  the intake changes), FUEL on a diesel, HEAD on a rotary or two-stroke. FINISH builds the engine only if an engine
+  field moved, so skipping every step leaves the factory car as it loaded. A car with FIXED timing keeps it, and the
+  fuel and compression steps say so. Fingerprint identical.
+- `CAR_PRICE` regenerated (`tools/car-prices.mjs`): 7 cars were stale on `main` (Tesla Model 3 33,150 → 33,547, Model Y,
+  Model S Plaid, F-150 Raptor, Ioniq, Qashqai e-POWER, 330e), which failed `test188` before this change.
+- Left open: goal hints (build 2) and the finish screen (build 3); FINISH opens the VEHICLE tab for now.
+
 ### Your own GPX road for the economy run (build 403)
 
 - **IMPORT GPX ROAD** on the CHALLENGES tab reads a GPX file in the browser (no upload, no library) and adds it as
