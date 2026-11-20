@@ -29,6 +29,11 @@ recorded numbers reports its range and the mean error against the real cars.
    ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
    Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
 2. **Valves, batch 2 of 4.**
+   *Build 422:* 16 engines sourced (43 of 93 now), all shipped. Peak hp −7.9% (B48 in the 330e) to +4.0% (BAC Mono's
+   Duratec); mean hp error of the 16: 5.8% → 4.8%, torque 7.9% → 7.9%. Left on the ratio, no usable source found or sources
+   disagree: Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57;
+   Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. GM LS3, LT4 and Ford Coyote
+   stay held back for item 5.
 3. **Valves, batch 3 of 4.**
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
 5. **The four V8s over 10%** (LS7, LS3, LT4, Coyote; decision 16): chase the cam timing and the intake, not the valves.

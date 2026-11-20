@@ -18,6 +18,34 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Sixteen more real engines get their own valves (build 422)
+
+`plans/v1-finish.md`, group 1, valves batch 2 of 4 (register `EV_RATIO`). 43 of 93 engines are now sourced.
+
+- **Sources:** the LT6 (GM, via The Drive and Corvsport) and the Cummins 6.7 (MAHLE's OE-referenced exhaust valve). Stock-size replacement valves (std) for the Audi 2.5 TFSI, BMW B48, Lancia 831 and Ferrari F136. Marked `unsure`: Ford GT 5.4, 993 Turbo, 3.5 EcoBoost, Duratec 2.3 (Cosworth's head taken as stock), Duramax L5P, 2ZR-FXE, S63, both Huracán V10s (exhaust from a +1 mm part) and 1VD-FTV.
+- **All 16 ship** on the owner's rule; none held back.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | BMW B48 (330e) | 190 → 175 (182), −7.9% | 262 → 263 |
+  | Ford Duratec 2.3 (BAC Mono) | 253 → 263 (280), +4.0% | 247 → 249 |
+  | Lamborghini 5.2 V10 (Huracán LP610-4) | 547 → 565 (602), +3.3% | 546 → 545 |
+  | Lamborghini 5.2 V10 (Huracán STO) | 547 → 565 (631), +3.3% | 546 → 545 |
+  | Ford 5.4 SC (Ford GT) | 511 → 526 (550), +2.9% | 651 → 649 |
+  | Audi 2.5 TFSI (RS3 8V) | 387 → 397 (394), +2.6% | 482 → 473 |
+  | Cummins 6.7 (Ram HD) | 404 → 413 (400), +2.2% | 1098 → 1099 |
+  | Ferrari F136 (458) | 526 → 536 (562), +1.9% | 475 → 478 |
+  | BMW S63 (X5 M F85) | 558 → 552 (575), −1.1% | 746 → 744 |
+  | GM LT6 (Z06 C8) | 619 → 626 (670), +1.1% | 574 → 578 |
+  | Lancia 831 (Integrale Evo) | 204 → 206 (210), +1.0% | 327 → 326 |
+  | Porsche M64/60 (993 Turbo) | 425 → 421 (408), −0.9% | 564 → 566 |
+  | the other four (1VD-FTV, 3.5 EcoBoost, L5P, 2ZR-FXE) | within ±0.3% | within ±0.5% |
+
+  Mean error of the 16 against published figures: power 5.8% → 4.8%, torque 7.9% → 7.9%.
+- **Fingerprint:** only these 16 engines' cars move (0–100 at most −0.18 s, the Ram), plus lap hashes on 'tech' (the shared racing-line cache). The Prius's and 330e's fuel cycles move with their engines.
+- **test176** now also fails if `ENGINE_VALVES` lists fewer than 43 engines.
+- **Left on the ratio** (no usable source, or sources disagree): Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57; Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. The LS3, LT4 and Coyote stay held back for plan item 5.
+
 ### Seventeen more real engines get their own valves (build 419)
 
 `plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
