@@ -133,7 +133,9 @@ if (!shut.hidden || !shut.home || shut.vizW !== 640 || shut.mode === 'race') fai
   const ph = await browser.newPage({ viewport: { width: 390, height: 844 } });
   ph.on('pageerror', e => errors.push('phone pageerror: ' + e.message));
   await ph.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'networkidle' });
-  await ph.waitForTimeout(400);await ph.click('#tabRace');await ph.waitForTimeout(300);
+  await ph.waitForTimeout(400);
+  // since build 394 the bar shows only the open section's tabs: RACE sits under DRIVE
+  await ph.click('#vizGroups button[data-g="drive"]');await ph.waitForTimeout(150);await ph.click('#tabRace');await ph.waitForTimeout(300);
   const m = await ph.evaluate(() => ({ sw: document.documentElement.scrollWidth, bw: document.querySelector('.race-body').scrollWidth,
     stage: document.getElementById('raceStage').getBoundingClientRect().bottom, side: document.getElementById('raceSide').getBoundingClientRect().top }));
   console.log(`== phone: page ${m.sw} px, race body ${m.bw} px wide, map ends ${Math.round(m.stage)} px, panel starts ${Math.round(m.side)} px`);
