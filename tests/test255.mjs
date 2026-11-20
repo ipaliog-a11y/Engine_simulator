@@ -1,4 +1,4 @@
-// The kit wing as a wing part (build BUILDNO).
+// The kit wing as a wing part (build 415).
 //
 // WHY THIS EXISTS. The FRONT and REAR AERO kit WING was a fitted ClA and ΔCd times the class's aero factor. It is now a
 // wing (wingAero, the lifting line of build 291) from a span, chord, angle, camber and end plates. What must hold:

@@ -57,7 +57,7 @@ const TIRE_TYPE={
 };
 // Aero elements — each adds a downforce coefficient (Cl·A, m²) and a drag penalty (ΔCd). The
 // floor/diffuser is the efficient one (lots of downforce, little drag). Scaled by chassis.aero.
-// The kit WING (build BUILDNO) is no longer a table row: it is a wing part (wingAero below), drawn from the car's own wing
+// The kit WING (build 415) is no longer a table row: it is a wing part (wingAero below), drawn from the car's own wing
 // (fit.wingR / fit.wingF), else its class's, else the PARTS page's starting wing as wide as the car's track (kitWing).
 // Until then it was ClA 0.60 (front) and 0.75 (rear) times the class's aero factor, ΔCd 0.028 and 0.035: fitted.
 const AERO_FRONT={none:{cl:0,cd:0},splitter:{cl:0.25,cd:0.010},wing:{cl:0,cd:0,part:true}};
@@ -95,7 +95,7 @@ function wingAero(p){
   const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
   return {S,AR0,AR,ge,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
 }
-// The geometry of the kit wing a car carries (build BUILDNO): the car's own, else its class's, else the starting wing of the
+// The geometry of the kit wing a car carries (build 415): the car's own, else its class's, else the starting wing of the
 // PARTS page (as wide as the track, 250 mm chord, 8 degrees (front 6), 6% camber; the front 100 mm off the road).
 function kitWing(v,front){
   const ch=CHASSIS[v.chassis]||{},own=v.body&&v.body.fit&&v.body.fit[front?'wingF':'wingR'],cls=ch.fit&&ch.fit[front?'wingF':'wingR'];

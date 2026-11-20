@@ -576,7 +576,7 @@ function partFromFactory(key,kind){
       seat_N:+(g.seat*k).toFixed(3),rate_Nmm:+(g.rate*k).toFixed(4)});
   });
   // a starting point, not a factory part: as wide as the car's track, a quarter of a metre deep, at a moderate angle
-  // (build BUILDNO: the kit WING's geometry, kitWing, so a car that carries its own starts from that)
+  // (build 415: the kit WING's geometry, kitWing, so a car that carries its own starts from that)
   if(kind==='wing')return normPart(Object.assign({kind,name:tr('REAR WING')},kitWing(vehicle||{},false)));
   // the front one as wide as the front track, its quarter chord 100 mm off the road, as a club racer's low front wing
   if(kind==='fwing')return normPart(Object.assign({kind,name:tr('FRONT WING')},kitWing(vehicle||{},true)));

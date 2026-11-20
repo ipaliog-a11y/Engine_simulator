@@ -7,7 +7,8 @@
 //   · it is the lap's physics: the lap run on a levelled copy of a circuit's racing line (the same line with its slope
 //     and its crests and dips taken out, which the envelope assumes) never corners past the envelope at the speed it
 //     is doing at any point, nor brakes or drives past it straight ahead, and at its limit it reaches it;
-//   · build 201: the Radical's cornering at 180 km/h is Radical's 2 g; the Huracán STO's downforce is Lamborghini's;
+//   · build 201: the Radical's cornering at 180 km/h is Radical's 2 g; the Huracán STO's downforce is Lamborghini's
+//     (build 415: both known gaps, AERO_KNOWN, that may only shrink);
 //   · the shapes are the physics: no downforce, the same cornering limit at every speed; downforce, a wider one the
 //     faster; a power-limited car drives less hard the faster; the braking and the drive fall as the cornering grows;
 //   · opening it changes nothing: the lap is bit-identical before and after;
@@ -97,8 +98,16 @@ if (m3.length !== 3 || Math.max(...m3.map(e => e.ay)) / Math.min(...m3.map(e => 
 if (!(r.wing[2] > r.wing[1] && r.wing[1] > r.wing[0])) fails.push('with downforce the cornering limit does not grow with the speed');
 // build 201: the Radical's aero is fitted to Radical's 'up to 2 g at high speed'; before, the class's factor gave it 3.2 g
 console.log(`  Huracán STO: ClA ${f(r.sto.clA)} m2 against ${f(r.sto.want)} from Lamborghini's 420 kg at 280 km/h`);
-if (!(Math.abs(r.wing[2] - 2) < 0.05)) fails.push(`the Radical corners at ${f(r.wing[2])} g at 180 km/h, not the 2 g Radical claims`);
-if (!(Math.abs(r.sto.clA / r.sto.want - 1) < 0.1)) fails.push(`the Huracán STO's downforce is ${f(r.sto.clA)} m2, not Lamborghini's ${f(r.sto.want)}`);
+// Build 415: the kit wings became wing parts from their dimensions (kitWing), and both cars missed their figures.
+// The owner ruled them known gaps rather than pick the unsourced wing angle to meet them. Each gap may only shrink:
+// the check fails if the car moves further from its figure than at that build. Each entry: [allowed gap, why].
+const AERO_KNOWN = {
+  radical: [0.068, "1.93 g against Radical's 2 g: its wings are now parts, the angle and camber unsourced (body.aero 1.09, fitted to 2 g in build 201, scales only the diffuser now)"],
+  sto: [0.142, "ClA 0.97 (~361 kg at 280 km/h) against Lamborghini's 420 kg at the wing's HIGH setting (their range 324-420 kg); the wing's angle and camber are unsourced"],
+};
+for (const k in AERO_KNOWN) console.log(`  known gap ${k}: ${AERO_KNOWN[k][1]}`);
+if (!(Math.abs(r.wing[2] - 2) < AERO_KNOWN.radical[0])) fails.push(`the Radical corners at ${f(r.wing[2])} g at 180 km/h, further from the 2 g Radical claims than its known gap`);
+if (!(Math.abs(r.sto.clA / r.sto.want - 1) < AERO_KNOWN.sto[0])) fails.push(`the Huracán STO's downforce is ${f(r.sto.clA)} m2, further from Lamborghini's ${f(r.sto.want)} than its known gap`);
 if (!(m3[0].acc[0] > m3[1].acc[0] && m3[1].acc[0] > m3[2].acc[0])) fails.push('the drive does not fall with the speed');
 for (const e of m3) {
   if (e.acc.some((a, i) => i && a > e.acc[i - 1] + 1e-3)) fails.push(`${e.vk} km/h: the drive grows as the cornering does`);
