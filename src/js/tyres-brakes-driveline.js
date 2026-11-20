@@ -714,9 +714,20 @@ function diffSpec(p){
 }
 // The factory clutch-plate LSD in the stepped car (build 318): a road car's, by its locking ratio, (T_fast - T_slow)
 // over the input torque, which is the ramp's lock L. Porsche quotes 37% on overrun for the manual 911 GT3 (991.2; press
-// kit, engine and transmission); owners' notes on older GT3s give 28-40% (PROBABLE). Taken the same on drive and coast.
-// Preload 60 N m: the PARTS page's road starting point (PROBABLE).
+// kit, engine and transmission); owners' notes on older GT3s give 28-40% (PROBABLE). Taken the same on drive and coast
+// (a 2-way) unless the preset's own unit has published ramps below. Preload 60 N m: the PARTS page's road starting
+// point (PROBABLE).
 const DIFF_CLSD_ROAD={pre:60,L:0.37};
+// Coast ramps where the maker publishes them (build 405): L on drive, Lc on the coast (overrun), from the two ramp
+// angles. Only one preset's own unit has both figures:
+// 718 Cayman GT4 manual: 22% under traction, 27% on overrun (Porsche Newsroom, 2020, "PDK for the 718 Spyder and
+// Cayman GT4": the PDK cars' 30/37 "compared to 22 and 27 percent with the six-speed manual").
+// Left open: the 911 GT3 (991.2) preset is the PDK car, whose rear lock is electronically controlled; the 30/37 Porsche
+// quotes is the manual's. The Mustang GT (2018) preset is the Performance Pack car, whose diff is a Torsen (Ford: 3.73
+// Torsen, manual), not a clutch pack: it biases on the coast too, and Ford publishes no bias ratio. The ND MX-5's
+// asymmetric LSD (stronger on the coast) is the 2024 car's, and Mazda gives no ratios. No other preset's maker
+// publishes drive and coast figures for its factory unit.
+const DIFF_CLSD_RAMPS={'Porsche 718 Cayman GT4 (2020)':{L:0.22,Lc:0.27}};
 // A viscous coupling (build 318): interleaved plates shearing a silicone fluid. A Newtonian film between two annuli
 // carries T = pi·mu·dw·(rO^4 - rI^4)/(2·gap), and 2·pairs - 1 films act in parallel, so the coupling is a rate c (N m
 // per rad/s). Fluid 60,000 cSt dimethyl silicone and 24 plate pairs: the working example of US patent 5,597,369
@@ -727,12 +738,15 @@ const DIFF_VCU={nu:0.06,rho:975,rO:0.055,rI:0.035,gap:0.3e-3,pairs:24};
 function diffVcuRate(p){return (2*p.pairs-1)*Math.PI*p.nu*p.rho*(Math.pow(p.rO,4)-Math.pow(p.rI,4))/(2*p.gap);}
 // How the stepped car couples an axle's two wheels: open (none), a friction pack (Coulomb: it holds the wheels together
 // up to preload + lock·|input torque|, then slips at that), a viscous coupling (c·dw), or a spool (always together).
-function diffCoupling(df){
+// Lc: the friction pack's lock on the coast (input torque negative); the same as L for a 2-way.
+// name (optional): the preset's, for its published ramps (DIFF_CLSD_RAMPS).
+function diffCoupling(df,name){
   if(!df||df===DIFF.open||!(df.lock>0))return {type:'open'};
   if(df.lock>=1)return {type:'spool'};
-  if(df.part)return {type:'fric',pre:df.preload,L:df.lock};
+  if(df.part)return {type:'fric',pre:df.preload,L:df.lock,Lc:df.lock};
   if(df===DIFF.visc)return {type:'visc',c:diffVcuRate(DIFF_VCU)};
-  return {type:'fric',pre:DIFF_CLSD_ROAD.pre,L:DIFF_CLSD_ROAD.L};
+  const r=DIFF_CLSD_RAMPS[name];
+  return {type:'fric',pre:DIFF_CLSD_ROAD.pre,L:r?r.L:DIFF_CLSD_ROAD.L,Lc:r?r.Lc:DIFF_CLSD_ROAD.L};
 }
 // THE CENTRE COUPLING of an all-wheel-drive car in the stepped car (build 320), by preset. f is the front axle's share
 // of the drive torque where a differential splits it; type as diffCoupling's, plus 'lock': an electronically controlled

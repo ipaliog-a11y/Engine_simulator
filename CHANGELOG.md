@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 405)
+### The guided build's walk-through: SHAPE IT sets the car's values one decision at a time (build 406)
 
 - **SHAPE IT** beside BUILD THIS CAR loads the matched car and walks through its design, one step per decision, in the
   plan's order (`plans/guided-build.md`, build 1 of 3): cylinders, bore and stroke, fuel, compression and air, boost,
@@ -36,6 +36,20 @@ they are accurate about *what* shipped but not about the day it shipped.
   Model Y LR 46,674 → 47,070 (+0.8%); Model S Plaid 76,613 → 76,604; Ioniq Hybrid 35,320 → 35,321; Qashqai e-POWER
   31,912 → 32,313 (+1.3%); BMW 330e 37,773 → 37,774. None moves more than 1.3%.
 - Left open: goal hints (build 2) and the finish screen (build 3); FINISH opens the VEHICLE tab for now.
+### A limited-slip diff can lock differently on the coast than under power (build 405)
+
+- The stepped car's clutch-plate LSD now has a coast lock beside its drive lock (the two ramp angles), set per preset
+  where the maker publishes both. Only one preset's own unit has them: the 718 Cayman GT4 manual, 22% under power and
+  27% on overrun (Porsche Newsroom, 2020). It was 37% both ways. Its stepped 0–100 is unchanged (4.06 s); its
+  ISO 9816 lift-off goes from x0.960 to x0.980 curvature (still slightly wide). Every other preset stays a 2-way at
+  37%; the fingerprint is identical.
+- The Mustang GT gap in `LIFT_KNOWN` stays open: the preset is the Performance Pack car, whose diff is a Torsen
+  (Ford: 3.73 Torsen with the manual), not a clutch pack. A Torsen also biases on the coast, and Ford publishes no
+  bias ratio, so no coast ramp closes it. Its reason in test204 now says so.
+- Left open: the 911 GT3 (991.2) preset is the PDK car, whose rear lock is electronic (Porsche's 30/37 is the
+  manual's); the ND MX-5's asymmetric LSD is the 2024 car's, with no ratios published; no other drive/coast figures
+  were found for a preset's factory unit.
+
 ### All-wheel-drive clutches pass at most their maker's published share (build 404)
 
 - The stepped car's centre clutch now honours a published limit: the GT-R R35 and R34 drive the rear and send the front
