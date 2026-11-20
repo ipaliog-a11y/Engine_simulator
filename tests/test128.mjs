@@ -59,8 +59,10 @@ const r = await page.evaluate(() => {
   const K = rollStiffness(vehicle);
   o.warp = { K: vehicle.warpK, series: K.F * K.R / (K.F + K.R), C: vehicle.warpC };
   const set = (id, v) => { document.getElementById(id).value = String(v); buildVehicle(); };
-  set('vhBarF', 2); set('vhBarR', 2); o.warp.Kstiff = vehicle.warpK; set('vhBarF', 0); set('vhBarR', 0);
-  set('vhDamperF', 2); set('vhDamperR', 2); o.warp.Cstiff = vehicle.warpC; set('vhDamperF', 0); set('vhDamperR', 0);
+  // a SPRINGS, BARS & DAMPERS part (build 419): the kit's with both bars 2.25x as stiff, then both dampers 1.69x
+  const kitP = partFromFactory('kit', 'susp'), fit = (m, n) => set('vhSuspPart', 'part:' + ensurePart(Object.assign({}, kitP, m, { id: '', name: n })));
+  fit({ barDF_mm: kitP.barDF_mm * 2.25 ** 0.25, barDR_mm: kitP.barDR_mm * 2.25 ** 0.25 }, 'BARS'); o.warp.Kstiff = vehicle.warpK;
+  fit({ dampF: kitP.dampF * 1.69, dampR: kitP.dampR * 1.69 }, 'DAMPERS'); o.warp.Cstiff = vehicle.warpC; set('vhSuspPart', 'kit');
   const tF = vehicle.trackF, N = vehicle.mass * G, ay = 0.9 * G;
   const flat = latBalance(N, ay, 0, 0, 0, { kw: 0, kws: 0, turn: 1 }), up = latBalance(N, ay, 0, 0, 0, { kw: 0.05 / tF, kws: 0, turn: 1 });
   o.warp.dF = vehicle.warpK * (0.05 / tF) / tF;

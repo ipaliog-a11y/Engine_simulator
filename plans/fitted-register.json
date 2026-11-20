@@ -128,24 +128,6 @@
    "state": "open"
   },
   {
-   "id": "TYRE_KZ",
-   "file": "tyres-brakes-driveline.js",
-   "match": "TYRE_KZ=",
-   "standsFor": "a tyre's vertical stiffness, one reference value",
-   "retiredBy": "tyre pressure (stiffness from pressure and section)",
-   "phase": "D",
-   "state": "open"
-  },
-  {
-   "id": "SPRING_STEP/BAR_STEP/DAMPER_STEP",
-   "file": "tyres-brakes-driveline.js",
-   "match": "SPRING_STEP=",
-   "standsFor": "springs, bars and dampers as steps about a kit",
-   "retiredBy": "spring, bar and damper rates as parts (N/mm, Ns/m)",
-   "phase": "D",
-   "state": "open"
-  },
-  {
    "id": "DIFF_ASYM0",
    "file": "tyres-brakes-driveline.js",
    "match": "const DIFF_ASYM0",

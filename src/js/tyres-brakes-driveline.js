@@ -292,20 +292,40 @@ const SUSPENSION={
   coilover:{label:'COILOVERS',  hz:1.6, camber:-1.8,zeta:0.45,cost:3200},
   race:    {label:'RACE/ADJUST',hz:2.0, camber:-2.5,zeta:0.60,cost:6500}
 };
-// Springs and anti-roll bars, each axle its own (build 174), in steps from SOFT -2 to STIFF +2 about the kit.
-// An axle's springs resist roll with k t^2/2, k each wheel's rate: from the ride frequency, k = (m_axle/2)(2 pi f)^2,
-// so K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that at STANDARD: a third of the total roll
-// stiffness, which brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 /
-// 2.4 / 1.5 deg/g. A spring step is 1.3x the rate (1.14x the frequency), a bar step 1.5x the bar: about 4% of the
-// load transfer, build 157's ROLL BALANCE step. At STANDARD both axles share the kit's frequency, so the roll
-// stiffness splits as m t^2, the weight split on equal tracks: build 157's NEUTRAL.
-const BAR_SHARE=0.55, SPRING_STEP=1.3, BAR_STEP=1.5;
-const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 216)
-// Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, steps).
+// Springs and anti-roll bars, each axle its own (build 174). With no part fitted, the kit's: an axle's springs resist
+// roll with k t^2/2, k each wheel's rate: from the ride frequency, k = (m_axle/2)(2 pi f)^2, so
+// K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that: a third of the total roll stiffness, which
+// brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 / 2.4 / 1.5 deg/g. Both
+// axles share the kit's frequency, so the roll stiffness splits as m t^2, the weight split on equal tracks: NEUTRAL.
+// SPRINGS, BARS & DAMPERS as a part (build 419, in place of build 174's SOFT/STIFF steps): each axle's rates from
+// their dimensions (suspAxle below).
+const BAR_SHARE=0.55;
+//   spring  a helical coil's rate k = G d^4 / (8 D^3 n): d the wire, D the mean coil diameter, n the active coils
+//           (Shigley, Mechanical Engineering Design, 10th ed., eq. 10-9); at the wheel MR^2 k, MR the spring's travel
+//           over the wheel's. G = 77.2 GPa, chrome-silicon spring wire (ASTM A401; Shigley table 10-5).
+//   bar     a solid torsion bar of diameter d between its two arms, length L: GJ/L, J = pi d^4 / 32. Rolling the car by
+//           phi moves each link by MR phi t/2, which twists the bar by MR phi t / a over its arms a, and the arm's force
+//           comes back to the wheels as a couple: K = (GJ/L) (MR t / a)^2 (Milliken & Milliken, RCVD, ch. 16).
+//           G = 79.3 GPa, carbon and alloy steels (Shigley table A-5). The arms' bending and the bushes' give are left out.
+//   damper  its low-speed slope in bound (N s/m, a damper dyno's figure) and its rebound over bound (build 364's
+//           DAMPER_RB, here the part's own); at the wheel MR^2 of it, on the spring's MR (a coilover).
+const SPRING_G=77.2e9, BAR_G=79.3e9;
+const springRate=(dMm,DMm,n)=>SPRING_G*Math.pow(dMm/1000,4)/(8*Math.pow(DMm/1000,3)*n);         // N/m at the spring
+const barTwistK=(dMm,LMm)=>BAR_G*Math.PI*Math.pow(dMm/1000,4)/32/(LMm/1000);                      // N m per rad of twist
+const barRollK=(P,ax,t)=>{const a=P['barArm'+ax+'_mm']/1000,m=P['barMr'+ax];return barTwistK(P['barD'+ax+'_mm'],P['barL'+ax+'_mm'])*Math.pow(m*t/a,2);};
+// One axle's rates from a fitted part ('F' or 'R'), or null for the kit's: the wheel rate ks (N/m), the bar's roll
+// stiffness kb (N m/rad), the mean damping at the wheel cs (N s/m, bound and rebound's mean) and rebound over bound rb.
+function suspAxle(v,ax){
+  const P=v&&v.suspPart;if(!P)return null;
+  const m2=P['mr'+ax]*P['mr'+ax],rb=P['rb'+ax],t=ax==='F'?v.trackF:v.trackR;
+  return {ks:m2*springRate(P['wireD'+ax+'_mm'],P['coilD'+ax+'_mm'],P['coils'+ax]),kb:barRollK(P,ax,t),cs:m2*P['damp'+ax]*(1+rb)/2,rb};
+}
+const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle, a part's springs, bars and dampers (build 216)
+// Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, or its SPRINGS, BARS & DAMPERS part).
 function rollStiffness(v){
   const w=2*Math.PI*(SUSPENSION[v.suspension]||SUSPENSION.sport).hz,w2=w*w;
-  const ax=(m,t,sp,bar)=>{const k=m*w2*t*t/4;return k*Math.pow(SPRING_STEP,sp||0)+BAR_SHARE*k*Math.pow(BAR_STEP,bar||0);};
-  return {F:ax(v.mass*v.fWt,v.trackF,v.springF,v.barF),R:ax(v.mass*(1-v.fWt),v.trackR,v.springR,v.barR)};
+  const ax=(m,t,a)=>{const s=suspAxle(v,a);if(s)return s.ks*t*t/2+s.kb;const k=m*w2*t*t/4;return k+BAR_SHARE*k;};
+  return {F:ax(v.mass*v.fWt,v.trackF,'F'),R:ax(v.mass*(1-v.fWt),v.trackR,'R')};
 }
 // ---- dampers and the road (build 216) ----
 // In a steady corner a damper does nothing: it only works while the suspension moves. On a real circuit it always
@@ -325,7 +345,7 @@ function rollStiffness(v){
 // Redrouthu & Das, Chalmers MSc thesis 2014:24, sec. 3.4 and appendix; the same constants in kg/mm, 0.00028 p[kPa] and
 // 3.45). The first term is the air's, the constant the carcass's own stiffness with no air. Wf = 0.7 of the section
 // width, the thesis's own assumption (PROBABLE). A 205/55R16 at 230 kPa: 224 kN/m, an 11-12 Hz wheel hop.
-const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, DAMPER_STEP=1.3, ISO_N0=0.1;
+const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, ISO_N0=0.1;
 function tyreKz(twMm,odMm,kPa){return (RHYNE_A*kPa/100*Math.sqrt(RHYNE_WF*twMm*odMm)+RHYNE_B)*1e4;}   // N/m
 // ---- tyre pressure as a part (build 313) ----
 // A designed pair of cold pressures (front, rear). Unfitted, every car stands for TYRE_P_REF. Fitted:
@@ -383,12 +403,12 @@ function unsprungMass(v,front){
 // A corner's quarter car for axle 'F' or 'R' of car v: sprung and unsprung mass (kg), wheel rate, damping, tyre rate.
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
-  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
-  // the damper is the kit's, matched to the kit's springs: a stiffer spring on the same damper is damped less
-  const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
+  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,P=suspAxle(v,ax);   // the rate rollStiffness uses
+  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 419)
+  const ks=P?P.ks:k0,cs=P?P.cs:2*kit.zeta*Math.sqrt(k0*ms);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);
-  return {ms,mu,ks,cs,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
+  return {ms,mu,ks,cs,rb:P?P.rb:0,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
 }
 // The quarter car's response to the road at frequency f (Hz), for a road movement of 1 m: the tyre's load swing (N)
 // and the body's acceleration (m/s2), as squared magnitudes.

@@ -122,7 +122,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          c = bump + xb, and at full droop, the wheel is stopped on the body: its speed on the body there is held at
 //          zero, and what that takes passes to the body (at droop the wheel hangs from it, off the road if need be).
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
-//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
+//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 419), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
 //   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
 //          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
@@ -147,7 +147,7 @@ function driveBody(v,a,b){
   const phi=v.mass*(arm+cF*gF0/TF+cR*gR0/TR)/(cF+cR);
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,rbF:qF.rb||DAMPER_RB,rbR:qR.rb||DAMPER_RB,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
     liveF:v.suspFront==='solid',liveR:v.suspRear==='solid',inbF:!!v.inboardF,inbR:!!v.inboardR,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
     pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR)),
     rollFull:phi,rrAyF:cF*(phi-v.mass*gF0/TF)/KF0,rrAyR:cR*(phi-v.mass*gR0/TR)/KR0,
@@ -869,7 +869,7 @@ function stepCar(car,s,u,dt){
       // each wheel: its spring, bar, bump rubber and damper (bound or rebound by its direction, taken implicitly in
       // the wheel's own speed on the body), then its two stops; what the corner passes to the body is what changed
       // the wheel's momentum other than the tyre, the links and its weight
-      const up=f?car.bumpF:car.bumpR,dn=f?car.droopF:car.droopR,top=up+DRIVE_BUMP_RUBBER,cb=2*cs/(1+DAMPER_RB),cr=cb*DAMPER_RB;
+      const up=f?car.bumpF:car.bumpR,dn=f?car.droopF:car.droopR,top=up+DRIVE_BUMP_RUBBER,rb=f?car.rbF:car.rbR,cb=2*cs/(1+rb),cr=cb*rb;
       const wheel=(w,cc,vb,Fs,Fl)=>{const x=Math.min(cc-up,0.95*DRIVE_BUMP_RUBBER),rub=x>0?ks*x/(1-x/DRIVE_BUMP_RUBBER):0;
         const A=s.zuV[w]+h*(Fz[w]-W0-Fs-rub+Fl-mu*dg)/mu-vb;               // the wheel's speed on the body, undamped
         let vr=A/(1+h*(A>0?cb:cr)/mu);                                      // the damper's sign is A's, whichever c
