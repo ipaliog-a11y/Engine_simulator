@@ -44,6 +44,8 @@ they are accurate about *what* shipped but not about the day it shipped.
   Mean error of the 16 against published figures: power 5.8% → 4.8%, torque 7.9% → 7.9%.
 - **Fingerprint:** only these 16 engines' cars move (0–100 at most −0.18 s, the Ram), plus lap hashes on 'tech' (the shared racing-line cache). The Prius's and 330e's fuel cycles move with their engines.
 - **test176** now also fails if `ENGINE_VALVES` lists fewer than 43 engines.
+- **Two known gaps added on the owner's ruling** (test60 `KNOWN`, shrink-only): the Audi 2.5 TFSI (RS3) and the Duratec 2.3 (BAC Mono) now peak at their limiters, 397 hp at 7000 rpm (published 394 at 5850) and 263 hp at 8000 (published 280 at 7700). It is the model's missing top-end fade, the same as the Hellcat and LS7 group.
+- **test93 (owner's ruling):** the governor-off check now runs on the EA288, a diesel still on the ratio, which peaks at its 4800 rpm limit. With its own valves the ungoverned Cummins rolls off at 3300 of 3500 rpm, and the 1GD-FTV at 4100 of 4500. The check itself is unchanged.
 - **Left on the ratio** (no usable source, or sources disagree): Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57; Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. The LS3, LT4 and Coyote stay held back for plan item 5.
 
 ### Seventeen more real engines get their own valves (build 419)

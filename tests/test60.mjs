@@ -45,6 +45,10 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
+  // build 424 (owner's ruling, valves batch 2): with their sourced valves these two peak at their limiters (RS3 397 hp at
+  // 7000, real 394 at 5850; BAC Mono 263 at 8000, real 280 at 7700): the model's missing top-end fade, as the Hellcat and LS7.
+  'Audi 2.5 TFSI (RS3 8V)': ['limiter'],
+  'Ford Duratec 2.3 Cosworth (BAC Mono)': ['limiter'],
   // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
   // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
   // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
