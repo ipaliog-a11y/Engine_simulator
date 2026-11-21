@@ -76,7 +76,12 @@ function lambdaSensorMv(lam){
 // O2_PIPE_VOL: valve-to-sensor volume, x displacement (probable: manifold + downpipe). O2_T_RATIO: exhaust over intake
 // temperature, ~900 K / 300 K (probable). O2_SENSOR_TAU: element response (probable: Bosch quotes < 100 ms for LSF/LSU).
 // O2_P, O2_I: jump and ramp of a narrowband trim (probable: no maker publishes a calibration).
-const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25;
+// The narrowband element's own lag is on its voltage, slower falling than rising. Bosch LSF 4.2 (Bosch sensors catalogue
+// 2022, "Type LSF-4.2"): 600 -> 300 mV in < 125 ms, 300 -> 600 mV in < 60 ms. A first-order lag between this model's
+// ~850 and ~70 mV crosses those in 0.835 and 0.788 time constants, so tau <= 150 and <= 76 ms; the bounds are used.
+// The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
+// 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
+const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
 let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
 function o2LoopActive(){
   const s=engine.lambdaSensor;
@@ -88,10 +93,12 @@ function o2DeadTime(){
   const flow=Vd*rps*engine.chargesPerRev*Math.max(0.2,state.ve||0.8)*Math.max(0.2,state.map||0.4)*O2_T_RATIO;   // L/s of exhaust
   return 1/(rps*engine.chargesPerRev)+O2_PIPE_VOL*Vd/flow;   // one cycle late, then the pipe
 }
+// The voltage the sensor sends now: the loop's own reading while it runs, else the gas at the sensor.
+function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambdaSensorMv(lam);}
 function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
 function o2LoopStep(dt){
   const L=o2Loop;L.dt=dt;
-  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);return;}
+  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
   L.t+=dt;
   if(!L.hist.length)L.hist.push([L.t,L.seen]);
   const dTime=o2DeadTime();let late=L.hist[0][1];
@@ -99,7 +106,9 @@ function o2LoopStep(dt){
   if(L.hist[0][0]<=L.t-dTime)late=L.hist[0][1];
   L.seen+=(late-L.seen)*(1-Math.exp(-dt/O2_SENSOR_TAU));   // the element's own lag
   if(engine.lambdaSensor==='narrow'){
-    const side=lambdaSensorMv(L.seen)>450?1:-1;             // rich: lean it off
+    const v=lambdaSensorMv(late);if(L.mv==null)L.mv=v;
+    L.mv+=(v-L.mv)*(1-Math.exp(-dt/(v<L.mv?O2_TAU_FALL:O2_TAU_RISE)));   // what the ECU reads
+    const side=L.mv>450?1:-1;                                // rich: lean it off
     if(side!==L.side){L.trim+=side*O2_P;L.side=side;}
     L.trim+=side*O2_I*dt;
   }else{
@@ -138,7 +147,7 @@ function updateLambdaTile(){
   else if(!run){V.textContent='—';U.textContent=tr(s==='wide'?'WIDEBAND':'NARROWBAND');}
   else{
     if(s==='wide'){V.textContent=lam>9?tr('AIR'):Math.max(LAMBDA_WIDE_MIN,lam).toFixed(2);U.textContent='λ • '+tr('WIDEBAND');}
-    else{const mv=lambdaSensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
+    else{const mv=o2SensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
     if(!state.fuelCut&&lambdaTrimFault(lam))cls=' warning';
   }
   el.className='stat'+cls;
