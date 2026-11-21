@@ -133,4 +133,6 @@ for(const p of FACTORY_ENGINES)if(p.real&&p.real.hp>0&&p.engine.radHp==null)p.en
 for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.springRpm=p.engine.redline||DEFAULT_ENGINE.redline;
 // Its valves are its maker's too, where a source gives them (build 287: ENGINE_VALVES, engine-options-presets.js).
 for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
+// And its cam, where a full card is found (build 427: ENGINE_CAMS).
+for(const p of FACTORY_ENGINES){const c=ENGINE_CAMS[p.name];if(c&&p.engine.camDur_deg==null){p.engine.camDur_deg=+camCardDur(c).toFixed(1);p.engine.camLsa_deg=c.lsa;p.engine.camLift_mm=+(c.lift*25.4).toFixed(2);}}
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);

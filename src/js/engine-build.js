@@ -46,7 +46,7 @@ function readEngineFromForm(){
     radiator:g('edRadiator').value,
     radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
     springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
-    ivValve_mm:0,evValve_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
+    ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
@@ -60,6 +60,9 @@ function readEngineFromForm(){
   // Change either on the form and the head is no longer that maker's, so the packing rule sizes the valves again.
   {const m=/^([\d.]+)\/([\d.]+)@([\d.]+)x(\d)$/.exec(g('edValveSpec').value||'');
    if(m&&Math.abs(+m[3]-e.bore_mm)<1e-6&&+m[4]===e.valves){e.ivValve_mm=+m[1];e.evValve_mm=+m[2];}}
+  // A real engine's own cam card (build 427) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
+  {const m=/^([\d.]+)\/([\d.]+)\/([\d.]+)@(\w+)$/.exec(g('edCamSpec').value||'');
+   if(m&&!e.camPart&&m[4]===e.cam){e.camDur_deg=+m[1];e.camLsa_deg=+m[2];e.camLift_mm=+m[3];}}
   return e;
 }
 function applyEngineToForm(e){
@@ -81,6 +84,7 @@ function applyEngineToForm(e){
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
+  g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';

@@ -43,7 +43,7 @@ const DEFAULT_ENGINE={
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
-  radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,fan:'electric',oilCooler:false,thermostat:88,
+  radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
 };
 // Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.
@@ -249,20 +249,12 @@ const PRESETS=[
   {cat:'NA Sports',name:'Mercedes-AMG M156 6.2 V8 (C63 W204)',real:{hp:457,hpRpm:6800,tq:600,tqRpm:5000},unsure:['bore_mm','stroke_mm','compression'],engine:{cylinders:8,layout:'v',bore_mm:102.2,stroke_mm:94.6,compression:11.3,redline:7200,cam:'sport',vvt:true,valveSpring:'perf',injector:'port',octane:98,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true}},
   {cat:'Diesel',name:'Toyota 1GD-FTV 2.8 diesel (Hilux)',real:{hp:177,hpRpm:3400,tq:450,tqRpm:1600},unsure:['boost_bar','redline'],engine:{type:'diesel',vvt:false,cylinders:4,bore_mm:92,stroke_mm:103.6,compression:15.6,redline:4500,govRpm:3400,intake:'turbo',boost_bar:1.4,turboSize:'small',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:450,taperRpm:1600,taperPct:23}},
   {cat:'Diesel',name:'VW 3.0 V6 TDI (Amarok)',real:{hp:224,hpRpm:3000,tq:550,tqRpm:1400},unsure:['boost_bar','compression','bore_mm','stroke_mm','redline','hpRpm'],engine:{type:'diesel',vvt:false,cylinders:6,layout:'v',bore_mm:83,stroke_mm:91.4,compression:16,redline:5000,govRpm:3000,intake:'turbo',boost_bar:1.5,turboSize:'medium',vgt:true,injector:'direct',intercooler:'large',exhaust:'stock',airFilter:'stock',radiator:'large',oilCooler:true,tqLimit:550,taperRpm:1500,taperPct:67}},
-  {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
+  {cat:'American V8',name:'GM LT4 6.2 supercharged (Camaro ZL1)',real:{hp:650,hpRpm:6400,tq:881,tqRpm:3600},unsure:['boost_bar','compression'],engine:{valvetrain:'ohv-roller',cylinders:8,layout:'v',valves:2,bore_mm:103.25,stroke_mm:92,compression:10,redline:6600,intake:'supercharger',boost_bar:0.65,scType:'roots',intercooler:'large',vvt:true,cam:'sport',injector:'direct',octane:91,exhaust:'sport',airFilter:'perf',radiator:'large',oilCooler:true,taperRpm:4000,taperPct:27}},
 ];
 // A real engine's own valve head diameters, mm (build 287), in place of the packing rule (VALVE_PACK) and of 0.83 of
 // the intake for the exhaust (EV_RATIO). Each with its source; a size known only from aftermarket "standard size"
 // replacement valves is marked (std): the replacement is made to the maker's head, but it is not the maker's sheet.
 // An engine not listed here still takes the rule. Adding an engine moves that engine's numbers only.
-// Held back: GM LS3, 55.0 / 40.4 mm (GM: 2.165 and 1.590 in). The rule gives it 51.6 mm and the engine is already 7.9%
-// over its 430 hp; with its real valves it is 19.3% over. Something else holds the real engine back (its cam and its
-// intake want a review against GM's sheet first), so its valves wait rather than push a car past 10%.
-// Held back: Ford Coyote Gen 3, 37.7 / 32 mm (Ford Performance Coyote Technical Reference). The rule gives it 36.3 mm;
-// with its real valves it goes from 452 to 477 hp (460 published) and its power is still rising at the 7500 rpm limiter,
-// where the real engine peaks at 7000 (test60's 'limiter' anomaly). Its cam and intake want the same review.
-// Held back (build 330): GM LT4, 54.1 / 40.39 mm (GM parts 12650770 / 12678746: 2.13 / 1.59 in). Its preset gives no
-// valve count, so it runs as four valves a cylinder; one intake valve of 54 mm needs the preset's head fixed first.
 const ENGINE_VALVES={
   'BMW S54 (M3 E46)':{iv:35,ev:30.5,src:'BMW ST041 M3 training manual, driveline: valves 35 / 30.5 mm'},
   'Honda F20C (S2000 AP1)':{iv:36,ev:31,src:'s2000.club F20C engine paper: 36 / 31 mm; Ferrea stock-size listings (std)'},
@@ -278,6 +270,10 @@ const ENGINE_VALVES={
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
   // cam or intake, not the valves (named in the CHANGELOG).
   'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'},
+  // Build 427 (plans/v1-finish.md item 5): the three V8s held back for their cams ship their valves on the owner's rule.
+  'GM LS3 (Corvette C6)':{iv:55.0,ev:40.4,src:'GM: LS3 intake 2.165 in, exhaust 1.590 in'},
+  'Ford Coyote 5.0 (Mustang GT 2018)':{iv:37.7,ev:32,src:'Ford Performance, Coyote Technical Reference (Gen 3): 37.7 / 32 mm'},
+  'GM LT4 6.2 supercharged (Camaro ZL1)':{iv:54.1,ev:40.39,src:'GM parts 12650770 / 12678746: intake 2.13 in, exhaust 1.59 in'},
   // Build 419 (plans/v1-finish.md, valves batch 1 of 4). unsure: true marks a size that is probable, not the maker's sheet.
   // Owner's rule (build 419): a sourced valve is used whichever way it moves the engine; none is held back for its result.
   'BMW S62 4.9 V8 (M5 E39)':{iv:35,ev:30.5,src:'BMW ST038 Z8 training manual, S62B50: valves 35 / 30.5 mm; BMW TIS E39 M5 the same'},
@@ -313,9 +309,28 @@ const ENGINE_VALVES={
   'Lamborghini 5.2 V10 (Huracán STO)':{iv:33.85,ev:28,unsure:true,src:'As the LP610-4: GSC and ZRP stock-size intake 33.85 mm, exhaust 28 mm (std)'},
   'Lancia 831 2.0 16V turbo (Delta Integrale Evo)':{iv:34.4,ev:28.4,src:'Supertech LIVN-1001 / LEVI-1001 stock-size Delta 16V valves: 34.4 / 28.4 mm (std)'},
   'Ferrari F136 FB V8 (458 Italia)':{iv:37.8,ev:31,src:'Supertech FEIVC-F136 / FEEVC-F136 stock-size 458 valves: 37.8 / 31.0 mm (std)'},
-  'Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)':{iv:30.1,ev:27,unsure:true,src:'australiancar.reviews and mymotorlist 1VD-FTV pages: 30.1 / 27.0 mm, not a Toyota sheet'}
+  'Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)':{iv:30.1,ev:27,unsure:true,src:'australiancar.reviews and mymotorlist 1VD-FTV pages: 30.1 / 27.0 mm, not a Toyota sheet'},
+  // Build 428 (plans/v1-finish.md, valves batch 3 of 4), on the same rules.
+  'Honda S07A turbo (S660)':{iv:24.5,ev:20.5,src:'Honda, S07B technical page: intake 24.0 mm against the S07A\'s 24.5; exhaust 20.0 mm, 0.5 mm less than the S07A\'s'},
+  'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
+  'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
+// A real engine's own cam card (build 427, plans/v1-finish.md item 5), in place of its factory class's duration, separation
+// and lift (CAM). d050: intake duration at 0.050 in of tappet lift, crank degrees; lift: intake valve lift, in; rocker:
+// the rocker ratio that lift is quoted at; lsa: lobe separation, degrees. The model's duration is seat to seat on its own
+// sin^2 lift law (intakeFill), so the card's 0.050 in is found on that law: lift(t) = L sin^2(pi t/dur) reaches h at
+// t/dur = asin(sqrt(h/L))/pi from each seat, so dur = d050/(1 - 2 asin(sqrt(h/L))/pi), L the lobe's lift (valve/rocker).
+// The intake centreline is taken at the separation (the model has no ground-in advance). The exhaust lobe stays the
+// intake's (overlapDeg is symmetric). An engine not listed keeps its class's cam.
+// Not listed, no full card found: Ford Coyote Gen 3 (14 mm lift, Ford; 260/263 deg advertised, EngineLabs; no 0.050 in
+// figure, no separation, and both cams phased); GM LT4 (189/223 at 0.050 in, .492/.551 in, Chevrolet LT4 page; no
+// separation found).
+const ENGINE_CAMS={
+  'GM LS3 (Corvette C6)':{d050:204,lift:0.551,rocker:1.7,lsa:117,src:'Summit Racing, Chevy LS3 engine specs: 204/211 deg at .050, .551/.525 in, LSA 117 (Engine Tech LS catalogue 2015: 116)'},
+  'GM LS7 (Corvette Z06 C6)':{d050:211,lift:0.593,rocker:1.8,lsa:121,src:'GM Performance Parts 12638426, factory LS7 cam (Hawks Motorsports listing): 211/230 deg at .050, .593/.588 in on 1.8 rockers, LSA 121'}
+};
+const camCardDur=c=>c.d050/(1-2*Math.asin(Math.sqrt(0.050/(c.lift/c.rocker)))/Math.PI);
 const STD_TUNE={throttle:0.85,load:0.40,elecLoad:0.30,afr:13.2,iat:25,coolant:90,oil:100,autoThermal:false};
 

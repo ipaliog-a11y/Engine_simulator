@@ -36,12 +36,31 @@ recorded numbers reports its range and the mean error against the real cars.
    stay held back for item 5. Owner's rulings: test60 `KNOWN` gains the RS3's 2.5 TFSI and the BAC Mono's Duratec ('limiter');
    test93's governor-off check moves from the Cummins to the EA288, which is still on the ratio.
 3. **Valves, batch 3 of 4.**
+   *Build 428:* 3 engines sourced (49 of 93 now), all shipped: Honda S07A (Honda), the Radical RPE 1500 (Hayabusa stock-size
+   valves, `unsure`) and the F355's F129B (Supertech stock-size, `unsure`; a forum post swaps intake and exhaust). Peak hp
+   S07A 68 → 68, RPE 203 → 207, F129B 385 → 386; mean hp error of the 3: 4.1% → 3.5%, torque 4.3% → 4.1%. Left on the
+   ratio, no usable source found or sources disagree: Suzuki K6A, F6A; Fiat TwinAir; Honda E07A; Nissan KR15DDT; VW 3.0 V6
+   TDI (EA897 sources give 27.5 and 28.7 mm intakes); Audi 2.1 20V; Lamborghini 3.9 (LP400), 5.7 (Diablo), 6.5 (Murciélago),
+   4.0 TT (Urus: one unopened paper gives the EA824's 33.85 / 28 mm); BMW S70/2; Ferrari Dino 135, F120A, Colombo 4.4,
+   F140B, F140; Porsche 5.7 V10, 3.7 TT (992), 4.8 TT (958), 4.0 (GT4), 4.6 V8 (918).
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
 5. **The four V8s over 10%** (LS7, LS3, LT4, Coyote; decision 16): chase the cam timing and the intake, not the valves.
    Published cam cards (GM, Ford Performance) and intake runner lengths. Report each against its published power.
+   *Build 427:* LS3 and LS7 on GM's cam cards (0.050" duration on the model's sin² lift law); LS3, Coyote and LT4 on
+   their real valves; the LT4 a two-valve head. Peak hp LS3 +7.9 → +22.1%, LS7 +15.6 → +17.0%, Coyote −1.7 → +3.7%,
+   LT4 −6.6 → −7.4% (mean 8.0 → 12.6%); torque mean 7.3 → 6.1%. Owner's ruling: test60 `KNOWN` gains the LS3 and Coyote
+   ('limiter'). Open: the model's missing top-end fade (LS3 and LS7 stay over 10%; item 5b). No full cam card for
+   the Coyote or LT4 (no separation found), no stock runner length or plenum volume for any of the four, and all four keep an unsourced `exhaust:'sport'`.
+5b. **Top-end fade** (owner, build 427): the model's power keeps rising to the limiter on six engines (Hellcat, LS7, RS3
+   2.5 TFSI, BAC Mono Duratec, LS3, Coyote; test60 KNOWN 'limiter'). Derive the high-rpm loss from physics (friction
+   mean effective pressure against piston speed, e.g. Chen–Flynn / Patton–Nitschke–Heywood; valve-train and breathing
+   limits: port Mach index, valve float), no fitting. Report every engine's peak-power move; the KNOWN 'limiter'
+   entries should shrink.
 6. **Water-to-air intercoolers, the model** (decision 22; register B4). The charge-air cooler as a coolant loop: the
    core's effectiveness from its NTU (Kays & London), the pump's flow, the front low-temperature radiator, and the
    loop's heat soak in time on a lap. Effectiveness and pressure drop beside the air-to-air part (builds 255–256).
+   *Build 429:* the model, as a type of the intercooler part (PARTS). Core and radiator ε from NTU, settled loop
+   (a/Cc)/(1 + a/b − a/Cw), dyno on the cold loop, the lap walks the loop in time. No preset moved (fingerprint identical).
 7. **Water-to-air intercoolers, per car.** Each preset whose maker publishes a water-to-air charge cooler moves to the
    new part (the build lists which, with sources). Report each car's power and lap moves.
 8. **`catRampTop`: a research build.** A measured back pressure for a catalyst brick and a silencer together (SAE
