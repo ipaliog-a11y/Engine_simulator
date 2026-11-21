@@ -31,8 +31,8 @@ they are accurate about *what* shipped but not about the day it shipped.
   LT4 +7.8 → +8.1%; mean 7.3 → 6.1%. Shipped on the owner's rule: sourced values ship whichever way they move.
 - Known gaps (owner): test60 `KNOWN` gains the LS3 and Coyote ('limiter'). Both peak at their limiters because the model
   has no top-end fade, as with the Hellcat, LS7, RS3 and BAC Mono.
-- Still open: the LS3 and LS7 stay over 10% because of that missing fade, not their cams; a top-end-fade build comes
-  before group 8. No full cam card was found for the Coyote (14 mm lift and 260/263° advertised, but no 0.050" figure,
+- Still open: the LS3 and LS7 stay over 10% because of that missing fade, not their cams; the owner adds a top-end-fade
+  build as plan item 5b. No full cam card was found for the Coyote (14 mm lift and 260/263° advertised, but no 0.050" figure,
   no separation, both cams phased) or the LT4 (189/223° at 0.050", 0.492/0.551", no separation). No stock runner
   length or plenum volume was found for any of the four. All four keep an unsourced `exhaust:'sport'`, and the Coyote
   an unsourced variable runner (its Gen 3 manifold has charge-motion valves, not two lengths).
