@@ -39,6 +39,12 @@ recorded numbers reports its range and the mean error against the real cars.
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
 5. **The four V8s over 10%** (LS7, LS3, LT4, Coyote; decision 16): chase the cam timing and the intake, not the valves.
    Published cam cards (GM, Ford Performance) and intake runner lengths. Report each against its published power.
+   *Build 426:* LS3 and LS7 on GM's cam cards (0.050" duration on the model's sin² lift law); LS3, Coyote and LT4 on
+   their real valves; the LT4 a two-valve head. Peak hp LS3 +7.9 → +22.1%, LS7 +15.6 → +17.0%, Coyote −1.7 → +3.7%,
+   LT4 −6.6 → −7.4% (mean 8.0 → 12.6%); torque mean 7.3 → 6.1%. Owner's ruling: test60 `KNOWN` gains the LS3 and Coyote
+   ('limiter'). Open: the model's missing top-end fade (LS3 and LS7 stay over 10%); a **top-end-fade model build is
+   added before group 8** (owner, build 426). No full cam card for the Coyote or LT4 (no separation found), no stock
+   runner length or plenum volume for any of the four, and all four keep an unsourced `exhaust:'sport'`.
 6. **Water-to-air intercoolers, the model** (decision 22; register B4). The charge-air cooler as a coolant loop: the
    core's effectiveness from its NTU (Kays & London), the pump's flow, the front low-temperature radiator, and the
    loop's heat soak in time on a lap. Effectiveness and pressure drop beside the air-to-air part (builds 255–256).

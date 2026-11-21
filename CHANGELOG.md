@@ -18,6 +18,25 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The four V8s on their own cams and valves (build 426)
+
+- The LS3 and LS7 run on their makers' cam cards in place of their class's cam (`ENGINE_CAMS`): LS3 204° at 0.050",
+  0.551" on a 1.7 rocker, separation 117° (Summit Racing; Engine Tech's catalogue says 116°); LS7 211° at 0.050",
+  0.593" on a 1.8 rocker, 121° (GM 12638426). The 0.050" duration is found on the model's own sin² lift law, giving
+  274.5° and 283.1° seat to seat. The card travels with the engine like its valves and moves only the engines carrying one.
+- The LS3 (55.0/40.4 mm), Coyote (37.7/32 mm) and LT4 (54.1/40.39 mm) take their real valves, held back until now. The
+  LT4 becomes a two-valve head, as GM builds it (it ran as four valves a cylinder).
+- Peak power against the published figure, before → after: LS3 +7.9 → +22.1%, LS7 +15.6 → +17.0%, Coyote −1.7 →
+  +3.7%, LT4 −6.6 → −7.4%; mean 8.0 → 12.6%. Torque: LS3 +5.4 → +2.8%, LS7 +8.2 → +6.1%, Coyote −7.6 → −7.4%,
+  LT4 +7.8 → +8.1%; mean 7.3 → 6.1%. Shipped on the owner's rule: sourced values ship whichever way they move.
+- Known gaps (owner): test60 `KNOWN` gains the LS3 and Coyote ('limiter'). Both peak at their limiters because the model
+  has no top-end fade, as with the Hellcat, LS7, RS3 and BAC Mono.
+- Still open: the LS3 and LS7 stay over 10% because of that missing fade, not their cams; a top-end-fade build comes
+  before group 8. No full cam card was found for the Coyote (14 mm lift and 260/263° advertised, but no 0.050" figure,
+  no separation, both cams phased) or the LT4 (189/223° at 0.050", 0.492/0.551", no separation). No stock runner
+  length or plenum volume was found for any of the four. All four keep an unsourced `exhaust:'sport'`, and the Coyote
+  an unsourced variable runner (its Gen 3 manifold has charge-motion valves, not two lengths).
+
 ### Sixteen more real engines get their own valves (build 425)
 
 `plans/v1-finish.md`, group 1, valves batch 2 of 4 (register `EV_RATIO`). 43 of 93 engines are now sourced.
