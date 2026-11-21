@@ -787,12 +787,6 @@ body.guided-open{overflow:hidden}
 
 /* ---- BUILD, TEST, DRIVE, MORE. The mode bar sits under the build strip on a tall screen and at the foot of a phone
    (portrait or landscape). Only the open mode's tabs are shown; the rest stay in the page so a script can still open them. ---- */
-.mode-room{height:36px;margin:0 0 8px;border:3px solid #333;background:#0a0a10 center/cover no-repeat;image-rendering:auto}
-body[data-group="build"] .mode-room{background-image:url(assets/landing/workshop-pickup.webp)}
-body[data-group="build"][data-pt="ev"] .mode-room{background-image:url(assets/landing/service-bay-ev.webp)}
-body[data-group="test"] .mode-room{background-image:url(assets/landing/garage-f355.webp)}
-body[data-group="drive"] .mode-room{background-image:url(assets/landing/pit-f355.webp)}
-body[data-group="more"] .mode-room{display:none}
 .viz-groups{display:flex;margin:0 0 10px;background:#0a0a12;border:3px solid #333}
 .viz-groups button{flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:10px 6px;font-size:9px;background:#12121c;color:#889;border:none;border-right:2px solid #26263a;box-shadow:none;cursor:pointer}
 .viz-groups button[data-g="more"]{flex:0.72}
@@ -835,6 +829,19 @@ body[data-group="more"] .mode-room{display:none}
   .build-strip{margin:0 0 8px;padding:5px 8px;gap:4px 8px;font-size:8px}
   .build-strip button{font-size:8px;padding:6px 8px}
   .mode-chips{display:none}
+  /* phone: the strip is two short rows (engine | car, then FILE GUIDE OPTIONS MENU), labels dropped */
+  .build-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px}
+  .build-strip .k{display:none}
+  .build-strip>button,.build-strip .file-wrap>button{min-height:28px;padding:4px;font-size:7px;width:100%}
+  #bsEngine,#bsCar{grid-column:span 2}
+  .build-strip .file-wrap{display:block;min-width:0}
+  /* challenge card: three small tiles to a row, so the result fits on one screen */
+  #chalGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  #chalGrid .perf-cell{padding:3px 4px;border-width:1px}
+  #chalGrid .perf-cell .k{font-size:6px;line-height:1.3}
+  #chalGrid .perf-cell .v{font-size:9px;margin-top:2px;overflow-wrap:anywhere}
+  #chalGrid .perf-cell.wide{grid-column:1/-1}
+  #chalPanel .perf-head{font-size:7px;margin-bottom:6px}
   .viz-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;position:sticky;top:0;z-index:20}
   .viz-tabs::-webkit-scrollbar{display:none}
   .viz-panel{min-width:0}
@@ -882,7 +889,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 425</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 426</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -907,7 +914,6 @@ body[data-group="more"] .mode-room{display:none}
 <button type="button" data-g="drive"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1h-1zM2 0h1v1h-1zM4 0h1v1h-1zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/></svg><span>DRIVE</span></button>
 <button type="button" data-g="more"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h1v1h-1zM2 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM7 5h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1z"/></svg><span>MORE</span></button>
 </nav>
-<div class="mode-room" id="modeRoom" aria-hidden="true"></div>
 <div class="main">
 <div class="viz-panel">
 <div class="viz-tabs">
