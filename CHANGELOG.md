@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Sixteen more real engines get their own valves (build 422)
+### Sixteen more real engines get their own valves (build 424)
 
 `plans/v1-finish.md`, group 1, valves batch 2 of 4 (register `EV_RATIO`). 43 of 93 engines are now sourced.
 
@@ -47,6 +47,65 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Two known gaps added on the owner's ruling** (test60 `KNOWN`, shrink-only): the Audi 2.5 TFSI (RS3) and the Duratec 2.3 (BAC Mono) now peak at their limiters, 397 hp at 7000 rpm (published 394 at 5850) and 263 hp at 8000 (published 280 at 7700). It is the model's missing top-end fade, the same as the Hellcat and LS7 group.
 - **test93 (owner's ruling):** the governor-off check now runs on the EA288, a diesel still on the ratio, which peaks at its 4800 rpm limit. With its own valves the ungoverned Cummins rolls off at 3300 of 3500 rpm, and the 1GD-FTV at 4100 of 4500. The check itself is unchanged.
 - **Left on the ratio** (no usable source, or sources disagree): Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57; Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. The LS3, LT4 and Coyote stay held back for plan item 5.
+
+### Five more overhang splits from the makers' own sheets (build 423)
+
+- Front and rear overhangs now come from the maker's sheet for five cars, each adding up with its wheelbase to the
+  car's length: Toyota Aygo 675/440 mm and GR86 860/830 mm (Toyota UK tech specs), Land Cruiser 200 930/1170 mm
+  (Toyota UK V8 press kit, 2008, same length and wheelbase), Hyundai Ioniq Hybrid 880/890 mm (Hyundai France press
+  information, 2016), Toyota Prius 950/889 mm (Toyota USA product information, preliminary, 2015). Each is cited
+  beside the value (`ovSrc`). Overhangs read from the side view: 78 → 73 (test171's budget lowered to match).
+- Still open: 73 cars. VW, Porsche, Ferrari, Lamborghini, Honda, Mazda, Suzuki, Ford, GM, Stellantis and Nissan
+  press data list length and wheelbase but no overhangs. BMW Canada's product guides list them for the X5 M
+  (906/1055) and M2 (on 4894 and 4476 mm North-American bodies, 14-15 mm longer than ours), so where the extra
+  length sits is unknown and they were not used.
+
+### Tyre sizes from the makers' sheets, and the two missing widths (build 422)
+
+Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
+
+- **Tyre sizes** (`CAR_DIMS`): 20 of the 26 cars that had no published size now carry one, with its source in a new
+  `tySrc`. Six come from the maker or the maker's catalogue and lose `unsure`: Alto Works (Suzuki sheet), AE86
+  (185/70R13, Toyota catalogue), S2000 (front 205/55R16, Honda factsheet), Murciélago LP640 (Lamborghini press
+  release), 911 Carrera RS 2.7 (185/70R15 and 215/60R15, Porsche media kit), Beat (155/65R13 and 165/60R14, Honda
+  catalogue). Fourteen are probable (fitment databases, dealers, period road tests) and stay `unsure`.
+- **Widths**: Radical SR3 RSX 1.799 m (dealer ad, topspeed.com), Ram 2500 2.019 m (autopadre.com, without mirrors).
+  Both are probable (`wSrc`, `unsure` w). `NO_WIDTH_KNOWN` is empty, and `test171`'s unsure budget goes from 37 to 33.
+- **Presets**: six cars' fits follow the sourced size: AE86, Diablo VT (17-inch, 335/35 rear), BAC Mono (205/45R17,
+  255/40R17), 911 RS 2.7, Beat (14-inch rear), Atom 3.5 (225/45R16 rear).
+- **Derived tables follow**: the light-roadster class's most common wheel is now 16-inch, not 15-inch (its six real
+  cars, `tools/class-medians.mjs`; no recorded number moves). `CAR_PRICE` was rerun with `tools/car-prices.mjs`: the
+  Diablo VT is −100, the BAC Mono +100 and the 911 RS −50.
+- **What moved** (fingerprint against build 421): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
+  +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.66% to
+  8.44%. The owner ruled that the sourced sizes ship.
+- **Named gap**: the Beat's top speed goes from 157 to 165 km/h (real 140), because its sourced rear tyre is 14-inch,
+  not 13-inch. 0–100 gets worse on the AE86, Diablo VT, BAC Mono, Beat and Atom (by 0.6–1.4 points), and better on the
+  911 RS.
+- **Left open**: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf GTI Mk1 and Amarok (no source reached). E-Type and
+  Mustang 1965 came on cross-ply sizes (6.40-15, 6.95-14) that the size format can't hold. The Radical runs slicks
+  (200/580-15, 265/605-16).
+
+### test72 opens DRIVE before it taps RACE on a phone (build 421)
+
+- `test72` failed on `main`: its phone pass tapped RACE while TEST was the open section. Since build 394 the bar shows only the open section's tabs on every screen, so RACE (under DRIVE) is hidden there. That was on purpose; the app is fine.
+- The test now opens DRIVE first, as a person would. No change to the app; fingerprint identical.
+
+### Springs, anti-roll bars and dampers are a part, their rates from their dimensions (build 420)
+
+`plans/v1-finish.md` build 12; retires `SPRING_STEP/BAR_STEP/DAMPER_STEP` from the fitted register (4 open, from 6).
+
+- **A new part, SPRINGS, BARS & DAMPERS** (PARTS tab, fitted from the VEHICLE tab), in place of the six SOFT −2 … STIFF +2 steps. Per axle:
+  - coil spring: wire, mean coil diameter, active coils; k = G d⁴ / (8 D³ n), G 77.2 GPa (chrome-silicon wire, Shigley table 10-5);
+  - anti-roll bar: diameter, arm, length; roll stiffness (G π d⁴/32 / L)(MR t / a)², G 79.3 GPa (Shigley table A-5; Milliken, RCVD ch. 16);
+  - damper: its bound slope (N·s/m, a dyno's figure) and rebound over bound, which the stepped car now reads (build 364's 3:1 when unfitted);
+  - motion ratios for the spring/damper and the bar: each at the wheel by MR².
+- **Unfitted cars keep the kit's rates**, so nothing moves: no preset carries a published spring, bar or damper rate, and none carries the part. START FROM writes the kit's rates on this car as a part (a 100 mm coil of 8 coils, a 1000 mm bar on 200 mm arms, motion ratio 1, the wire and bar sized to the rate): fitted as it starts, it moves nothing (≤ 6e-6). These starting dimensions are not any real car's.
+- **Cost:** the part replaces both axles' springs, bars and dampers, $2000 (the old per-axle step prices).
+- **Saves:** a build saved with steps or the old ROLL BALANCE now loads on the kit.
+- **Tests updated in the open:** `test85`, `test95`, `test127` and `test128` fit the part (the kit's, scaled to the old steps) where they set steps; the same behaviours hold, the numbers unchanged. `test127`'s part costs $2000, not one axle's $350; `test95`'s old save loads on the kit, not as a front bar; the Greek checks of the removed selects are dropped (Greek paused). `test157` checks the new select. `test166`: OPEN 6 → 4, also dropping `TYRE_KZ`, which build 418 retired but left in the register (test166 failed on `main`).
+- **New `test256`:** the formulas, motion ratios, the stepped car's rebound ratio, SAVE & FIT, the kit's part moving nothing.
+- **Left open:** hollow bars, the bar arms' bending and the bushes' give, progressive and preloaded springs, the damper's valve itself (shims and blow-off: its curve is taken as straight), and a separate damper motion ratio.
 
 ### Seventeen more real engines get their own valves (build 419)
 

@@ -12,7 +12,7 @@
 //     one takes 0.83 of its intake;
 //   · a real engine whose valves are sourced (ENGINE_VALVES, build 287) has them; they go when its bore changes and
 //     stay through a save; an engine not listed (the GR Yaris's G16E) keeps the packing rule; every listed engine (build 330) reaches the
-//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 419, 43 by build 422, and never fewer);
+//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 419, 43 by build 424, and never fewer);
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -96,7 +96,7 @@ const rd = a => a.map(x => Math.round(x)).join(' / ');
 console.log(`== a real engine's own valves: M3 ${r.own.iv} / ${r.own.ev} mm; bored to 88 mm ${r.own.rebored.toFixed(2)} mm; after a save ${r.own.back.join(' / ')}; an unlisted engine ${r.own.rule.map(x => x.toFixed(2)).join(' of the bore, exhaust ')} of the intake ==`);
 if (r.own.iv !== 35 || r.own.ev !== 30.5) fails.push("the M3 does not have BMW's valves (35 / 30.5 mm)");
 console.log(`== ${'sourced engines that do not reach their valves'}: ${r.own.miss.length ? r.own.miss.join(', ') : 'none'} ==`);
-if (r.own.n < 43) fails.push(`ENGINE_VALVES lists ${r.own.n} engines, fewer than the 43 sourced by build 422`);
+if (r.own.n < 43) fails.push(`ENGINE_VALVES lists ${r.own.n} engines, fewer than the 43 sourced by build 424`);
 if (r.own.miss.length) fails.push('ENGINE_VALVES entries that do not reach their engine: ' + r.own.miss.join(', '));
 if (Math.abs(r.own.rebored - 0.39 * 88) > 1e-9) fails.push('a head on another bore kept the old bore\'s valves');
 if (r.own.back[0] !== 35 || r.own.back[1] !== 30.5) fails.push('a saved build lost its real valves');

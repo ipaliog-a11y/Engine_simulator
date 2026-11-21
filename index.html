@@ -882,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 419</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 424</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2958,7 +2958,7 @@ Corner hard and the body <b>rolls</b> toward the outside. Soft suspension rolls 
 <div class="guide-body" data-gk="suspensionGame">
 <b>SUSPENSION</b> on the VEHICLE tab: comfort, sport, coilovers or race. Stiffer setups roll less and run more static negative camber.<br>
 <b>FRONT GEOMETRY</b> and <b>REAR GEOMETRY</b> are the linkage at each end: MacPherson strut, double wishbone, multi-link, twist beam (rear only, it cannot steer) or solid axle. A real car comes with its own, and its own front and rear track; fitting another is a conversion and costs money.<br>
-<b>FRONT SPRINGS</b>, <b>REAR SPRINGS</b>, <b>FRONT ANTI-ROLL BAR</b> and <b>REAR ANTI-ROLL BAR</b> go from SOFT −2 to STIFF +2 about the kit. Stiffer all round rolls less; stiffer at one end moves the balance: a stiffer front understeers more, a stiffer rear oversteers more.
+<b>SPRINGS, BARS &amp; DAMPERS</b> are the kit's, or a set designed on the PARTS tab: each axle's coil spring (wire, coil diameter, active coils), anti-roll bar (diameter, arms, length), damper and motion ratios, and the rates come from those dimensions. Stiffer all round rolls less; stiffer at one end moves the balance: a stiffer front understeers more, a stiffer rear oversteers more.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -3020,7 +3020,7 @@ No road is flat. Over every bump the wheel is pushed up, the spring is squeezed,
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="dampers">
-<b>FRONT DAMPERS</b> and <b>REAR DAMPERS</b> on the VEHICLE tab go from SOFT −2 to STIFF +2 about the suspension kit's own damping. Each step is 1.3× the damping; off STANDARD they are new parts.<br>
+The dampers are the suspension kit's, matched to its springs, or a <b>SPRINGS, BARS &amp; DAMPERS</b> part's from the PARTS tab: each axle's bound damping (N·s/m, as a damper dyno gives it) and its rebound over bound.<br>
 The summary shows each axle's damping as a share of critical damping, the wheel-hop frequency, and the <b>ride</b>: how hard the body is shaken at 80 km/h on an ordinary good road. Lower is more comfortable.<br>
 On the TRACK, every circuit has a road surface: purpose-built circuits are smooth, older and public-road circuits bumpier, and the Nordschleife bumpiest. The bumps cost grip wherever the tyres work, cornering, braking and driving, and more at speed. Damping near half of critical keeps the tyres' load steadiest. Softer is more comfortable but lets the wheels hop; stiffer shakes the car and the tyres again. Stiffer springs on the same dampers are damped less, and cost a little grip on bumps.<br>
 The 0–100, braking and skidpad tests are run on a smooth surface, so the dampers do not change them.<br>
@@ -3769,12 +3769,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 <div class="field"><label for="vhGeoF">FRONT GEOMETRY</label><select id="vhGeoF"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="solid">SOLID AXLE</option></select></div>
 <div class="field"><label for="vhGeoR">REAR GEOMETRY</label><select id="vhGeoR"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="twist">TWIST BEAM</option><option value="solid">SOLID AXLE</option></select></div>
-<div class="field"><label for="vhSpringF">FRONT SPRINGS</label><select id="vhSpringF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhSpringR">REAR SPRINGS</label><select id="vhSpringR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhBarF">FRONT ANTI-ROLL BAR</label><select id="vhBarF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhBarR">REAR ANTI-ROLL BAR</label><select id="vhBarR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhDamperF">FRONT DAMPERS</label><select id="vhDamperF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhDamperR">REAR DAMPERS</label><select id="vhDamperR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="vhSuspPart">SPRINGS, BARS &amp; DAMPERS</label><select id="vhSuspPart"><option value="kit">THE KIT'S</option></select></div>
 <div class="field"><label for="btnSusp">QUARTER CAR</label><button id="btnSusp" type="button">SUSPENSION CALCULATOR…</button></div>
 <div class="field"><label for="btnGG">GRIP</label><button id="btnGG" type="button">G-G DIAGRAM…</button></div>
 </div></section>
@@ -4019,6 +4014,46 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="part-guide" id="pyGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pyLegend"></div><canvas id="pyCanvas" role="img" aria-label="The aquaplaning speed and the tyre's stiffness against the cold pressure"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pySave">SAVE PART</button><button type="button" id="pySaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsSusp" hidden>
+<div class="design-section">My springs, bars and dampers</div>
+<div class="part-list" id="psList"></div>
+<div class="pick-row"><div class="field"><label for="psFrom">START FROM</label><select id="psFrom"><option value="kit">THE KIT'S, ON THIS CAR</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="psNew">NEW SET</button><button type="button" id="psReset" title="Put the dimensions back to the kit's, keeping the name">RESET</button></div></div>
+<div class="hint">Fitted from the VEHICLE tab's SPRINGS, BARS &amp; DAMPERS, each axle's rates come from these dimensions in place of the kit's. A motion ratio is the part's travel over the wheel's.</div>
+<div class="design-grid">
+<div class="field"><label for="psName">NAME</label><input type="text" id="psName" maxlength="40"></div>
+</div>
+<div class="design-section">Front axle</div>
+<div class="design-grid">
+<div class="field"><label for="ps_wireDF_mm">WIRE (mm)</label><input type="number" id="ps_wireDF_mm" min="5" max="25" step="0.1"></div>
+<div class="field"><label for="ps_coilDF_mm">COIL, MEAN (mm)</label><input type="number" id="ps_coilDF_mm" min="40" max="250" step="1"></div>
+<div class="field"><label for="ps_coilsF">ACTIVE COILS</label><input type="number" id="ps_coilsF" min="2" max="20" step="0.1"></div>
+<div class="field"><label for="ps_mrF">SPRING MOTION RATIO</label><input type="number" id="ps_mrF" min="0.3" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_barDF_mm">BAR (mm, 0 NONE)</label><input type="number" id="ps_barDF_mm" min="0" max="45" step="0.1"></div>
+<div class="field"><label for="ps_barArmF_mm">BAR ARM (mm)</label><input type="number" id="ps_barArmF_mm" min="80" max="400" step="1"></div>
+<div class="field"><label for="ps_barLF_mm">BAR LENGTH (mm)</label><input type="number" id="ps_barLF_mm" min="300" max="1600" step="1"></div>
+<div class="field"><label for="ps_barMrF">BAR MOTION RATIO</label><input type="number" id="ps_barMrF" min="0.2" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_dampF">DAMPER, BOUND (N·s/m)</label><input type="number" id="ps_dampF" min="100" max="30000" step="10"></div>
+<div class="field"><label for="ps_rbF">REBOUND / BOUND</label><input type="number" id="ps_rbF" min="1" max="5" step="0.1"></div>
+</div>
+<div class="design-section">Rear axle</div>
+<div class="design-grid">
+<div class="field"><label for="ps_wireDR_mm">WIRE (mm)</label><input type="number" id="ps_wireDR_mm" min="5" max="25" step="0.1"></div>
+<div class="field"><label for="ps_coilDR_mm">COIL, MEAN (mm)</label><input type="number" id="ps_coilDR_mm" min="40" max="250" step="1"></div>
+<div class="field"><label for="ps_coilsR">ACTIVE COILS</label><input type="number" id="ps_coilsR" min="2" max="20" step="0.1"></div>
+<div class="field"><label for="ps_mrR">SPRING MOTION RATIO</label><input type="number" id="ps_mrR" min="0.3" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_barDR_mm">BAR (mm, 0 NONE)</label><input type="number" id="ps_barDR_mm" min="0" max="45" step="0.1"></div>
+<div class="field"><label for="ps_barArmR_mm">BAR ARM (mm)</label><input type="number" id="ps_barArmR_mm" min="80" max="400" step="1"></div>
+<div class="field"><label for="ps_barLR_mm">BAR LENGTH (mm)</label><input type="number" id="ps_barLR_mm" min="300" max="1600" step="1"></div>
+<div class="field"><label for="ps_barMrR">BAR MOTION RATIO</label><input type="number" id="ps_barMrR" min="0.2" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_dampR">DAMPER, BOUND (N·s/m)</label><input type="number" id="ps_dampR" min="100" max="30000" step="10"></div>
+<div class="field"><label for="ps_rbR">REBOUND / BOUND</label><input type="number" id="ps_rbR" min="1" max="5" step="0.1"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="psGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="psLegend"></div><canvas id="psCanvas" role="img" aria-label="Each axle's roll stiffness from its springs and bar, this part against the car now"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="psSave">SAVE PART</button><button type="button" id="psSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 
@@ -6214,7 +6249,7 @@ const ENGINE_VALVES={
   'Mercedes M102 2.3-16 (190E)':{iv:38,ev:33,unsure:true,src:'RPM Depot M102 16V overhaul valves, 190E 2.3-16: 38 and 33 mm (std; which is which not stated)'},
   'Ford Windsor 289 4-bbl (Mustang 1965)':{iv:45.21,ev:36.83,src:'CarTech, Ford Small-Block General Data: every 289 head 1.780 / 1.450 in'},
   'Rover K-series 1.8 (Elise S1)':{iv:27.7,ev:24.1,src:'Land Rover Freelander workshop manual, K 1.8 general data: inlet 27.6-27.8, exhaust 24.0-24.2 mm'},
-  // Build 422 (plans/v1-finish.md, valves batch 2 of 4), on the same rules.
+  // Build 424 (plans/v1-finish.md, valves batch 2 of 4), on the same rules.
   'GM LT6 flat-plane V8 (Corvette Z06 C8)':{iv:42,ev:35,src:'GM via The Drive and Corvsport, LT6 technical details: titanium intake 42 mm, sodium-filled exhaust 35 mm'},
   'Cummins 6.7 (Ram HD 2019 HO)':{iv:33,ev:33,src:'MAHLE 211-4670 exhaust (cross-ref. Cummins 4955210) 33.00 mm; stock-size 6.7 intake valves 1.299 in (std)'},
   'Ford 5.4 supercharged V8 (Ford GT)':{iv:37,ev:32,unsure:true,src:'Stock-size Ford GT 5.4 intake valve 37 mm (std); exhaust 32 mm from owners (themustangsource.com)'},
@@ -8703,7 +8738,7 @@ const CHASSIS={
   hatch:    {label:'HOT HATCH',        mass:983,area:2.12,cd:0.33,wb:2.62,cg:0.52,fWt:0.62,track:1.53,drive:'fwd',aero:0.6,cost:8000,
              fit:{tire:'sport',tw:195,ta:45,wheel:16,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:50,gearbox:'manual',diff:'open',geoF:'strut',geoR:'twist'}},
   roadster: {label:'LIGHT ROADSTER',   mass:735,area:1.585,cd:0.37,wb:2.305,cg:0.46,fWt:0.51,track:1.42,drive:'rwd',aero:0.6,cost:9000,
-             fit:{tire:'sport',tw:205,ta:55,wheel:15,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'}},
+             fit:{tire:'sport',tw:205,ta:55,wheel:16,brake:'slotted',rotor:280,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'}},
   coupe:    {label:'SPORTS COUPE',     mass:1222,area:1.94,cd:0.32,wb:2.575,cg:0.48,fWt:0.53,track:1.55,drive:'rwd',aero:0.8,cost:11000,
              fit:{tire:'sport',tw:245,ta:45,wheel:17,brake:'slotted',rotor:320,susp:'sport',   aF:'none',    aR:'none',aFl:'none',     weight:'none',  gears:6,gearing:52,gearbox:'manual',diff:'clsd',geoF:'strut',geoR:'multilink'}},
   sedan:    {label:'SPORTS SEDAN',     mass:1397,area:2.17,cd:0.31,wb:2.81,cg:0.52,fWt:0.521,track:1.56,drive:'rwd',aero:0.7,cost:12000,
@@ -8774,7 +8809,7 @@ const VEHICLE_PRESETS=[
    body:{kg:955,cd:0.38,area:1.72,wb:2.265,fWt:0.52,h:1.230},fit:{tc:false,drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.8,top:195},unsure:['h']},
   {cat:'NA Sports',name:'Toyota Corolla Levin GT-APEX (AE86)',engine:'Toyota 4A-GE (AE86)',chassis:'coupe',
-   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53,h:1.335},fit:{tc:false,drive:'rwd',tire:'eco',tw:185,ta:60,wheel:14,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
+   body:{kg:940,cd:0.38,area:1.75,wb:2.40,fWt:0.53,h:1.335},fit:{tc:false,drive:'rwd',tire:'eco',tw:185,ta:70,wheel:13,brake:'steel',rotor:250,susp:'sport',gears:5,gearbox:'manual',diff:'open'},
    real:{t100:8.5,top:200},unsure:['cd','area','t100','top']},
   {cat:'NA Sports',name:'Honda S2000 (AP1, 2000)',engine:'Honda F20C (S2000 AP1)',chassis:'roadster',
    body:{kg:1250,cd:0.33,area:1.80,wb:2.40,fWt:0.50,h:1.285},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,twF:205,ta:50,wheel:16,brake:'slotted',rotor:300,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
@@ -8817,7 +8852,7 @@ const VEHICLE_PRESETS=[
    body:{kg:1440,cd:0.33,area:1.85,wb:2.45,fWt:0.42,h:1.171},fit:{tc:false,drive:'rwd',tire:'sport',tw:265,twF:225,ta:40,wheel:18,brake:'slotted',rotor:284,susp:'sport',gears:6,gearbox:'manual',diff:'clsd'},
    real:{t100:4.7,top:295},unsure:['kg','area','fWt']},
   {cat:'Supercar',era:'1990s',name:'Lamborghini Diablo VT (1993)',engine:'Lamborghini 5.7 V12 (Diablo VT)',chassis:'super',
-   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41,h:1.105},fit:{tc:false,drive:'awd',tire:'sport',tw:335,twF:235,ta:30,wheel:18,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
+   body:{kg:1700,cd:0.31,area:1.90,wb:2.65,fWt:0.41,h:1.105},fit:{tc:false,drive:'awd',tire:'sport',tw:335,twF:235,ta:35,wheel:17,brake:'big',rotor:330,susp:'sport',gears:5,gearbox:'manual',diff:'visc'},
    real:{t100:4.1,top:325},unsure:['h','kg','area','fWt','t100']},
   // 1138 kg dry; 386 km/h is the production car, 391 with the limiter raised
   {cat:'Supercar',era:'1990s',name:'McLaren F1 (1994)',engine:'BMW S70/2 V12 (McLaren F1)',chassis:'hyper',
@@ -8905,7 +8940,7 @@ const VEHICLE_PRESETS=[
   {cat:'Track',era:'2010s',name:'Radical SR3 RSX 1500 (2015)',engine:'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)',chassis:'proto',body:{kg:580,cd:0.45,area:1.4,wb:2.37,fWt:0.46,aero:1.09},fit:{drive:'rwd',tire:'slick',tw:275,twF:200,ta:50,wheel:15,brake:'big',rotor:280,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'wing',aR:'wing',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone',wingR:{span_mm:1555,chord_mm:413,angle_deg:8,camber_pct:6,plate_mm:250}},real:{t100:3.2,top:240,limited:false},confidence:'low',unsure:['aero','wing','kg','cd','area','wb','fWt','t100','top','tw','twF','ta','rotor','bore_mm','stroke_mm','compression','redline','hp','tq','gearset']},
   // build 201: a street-legal car in Track runs on semi-slicks (the Mono's road tyres are Pirelli P Zero Trofeo R); the
   // pack fitted slicks. The Radical SR3 RSX is a race car, not road legal, and keeps them.
-  {cat:'Track',era:'2010s',name:'BAC Mono 2.3 (2011)',engine:'Ford Duratec 2.3 Cosworth (BAC Mono)',chassis:'openwheel',body:{kg:540,cd:0.55,area:1.15,wb:2.56,fWt:0.45,engPos:'mid'},fit:{drive:'rwd',tire:'semi',tw:250,twF:200,ta:45,wheel:16,brake:'big',rotor:295,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'none',aR:'none',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone'},real:{t100:3,top:274,limited:false},confidence:'low',unsure:['kg','cd','area','wb','fWt','t100','top','tw','twF','rotor','compression','hpRpm','tq','tqRpm','gearset']},
+  {cat:'Track',era:'2010s',name:'BAC Mono 2.3 (2011)',engine:'Ford Duratec 2.3 Cosworth (BAC Mono)',chassis:'openwheel',body:{kg:540,cd:0.55,area:1.15,wb:2.56,fWt:0.45,engPos:'mid'},fit:{drive:'rwd',tire:'semi',tw:255,twF:205,ta:40,wheel:17,brake:'big',rotor:295,susp:'race',gears:6,gearbox:'sequential',diff:'spool',tc:false,aF:'none',aR:'none',aFl:'diffuser',geoF:'wishbone',geoR:'wishbone'},real:{t100:3,top:274,limited:false},confidence:'low',unsure:['kg','cd','area','wb','fWt','t100','top','tw','twF','rotor','compression','hpRpm','tq','tqRpm','gearset']},
   {cat:'NA Sports',era:'2000s',name:'Nissan 370Z (Z34, 2009)',engine:'Nissan VQ37VHR (370Z)',chassis:'coupe',body:{kg:1466,cd:0.3,area:1.86,wb:2.55,fWt:0.54,tf:1.540,tr:1.565,h:1.310},fit:{drive:'rwd',tire:'sport',tw:245,twF:225,ta:45,wheel:18,brake:'slotted',rotor:320,susp:'sport',gears:6,gearbox:'manual',diff:'visc',tc:true,geoF:'wishbone',geoR:'multilink'},real:{t100:5.1,top:250,limited:false},confidence:'high',unsure:['tf','tr','h','area','t100','top']},
   {cat:'Supercar',era:'1990s',name:'Honda NSX (NA1, 1991)',engine:'Honda C30A V6 (NSX NA1)',chassis:'super',body:{kg:1370,cd:0.32,area:1.72,wb:2.53,fWt:0.42,tf:1.510,tr:1.530,h:1.170},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,twF:205,ta:50,wheel:15,brake:'slotted',rotor:282,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',geoF:'wishbone',geoR:'wishbone'},real:{t100:5.9,top:270,limited:false},confidence:'high',unsure:['kg','cd','area','fWt','t100','top']},
   {cat:'Pickup',era:'2010s',name:'Ford F-150 Raptor (2017)',engine:'Ford 3.5 EcoBoost HO V6 (F-150 Raptor 2017)',chassis:'pickup',body:{kg:2585,cd:0.42,area:3.5,wb:3.683,fWt:0.57},fit:{drive:'awd',tire:'street',tw:315,ta:70,wheel:17,brake:'hd',rotor:350,susp:'comfort',gears:10,gearbox:'auto',diff:'clsd',tc:true,geoF:'wishbone',geoR:'solid'},real:{t100:5.4,top:180,limited:true},confidence:'medium',unsure:['kg','cd','area','wb','fWt','t100','top','rotor','boost_bar','hpRpm','tqRpm','bore_mm','gearset','tire']},
@@ -8917,7 +8952,7 @@ const VEHICLE_PRESETS=[
   {cat:'Supercar',era:'1980s',name:'Ferrari F40 (1987)',engine:'Ferrari F120A V8 TT (F40)',chassis:'hyper',body:{kg:1254,cd:0.34,area:1.79,wb:2.45,fWt:0.42,tf:1.594,tr:1.606,h:1.124},fit:{tc:false,drive:'rwd',tire:'sport',tw:335,twF:245,ta:35,wheel:17,brake:'big',rotor:330,susp:'coilover',gears:5,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'wishbone',geoR:'wishbone'},real:{t100:4.1,top:324,limited:false},confidence:'medium',unsure:['kg','cd','area','fWt','rotor','boost_bar','redline','gearset']},
   {cat:'NA Sports',era:'1960s',name:'Jaguar E-Type 3.8 FHC (Series 1, 1961)',engine:'Jaguar XK 3.8 I6 (E-Type S1)',chassis:'coupe',body:{kg:1315,cd:0.4,area:1.64,wb:2.438,fWt:0.51,tf:1.270,tr:1.270,h:1.222},fit:{tc:false,drive:'rwd',tire:'street',tw:185,ta:80,wheel:15,brake:'steel',rotor:279,susp:'sport',gears:4,gearbox:'manual',diff:'clsd',geoF:'wishbone',geoR:'wishbone'},real:{t100:7.3,top:241,limited:false},confidence:'medium',unsure:['tf','tr','h','kg','cd','area','fWt','t100','tw','ta','hp','tq']},
   {cat:'American V8',era:'1960s',name:'Ford Mustang Fastback 289 (1965)',engine:'Ford Windsor 289 4-bbl (Mustang 1965)',chassis:'muscle',body:{kg:1180,cd:0.45,area:1.94,wb:2.743,fWt:0.55,tf:1.422,tr:1.422,h:1.298},fit:{tc:false,drive:'rwd',tire:'street',tw:175,ta:80,wheel:14,brake:'steel',rotor:260,susp:'comfort',gears:4,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'solid'},real:{t100:8.8,top:180,limited:false},confidence:'medium',unsure:['h','kg','cd','area','fWt','t100','top','tw','ta','brake','rotor','hp','tq','redline']},
-  {cat:'NA Sports',era:'1970s',name:'Porsche 911 Carrera RS 2.7 Sport (1973)',engine:'Porsche 911/83 2.7 flat-six (Carrera RS)',chassis:'super',body:{kg:960,cd:0.39,area:1.73,wb:2.271,fWt:0.4,engPos:'rear',tf:1.372,tr:1.380,h:1.320},fit:{tc:false,drive:'rwd',tire:'street',tw:235,twF:215,ta:60,wheel:15,brake:'slotted',rotor:282,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'strut',geoR:'wishbone'},real:{t100:5.8,top:245,limited:false},confidence:'high',unsure:['tf','tr','h','cd','area','fWt','tw','twF','rotor','gearset']},
+  {cat:'NA Sports',era:'1970s',name:'Porsche 911 Carrera RS 2.7 Sport (1973)',engine:'Porsche 911/83 2.7 flat-six (Carrera RS)',chassis:'super',body:{kg:960,cd:0.39,area:1.73,wb:2.271,fWt:0.4,engPos:'rear',tf:1.372,tr:1.380,h:1.320},fit:{tc:false,drive:'rwd',tire:'street',tw:215,twF:185,ta:60,wheel:15,brake:'slotted',rotor:282,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'strut',geoR:'wishbone'},real:{t100:5.8,top:245,limited:false},confidence:'high',unsure:['tf','tr','h','cd','area','fWt','rotor','gearset']},
   {cat:'NA Sports',era:'1980s',name:'BMW M3 (E30, 1986)',engine:'BMW S14B23 (M3 E30)',chassis:'coupe',body:{kg:1200,cd:0.33,area:1.85,wb:2.562,fWt:0.52,tf:1.412,tr:1.434,h:1.370},fit:{tc:false,drive:'rwd',tire:'sport',tw:205,ta:55,wheel:15,brake:'slotted',rotor:284,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'strut',geoR:'wishbone'},real:{t100:6.7,top:235,limited:false},confidence:'high',unsure:['area','fWt','redline']},
   {cat:'NA Sports',era:'1970s',name:'Volkswagen Golf GTI (Mk1, 1976)',engine:'VW EA827 1.6 K-Jetronic (Golf GTI Mk1)',chassis:'hatch',body:{kg:810,cd:0.4,area:1.83,wb:2.4,fWt:0.62,tf:1.405,tr:1.372,h:1.410},fit:{tc:false,drive:'fwd',tire:'street',tw:175,ta:70,wheel:13,brake:'steel',rotor:240,susp:'comfort',gears:4,gearbox:'manual',diff:'open',geoF:'strut',geoR:'twist'},real:{t100:9,top:182,limited:false},confidence:'high',unsure:['h','cd','area','fWt','rotor','redline']},
   {cat:'Supercar',era:'1960s',name:'Ferrari 365 GTB/4 Daytona (1968)',engine:'Ferrari Colombo 4.4 V12 (365 GTB/4)',chassis:'gt',body:{kg:1600,cd:0.4,area:1.77,wb:2.4,fWt:0.48,tf:1.440,tr:1.453,h:1.245},fit:{tc:false,drive:'rwd',tire:'street',tw:215,ta:70,wheel:15,brake:'slotted',rotor:280,susp:'sport',gears:5,gearbox:'manual',diff:'clsd',geoF:'wishbone',geoR:'wishbone'},real:{t100:5.4,top:280,limited:false},confidence:'medium',unsure:['kg','cd','area','fWt','t100','rotor','intakeSys','redline','gearset']},
@@ -8932,7 +8967,7 @@ const VEHICLE_PRESETS=[
   {cat:'NA Sports',era:'2000s',name:'BMW M5 (E39, 2000)',engine:'BMW S62 4.9 V8 (M5 E39)',chassis:'sedan',body:{kg:1825,cd:0.31,area:2.17,wb:2.83,fWt:0.521,tf:1.515,tr:1.527,h:1.437},fit:{drive:'rwd',tire:'sport',tw:275,twF:245,ta:40,wheel:18,brake:'slotted',rotor:345,susp:'sport',gears:6,gearbox:'manual',diff:'clsd',tc:true,geoF:'strut',geoR:'multilink'},real:{t100:5.3,top:250,limited:true},confidence:'high',unsure:['h','area','t100','rotor']},
   {cat:'Two-Stroke',era:'1980s',name:'Trabant 601 S (1988)',engine:'Trabant P65 0.6 2-stroke twin (601)',chassis:'kei',body:{kg:615,cd:0.48,area:1.8,wb:2.02,fWt:0.59,h:1.440},fit:{tc:false,drive:'fwd',tire:'eco',tw:145,ta:80,wheel:13,brake:'steel',rotor:200,susp:'comfort',gears:4,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'},real:{t100:24,top:100,limited:false},confidence:'medium',unsure:['h','cd','area','t100','tw','ta','brake','rotor','redline']},
   {cat:'Kei & City',era:'2010s',name:'Honda S660 (2015)',engine:'Honda S07A turbo (S660)',chassis:'kei',body:{kg:830,cd:0.36,area:1.41,wb:2.285,fWt:0.44,engPos:'mid',tf:1.300,tr:1.275,h:1.180},fit:{drive:'rwd',tire:'eco',tw:195,twF:165,ta:45,wheel:15,brake:'steel',rotor:260,susp:'sport',gears:6,gearbox:'manual',diff:'open',tc:true,geoF:'strut',geoR:'strut'},real:{t100:11.5,top:140,limited:false},confidence:'high',unsure:['cd','area','fWt','t100','top','rotor','boost_bar','redline']},
-  {cat:'Kei & City',era:'1990s',name:'Honda Beat (1991)',engine:'Honda E07A MTREC (Beat)',chassis:'kei',body:{kg:760,cd:0.38,area:1.33,wb:2.28,fWt:0.43,engPos:'mid',h:1.175},fit:{tc:false,drive:'rwd',tire:'eco',tw:165,twF:155,ta:60,wheel:13,brake:'steel',rotor:230,susp:'sport',gears:5,gearbox:'manual',diff:'open',geoF:'strut',geoR:'strut'},real:{t100:11.5,top:140,limited:false},confidence:'high',unsure:['cd','area','fWt','t100','top','rotor','redline']},
+  {cat:'Kei & City',era:'1990s',name:'Honda Beat (1991)',engine:'Honda E07A MTREC (Beat)',chassis:'kei',body:{kg:760,cd:0.38,area:1.33,wb:2.28,fWt:0.43,engPos:'mid',h:1.175},fit:{tc:false,drive:'rwd',tire:'eco',tw:165,twF:155,ta:60,wheel:14,brake:'steel',rotor:230,susp:'sport',gears:5,gearbox:'manual',diff:'open',geoF:'strut',geoR:'strut'},real:{t100:11.5,top:140,limited:false},confidence:'high',unsure:['cd','area','fWt','t100','top','rotor','redline']},
   {cat:'Kei & City',era:'1990s',name:'Suzuki Cappuccino (EA11R, 1991)',engine:'Suzuki F6A turbo (Cappuccino EA11R)',chassis:'roadster',body:{kg:700,cd:0.4,area:1.34,wb:2.06,fWt:0.54,tf:1.210,tr:1.210,h:1.185},fit:{tc:false,drive:'rwd',tire:'eco',tw:165,ta:65,wheel:14,brake:'steel',rotor:230,susp:'sport',gears:5,gearbox:'manual',diff:'open',geoF:'wishbone',geoR:'wishbone'},real:{t100:9.5,top:150,limited:false},confidence:'medium',unsure:['cd','area','fWt','t100','top','rotor','boost_bar','redline','gearset']},
   {cat:'Compact Turbo',era:'2010s',name:'Ford Focus RS (Mk3, 2016)',engine:'Ford 2.3 EcoBoost (Focus RS Mk3)',chassis:'rally',body:{kg:1524,cd:0.36,area:2.22,wb:2.647,fWt:0.6,tf:1.564,tr:1.539,h:1.472},fit:{drive:'awd',tire:'sport',tw:235,ta:35,wheel:19,brake:'big',rotor:350,susp:'sport',gears:6,gearbox:'manual',diff:'clsd',tc:true,geoF:'strut',geoR:'multilink'},real:{t100:4.7,top:266,limited:false},confidence:'high',unsure:['cd','area','fWt','boost_bar','redline','gearset']},
   {cat:'Compact Turbo',era:'2010s',name:'Renault Mégane R.S. Trophy (2018)',engine:'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)',chassis:'hatch',body:{kg:1447,cd:0.36,area:2.16,wb:2.669,fWt:0.62,tf:1.615,tr:1.596,h:1.445},fit:{drive:'fwd',tire:'sport',tw:245,ta:35,wheel:19,brake:'big',rotor:355,susp:'sport',gears:6,gearbox:'dct',diff:'clsd',tc:true,geoF:'strut',geoR:'twist'},real:{t100:5.7,top:255,limited:false},confidence:'high',unsure:['cd','area','wb','fWt','compression','boost_bar','redline','tqRpm','gearset']},
@@ -8941,7 +8976,7 @@ const VEHICLE_PRESETS=[
   {cat:'NA Sports',era:'2020s',name:'Toyota GR86 (2022)',engine:'Toyota FA24D 2.4 boxer (GR86)',chassis:'coupe',body:{kg:1275,cd:0.276,area:1.88,wb:2.575,fWt:0.53,tf:1.520,tr:1.550,h:1.310},fit:{drive:'rwd',tire:'sport',tw:215,ta:45,wheel:17,brake:'slotted',rotor:295,susp:'sport',gears:6,gearbox:'manual',diff:'clsd',tc:true,geoF:'strut',geoR:'multilink'},real:{t100:6.4,top:225,limited:false},confidence:'high',unsure:['kg','area','fWt','t100','rotor','redline']},
   {cat:'NA Sports',era:'2020s',name:'Porsche 718 Cayman GT4 (2020)',engine:'Porsche 4.0 flat-six (718 Cayman GT4)',chassis:'super',body:{kg:1420,cd:0.34,area:2,wb:2.475,fWt:0.45,tf:1.538,tr:1.534,h:1.269},fit:{drive:'rwd',tire:'semi',tw:295,twF:245,ta:30,wheel:20,brake:'big',rotor:380,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'strut',geoR:'strut'},real:{t100:4.4,top:304,limited:false},confidence:'medium',unsure:['kg','cd','area','wb','fWt','rotor','compression','bore_mm','stroke_mm','gearset']},
   {cat:'Turbo Performance',era:'2010s',name:'BMW M2 Competition (F87, 2018)',engine:'BMW S55 3.0 TT I6 (M2 Competition)',chassis:'coupe',body:{kg:1550,cd:0.36,area:2.15,wb:2.693,fWt:0.52,tf:1.579,tr:1.601,h:1.410},fit:{drive:'rwd',tire:'sport',tw:265,twF:245,ta:35,wheel:19,brake:'big',rotor:380,susp:'sport',gears:6,gearbox:'manual',diff:'clsd',tc:true,geoF:'strut',geoR:'multilink'},real:{t100:4.4,top:250,limited:true},confidence:'medium',unsure:['kg','cd','area','fWt','rotor','boost_bar','compression','bore_mm','stroke_mm','redline','gearset']},
-  {cat:'NA Sports',era:'2010s',name:'Ariel Atom 3.5 (2013)',engine:'Honda K20A tuned (Ariel Atom 3.5)',chassis:'roadster',body:{kg:520,cd:0.55,area:1.2,wb:2.345,fWt:0.42,engPos:'mid'},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,twF:195,ta:50,wheel:15,brake:'slotted',rotor:280,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'wishbone',geoR:'wishbone'},real:{t100:3.2,top:241,limited:false},confidence:'low',unsure:['kg','cd','area','wb','fWt','t100','tw','twF','rotor','compression','tq','gearset']},
+  {cat:'NA Sports',era:'2010s',name:'Ariel Atom 3.5 (2013)',engine:'Honda K20A tuned (Ariel Atom 3.5)',chassis:'roadster',body:{kg:520,cd:0.55,area:1.2,wb:2.345,fWt:0.42,engPos:'mid'},fit:{tc:false,drive:'rwd',tire:'sport',tw:225,twF:195,ta:45,wheel:16,brake:'slotted',rotor:280,susp:'coilover',gears:6,gearbox:'manual',diff:'clsd',aF:'none',aR:'none',aFl:'none',geoF:'wishbone',geoR:'wishbone'},real:{t100:3.2,top:241,limited:false},confidence:'low',unsure:['kg','cd','area','wb','fWt','t100','tw','twF','rotor','compression','tq','gearset']},
   {cat:'NA Sports',era:'2010s',name:'Mazda MX-5 2.0 (ND, 2015)',engine:'Mazda Skyactiv-G 2.0 (MX-5 ND)',chassis:'roadster',body:{kg:1025,cd:0.33,area:1.75,wb:2.31,fWt:0.52,tf:1.495,tr:1.505,h:1.230},fit:{drive:'rwd',tire:'sport',tw:205,ta:45,wheel:17,brake:'slotted',rotor:280,susp:'sport',gears:6,gearbox:'manual',diff:'open',tc:true,geoF:'wishbone',geoR:'multilink'},real:{t100:7.3,top:214,limited:false},confidence:'medium',unsure:['kg','cd','area','fWt','t100','top','rotor','bore_mm','stroke_mm','gearset']},
   {cat:'Supercar',era:'2000s',name:'Dodge Viper SRT-10 (2008)',engine:'Dodge Viper 8.4 V10 (SRT-10)',chassis:'muscle',body:{kg:1565,cd:0.4,area:1.9,wb:2.51,fWt:0.5,tf:1.565,tr:1.547,h:1.210},fit:{tc:true,drive:'rwd',tire:'sport',tw:345,twF:275,ta:30,wheel:19,brake:'big',rotor:355,susp:'sport',gears:6,gearbox:'manual',diff:'clsd',geoF:'wishbone',geoR:'wishbone'},real:{t100:3.9,top:325,limited:false},confidence:'medium',unsure:['kg','cd','area','fWt','t100','top','rotor','bore_mm','stroke_mm','compression','gearset']},
   {cat:'NA Sports',era:'2000s',name:'Mercedes-AMG C63 (W204, 2008)',engine:'Mercedes-AMG M156 6.2 V8 (C63 W204)',chassis:'sedan',body:{kg:1730,cd:0.31,area:2.2,wb:2.76,fWt:0.54,tf:1.568,tr:1.525,h:1.438},fit:{drive:'rwd',tire:'sport',tw:255,twF:235,ta:35,wheel:18,brake:'big',rotor:360,susp:'sport',gears:7,gearbox:'auto',diff:'clsd',tc:true,geoF:'strut',geoR:'multilink'},real:{t100:4.5,top:250,limited:true},confidence:'medium',unsure:['kg','cd','area','fWt','rotor','bore_mm','stroke_mm','compression','gearset']},
@@ -9045,7 +9080,7 @@ function vehicleFromPreset(p){
   const keys=Object.keys(SPEED_RATING), i=keys.findIndex(k=>SPEED_RATING[k].kmh>=p.real.top);
   const rating=keys[Math.min(keys.length-1,(i<0?keys.length-1:i)+(p.real.limited?1:0))];
   return {chassis:p.chassis,drive:fit.drive,gearbox:fit.gearbox,diff:fit.diff,gears:fit.gears,gearing:fit.gearing,
-    tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,springF:0,springR:0,barF:0,barR:0,damperF:0,damperR:0,tireAspect:fit.ta,wheelDia:fit.wheel,
+    tireType:fit.tire,tireWidth:fit.tw,tireWidthF:fit.twF||0,tireAspect:fit.ta,wheelDia:fit.wheel,
     aeroFront:fit.aF,aeroRear:fit.aR,aeroFloor:fit.aFl,weightRed:fit.weight,
     brakeType:fit.brake,rotor:fit.rotor,suspension:fit.susp,speedRating:rating,governor:fit.gov,limitKmh:fit.gov||250,
     tc:fit.tc!==false,spacing:'stock',suspFront:(SUSP_REAL[p.name]||{}).f||fit.geoF,suspRear:(SUSP_REAL[p.name]||{}).r||fit.geoR,
@@ -9345,20 +9380,40 @@ const SUSPENSION={
   coilover:{label:'COILOVERS',  hz:1.6, camber:-1.8,zeta:0.45,cost:3200},
   race:    {label:'RACE/ADJUST',hz:2.0, camber:-2.5,zeta:0.60,cost:6500}
 };
-// Springs and anti-roll bars, each axle its own (build 174), in steps from SOFT -2 to STIFF +2 about the kit.
-// An axle's springs resist roll with k t^2/2, k each wheel's rate: from the ride frequency, k = (m_axle/2)(2 pi f)^2,
-// so K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that at STANDARD: a third of the total roll
-// stiffness, which brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 /
-// 2.4 / 1.5 deg/g. A spring step is 1.3x the rate (1.14x the frequency), a bar step 1.5x the bar: about 4% of the
-// load transfer, build 157's ROLL BALANCE step. At STANDARD both axles share the kit's frequency, so the roll
-// stiffness splits as m t^2, the weight split on equal tracks: build 157's NEUTRAL.
-const BAR_SHARE=0.55, SPRING_STEP=1.3, BAR_STEP=1.5;
-const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle off STANDARD (dampers: build 216)
-// Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, steps).
+// Springs and anti-roll bars, each axle its own (build 174). With no part fitted, the kit's: an axle's springs resist
+// roll with k t^2/2, k each wheel's rate: from the ride frequency, k = (m_axle/2)(2 pi f)^2, so
+// K_springs = m_axle (2 pi f)^2 t^2 / 4. Its bar adds BAR_SHARE of that: a third of the total roll stiffness, which
+// brings a typical car (roll arm 0.40 m, track 1.55 m) to the skidpad figures above, 6.1 / 3.9 / 2.4 / 1.5 deg/g. Both
+// axles share the kit's frequency, so the roll stiffness splits as m t^2, the weight split on equal tracks: NEUTRAL.
+// SPRINGS, BARS & DAMPERS as a part (build 420, in place of build 174's SOFT/STIFF steps): each axle's rates from
+// their dimensions (suspAxle below).
+const BAR_SHARE=0.55;
+//   spring  a helical coil's rate k = G d^4 / (8 D^3 n): d the wire, D the mean coil diameter, n the active coils
+//           (Shigley, Mechanical Engineering Design, 10th ed., eq. 10-9); at the wheel MR^2 k, MR the spring's travel
+//           over the wheel's. G = 77.2 GPa, chrome-silicon spring wire (ASTM A401; Shigley table 10-5).
+//   bar     a solid torsion bar of diameter d between its two arms, length L: GJ/L, J = pi d^4 / 32. Rolling the car by
+//           phi moves each link by MR phi t/2, which twists the bar by MR phi t / a over its arms a, and the arm's force
+//           comes back to the wheels as a couple: K = (GJ/L) (MR t / a)^2 (Milliken & Milliken, RCVD, ch. 16).
+//           G = 79.3 GPa, carbon and alloy steels (Shigley table A-5). The arms' bending and the bushes' give are left out.
+//   damper  its low-speed slope in bound (N s/m, a damper dyno's figure) and its rebound over bound (build 364's
+//           DAMPER_RB, here the part's own); at the wheel MR^2 of it, on the spring's MR (a coilover).
+const SPRING_G=77.2e9, BAR_G=79.3e9;
+const springRate=(dMm,DMm,n)=>SPRING_G*Math.pow(dMm/1000,4)/(8*Math.pow(DMm/1000,3)*n);         // N/m at the spring
+const barTwistK=(dMm,LMm)=>BAR_G*Math.PI*Math.pow(dMm/1000,4)/32/(LMm/1000);                      // N m per rad of twist
+const barRollK=(P,ax,t)=>{const a=P['barArm'+ax+'_mm']/1000,m=P['barMr'+ax];return barTwistK(P['barD'+ax+'_mm'],P['barL'+ax+'_mm'])*Math.pow(m*t/a,2);};
+// One axle's rates from a fitted part ('F' or 'R'), or null for the kit's: the wheel rate ks (N/m), the bar's roll
+// stiffness kb (N m/rad), the mean damping at the wheel cs (N s/m, bound and rebound's mean) and rebound over bound rb.
+function suspAxle(v,ax){
+  const P=v&&v.suspPart;if(!P)return null;
+  const m2=P['mr'+ax]*P['mr'+ax],rb=P['rb'+ax],t=ax==='F'?v.trackF:v.trackR;
+  return {ks:m2*springRate(P['wireD'+ax+'_mm'],P['coilD'+ax+'_mm'],P['coils'+ax]),kb:barRollK(P,ax,t),cs:m2*P['damp'+ax]*(1+rb)/2,rb};
+}
+const STIFF_STEP_COST={spring:400,bar:250,damper:350};   // per axle, a part's springs, bars and dampers (build 216)
+// Roll stiffness of each axle (N m per rad) for car v (mass, fWt, tracks, kit, or its SPRINGS, BARS & DAMPERS part).
 function rollStiffness(v){
   const w=2*Math.PI*(SUSPENSION[v.suspension]||SUSPENSION.sport).hz,w2=w*w;
-  const ax=(m,t,sp,bar)=>{const k=m*w2*t*t/4;return k*Math.pow(SPRING_STEP,sp||0)+BAR_SHARE*k*Math.pow(BAR_STEP,bar||0);};
-  return {F:ax(v.mass*v.fWt,v.trackF,v.springF,v.barF),R:ax(v.mass*(1-v.fWt),v.trackR,v.springR,v.barR)};
+  const ax=(m,t,a)=>{const s=suspAxle(v,a);if(s)return s.ks*t*t/2+s.kb;const k=m*w2*t*t/4;return k+BAR_SHARE*k;};
+  return {F:ax(v.mass*v.fWt,v.trackF,'F'),R:ax(v.mass*(1-v.fWt),v.trackR,'R')};
 }
 // ---- dampers and the road (build 216) ----
 // In a steady corner a damper does nothing: it only works while the suspension moves. On a real circuit it always
@@ -9378,7 +9433,7 @@ function rollStiffness(v){
 // Redrouthu & Das, Chalmers MSc thesis 2014:24, sec. 3.4 and appendix; the same constants in kg/mm, 0.00028 p[kPa] and
 // 3.45). The first term is the air's, the constant the carcass's own stiffness with no air. Wf = 0.7 of the section
 // width, the thesis's own assumption (PROBABLE). A 205/55R16 at 230 kPa: 224 kN/m, an 11-12 Hz wheel hop.
-const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, DAMPER_STEP=1.3, ISO_N0=0.1;
+const RHYNE_A=0.0274, RHYNE_B=3.38, RHYNE_WF=0.7, ISO_N0=0.1;
 function tyreKz(twMm,odMm,kPa){return (RHYNE_A*kPa/100*Math.sqrt(RHYNE_WF*twMm*odMm)+RHYNE_B)*1e4;}   // N/m
 // ---- tyre pressure as a part (build 313) ----
 // A designed pair of cold pressures (front, rear). Unfitted, every car stands for TYRE_P_REF. Fitted:
@@ -9436,12 +9491,12 @@ function unsprungMass(v,front){
 // A corner's quarter car for axle 'F' or 'R' of car v: sprung and unsprung mass (kg), wheel rate, damping, tyre rate.
 function quarterCar(v,ax){
   const front=ax==='F',mc=v.mass*(front?v.fWt:1-v.fWt)/2,kit=SUSPENSION[v.suspension]||SUSPENSION.sport,w=2*Math.PI*kit.hz;
-  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,ks=k0*Math.pow(SPRING_STEP,(front?v.springF:v.springR)||0);   // the rate rollStiffness uses
-  // the damper is the kit's, matched to the kit's springs: a stiffer spring on the same damper is damped less
-  const cs=2*kit.zeta*Math.sqrt(k0*ms)*Math.pow(DAMPER_STEP,(front?v.damperF:v.damperR)||0);
+  const mu=Math.min(unsprungMass(v,front),0.5*mc),ms=mc-mu,k0=mc*w*w,P=suspAxle(v,ax);   // the rate rollStiffness uses
+  // unfitted, the kit's spring and damper, the damper matched to the kit's spring; fitted, the part's (build 420)
+  const ks=P?P.ks:k0,cs=P?P.cs:2*kit.zeta*Math.sqrt(k0*ms);
   const tw=((front&&v.tireWidthF)||v.tireWidth||225)/1000,od=2*(v.rTire||0.32);
   const p=tyreColdKPa(v,front);
-  return {ms,mu,ks,cs,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
+  return {ms,mu,ks,cs,rb:P?P.rb:0,kt:tyreKz(tw*1000,od*1000,p||TYRE_P_REF)};
 }
 // The quarter car's response to the road at frequency f (Hz), for a road movement of 1 m: the tyre's load swing (N)
 // and the body's acceleration (m/s2), as squared magnitudes.
@@ -13416,10 +13471,6 @@ function readVehicleFromForm(){
     brakeType:g('vhBrake').value,rotor:clamp(Math.round(+g('vhRotor').value||330),200,450),suspension:g('vhSusp').value,
     // each axle's geometry (build 173)
     suspFront:g('vhGeoF').value,suspRear:g('vhGeoR').value,
-    // each axle's springs and anti-roll bar, steps about the kit (build 174)
-    springF:stepOf(g('vhSpringF').value),springR:stepOf(g('vhSpringR').value),barF:stepOf(g('vhBarF').value),barR:stepOf(g('vhBarR').value),
-    // each axle's dampers, steps about the kit's damping ratio (build 216)
-    damperF:stepOf(g('vhDamperF').value),damperR:stepOf(g('vhDamperR').value),
     speedRating:g('vhRating').value,body:vehBody,
     // Steering-wheel turns per road-wheel turn. Only the live-timing wheel reads it; the lap does not.
     steerRatio:clamp(numOr(g('vhSteer').value,15),8,22),
@@ -13460,8 +13511,6 @@ function syncDimsForm(){
   g('vhWb').value=+F.wb.toFixed(3);g('vhTrackF').value=+F.trackF.toFixed(3);g('vhTrackR').value=+F.trackR.toFixed(3);
   g('vhCg').value=+F.cg.toFixed(3);g('vhFwt').value=+(F.fWtCar*100).toFixed(1);
 }
-// A spring or bar step from a form value or a record: an integer from -2 to 2, 0 when missing.
-function stepOf(x){return clamp(Math.round(+x||0),-2,2);}
 // The real car's body when one is loaded (see VEHICLE_PRESETS), else null and the archetype stands.
 // It has no form fields of its own yet, so it lives here and travels with every saved build.
 let vehBody=null, vehRatioSet=null, vehFinalDriveSet=0;
@@ -13490,14 +13539,10 @@ function applyVehicleToForm(v){
   applyAidsToForm(v.aids,v.tc!==false);
   g('vhChassis').value=v.chassis||'coupe';g('vhDrive').value=g('vhDrive').dataset.prev=v.drive||'rwd';g('vhGearbox').value=v.gearbox||'manual';g('vhDiff').value=v.diff||'open';
   g('vhGears').value=v.gears||6;g('vhGearing').value=v.gearing!=null?v.gearing:52;
-  g('vhTire').value=v.tireType||'sport';g('vhTyreP').value='ref';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
+  g('vhTire').value=v.tireType||'sport';g('vhTyreP').value='ref';g('vhSuspPart').value='kit';g('vhTireW').value=v.tireWidth||235;g('vhTireWF').value=v.tireWidthF||0;g('vhTireA').value=v.tireAspect||40;g('vhWheel').value=v.wheelDia||18;
   g('vhAeroF').value=v.aeroFront||'none';g('vhAeroR').value=v.aeroRear||'none';g('vhBrakeBal').value='r13h';vehPartsToForm(v);g('vhAeroFl').value=v.aeroFloor||'none';g('vhWeight').value=v.weightRed||'none';
   g('vhBrake').value=v.brakeType||'slotted';g('vhRotor').value=v.rotor||330;g('vhSusp').value=v.suspension||'sport';
   {const fg=factoryGeo(v);g('vhGeoF').value=SUSP_GEO[v.suspFront]?v.suspFront:fg.f;g('vhGeoR').value=SUSP_GEO[v.suspRear]?v.suspRear:fg.r;}   // saves from before build 173 carry none
-  // saves from before build 174 carry ROLL BALANCE (arbBal), the front bar against the rear: it becomes the front bar
-  g('vhSpringF').value=String(stepOf(v.springF));g('vhSpringR').value=String(stepOf(v.springR));
-  g('vhBarF').value=String(stepOf(v.barF!=null?v.barF:v.arbBal));g('vhBarR').value=String(stepOf(v.barR));
-  g('vhDamperF').value=String(stepOf(v.damperF));g('vhDamperR').value=String(stepOf(v.damperR));   // none before build 216: the kit's own
   g('vhSteer').value=v.steerRatio||15;   // saves from before build 130 carry none
   // the chassis numbers and ballast (build 250); saves from before carry none: the factory's, and no ballast
   {const D=v.dims;g('vhDims').value=D?'design':'factory';
@@ -13516,7 +13561,7 @@ function applyChassisFit(key,body){
   g('vhGears').value=f.gears;g('vhGearing').value=f.gearing;
   fillSpacingSelect(!!body,body?'stock':'std');vehRatioSet=null;vehFinalDriveSet=0;
   g('vhTire').value=f.tire;g('vhTireW').value=f.tw;g('vhTireWF').value=f.twF||0;
-  ['vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR'].forEach(id=>g(id).value='0');g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
+  g('vhSuspPart').value='kit';g('vhTireA').value=f.ta;g('vhWheel').value=f.wheel;
   g('vhRating').value=(TIRE_TYPE[f.tire]||TIRE_TYPE.sport).rating;
   if(body){const top=FACTORY_CARS.find(p=>p.name===body.name);
     if(top)g('vhRating').value=vehicleFromPreset(top).speedRating;}
@@ -14173,7 +14218,7 @@ function factoryDims(v){
 function isFactoryFit(v){
   const ch=CHASSIS[v.chassis];if(!ch||!ch.fit)return false;const f=v.body?v.body.fit:ch.fit;
   return (v.driveMech||v.drive)===(v.body?f.drive:ch.drive)&&(v.governor||0)===(f.gov||0)&&(v.tc!==false)===(f.tc!==false)&&v.gears===f.gears&&v.gearing===f.gearing&&v.spacing===(v.body?'stock':'std')&&!(v.finalDriveSet>0)&&v.gearbox===f.gearbox&&v.diff===f.diff&&!v.diffPart&&!v.tyrePart&&
-    v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!stepOf(v.springF)&&!stepOf(v.springR)&&!stepOf(v.barF)&&!stepOf(v.barR)&&!stepOf(v.damperF)&&!stepOf(v.damperR)&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
+    v.tireType===f.tire&&v.tireWidth===f.tw&&(v.tireWidthF||0)===(f.twF||0)&&!v.suspPart&&v.tireAspect===f.ta&&v.wheelDia===f.wheel&&
     v.aeroFront===f.aF&&v.aeroRear===f.aR&&!v.wingPart&&!v.fwingPart&&v.aeroFloor===f.aFl&&v.weightRed===f.weight&&
     v.brakeType===f.brake&&v.rotor===f.rotor&&!v.brakePart&&v.suspension===f.susp&&geoStock(v)&&!v.dims&&!(v.ballastKg>0);
 }
@@ -14187,10 +14232,8 @@ function computeVehicleCost(ch,tt,wr){
   {const fg=factoryGeo(vehicle);
    if(vehicle.suspFront&&vehicle.suspFront!==fg.f)c+=(SUSP_GEO[vehicle.suspFront]||{cost:0}).cost;
    if(vehicle.suspRear&&vehicle.suspRear!==fg.r)c+=(SUSP_GEO[vehicle.suspRear]||{cost:0}).cost;}
-  // springs and bars off STANDARD are new parts (build 174)
-  c+=(stepOf(vehicle.springF)?1:0)*STIFF_STEP_COST.spring+(stepOf(vehicle.springR)?1:0)*STIFF_STEP_COST.spring+
-     (stepOf(vehicle.barF)?1:0)*STIFF_STEP_COST.bar+(stepOf(vehicle.barR)?1:0)*STIFF_STEP_COST.bar+
-     (stepOf(vehicle.damperF)?1:0)*STIFF_STEP_COST.damper+(stepOf(vehicle.damperR)?1:0)*STIFF_STEP_COST.damper;   // dampers: build 216
+  // a SPRINGS, BARS & DAMPERS part: new springs, bars and dampers on both axles (build 420)
+  if(vehicle.suspPart)c+=2*(STIFF_STEP_COST.spring+STIFF_STEP_COST.bar+STIFF_STEP_COST.damper);
   c+=Math.max(0,vehicle.rotor-320)*6;
   if(vehicle.brakePart)c+=800;   // a pedal box with a balance bar and two master cylinders (~$500-900 in race catalogues; PROBABLE)
   c+={fwd:0,rwd:800,awd:2500}[vehicle.drive]||0;
@@ -14868,7 +14911,7 @@ function driveAids(v){const A=Object.assign({},DRIVE_AIDS,v.aids||{});A.absSlip=
 //          c = bump + xb, and at full droop, the wheel is stopped on the body: its speed on the body there is held at
 //          zero, and what that takes passes to the body (at droop the wheel hangs from it, off the road if need be).
 //   damper (build 364) bound and rebound apart: rebound DAMPER_RB times bound (passenger dampers ~3:1, Dixon, The
-//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE), their mean the kit's cs, so the lap's quarter car, which
+//          Shock Absorber Handbook, 2007, ch. 1: PROBABLE; a fitted SPRINGS, BARS & DAMPERS part's own, build 420), their mean the kit's cs, so the lap's quarter car, which
 //          meets a road wave with that mean (the describing function, as the suspension calculator), is unchanged.
 //   links  (build 369) anti-dive, anti-squat and anti-lift: each tyre's longitudinal force Fl reaches the body through
 //          its side-view swing arm (SUSP_GEO svF/svR: [e, d]) with a vertical part J = (Fl e - Tb)/d, Tb the torque on
@@ -14893,7 +14936,7 @@ function driveBody(v,a,b){
   const phi=v.mass*(arm+cF*gF0/TF+cR*gR0/TR)/(cF+cR);
   return {rollI:v.mass*(kx*kx+arm*arm),rollArm:arm,rollK:K,rollKF:KF,KaF:K*KF,KaR:K*(1-KF),
     rcGF:fw*zF,rcGR:(1-fw)*zR,
-    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
+    ksF:qF.ks,ksR:qR.ks,cdF:qF.cs,cdR:qR.cs,rbF:qF.rb||DAMPER_RB,rbR:qR.rb||DAMPER_RB,bumpF:gF.bump,bumpR:gR.bump,droopF:gF.droop,droopR:gR.droop,svF:gF.svF,svR:gR.svR,
     liveF:v.suspFront==='solid',liveR:v.suspRear==='solid',inbF:!!v.inboardF,inbR:!!v.inboardR,unsF:qF.mu,unsR:qR.mu,mS:v.mass-2*(qF.mu+qR.mu),
     pitchI:v.mass*a*b,pitchK:L*L/(1/kz(qF)+1/kz(qR)),
     rollFull:phi,rrAyF:cF*(phi-v.mass*gF0/TF)/KF0,rrAyR:cR*(phi-v.mass*gR0/TR)/KR0,
@@ -15615,7 +15658,7 @@ function stepCar(car,s,u,dt){
       // each wheel: its spring, bar, bump rubber and damper (bound or rebound by its direction, taken implicitly in
       // the wheel's own speed on the body), then its two stops; what the corner passes to the body is what changed
       // the wheel's momentum other than the tyre, the links and its weight
-      const up=f?car.bumpF:car.bumpR,dn=f?car.droopF:car.droopR,top=up+DRIVE_BUMP_RUBBER,cb=2*cs/(1+DAMPER_RB),cr=cb*DAMPER_RB;
+      const up=f?car.bumpF:car.bumpR,dn=f?car.droopF:car.droopR,top=up+DRIVE_BUMP_RUBBER,rb=f?car.rbF:car.rbR,cb=2*cs/(1+rb),cr=cb*rb;
       const wheel=(w,cc,vb,Fs,Fl)=>{const x=Math.min(cc-up,0.95*DRIVE_BUMP_RUBBER),rub=x>0?ks*x/(1-x/DRIVE_BUMP_RUBBER):0;
         const A=s.zuV[w]+h*(Fz[w]-W0-Fs-rub+Fl-mu*dg)/mu-vb;               // the wheel's speed on the body, undamped
         let vr=A/(1+h*(A>0?cb:cr)/mu);                                      // the damper's sign is A's, whichever c
@@ -20545,46 +20588,49 @@ const CAR_PROFILES={
 // ovF: the front overhang in m, only where the source publishes both overhangs and they add up with its
 // wheelbase to its length; elsewhere carDims() splits (len - wheelbase) as CAR_PROFILES reads the side view.
 // ovSrc: the overhangs are from that page instead: another version of the same body, with the same length and
-// wheelbase on the page (build 416).
+// wheelbase on the page (build 416), or the maker's own sheet named in full, whose overhangs and wheelbase add up
+// to the same length (build 423).
 // src: 'ad:<page>' is auto-data.net/en/<page>, the car's own page on a database of makers' figures;
 // 'wp:<Article>' is the spec box of that English Wikipedia article. Read in November 2026.
 // unsure names what is not that page's figure for this car:
 //   len, wb: the page is more than 20 mm (10 mm) from the length CAR_PROFILES (the wheelbase the preset) carries;
-//   w, h:    the page is a sibling body's (a base model's, or a later version's);
-//   tyres:   the page does not list the size the preset is fitted with; tyF and tyR are then built from the
-//            preset's fit, and on a staggered car the front's aspect and rim are the rear's (not published here).
+//   w, h:    the page is a sibling body's (a base model's, or a later version's), or wSrc is a third-party page;
+//   tyres:   the size is not the maker's: tySrc marks it 'probable' (fitment databases, dealers, road tests) or
+//            'open', or, with no tySrc, tyF and tyR are built from the preset's fit (on a staggered car the
+//            front's aspect and rim are then the rear's).
+// tySrc, wSrc: where the tyre sizes (the width) come from when not from src (build 417).
 // A field left out was not found: carDims() then gives the profile's length and height, and no width.
 // The wheelbase and the tracks are not repeated here: the preset and SUSP_REAL hold them.
 const CAR_DIMS={
-  'Suzuki Alto Works (HA36S, 2015)':{len:3.395,w:1.475,h:1.475,tyF:'165/55R15',tyR:'165/55R15',src:'ad:suzuki-alto-viii-0.7-52hp-4wd-automatic-35907',unsure:['h','tyres']},
-  'Toyota Aygo 1.0 (2014)':{len:3.455,w:1.615,h:1.460,tyF:'165/65R14',tyR:'165/65R14',src:'ad:toyota-aygo-ii-1.0-vvt-i-69hp-21940',unsure:['tyres']},
+  'Suzuki Alto Works (HA36S, 2015)':{len:3.395,w:1.475,h:1.475,tyF:'165/55R15',tyR:'165/55R15',src:'ad:suzuki-alto-viii-0.7-52hp-4wd-automatic-35907',tySrc:'Suzuki spec sheet, Dec 2015 (suzuki.co.jp digital library, altoworks/34.pdf)',unsure:['h']},
+  'Toyota Aygo 1.0 (2014)':{len:3.455,w:1.615,h:1.460,ovF:0.675,tyF:'165/65R14',tyR:'165/65R14',src:'ad:toyota-aygo-ii-1.0-vvt-i-69hp-21940',unsure:['tyres'],ovSrc:'Toyota UK media, Aygo technical specifications, Jan 2021 (210127M): 675/2340/440 mm, length 3455'},
   'Fiat 500 TwinAir 85 (2011)':{len:3.546,w:1.627,h:1.488,tyF:'185/55R15',tyR:'185/55R15',src:'ad:fiat-500-312-0.9-twin-air-85hp-start-stop-18352'},
   'Ford Fiesta 1.0 EcoBoost 125 (2013)':{len:3.969,w:1.722,h:1.495,tyF:'195/55R15',tyR:'195/55R15',rimF:6,rimR:6,src:'ad:ford-fiesta-vii-mk7-facelift-2012-3-door-1.0-ecoboost-125hp-46883'},
   'VW Golf GTI (Mk7, 2013)':{len:4.268,w:1.799,h:1.442,tyF:'225/45R17',tyR:'225/45R17',rimF:7.5,rimR:7.5,src:'ad:volkswagen-golf-vii-5-door-gti-2.0-tsi-220hp-18409'},
   'Toyota GR Yaris (2020)':{len:3.995,w:1.805,h:1.455,ovF:0.830,tyF:'225/40R18',tyR:'225/40R18',src:'ad:toyota-yaris-xp210-gr-1.6-261hp-gr-four-38960'},
   'Honda Civic Type R (FK8, 2017)':{len:4.557,w:1.877,h:1.434,tyF:'245/30R20',tyR:'245/30R20',rimF:8.5,rimR:8.5,src:'ad:honda-civic-type-r-fk8-2.0-320hp-31022'},
   'Mazda MX-5 1.6 (NA, 1989)':{len:3.975,w:1.675,h:1.230,tyF:'185/60R14',tyR:'185/60R14',rimF:5.5,rimR:5.5,src:'ad:mazda-mx-5-i-na-1.6-115hp-11261'},
-  'Toyota Corolla Levin GT-APEX (AE86)':{len:4.200,w:1.645,h:1.335,tyF:'185/60R14',tyR:'185/60R14',src:'ad:toyota-corolla-coupe-v-e80-1.6-gt-16v-124hp-3403',unsure:['h','tyres']},
-  'Honda S2000 (AP1, 2000)':{len:4.135,w:1.750,h:1.270,tyF:'205/50R16',tyR:'225/50R16',src:'ad:honda-s2000-ap1-2.0-240hp-12368',unsure:['tyres']},
+  'Toyota Corolla Levin GT-APEX (AE86)':{len:4.200,w:1.645,h:1.335,tyF:'185/70R13',tyR:'185/70R13',src:'ad:toyota-corolla-coupe-v-e80-1.6-gt-16v-124hp-3403',tySrc:'Toyota catalogue, 1983-85 1.6 GT-APEX, as kurumaerabi.com reproduces it',unsure:['h']},
+  'Honda S2000 (AP1, 2000)':{len:4.135,w:1.750,h:1.270,tyF:'205/55R16',tyR:'225/50R16',src:'ad:honda-s2000-ap1-2.0-240hp-12368',tySrc:'Honda 2003 S2000 factsheet (16-inch wheels until 2004)'},
   'BMW M3 (E46, 2000)':{len:4.492,w:1.780,h:1.372,ovF:0.774,tyF:'225/45R18',tyR:'255/40R18',rimF:8,rimR:9,src:'ad:bmw-m3-coupe-e46-3.2i-24v-343hp-9872',ovSrc:'ad:bmw-m3-coupe-e46-3.2-333hp-53858'},
   'Porsche 911 GT3 (991.2, 2017)':{len:4.562,w:1.852,h:1.271,tyF:'245/35R20',tyR:'305/30R20',rimF:9,rimR:12,src:'ad:porsche-911-991-ii-gt3-4.0-500hp-29495'},
-  'Toyota Supra RZ (A80, 1993)':{len:4.520,w:1.810,h:1.275,tyF:'235/40R17',tyR:'255/40R17',src:'ad:toyota-supra-iv-a80-3.0i-24v-t-turbo-330hp-3454',unsure:['tyres','wb']},
+  'Toyota Supra RZ (A80, 1993)':{len:4.520,w:1.810,h:1.275,tyF:'235/45R17',tyR:'255/40R17',rimF:8,rimR:9.5,src:'ad:toyota-supra-iv-a80-3.0i-24v-t-turbo-330hp-3454',tySrc:'probable: wheel-size.com, tiresize.com, Goodyear fitment (1993 Turbo)',unsure:['tyres','wb']},
   'Nissan Skyline GT-R V-spec (R34, 1999)':{len:4.600,w:1.785,h:1.360,tyF:'245/40R18',tyR:'245/40R18',src:'ad:nissan-skyline-gt-r-x-r34-2.6-i-24v-turbo-4wd-280hp-360'},
   'Subaru Impreza WRX STI (GD, 2004)':{len:4.415,w:1.740,h:1.440,tyF:'225/45R17',tyR:'225/45R17',rimF:7.5,rimR:7.5,src:'ad:subaru-impreza-ii-facelift-2002-wrx-sti-2.0-265hp-awd-16082'},
   'Mitsubishi Lancer Evolution IX (2006)':{len:4.534,w:1.770,h:1.450,tyF:'235/45R17',tyR:'235/45R17',rimF:8,rimR:8,src:'ad:mitsubishi-lancer-evolution-ix-2.0-mivec-286hp-4wd-44889',unsure:['len']},
   'Audi RS3 Sportback (8V, 2017)':{len:4.335,w:1.800,h:1.411,ovF:0.886,tyF:'235/35R19',tyR:'235/35R19',src:'ad:audi-rs3-sportback-8va-facelift-2017-2.5-tfsi-400hp-quattro-s-tronic-27853'},
   'Chevrolet Corvette (C6, LS3, 2008)':{len:4.435,w:1.845,h:1.245,tyF:'245/40R18',tyR:'285/35R19',src:'ad:chevrolet-corvette-coupe-c6-6.2i-v8-437hp-14520'},
-  'Chevrolet Corvette Z06 (C6, 2006)':{len:4.460,w:1.928,h:1.237,tyF:'275/30R19',tyR:'325/30R19',src:'ad:chevrolet-corvette-coupe-c6-z06-7.0-i-v8-505hp-14521',unsure:['len','tyres']},
-  'Ford Mustang GT (2018)':{len:4.788,w:1.915,h:1.379,tyF:'255/40R19',tyR:'275/40R19',src:'ad:ford-mustang-vi-facelift-2017-gt-5.0-ti-vct-v8-460hp-32161',unsure:['tyres']},
+  'Chevrolet Corvette Z06 (C6, 2006)':{len:4.460,w:1.928,h:1.237,tyF:'275/35R18',tyR:'325/30R19',rimF:9.5,rimR:12,src:'ad:chevrolet-corvette-coupe-c6-z06-7.0-i-v8-505hp-14521',tySrc:'probable: Goodyear fitment, M-A C6 tyre guide',unsure:['len','tyres']},
+  'Ford Mustang GT (2018)':{len:4.788,w:1.915,h:1.379,tyF:'255/40R19',tyR:'275/40R19',src:'ad:ford-mustang-vi-facelift-2017-gt-5.0-ti-vct-v8-460hp-32161',tySrc:'probable: Goodyear fitment (GT Premium), The Drive (Performance Pack, Pilot Sport 4S)',unsure:['tyres']},
   'Dodge Challenger SRT Hellcat (2015)':{len:5.017,w:1.923,h:1.448,tyF:'275/40R20',tyR:'275/40R20',rimF:9.5,rimR:9.5,src:'ad:dodge-challenger-iii-facelift-2014-srt-hellcat-6.2-hemi-v8-707hp-32897'},
   'Ferrari F355 Berlinetta (1994)':{len:4.250,w:1.900,h:1.170,ovF:1.032,tyF:'225/40R18',tyR:'265/40R18',rimF:7.5,rimR:10,src:'ad:ferrari-f355-berlinetta-3.5-v8-380hp-6561'},
-  'Lamborghini Diablo VT (1993)':{len:4.460,w:2.040,h:1.105,tyF:'235/30R18',tyR:'335/30R18',src:'ad:lamborghini-diablo-vt-5.7-v12-492hp-4wd-3091',unsure:['tyres']},
+  'Lamborghini Diablo VT (1993)':{len:4.460,w:2.040,h:1.105,tyF:'235/40R17',tyR:'335/35R17',rimF:8.5,rimR:13,src:'ad:lamborghini-diablo-vt-5.7-v12-492hp-4wd-3091',tySrc:'probable: Lamborghini press sheet (rear; its front reads 235/40 and 245/40), lambocars.com, carsales.com.au rims',unsure:['tyres']},
   'McLaren F1 (1994)':{len:4.287,w:1.820,h:1.140,ovF:0.970,tyF:'235/45R17',tyR:'315/45R17',rimF:9,rimR:11.5,src:'ad:mclaren-f1-6.1-v12-627hp-11837'},
   'Porsche 911 Turbo (993, 1995)':{len:4.245,w:1.795,h:1.285,tyF:'225/40R18',tyR:'285/30R18',rimF:8,rimR:10,src:'ad:porsche-911-993-turbo-3.6-408hp-6611'},
   'Ferrari Enzo (2002)':{len:4.702,w:2.035,h:1.147,tyF:'245/35R19',tyR:'345/35R19',rimF:9,rimR:13,src:'ad:ferrari-enzo-6.0-v12-660hp-6543'},
   'Porsche Carrera GT (2004)':{len:4.613,w:1.921,h:1.166,tyF:'265/35R20',tyR:'335/30R20',src:'ad:porsche-carrera-gt-5.7-i-v10-40v-612hp-6692'},
   'Ford GT (2005)':{len:4.645,w:1.955,h:1.125,tyF:'235/45R18',tyR:'315/40R19',rimF:9,rimR:11.5,src:'ad:ford-gt-5.4-i-v8-32v-557hp-8083'},
-  'Lamborghini Murciélago LP640 (2006)':{len:4.610,w:2.058,h:1.135,tyF:'245/30R18',tyR:'335/30R18',src:'ad:lamborghini-murcielago-lp640-6.5-v12-48v-640hp-3096',unsure:['tyres']},
+  'Lamborghini Murciélago LP640 (2006)':{len:4.610,w:2.058,h:1.135,tyF:'245/35R18',tyR:'335/30R18',src:'ad:lamborghini-murcielago-lp640-6.5-v12-48v-640hp-3096',tySrc:'Lamborghini LP640 press release (lambocars.com), Pirelli June 2006'},
   'Ferrari 458 Italia (2010)':{len:4.527,w:1.937,h:1.213,tyF:'235/35R20',tyR:'295/35R20',rimF:8.5,rimR:10.5,src:'ad:ferrari-458-italia-4.5-v8-570hp-18350'},
   'Lamborghini Huracán LP610-4 (2014)':{len:4.459,w:1.924,h:1.165,tyF:'245/30R20',tyR:'305/30R20',rimF:8.5,rimR:11,src:'ad:lamborghini-huracan-lp-610-4-5.2-v10-610hp-awd-ldf-22766'},
   'McLaren 720S (2017)':{len:4.543,w:1.930,h:1.196,tyF:'245/35R19',tyR:'305/30R20',rimF:9,rimR:11,src:'ad:mclaren-720s-4.0-v8-720hp-ssg-28867'},
@@ -20602,57 +20648,57 @@ const CAR_DIMS={
   'Porsche Cayenne Turbo (958.2, 2014)':{len:4.855,w:1.939,h:1.702,tyF:'265/50R19',tyR:'265/50R19',rimF:8.5,rimR:8.5,src:'ad:porsche-cayenne-ii-facelift-2014-turbo-4.8-v8-520hp-tiptronic-21439'},
   'Lamborghini Urus (2018)':{len:5.112,w:2.016,h:1.638,tyF:'285/45R21',tyR:'315/40R21',rimF:9.5,rimR:10.5,src:'ad:lamborghini-urus-4.0-v8-650hp-4wd-automatic-32263'},
   'Jeep Grand Cherokee SRT (WK2, 2014)':{len:4.859,w:1.958,h:1.756,tyF:'295/45R20',tyR:'295/45R20',src:'ad:jeep-grand-cherokee-iv-wk2-facelift-2013-srt-6.4-v8-476hp-4x4-automatic-31186',unsure:['len']},
-  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':{len:4.950,w:1.970,h:1.865,tyF:'285/60R18',tyR:'285/60R18',src:'ad:toyota-land-cruiser-j200-facelift-2013-4.5d-v8-272hp-automatic-18527',unsure:['tyres']},
-  'Radical SR3 RSX 1500 (2015)':{tyF:'200/50R15',tyR:'275/50R15',src:'wp:Radical_SR3',unsure:['tyres']},
-  'BAC Mono 2.3 (2011)':{len:3.952,w:1.836,h:1.110,tyF:'200/45R16',tyR:'250/45R16',src:'ad:bac-mono-2.5-305hp-automatic-32126',unsure:['h','tyres']},
+  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':{len:4.950,w:1.970,h:1.865,ovF:0.930,tyF:'285/60R18',tyR:'285/60R18',src:'ad:toyota-land-cruiser-j200-facelift-2013-4.5d-v8-272hp-automatic-18527',unsure:['tyres'],ovSrc:'Toyota UK media, Land Cruiser V8 press kit 2008 (Landcruiser_fulltxt_UK.pdf), specifications: 930/2850/1170 mm, length 4950'},
+  'Radical SR3 RSX 1500 (2015)':{w:1.799,wSrc:'probable: Team Stradale (dealer) ad and topspeed.com, 1799 mm',tyF:'200/50R15',tyR:'275/50R15',src:'wp:Radical_SR3',tySrc:'open: the RSX runs Dunlop slicks 200/580-15 and 265/605-16 (lapmeta), not a road size',unsure:['tyres','w']},
+  'BAC Mono 2.3 (2011)':{len:3.952,w:1.836,h:1.110,tyF:'205/45R17',tyR:'255/40R17',rimF:7.5,rimR:8.5,src:'ad:bac-mono-2.5-305hp-automatic-32126',tySrc:'probable: bac-mono.com spec and Pirelli 2019 (for the Mono 2.5)',unsure:['h','tyres']},
   'Nissan 370Z (Z34, 2009)':{len:4.250,w:1.845,h:1.310,ovF:0.840,tyF:'225/50R18',tyR:'245/45R18',rimF:8,rimR:9,src:'ad:nissan-370z-3.7-328hp-664'},
   'Honda NSX (NA1, 1991)':{len:4.405,w:1.810,h:1.170,tyF:'205/55R16',tyR:'225/50R16',src:'ad:honda-nsx-i-coupe-3.0-24v-vtec-na1-274hp-12365'},
-  'Ford F-150 Raptor (2017)':{len:5.890,w:2.192,h:1.994,ovF:0.942,tyF:'315/70R17',tyR:'315/70R17',src:'ad:ford-f-series-f-150-xiii-supercrew-facelift-2018-raptor-3.5-v6-450hp-4x4-automatic-32525',unsure:['tyres','wb']},
+  'Ford F-150 Raptor (2017)':{len:5.890,w:2.192,h:1.994,ovF:0.942,tyF:'315/70R17',tyR:'315/70R17',src:'ad:ford-f-series-f-150-xiii-supercrew-facelift-2018-raptor-3.5-v6-450hp-4x4-automatic-32525',tySrc:'probable: LT315/70R17 BFGoodrich KO2, Heavy Equipment Guide 2017; the same on Ford 2021-24 Raptor spec sheets',unsure:['tyres','wb']},
   'Nissan GT-R (R35, 2017)':{len:4.710,w:1.895,h:1.370,tyF:'255/40R20',tyR:'285/35R20',rimF:9.5,rimR:10.5,src:'ad:nissan-gt-r-r35-facelift-2016-3.8-v6-570hp-awd-dct-25701'},
   'Alfa Romeo Giulia Quadrifoglio (2017)':{len:4.639,w:1.873,h:1.426,ovF:0.795,tyF:'245/35R19',tyR:'285/30R19',rimF:8.5,rimR:10,src:'ad:alfa-romeo-giulia-952-quadrifoglio-2.9-v6-510hp-23700'},
   'Nissan 300ZX Twin Turbo (Z32, 1990)':{w:1.800,h:1.255,tyF:'225/50R16',tyR:'245/45R16',src:'ad:nissan-300-zx-z32-3.0-twin-turbo-283hp-534',unsure:['len']},
   'Buick GNX (1987)':{len:5.095,w:1.819,h:1.387,tyF:'245/50R16',tyR:'255/50R16',src:'ad:buick-regal-ii-coupe-facelift-1981-3.8-v6-280hp-automatic-30613',unsure:['h']},
-  'Ferrari Dino 246 GT (1969)':{len:4.235,w:1.700,h:1.135,tyF:'205/70R14',tyR:'205/70R14',src:'wp:Dino_206_GT_and_246_GT',unsure:['tyres']},
+  'Ferrari Dino 246 GT (1969)':{len:4.235,w:1.700,h:1.135,tyF:'205/70R14',tyR:'205/70R14',src:'wp:Dino_206_GT_and_246_GT',tySrc:'probable: Vintage Tyres, Longstone (Michelin XWX 205/70VR14; early cars 185VR14)',unsure:['tyres']},
   'Ferrari F40 (1987)':{len:4.358,w:1.970,h:1.124,ovF:1.048,tyF:'245/40R17',tyR:'335/35R17',rimF:8,rimR:13,src:'ad:ferrari-f40-2.9-i-v8-32v-478hp-6524',unsure:['len']},
   'Jaguar E-Type 3.8 FHC (Series 1, 1961)':{len:4.453,w:1.657,h:1.222,tyF:'185/80R15',tyR:'185/80R15',src:'wp:Jaguar_E-Type',unsure:['tyres']},
   'Ford Mustang Fastback 289 (1965)':{len:4.613,w:1.732,h:1.298,tyF:'175/80R14',tyR:'175/80R14',src:'ad:ford-mustang-i-hardtop-4.7-v8-210hp-7807',unsure:['tyres']},
-  'Porsche 911 Carrera RS 2.7 Sport (1973)':{len:4.147,w:1.652,h:1.320,ovF:0.884,tyF:'215/60R15',tyR:'235/60R15',src:'ad:porsche-911-coupe-f-carrera-rs-2.7-210hp-6643',ovSrc:'ad:porsche-911-coupe-f-2.3-t-130hp-6638',unsure:['tyres']},
+  'Porsche 911 Carrera RS 2.7 Sport (1973)':{len:4.147,w:1.652,h:1.320,ovF:0.884,tyF:'185/70R15',tyR:'215/60R15',rimF:6,rimR:7,src:'ad:porsche-911-coupe-f-carrera-rs-2.7-210hp-6643',tySrc:'Porsche media kit, 911 Carrera RS 2.7, chassis',ovSrc:'ad:porsche-911-coupe-f-2.3-t-130hp-6638'},
   'BMW M3 (E30, 1986)':{len:4.345,w:1.680,h:1.370,tyF:'205/55R15',tyR:'205/55R15',rimF:7,rimR:7,src:'ad:bmw-m3-coupe-e30-2.3-200hp-30376'},
   'Volkswagen Golf GTI (Mk1, 1976)':{len:3.723,w:1.610,h:1.410,tyF:'175/70R13',tyR:'175/70R13',src:'ad:volkswagen-golf-i-3-door-1.8-gti-112hp-8798',unsure:['tyres']},
   'Ferrari 365 GTB/4 Daytona (1968)':{len:4.425,w:1.760,h:1.245,tyF:'215/70R15',tyR:'215/70R15',rimF:7.5,rimR:7.5,src:'ad:ferrari-365-gtb4-daytona-4.4-v12-352hp-47117'},
   'Lamborghini Countach LP400 (1974)':{len:4.140,w:1.890,h:1.070,ovF:0.933,tyF:'205/70R14',tyR:'215/70R14',src:'ad:lamborghini-countach-lp400-375hp-3072'},
-  'Audi Sport quattro (1984)':{len:4.160,w:1.780,h:1.345,tyF:'225/50R15',tyR:'225/50R15',src:'ad:audi-quattro-typ-85-sport-2.1-20v-turbo-306hp-4901',unsure:['tyres']},
+  'Audi Sport quattro (1984)':{len:4.160,w:1.780,h:1.345,tyF:'225/50R15',tyR:'225/50R15',rimF:9,rimR:9,src:'ad:audi-quattro-typ-85-sport-2.1-20v-turbo-306hp-4901',tySrc:'probable: Motor Sport road test, May 1984',unsure:['tyres']},
   'Mercedes-Benz 190E 2.3-16 (1984)':{len:4.430,w:1.678,h:1.390,tyF:'205/55R15',tyR:'205/55R15',src:'ad:mercedes-benz-190-w201-e-2.3-16-185hp-12814 + wp:Mercedes-Benz_W201',unsure:['h','w']},
   'Peugeot 205 GTI 1.9 (1986)':{len:3.705,w:1.572,h:1.373,ovF:0.680,tyF:'185/55R15',tyR:'185/55R15',src:'ad:peugeot-205-i-20a-c-facelift-1987-3-door-1.9-gti-130hp-5662'},
-  'Ford Sierra RS Cosworth (1986)':{len:4.460,w:1.730,h:1.380,tyF:'205/50R15',tyR:'205/50R15',src:'wp:Ford_Sierra_RS_Cosworth',unsure:['tyres']},
+  'Ford Sierra RS Cosworth (1986)':{len:4.460,w:1.730,h:1.380,tyF:'205/50R15',tyR:'205/50R15',rimF:7,rimR:7,src:'wp:Ford_Sierra_RS_Cosworth',tySrc:'probable: Vintage Tyres, evo, supercars.net (Dunlop D40 205/50VR15)',unsure:['tyres']},
   'Lancia Delta HF Integrale Evoluzione (1992)':{len:3.898,w:1.767,h:1.365,ovF:0.762,tyF:'205/45R16',tyR:'205/45R16',rimF:7.5,rimR:7.5,src:'ad:lancia-delta-i-831-facelift-1991-hf-integrale-evo-2.0-16v-215hp-4wd-5072'},
   'Honda Integra Type R (DC2, 1995)':{len:4.380,w:1.695,h:1.335,tyF:'195/55R15',tyR:'195/55R15',src:'ad:honda-integra-iii-dc2-1.8-i-180hp-12121'},
   'Lotus Elise (S1, 1996)':{len:3.726,w:1.701,h:1.202,tyF:'185/55R16',tyR:'205/50R16',src:'ad:lotus-elise-series-1-1.8-i-16v-120hp-8296'},
   'BMW M5 (E39, 2000)':{len:4.784,w:1.800,h:1.437,tyF:'245/40R18',tyR:'275/35R18',rimF:8,rimR:9.5,src:'ad:bmw-m5-e39-lci-facelift-2000-4.9-v8-400hp-46225'},
   'Trabant 601 S (1988)':{len:3.510,w:1.510,h:1.440,tyF:'145/80R13',tyR:'145/80R13',src:'ad:trabant-p-601-0.6-26hp-5108',unsure:['h','len']},
   'Honda S660 (2015)':{len:3.395,w:1.475,h:1.180,tyF:'165/55R15',tyR:'195/45R16',src:'ad:honda-s660-0.7i-64hp-36543'},
-  'Honda Beat (1991)':{len:3.295,w:1.395,h:1.175,tyF:'155/60R13',tyR:'165/60R13',src:'wp:Honda_Beat',unsure:['tyres']},
+  'Honda Beat (1991)':{len:3.295,w:1.395,h:1.175,tyF:'155/65R13',tyR:'165/60R14',rimF:4.5,rimR:5,src:'wp:Honda_Beat',tySrc:'Honda catalogue, 1991 MT, as 221616.com reproduces it; rims tirewheelguide.com'},
   'Suzuki Cappuccino (EA11R, 1991)':{len:3.295,w:1.395,h:1.185,tyF:'165/65R14',tyR:'165/65R14',src:'ad:suzuki-cappuccino-0.7-i-12v-turbo-64hp-16503'},
   'Ford Focus RS (Mk3, 2016)':{len:4.390,w:1.823,h:1.472,tyF:'235/35R19',tyR:'235/35R19',rimF:8,rimR:8,src:'ad:ford-focus-iii-hatchback-facelift-2014-rs-2.3-ecoboost-350hp-awd-24929'},
   'Renault Mégane R.S. Trophy (2018)':{len:4.372,w:1.874,h:1.445,ovF:0.916,tyF:'245/35R19',tyR:'245/35R19',rimF:8.5,rimR:8.5,src:'ad:renault-megane-iv-rs-trophy-1.8-300hp-33897'},
   'Suzuki Swift Sport (ZC33S, 2018)':{len:3.890,w:1.735,h:1.495,tyF:'195/50R17',tyR:'195/50R17',rimF:6.5,rimR:6.5,src:'ad:suzuki-swift-vi-sport-1.4-140hp-32530'},
   'Honda Civic Type R (EK9, 1997)':{len:4.180,w:1.695,h:1.360,tyF:'195/55R15',tyR:'195/55R15',rimF:6,rimR:6,src:'ad:honda-civic-type-r-ek9-1.6-185hp-47228'},
-  'Toyota GR86 (2022)':{len:4.265,w:1.775,h:1.310,tyF:'215/40R18',tyR:'215/40R18',rimF:7.5,rimR:7.5,src:'ad:toyota-86-ii-gr-2.4-d-4s-235hp-43105'},
+  'Toyota GR86 (2022)':{len:4.265,w:1.775,h:1.310,ovF:0.860,tyF:'215/40R18',tyR:'215/40R18',rimF:7.5,rimR:7.5,src:'ad:toyota-86-ii-gr-2.4-d-4s-235hp-43105',ovSrc:'Toyota UK media, GR86 technical specifications, May 2022 (220523M): 860/2575/830 mm, length 4265'},
   'Porsche 718 Cayman GT4 (2020)':{len:4.456,w:1.801,h:1.269,tyF:'245/35R20',tyR:'295/30R20',rimF:8.5,rimR:11,src:'ad:porsche-718-cayman-982-gt4-4.0-420hp-41345'},
   'BMW M2 Competition (F87, 2018)':{len:4.461,w:1.854,h:1.410,tyF:'245/35R19',tyR:'265/35R19',rimF:9,rimR:10,src:'ad:bmw-m2-coupe-f87-competition-3.0-410hp-33006'},
-  'Ariel Atom 3.5 (2013)':{len:3.410,w:1.890,h:1.195,tyF:'195/50R15',tyR:'225/50R15',src:'wp:Ariel_Atom',unsure:['len','tyres']},
-  'Mazda MX-5 2.0 (ND, 2015)':{len:3.915,w:1.735,h:1.230,tyF:'205/45R17',tyR:'205/45R17',src:'ad:mazda-mx-5-iv-nd-2.0-skyactiv-g-160hp-23233',unsure:['tyres']},
+  'Ariel Atom 3.5 (2013)':{len:3.410,w:1.890,h:1.195,tyF:'195/50R15',tyR:'225/45R16',rimF:7,rimR:8,src:'wp:Ariel_Atom',tySrc:'probable: Atom 3 (PistonHeads guide) and Ariel A052 sizes; the 3.5R is 245/45R16 (Ariel literature)',unsure:['len','tyres']},
+  'Mazda MX-5 2.0 (ND, 2015)':{len:3.915,w:1.735,h:1.230,tyF:'205/45R17',tyR:'205/45R17',src:'ad:mazda-mx-5-iv-nd-2.0-skyactiv-g-160hp-23233',tySrc:'probable: paultan.org, encycarpedia (2.0 160)',unsure:['tyres']},
   'Dodge Viper SRT-10 (2008)':{len:4.459,w:1.911,h:1.210,tyF:'275/35R18',tyR:'345/30R19',rimF:10,rimR:13,src:'ad:dodge-viper-zb-ii-coupe-srt10-8.4-v10-600hp-43065'},
   'Mercedes-AMG C63 (W204, 2008)':{len:4.725,w:1.795,h:1.438,tyF:'235/40R18',tyR:'255/35R18',rimF:8,rimR:9,src:'ad:mercedes-benz-c-class-w204-amg-c-63-v8-457hp-7g-tronic-amg-speedshift-plus-12549'},
-  'Ram 2500 HO Cummins (2019)':{len:6.067,h:2.037,tyF:'275/70R18',tyR:'275/70R18',rimF:8,rimR:8,src:'ad:ram-2500-3500-crew-cab-ii-dt-2500-6.7-cummins-td-370hp-4x4-automatic-35540',unsure:['len']},
+  'Ram 2500 HO Cummins (2019)':{len:6.067,w:2.019,wSrc:'probable: autopadre.com, 79.5 in without mirrors (Big Horn crew cab)',h:2.037,tyF:'275/70R18',tyR:'275/70R18',rimF:8,rimR:8,src:'ad:ram-2500-3500-crew-cab-ii-dt-2500-6.7-cummins-td-370hp-4x4-automatic-35540',unsure:['len','w']},
   'Toyota Hilux 2.8 D-4D (2016)':{len:5.330,w:1.855,h:1.815,ovF:1.000,tyF:'265/65R17',tyR:'265/65R17',rimF:7.5,rimR:7.5,src:'ad:toyota-hilux-double-cab-viii-facelift-2017-2.8d-177hp-4x4-33329'},
   'Volkswagen Amarok 3.0 V6 TDI (2018)':{len:5.254,w:1.954,h:1.834,ovF:0.898,tyF:'255/55R19',tyR:'255/55R19',src:'ad:volkswagen-amarok-i-double-cab-facelift-2016-3.0-v6-tdi-224hp-4motion-automatic-27100',unsure:['tyres']},
-  'Chevrolet Camaro ZL1 (2017)':{len:4.784,w:1.897,h:1.330,tyF:'285/30R20',tyR:'305/30R20',src:'ad:chevrolet-camaro-vi-zl1-6.2-v8-650hp-30812',unsure:['tyres']},
+  'Chevrolet Camaro ZL1 (2017)':{len:4.784,w:1.897,h:1.330,tyF:'285/30R20',tyR:'305/30R20',src:'ad:chevrolet-camaro-vi-zl1-6.2-v8-650hp-30812',tySrc:'probable: Goodyear, tiresize.com fitment',unsure:['tyres']},
   'Tesla Model 3 RWD (2021)':{len:4.694,w:1.849,h:1.443,ovF:0.841,tyF:'235/45R18',tyR:'235/45R18',src:'ad:tesla-model-3-facelift-2020-60-kwh-325hp-44977'},
   'Tesla Model Y Long Range (2022)':{len:4.751,w:1.921,h:1.624,ovF:0.875,tyF:'255/45R19',tyR:'255/45R19',rimF:9.5,rimR:9.5,src:'ad:tesla-model-y-long-range-78.1-kwh-347hp-54410'},
   'Tesla Model S Plaid (2021)':{len:5.021,w:1.987,h:1.431,ovF:0.961,tyF:'265/35R21',tyR:'295/30R21',rimF:9.5,rimR:10.5,src:'ad:tesla-model-s-facelift-2021-plaid-100-kwh-1020hp-tri-motor-awd-42385',unsure:['len']},
-  'Hyundai Ioniq Hybrid (2016)':{len:4.470,w:1.820,h:1.450,tyF:'195/65R15',tyR:'195/65R15',rimF:6,rimR:6,src:'ad:hyundai-ioniq-1.6-gdi-141hp-hybrid-dct-30706'},
-  'Toyota Prius (2016)':{len:4.540,w:1.760,h:1.470,tyF:'195/65R15',tyR:'195/65R15',rimF:6.5,rimR:6.5,src:'ad:toyota-prius-iv-xw50-1.8-vvt-i-122hp-hybrid-e-cvt-22776'},
+  'Hyundai Ioniq Hybrid (2016)':{len:4.470,w:1.820,h:1.450,ovF:0.880,tyF:'195/65R15',tyR:'195/65R15',rimF:6,rimR:6,src:'ad:hyundai-ioniq-1.6-gdi-141hp-hybrid-dct-30706',ovSrc:'Hyundai France, IONIQ press information (Amsterdam 2016), technical specifications: 880/2700/890 mm, length 4470'},
+  'Toyota Prius (2016)':{len:4.540,w:1.760,h:1.470,ovF:0.950,tyF:'195/65R15',tyR:'195/65R15',rimF:6.5,rimR:6.5,src:'ad:toyota-prius-iv-xw50-1.8-vvt-i-122hp-hybrid-e-cvt-22776',ovSrc:'Toyota USA, 2016 Prius Liftback product information (preliminary, Nov 2015): 37.4/106.3/35.0 in, length 178.7'},
   'Nissan Qashqai e-POWER (2022)':{len:4.425,w:1.835,h:1.625,tyF:'235/55R18',tyR:'235/55R18',rimF:7.5,rimR:7.5,src:'ad:nissan-qashqai-iii-j12-e-power-1.5-vc-t-190hp-full-hybrid-automatic-46241'},
   'BMW 330e (2020)':{len:4.709,w:1.827,h:1.444,ovF:0.799,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-g20-330e-292hp-plug-in-hybrid-steptronic-37654',ovSrc:'ad:bmw-3-series-sedan-g20-330i-258hp-xdrive-steptronic-37973'},
   'Porsche 918 Spyder (2013)':{len:4.643,w:1.940,h:1.167,tyF:'265/35R20',tyR:'325/30R21',rimF:9.5,rimR:12.5,src:'ad:porsche-918-spyder-4.6-v8-887hp-hybrid-pdk-21380'},
@@ -25908,7 +25954,14 @@ const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],bar_pct:[30,70],mcF_mm:[
   w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
   // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
-  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6]};
+  compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6],
+  // springs, bars and dampers (build 420), each axle: a coil's wire 5-25 mm on a 40-250 mm coil with 2-20 active coils
+  // (a kei car's to a truck's), a solid bar 0 (none) to 45 mm on 80-400 mm arms, 300-1600 mm between them, motion ratios
+  // 0.2-1.2, a damper's low-speed slope 100-30000 N s/m in bound, its rebound 1-5 times that
+  wireD_mm:[5,25],coilD_mm:[40,250],coils:[2,20],mr:[0.3,1.2],barD_mm:[0,45],barArm_mm:[80,400],barL_mm:[300,1600],barMr:[0.2,1.2],damp:[100,30000],rb:[1,5]};
+// the editor's fields of a SPRINGS, BARS & DAMPERS part, each axle's: the part's key without its axle, and its limit's
+const SUSP_FIELDS=[['wireD','_mm'],['coilD','_mm'],['coils',''],['mr',''],['barD','_mm'],['barArm','_mm'],['barL','_mm'],['barMr',''],['damp',''],['rb','']];
+const suspKey=(f,ax)=>f[0]+ax+f[1];
 
 // ---- the air filter (build 210) ----
 // What a filter restricts is its pressure drop at the flow through it, and the charge is that much thinner (computeVE).
@@ -26065,6 +26118,7 @@ const PART_KINDS=[
   {kind:'diff',   label:'DIFFERENTIAL',ready:true},
   {kind:'brake',  label:'BRAKE BALANCE',ready:true},
   {kind:'tyre',   label:'TYRE PRESSURE',ready:true},
+  {kind:'susp',   label:'SPRINGS, BARS & DAMPERS',ready:true},
   {kind:'cat',    label:'CATALYTIC CONVERTER',ready:false}
 ];
 // A designed intake, as the factory class the rest of the app reads: a variable one is VARIABLE, a fixed one the
@@ -26129,7 +26183,11 @@ const PART_DEF={
     label:()=>'BRAKE BALANCE',newName:'MY BRAKES',factory:['r13h']},
   // the tyre pressures (build 313): cold front and rear, fitted from TYRE PRESSURE; unfitted, the reference TYRE_P_REF
   tyre:   {on:'vehicle',field:'tyrePart',cls:'tyrePress',select:'vhTyreP',def:'ref',valid:k=>k==='ref',clsOf:()=>'ref',
-    label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']}
+    label:()=>'TYRE PRESSURE',newName:'MY PRESSURES',factory:['ref']},
+  // springs, bars and dampers (build 420): each axle's from their dimensions, fitted from SPRINGS, BARS & DAMPERS;
+  // unfitted, the kit's (SUSPENSION)
+  susp:   {on:'vehicle',field:'suspPart',cls:'suspSet',select:'vhSuspPart',def:'kit',valid:k=>k==='kit',clsOf:()=>'kit',
+    label:()=>"THE KIT'S",newName:'MY SUSPENSION',factory:['kit']}
 };
 const partOwner=kind=>PART_DEF[kind].on==='vehicle'?vehicle:engine;
 const partRebuild=kind=>{if(PART_DEF[kind].on==='vehicle'){buildVehicle();updateVehicleSummary();}else buildEngine();};
@@ -26165,6 +26223,9 @@ function normPart(p){
   if(p.kind==='brake')return {id,kind:'brake',name:String(p.name||'BRAKES').slice(0,40),bar_pct:n(p.bar_pct,'bar_pct',50),mcF_mm:n(p.mcF_mm,'mcF_mm',19.05),
     mcR_mm:n(p.mcR_mm,'mcR_mm',19.05),rearPistons:Math.round(n(p.rearPistons,'rearPistons',1)),rearPistonD_mm:n(p.rearPistonD_mm,'rearPistonD_mm',38),rearRotor_mm:n(p.rearRotor_mm,'rearRotor_mm',300)};
   if(p.kind==='tyre')return {id,kind:'tyre',name:String(p.name||'PRESSURES').slice(0,40),front_kPa:n(p.front_kPa,'front_kPa',TYRE_P_REF),rear_kPa:n(p.rear_kPa,'rear_kPa',TYRE_P_REF)};
+  if(p.kind==='susp'){const q={id,kind:'susp',name:String(p.name||'SUSPENSION').slice(0,40)};
+    for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax),lim=f[0]+f[1];q[k]=n(p[k],lim,PART_LIMITS[lim][0]);}
+    return q;}
   if(p.kind==='diff')return {id,kind:'diff',name:String(p.name||'DIFF').slice(0,40),preload_Nm:n(p.preload_Nm,'preload_Nm',60),
     ramp_deg:n(p.ramp_deg,'ramp_deg',45),faces:Math.round(n(p.faces,'faces',3)),rFace_mm:n(p.rFace_mm,'rFace_mm',40),rRamp_mm:n(p.rRamp_mm,'rRamp_mm',40)};
   if(p.kind==='turbo'){const c=n(p.compD_mm,'compD_mm',71);
@@ -26408,6 +26469,22 @@ function partFromFactory(key,kind){
     return normPart({kind,name:tr('BRAKE BALANCE'),bar_pct:50,mcF_mm:BRAKE_MC_REF_MM,mcR_mm:BRAKE_MC_REF_MM,rearPistons:np,rearPistonD_mm:+(d/Math.sqrt(np)).toFixed(2),rearRotor_mm:Dr});}
   // the pressure every unfitted car stands for: fitted as it starts, it moves nothing
   if(kind==='tyre')return normPart({kind,name:tr('TYRE PRESSURE'),front_kPa:TYRE_P_REF,rear_kPa:TYRE_P_REF});
+  // the kit's own rates on this car written as parts, at a motion ratio of 1 (each at the wheel): a coil of 8 active
+  // coils on a 100 mm coil, its wire sized to the rate; a bar on 200 mm arms, 1000 mm long, its diameter sized to the
+  // kit's bar; the kit's damper as bound and rebound at DAMPER_RB. A starting point, not any real car's springs: fitted
+  // as it starts, it moves nothing.
+  if(kind==='susp'){const V=vehicle||{},q={kind,name:tr("THE KIT'S")},L=PART_LIMITS,c=(x,k)=>clamp(x,L[k][0],L[k][1]);
+    const t0=Object.assign({},V,{suspPart:null}),K=V.mass?rollStiffness(t0):{F:0,R:0};
+    for(const ax of ['F','R']){
+      const Q=V.mass?quarterCar(t0,ax):{ks:25000,cs:2000},t=(ax==='F'?V.trackF:V.trackR)||1.55,D=100,a=200;
+      const d=c(Math.pow(8*Math.pow(D/1000,3)*8*Q.ks/SPRING_G,0.25)*1000,'wireD_mm');
+      const kb=V.mass?K[ax]-Q.ks*t*t/2:BAR_SHARE*Q.ks*t*t/2,J=kb*(a/1000)*(a/1000)/(BAR_G*t*t);   // per metre of bar
+      const bd=c(Math.pow(32*J/Math.PI,0.25)*1000,'barD_mm'),bL=c(bd>0?BAR_G*Math.PI*Math.pow(bd/1000,4)/32*t*t/(kb*(a/1000)*(a/1000))*1000:1000,'barL_mm');
+      Object.assign(q,{['wireD'+ax+'_mm']:+d.toFixed(4),['coilD'+ax+'_mm']:D,['coils'+ax]:+c(springRate(d,D,1)/Q.ks,'coils').toFixed(4),['mr'+ax]:1,
+        ['barD'+ax+'_mm']:+bd.toFixed(4),['barArm'+ax+'_mm']:a,['barL'+ax+'_mm']:+bL.toFixed(2),['barMr'+ax]:1,
+        ['damp'+ax]:+c(2*Q.cs/(1+DAMPER_RB),'damp').toFixed(2),['rb'+ax]:DAMPER_RB});
+    }
+    return normPart(q);}
   if(kind==='diff')return normPart({kind,name:tr('CLUTCH-PLATE LSD'),preload_Nm:60,ramp_deg:45,faces:3,rFace_mm:40,rRamp_mm:40});
   // the engine's own turbo (its compressor wheel, if it sets one, and its housing), or a frame as sold
   if(kind==='turbo')return withPart('turbo',key,e=>{
@@ -26475,7 +26552,7 @@ function runnerFor(rpm,Dmm){
 }
 
 // ---- the PARTS page ----
-const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null,brake:null,tyre:null},timer:0};
+const partsUI={kind:'exhaust',edit:{exhaust:null,intake:null,filter:null,cam:null,head:null,turbo:null,intercooler:null,wing:null,fwing:null,diff:null,brake:null,tyre:null,susp:null},timer:0};
 const pv=id=>document.getElementById(id);
 const fittedPart=kind=>partOwner(kind)&&partOwner(kind)[PART_DEF[kind].field];
 // the ids of each kind's editor
@@ -26525,6 +26602,10 @@ PART_UI.tyre={reset:'pyReset',box:'partsTyre',list:'pyList',from:'pyFrom',neu:'p
   none:"No tyre pressures set yet. Start from the reference pressure below.",
   fields:['pyName','pyFront','pyRear'],
   spec:p=>tr('front')+' '+p.front_kPa+' · '+tr('rear')+' '+p.rear_kPa+' kPa '+tr('cold')};
+PART_UI.susp={reset:'psReset',box:'partsSusp',list:'psList',from:'psFrom',neu:'psNew',save:'psSave',saveFit:'psSaveFit',guide:'psGuide',canvas:'psCanvas',legend:'psLegend',
+  none:"No springs, bars or dampers designed yet. Start from the kit's below.",
+  fields:['psName'].concat(['F','R'].flatMap(ax=>SUSP_FIELDS.map(f=>'ps_'+suspKey(f,ax)))),
+  spec:p=>['F','R'].map(ax=>tr(ax==='F'?'front':'rear')+' '+fmt(p['mr'+ax]*p['mr'+ax]*springRate(p['wireD'+ax+'_mm'],p['coilD'+ax+'_mm'],p['coils'+ax])/1000,1)+' N/mm, '+tr('bar')+' '+fmt(p['barD'+ax+'_mm'],1)+' mm').join(' · ')};
 // the front wing shares the rear wing's editor, with its height over the road
 PART_UI.fwing=Object.assign({},PART_UI.wing,{none:"No front wings designed yet. Start from a wing as wide as this car's front track below.",
   fields:PART_UI.wing.fields.concat('pwHeight'),spec:p=>PART_UI.wing.spec(p)+' · '+p.height_mm+' mm '+tr('up')});
@@ -26571,6 +26652,7 @@ function partToEditor(kind,p){
     pv('pkName').value=p.name;pv('pkBar').value=p.bar_pct;pv('pkMcF').value=p.mcF_mm;pv('pkMcR').value=p.mcR_mm;pv('pkPistons').value=p.rearPistons;pv('pkPistonD').value=p.rearPistonD_mm;pv('pkRotorR').value=p.rearRotor_mm;
     return;
   }
+  if(kind==='susp'){pv('psName').value=p.name;for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax);pv('ps_'+k).value=p[k];}return;}
   if(kind==='tyre'){pv('pyName').value=p.name;pv('pyFront').value=p.front_kPa;pv('pyRear').value=p.rear_kPa;return;}
   if(kind==='diff'){
     pv('pdName').value=p.name;pv('pdPreload').value=p.preload_Nm;pv('pdRamp').value=p.ramp_deg;pv('pdFaces').value=p.faces;pv('pdRFace').value=p.rFace_mm;pv('pdRRamp').value=p.rRamp_mm;
@@ -26612,6 +26694,9 @@ function partFromEditor(kind){
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
   if(kind==='brake')return normPart({kind,id:ed&&ed.id,name:pv('pkName').value.trim()||newName,bar_pct:pv('pkBar').value,mcF_mm:pv('pkMcF').value,
     mcR_mm:pv('pkMcR').value,rearPistons:pv('pkPistons').value,rearPistonD_mm:pv('pkPistonD').value,rearRotor_mm:pv('pkRotorR').value});
+  if(kind==='susp'){const q={kind,id:ed&&ed.id,name:pv('psName').value.trim()||newName};
+    for(const ax of ['F','R'])for(const f of SUSP_FIELDS){const k=suspKey(f,ax);q[k]=pv('ps_'+k).value;}
+    return normPart(q);}
   if(kind==='tyre')return normPart({kind,id:ed&&ed.id,name:pv('pyName').value.trim()||newName,front_kPa:pv('pyFront').value,rear_kPa:pv('pyRear').value});
   if(kind==='diff')return normPart({kind,id:ed&&ed.id,name:pv('pdName').value.trim()||newName,preload_Nm:pv('pdPreload').value,
     ramp_deg:pv('pdRamp').value,faces:pv('pdFaces').value,rFace_mm:pv('pdRFace').value,rRamp_mm:pv('pdRRamp').value});
@@ -26642,7 +26727,7 @@ function partAction(a,id){
     partLib=partLib.filter(x=>x.id!==id);persistParts();
     const f=fittedPart(kind);
     if(f&&f.id===id){pv(D.select).value=partOwner(kind)[D.cls];fillPartSelects();partRebuild(kind);
-      flash(tr(kind==='tyre'?'PART DELETED: THE CAR HAS THE REFERENCE TYRE PRESSURE':kind==='brake'?"PART DELETED: THE CAR'S REAR BRAKES ARE SIZED TO THE R13-H LINE AGAIN":kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
+      flash(tr(kind==='susp'?"PART DELETED: THE CAR HAS THE KIT'S SPRINGS, BARS AND DAMPERS":kind==='tyre'?'PART DELETED: THE CAR HAS THE REFERENCE TYRE PRESSURE':kind==='brake'?"PART DELETED: THE CAR'S REAR BRAKES ARE SIZED TO THE R13-H LINE AGAIN":kind==='diff'?"PART DELETED: THE CAR HAS THE TABLE'S CLUTCH-PLATE LSD":kind==='wing'?"PART DELETED: THE CAR HAS THE KIT'S REAR WING":kind==='fwing'?"PART DELETED: THE CAR HAS THE KIT'S FRONT WING":kind==='intake'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTAKE':kind==='intercooler'?'PART DELETED: THE ENGINE HAS ITS FACTORY INTERCOOLER':kind==='cam'?'PART DELETED: THE ENGINE HAS ITS FACTORY CAM':kind==='head'?'PART DELETED: THE ENGINE HAS ITS FACTORY HEAD':kind==='turbo'?'PART DELETED: THE ENGINE HAS ITS FACTORY TURBO':kind==='filter'?'PART DELETED: THE ENGINE HAS ITS FACTORY AIR FILTER':'PART DELETED: THE ENGINE HAS ITS FACTORY EXHAUST'));}
     else{fillPartSelects();flash(tr('PART DELETED'));}
     if(partsUI.edit[kind]&&partsUI.edit[kind].id===id)partsUI.edit[kind]=null;
     renderParts();
@@ -26688,6 +26773,7 @@ function previewPart(kind){
   if(kind==='diff')return previewDiff();
   if(kind==='brake')return previewBrake();
   if(kind==='tyre')return previewTyre();
+  if(kind==='susp')return previewSusp();
   const p=partFromEditor('exhaust'),now=exhaustReport(engine.exhaustPart||engine.exhaust),r=exhaustReport(p);
   partsUI.last={kind,p,now,r};
   const turbo=engine.intake==='turbo',ported=!!engine.ports;
@@ -26947,6 +27033,41 @@ function previewTyre(){
   pv('pyGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawTyre(p);
 }
+// SPRINGS, BARS & DAMPERS on this car (build 420): each axle's wheel rate, its body bounce on the spring, its damping
+// as a share of critical, and its roll stiffness from spring and bar; the car's roll per g and the front's share of
+// the roll stiffness (the roll balance), against the car as it is now.
+function suspReport(v,P){
+  const t=Object.assign({},v,{suspPart:P}),K=rollStiffness(t),o={K,ax:{}};
+  for(const ax of ['F','R']){const q=quarterCar(t,ax),tr_=ax==='F'?v.trackF:v.trackR;
+    o.ax[ax]={ks:q.ks,hz:Math.sqrt(q.ks/q.ms)/(2*Math.PI),zeta:q.cs/(2*Math.sqrt(q.ks*q.ms)),spr:q.ks*tr_*tr_/2,bar:K[ax]-q.ks*tr_*tr_/2};}
+  o.share=K.F/(K.F+K.R);o.roll=v.rollGrad*v.rollK/(K.F+K.R);   // the roll moment's arm unchanged
+  return o;
+}
+function previewSusp(){
+  const p=partFromEditor('susp'),V=vehicle,r=suspReport(V,p),now=suspReport(V,V.suspPart||null),lines=[],pc=x=>fmt(x*100,1)+'%';
+  partsUI.last={kind:'susp',p,r,now};
+  for(const ax of ['F','R']){const a=r.ax[ax],n=now.ax[ax];
+    lines.push('<b>'+tr(ax==='F'?'FRONT':'REAR')+'</b> '+tr('wheel rate')+' <b>'+fmt(a.ks/1000,1)+'</b> N/mm · '+tr('body bounce')+' '+fmt(a.hz,2)+' Hz · '+tr('damping')+' '+fmt(a.zeta,2)+' '+tr('of critical')
+      +' · '+tr('roll stiffness')+' '+fmt((a.spr+a.bar)/1000,1)+' kN m/rad ('+tr('bar')+' '+pc(a.bar/(a.spr+a.bar))+') <span class="dim">('+tr('now')+' '+fmt(n.ks/1000,1)+' N/mm, '+fmt(n.hz,2)+' Hz, '+fmt(n.zeta,2)+')</span>');}
+  lines.push(tr('Roll')+' <b>'+fmt(r.roll,2)+'</b> °/g · '+tr('front share of the roll stiffness')+' <b>'+pc(r.share)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.roll,2)+' °/g, '+pc(now.share)+')</span>');
+  lines.push('<span class="dim">'+tr("A coil's rate from its wire, coil and active coils, G d^4 / (8 D^3 n) (Shigley); a bar's from its diameter, length and arms, (G J / L) (MR t / a)^2 (Milliken); each at the wheel by its motion ratio squared. The damper's bound slope and its rebound ratio, as a damper dyno gives them.")+'</span>');
+  pv('psGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
+  drawSusp(partsUI.last);
+}
+// Each axle's roll stiffness, spring and bar, this part's against the car's now.
+function drawSusp(L){
+  const c=pv('psCanvas');if(!c||!L||!L.r)return;
+  const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const rows=[['F',L.r,'#6fc'],['F',L.now,'#889'],['R',L.r,'#6fc'],['R',L.now,'#889']];
+  const max=Math.max(...rows.map(([a,o])=>o.ax[a].spr+o.ax[a].bar))*1.05,X0=44,X1=w-12,bh=(h-24)/4-6;
+  g.font='8px monospace';
+  rows.forEach(([a,o,col],i)=>{const y=8+i*(bh+6),A=o.ax[a],xs=X0+A.spr/max*(X1-X0),xb=xs+A.bar/max*(X1-X0);
+    g.fillStyle=col;g.fillRect(X0,y,xs-X0,bh);g.fillStyle='#fa4';g.fillRect(xs,y,xb-xs,bh);
+    g.fillStyle='#667';g.fillText(tr(a==='F'?'front':'rear'),2,y+bh/2+3);});
+  pv('psLegend').innerHTML='<span style="color:#6fc">■ '+esc(tr('springs, this part'))+'</span> <span style="color:#889">■ '+esc(tr('springs, now'))+'</span> <span style="color:#fa4">■ '+esc(tr('bar'))+'</span> <span class="dim">'+esc(tr('each axle\'s roll stiffness'))+'</span>';
+}
 // The aquaplaning speed and the tyre's stiffness against the cold pressure, with this part's two axles marked.
 function drawTyre(p){
   const c=pv('pyCanvas');if(!c)return;
@@ -26999,6 +27120,7 @@ function drawPartCurves(kind,now,r){
   if(kind==='diff')return drawDiff(partsUI.last.p,r);
   if(kind==='brake')return drawBrake(r);
   if(kind==='tyre')return drawTyre(partsUI.last.p);
+  if(kind==='susp')return drawSusp(partsUI.last);
   const U=PART_UI[kind],c=pv(U.canvas);if(!c)return;
   const w=c.clientWidth||480,h=c.clientHeight||200,dpr=window.devicePixelRatio||1;
   c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
@@ -33511,18 +33633,8 @@ const VCD_FIELDS={
     trade:'A double wishbone or multi-link holds the tyre flatter as the car rolls than a strut; a strut is cheaper and lighter. A solid axle is the simplest and the least precise.'},
   vhGeoR:{what:'How the rear wheels are located.',
     trade:'Independent geometry keeps each tyre on the road on its own; a twist beam or a solid axle is cheaper and ties the two sides together.'},
-  vhSpringF:{adv:true,what:'The front springs, softer or stiffer than the kit\'s.',
-    trade:'Stiffer at the front moves the balance toward understeer and rolls less; softer grips better over bumps.'},
-  vhSpringR:{adv:true,what:'The rear springs, softer or stiffer than the kit\'s.',
-    trade:'Stiffer at the rear moves the balance toward oversteer.'},
-  vhBarF:{adv:true,what:'The front anti-roll bar, softer or stiffer than the kit\'s.',
-    trade:'A stiffer front bar carries more of the load transfer at the front: more understeer, less roll.'},
-  vhBarR:{adv:true,what:'The rear anti-roll bar, softer or stiffer than the kit\'s.',
-    trade:'A stiffer rear bar carries more of the load transfer at the rear: more oversteer, less roll.'},
-  vhDamperF:{adv:true,guide:'dampers',what:'The front dampers, softer or stiffer than the kit\'s.',
-    trade:'Stiffer dampers settle the body faster after a bump, and pass more of the road through to the cabin.'},
-  vhDamperR:{adv:true,guide:'dampers',what:'The rear dampers, softer or stiffer than the kit\'s.',
-    trade:'Stiffer dampers settle the body faster after a bump, and pass more of the road through to the cabin.'}
+  vhSuspPart:{adv:true,guide:'dampers',what:'The springs, anti-roll bars and dampers: the kit\'s, or a set you design on the PARTS tab from their dimensions.',
+    trade:'Stiffer at the front (springs or bar) moves the balance toward understeer and rolls less; at the rear, toward oversteer. Stiffer dampers settle the body faster and pass more of the road to the cabin.'}
 };
 // Where a field's value lives on a factory car (vehicleFromPreset), and how a choice is written there.
 const VCD_KEY={vhChassis:'chassis',vhDrive:'drive',vhDiff:'diff',vhTC:'tc',vhLimiter:'governor',vhLimitKmh:'governor',vhGearbox:'gearbox',vhGears:'gears',
@@ -34095,7 +34207,7 @@ const CAR_PRICE={
   "Ford Mustang GT (2018)":42050,
   "Dodge Challenger SRT Hellcat (2015)":48700,
   "Ferrari F355 Berlinetta (1994)":56500,
-  "Lamborghini Diablo VT (1993)":60350,
+  "Lamborghini Diablo VT (1993)":60250,
   "McLaren F1 (1994)":95550,
   "Porsche 911 Turbo (993, 1995)":59500,
   "Ferrari Enzo (2002)":105600,
@@ -34121,7 +34233,7 @@ const CAR_PRICE={
   "Jeep Grand Cherokee SRT (WK2, 2014)":49500,
   "Toyota Land Cruiser 200 VX 4.5 D-4D (2015)":54450,
   "Radical SR3 RSX 1500 (2015)":87900,
-  "BAC Mono 2.3 (2011)":77200,
+  "BAC Mono 2.3 (2011)":77300,
   "Nissan 370Z (Z34, 2009)":32950,
   "Honda NSX (NA1, 1991)":54550,
   "Ford F-150 Raptor (2017)":44550,
@@ -34133,7 +34245,7 @@ const CAR_PRICE={
   "Ferrari F40 (1987)":94700,
   "Jaguar E-Type 3.8 FHC (Series 1, 1961)":29200,
   "Ford Mustang Fastback 289 (1965)":29900,
-  "Porsche 911 Carrera RS 2.7 Sport (1973)":51700,
+  "Porsche 911 Carrera RS 2.7 Sport (1973)":51650,
   "BMW M3 (E30, 1986)":31100,
   "Volkswagen Golf GTI (Mk1, 1976)":20000,
   "Ferrari 365 GTB/4 Daytona (1968)":46900,
@@ -35028,7 +35140,7 @@ function bindControls(){
     try{localStorage.setItem('pes.gauges',lapReplay.gauges);}catch(err){}});
   // Vehicle design: recompute performance live on any change. Picking a chassis fits its whole
   // factory spec (drivetrain, gearbox, tyres/wheels, brakes, suspension, aero, weight).
-  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhAbs','vhAbsF','vhAbsR','vhTcSlip','vhEsp','vhEspSlide','vhEspCut','vhRating','vhTire','vhTireW','vhTireWF','vhTyreP','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhBrakeBal','vhSusp','vhGeoF','vhGeoR','vhSpringF','vhSpringR','vhBarF','vhBarR','vhDamperF','vhDamperR','vhSteer','vhDims','vhWb','vhTrackF','vhTrackR','vhCg','vhFwt','vhBallast','vhBallastPos','vhBallastH'].forEach(id=>{
+  ['vhChassis','vhDrive','vhGearbox','vhDiff','vhGears','vhSpacing','vhGearing','vhLimiter','vhLimitKmh','vhTC','vhAbs','vhAbsF','vhAbsR','vhTcSlip','vhEsp','vhEspSlide','vhEspCut','vhRating','vhTire','vhTireW','vhTireWF','vhTyreP','vhTireA','vhWheel','vhAeroF','vhAeroR','vhAeroFl','vhWeight','vhBrake','vhRotor','vhBrakeBal','vhSusp','vhGeoF','vhGeoR','vhSuspPart','vhSteer','vhDims','vhWb','vhTrackF','vhTrackR','vhCg','vhFwt','vhBallast','vhBallastPos','vhBallastH'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',()=>{
       // a chassis number changed by hand is a designed chassis (build 250); FACTORY puts the factory's back (syncDimsForm)
