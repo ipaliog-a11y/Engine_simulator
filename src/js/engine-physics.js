@@ -820,8 +820,11 @@ function pumpingMEP(rpm,map){
   // A diesel's IMEP is gross (fuel-based), so its gas exchange is the whole loop, signed: the piston
   // pushes out against p_exh and is pushed down by p_int. A turbo that makes more boost than
   // back-pressure gives work back. Below atmosphere the throttle term stays as described above.
-  if(engine.ci)return pExh-Math.max(1,map)+PUMP_K*Math.max(0,1.0-map)*0.15;
-  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map);
+  // Build 428: and the intake stroke's own loss, the piston drawing against the depression the valve's restriction leaves
+  // in the cylinder (intakeFill integrates it with the filling). At the same velocities it scales with the gas density.
+  const pi=(window.__noPump?0:fillPumpAt(rpm)*Math.max(0.2,map))+(window.__noEx?0:exPumpAt(rpm)*Math.max(0.2,map));
+  if(engine.ci)return pExh-Math.max(1,map)+PUMP_K*Math.max(0,1.0-map)*0.15+pi;
+  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map)+pi;
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){

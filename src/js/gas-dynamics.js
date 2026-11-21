@@ -220,7 +220,7 @@ function wallTrace(e,rpm,map,egr=0){
     const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX};
+  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pE, TE, evo};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
@@ -369,20 +369,70 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   const disc=Math.PI/4*B*B,ends=disc*(e.ci?2+4*0.55*0.17:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const cR=2*Math.PI*helmholtzHz(Ar,L,e.vEffCyl,T0)*rho0*L/Q_INTAKE, a=rho0*L/dt+cR;
   const Tr=Tres>0?Tres:T0;
-  let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
+  let T=Tr,m=p0*V(th0)/(R*Tr),u=0,W=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
     const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
-    const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
-    u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
+    const P=p0+rho0*L/dt*u,rhs=P-pc;   // implicit in u: k u|u| + a u = rhs
+    u=rhs>=0&&!window.__incomp?curtainInflow(P,pc,a,Av/(rho0*Ar)/Math.sqrt(R*T0)):rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
     const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
+    if(th<180)W+=(p0-pc)*dV;        // the piston's work against the cylinder's depression on the intake stroke
     const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(pc/1000,0.8)*Math.pow(T,-0.55)*Math.pow(6.18*Sp,0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
     const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
     m+=dm;T=U/(cv*m);
   }
+  _fillPump=W/Vd/1e5;
   return (m-m0)/(rho0*Vd);
 }
+// Build 428: the curtain's flow is compressible. Until then the valve was a Borda loss on incompressible air,
+// dp = (rho/2) v^2, which at the curtain velocities of a big valve at the top end (a quarter of sonic on the mean,
+// past half of it at peak lift) passes more air than the pressure drop can: compressible orifice flow (Heywood,
+// Internal Combustion Engine Fundamentals, App. C, eq. C.8) gives 6% less at a pressure ratio of 0.9 and 11% less at
+// 0.8, and none past the critical ratio, where the curtain chokes. The air accelerates isentropically from the runner's
+// end (stagnation p_end, the plenum's T0) to the cylinder's pressure in the vena contracta, and its dynamic head is lost
+// there as in Borda's relation, so for p_end > pc
+//     rho0 A_r u = A_v p_end / sqrt(R T0) psi(max(x*, pc/p_end)),  psi(x) = sqrt(2g/(g-1) (x^(2/g) - x^((g+1)/g)))
+// with the column's momentum giving u = (P - p_end)/a (P: the plenum's pressure plus the column's inertia). Solved on
+// p_end by bisection, both sides monotone. Reverse flow (cylinder above plenum) stays incompressible: it is slow.
+// kv = A_v / (rho0 A_r sqrt(R T0)).
+const CRIT_X_AIR=Math.pow(2/(GAMMA_AIR+1),GAMMA_AIR/(GAMMA_AIR-1));
+const psiAir=x=>{x=Math.max(CRIT_X_AIR,Math.min(1,x));return Math.sqrt(2*GAMMA_AIR/(GAMMA_AIR-1)*Math.max(0,Math.pow(x,2/GAMMA_AIR)-Math.pow(x,(GAMMA_AIR+1)/GAMMA_AIR)));};
+function curtainInflow(P,pc,a,kv){
+  let lo=pc,hi=P;
+  for(let i=0;i<40;i++){const pe=(lo+hi)/2;if((P-pe)/a>kv*pe*psiAir(pc/pe))lo=pe;else hi=pe;}
+  return (P-(lo+hi)/2)/a;
+}
+let _fillPump=0;
+// Build 428: the exhaust stroke's pumping work (bar, at 1 atm intake), from blowdown and displacement through the
+// exhaust curtain. The model had the exhaust stroke at the manifold's pressure (pumpingMEP: the pipes' back-pressure
+// only), as if the valve took no time to empty the cylinder. It does: the valve opens at EVO on the cylinder's
+// pressure from the cycle trace (wallTrace, p_EVO, T_EVO) and the gas leaves through Cd A_v(theta) as compressible
+// orifice flow (Heywood App. C, choked below the critical ratio), the cylinder expanding adiabatically as it empties
+// and the piston rising on what is left. At low speed the blowdown is over by BDC; at high speed it is not, and the
+// piston pushes against the remainder (Heywood ch. 6.5). The work is the integral of (p_cyl - p_manifold) dV over the
+// stroke, BDC to TDC. The exhaust valve takes the intake's discharge coefficient (intakeCd, Taylor's Ci on the cam's
+// event) and the intake's lift (exhaust lifts are within ~5% of the intake's on the presets' cam cards; probable),
+// on its own head diameter; the manifold sits at 1.05 bar as in wallTrace. Gas: gamma 1.33 (GAMMA_EXH), R 287.
+function exhaustStrokePump(rpm,tr,Cd){
+  const e=engine;if(!e.evDia_mm||!(tr&&tr.pE>0))return 0;
+  const g=GAMMA_EXH,R=287,cv=R/(g-1),cp=cv+R,dur=e.camDur,evo=tr.evo,pm=1.05e5;
+  const xc=Math.pow(2/(g+1),g/(g-1)),psi=x=>{x=Math.max(xc,Math.min(1,x));return Math.sqrt(2*g/(g-1)*Math.max(0,Math.pow(x,2/g)-Math.pow(x,(g+1)/g)));};
+  const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
+  const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2, nEx=Math.max(1,(e.valves||4)-e.ivCount);
+  const dth=0.25,dt=dth*Math.PI/180/(rpm*2*Math.PI/60);
+  let T=tr.TE,m=tr.pE*V(evo)/(R*T),W=0;
+  for(let th=evo;th<360;th+=dth){
+    const Vc=V(th),pc=m*R*T/Vc,dV=V(th+dth)-Vc;
+    const A=Cd*nEx*valveFlowArea(e.evDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-evo)/dur),2),e.throatRatio)*1e-6;
+    // out at the cylinder's state, or back in from the manifold at the cylinder's temperature
+    const dm=(pc>=pm?-A*pc/Math.sqrt(R*T)*psi(pm/pc):A*pm/Math.sqrt(R*T)*psi(pc/pm))*dt;
+    const U=cv*m*T+cp*T*Math.max(-m*0.5,dm)-pc*dV;
+    m+=Math.max(-m*0.5,dm);T=U/(cv*m);
+    if(th>=180)W+=(pc-pm)*(-dV);
+  }
+  return W/Vd/1e5;
+}   // the intake stroke's pumping work (bar) from the last intakeFill
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
   const e=engine;e.fillTable=null;
@@ -390,13 +440,13 @@ function buildFillTable(){
   const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
-    let f=0,best=0,bestL=lens[0];
+    let f=0,best=0,bestL=lens[0],pi=0;
     const Tres=wallTrace(e,r,1).Tres;
     const auth=e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0;   // an Atkinson cam's phaser is shorter (build 188)
     for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
-      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;}
+      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;pi=_fillPump;}
     }
-    tb.push({rpm:r,f,adv:best,L:bestL});
+    tb.push({rpm:r,f,adv:best,L:bestL,pi,pe:exhaustStrokePump(r,wallTrace(e,r,1),Cd)});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
@@ -421,6 +471,19 @@ function camAdvAt(rpm){
 function ivcAt(rpm){
   const e=engine;if(!e.fillTable)return null;
   return ivcAbdc(e.camDur,e.camLSA,camAdvAt(rpm));
+}
+// The intake stroke's pumping work at this speed (bar, at the plenum's 1 atm; build 428), from the same table.
+function fillPumpAt(rpm){
+  const tb=engine.fillTable;if(!tb||tb[0].pi==null)return 0;
+  if(rpm<=tb[0].rpm)return tb[0].pi;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.pi+(b.pi-a.pi)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].pi;
+}
+function exPumpAt(rpm){
+  const tb=engine.fillTable;if(!tb||tb[0].pe==null)return 0;
+  if(rpm<=tb[0].rpm)return tb[0].pe;
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a.pe+(b.pe-a.pe)*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1].pe;
 }
 function fillAt(rpm){
   const tb=engine.fillTable;if(!tb)return 1;
