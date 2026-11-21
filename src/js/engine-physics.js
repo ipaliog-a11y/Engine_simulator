@@ -203,8 +203,9 @@ function mappedAFR(rpm,map){
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
 // (smoke, turbine temperature), whatever the map or the slider asks for.
+let o2Trim=1;   // the closed loop's live trim, set only while the live bench steps (updatePhysics)
 function curAFR(rpm,map){
-  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map)):state.afr;
+  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map))*o2Trim:state.afr;
   return engine.ci?Math.max(afr,engine.stoichAFR*dieselLambdaFloor(rpm)):afr;
 }
 // ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
@@ -1438,8 +1439,9 @@ function computeEmissions(){
     const hot=state.coolant<50?0.3:1;
     oxEff=engine.catConv*hot;pmEff=engine.catConv*hot;redEff=(engine.cat==='stock'?0.9:0)*hot;
   }else{
-    const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
-    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1),litoff=state.coolant<50?0.25:1;
+    const lc=catStoreLambda(lam,burn,y,z);   // the mixture the converter acts on, after its oxygen storage
+    const w=Math.exp(-Math.pow((lc-1.0)/0.02,2));
+    const leanO2=clamp((lc-1.0)/0.05,0,1),richRed=clamp((1.0-lc)/0.05,0,1),litoff=state.coolant<50?0.25:1;
     oxEff=engine.catConv*litoff*Math.max(w,leanO2*0.85);
     redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
   }
@@ -1460,10 +1462,37 @@ function computeEmissions(){
   else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
 }
+// The catalyst's oxygen storage (trial). Its ceria gives up oxygen (2 CeO2 -> Ce2O3 + 1/2 O2) when the gas is rich and
+// takes it back when lean, so a converter fed a mixture swinging a few % about lambda 1 sees close to lambda 1 until the
+// store runs full or empty. Storage and release go as the free and the filled share of the store (Brandt, Wang &
+// Grizzle, IEEE TCST 8(5), 2000). Capacity: ~30 g of CeO2 per litre of brick (probable: a 150-200 g/L washcoat, about
+// a fifth of it ceria), at most 0.25 mol O2 per mol CeO2 (1.39 g/L), of which ~30% takes part at a 1-3 Hz swing
+// (probable); a brick of the engine's swept volume (probable), scaled by the cat's conversion against the stock one's.
+// Only the live bench, where the closed loop swings the mixture, steps it; everywhere else it is lambda itself.
+const CAT_OSC_G_PER_L=30*(0.25*32/172.1)*0.3;   // ~0.42 g O2 per litre
+const CAT_OSC_CELLS=5;   // the brick in slices along the flow: it fills from the front, as a real one does
+function catStoreLambda(lam,burn,y,z){
+  const L=typeof o2Loop!=='undefined'?o2Loop:null;
+  if(!L||!L.live||!(L.dt>0)||!(engine.catConv>0)||state.coolant<50)return lam;
+  if(!Array.isArray(L.osc))L.osc=new Array(CAT_OSC_CELLS).fill(0.5);
+  const capMol=CAT_OSC_G_PER_L*engine.displacement_L*engine.catConv/0.97/32/CAT_OSC_CELLS;
+  const nC=burn*1000/(MW_C+y*MW_H+z*MW_O),aS=1+y/4-z/2;
+  let flux=(lam-1)*aS*nC;                                                 // mol/s of O2 over (+) or short of (-) stoichiometric
+  for(let i=0;i<CAT_OSC_CELLS;i++){
+    const share=flux>0?1-L.osc[i]:L.osc[i];                               // what this slice can still take, or still give
+    const take=flux*share;
+    L.osc[i]=clamp(L.osc[i]+take*L.dt/capMol,0,1);
+    flux-=take;
+  }
+  return 1+flux/(aS*nC);
+}
 function updatePhysics(){
   if(isElectric())return;   // the bench step does it (stepMotorBench)
-  if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
-  updateEnginePhysics();
+  o2Trim=o2LoopFactor();
+  try{
+    if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
+    updateEnginePhysics();
+  }finally{o2Trim=1;}
 }
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
@@ -1475,7 +1504,7 @@ function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
-  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map));
+  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
     state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
@@ -1507,7 +1536,7 @@ function updateEnginePhysics(){
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
-  const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
+  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));

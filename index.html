@@ -889,7 +889,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 429</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 430</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2386,15 +2386,15 @@ A <b>three-way catalytic converter</b> cleans all three at once, but only in a n
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="emissionsGame">
-The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load. An engine with a catalyst and an ECU has a <b>LAMBDA SENSOR</b> tile: port injection carries a narrowband sensor, which reads about 900 mV rich and under 100 mV lean and can only hold λ 1; direct injection and diesels carry a wideband one, which reads λ itself. Tune a narrowband engine off λ 1 at part load and the FAULT lamp stores P0171 (lean) or P0172 (rich).
+The LIVE panel's <b>EMISSIONS</b> analyser shows CLEAN / OK / DIRTY plus tailpipe <b>CO₂</b>, <b>CO</b>, <b>HC</b>, <b>NOx</b> and (diesel) <b>PM</b> in g/s from the design, the tune and the live operating point. Each species tile turns <b>amber</b> then <b>red</b> as that pollutant (g per kg of fuel) climbs the same scale the emit score uses; CO₂ uses g/kWh when you are making power. Choose the <b>CATALYTIC CONV.</b>: stock (97% conversion), sport (85%) or none. The scorecard's <b>emit</b> score still rates a stoich cruise and part load. An engine with a catalyst and an ECU has a <b>LAMBDA SENSOR</b> tile: port injection carries a narrowband sensor, which reads about 900 mV rich and under 100 mV lean and can only hold λ 1; direct injection and diesels carry a wideband one, which reads λ itself and its pump current in mA, and shows HEATING for its first 11 s. Warm and at part load the ECU closes the loop on it: with a narrowband sensor the mixture swings about λ 1 ± 1–3% at 1–3 Hz and the tile flips between ~100 and ~900 mV, as on a real car; a wideband one settles without a swing. Tune a narrowband engine off λ 1 at part load and the FAULT lamp stores P0171 (lean) or P0172 (rich).
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="emissionsPhys">
-Major species (CO₂, H₂O, O₂, N₂, and rich CO/H₂) come from the fuel's C/H/O atoms and λ (water-gas shift on the rich side). HC, residual lean CO, NOx and diesel PM keep mixture and temperature trends, scaled to g/s by the live fuel mass. The catalyst's oxidation of CO and HC needs spare oxygen (works stoich to lean) and its reduction of NOx needs none (stoich to rich), so its conversion falls off on both sides of λ = 1; oxidised CO/HC add to CO₂.
+Major species (CO₂, H₂O, O₂, N₂, and rich CO/H₂) come from the fuel's C/H/O atoms and λ (water-gas shift on the rich side). HC, residual lean CO, NOx and diesel PM keep mixture and temperature trends, scaled to g/s by the live fuel mass. The catalyst's oxidation of CO and HC needs spare oxygen (works stoich to lean) and its reduction of NOx needs none (stoich to rich), so its conversion falls off on both sides of λ = 1; oxidised CO/HC add to CO₂. Its ceria stores oxygen when the gas is lean and gives it back when rich, in five slices along the brick, so the narrowband loop's swing costs little. The sensors are Bosch's: the LSF 4.2's switching times and the LSU 4.9's pump-current table and heater ramp.
 </div>
 <div class="guide-limit" data-gk="emissionsLimit">
-Limit: no Zeldovich NOx mechanism, no catalyst brick temperature or oxygen storage, and no g/km drive-cycle accounting yet.
+Limit: no Zeldovich NOx mechanism, no catalyst brick temperature, an oxygen store whose capacity is estimated (not measured), a closed loop only on the live bench (not in the dyno, laps or drive cycles), and no g/km drive-cycle accounting yet.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="firetriangle">Air, fuel and spark</a> · <a data-gp="fuelmap">Fuel, injection &amp; the fuel map</a> · <a data-gp="scorecard">The scorecard</a></div>
@@ -10877,8 +10877,9 @@ function mappedAFR(rpm,map){
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
 // (smoke, turbine temperature), whatever the map or the slider asks for.
+let o2Trim=1;   // the closed loop's live trim, set only while the live bench steps (updatePhysics)
 function curAFR(rpm,map){
-  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map)):state.afr;
+  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map))*o2Trim:state.afr;
   return engine.ci?Math.max(afr,engine.stoichAFR*dieselLambdaFloor(rpm)):afr;
 }
 // ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
@@ -12112,8 +12113,9 @@ function computeEmissions(){
     const hot=state.coolant<50?0.3:1;
     oxEff=engine.catConv*hot;pmEff=engine.catConv*hot;redEff=(engine.cat==='stock'?0.9:0)*hot;
   }else{
-    const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
-    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1),litoff=state.coolant<50?0.25:1;
+    const lc=catStoreLambda(lam,burn,y,z);   // the mixture the converter acts on, after its oxygen storage
+    const w=Math.exp(-Math.pow((lc-1.0)/0.02,2));
+    const leanO2=clamp((lc-1.0)/0.05,0,1),richRed=clamp((1.0-lc)/0.05,0,1),litoff=state.coolant<50?0.25:1;
     oxEff=engine.catConv*litoff*Math.max(w,leanO2*0.85);
     redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
   }
@@ -12134,10 +12136,37 @@ function computeEmissions(){
   else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
 }
+// The catalyst's oxygen storage (trial). Its ceria gives up oxygen (2 CeO2 -> Ce2O3 + 1/2 O2) when the gas is rich and
+// takes it back when lean, so a converter fed a mixture swinging a few % about lambda 1 sees close to lambda 1 until the
+// store runs full or empty. Storage and release go as the free and the filled share of the store (Brandt, Wang &
+// Grizzle, IEEE TCST 8(5), 2000). Capacity: ~30 g of CeO2 per litre of brick (probable: a 150-200 g/L washcoat, about
+// a fifth of it ceria), at most 0.25 mol O2 per mol CeO2 (1.39 g/L), of which ~30% takes part at a 1-3 Hz swing
+// (probable); a brick of the engine's swept volume (probable), scaled by the cat's conversion against the stock one's.
+// Only the live bench, where the closed loop swings the mixture, steps it; everywhere else it is lambda itself.
+const CAT_OSC_G_PER_L=30*(0.25*32/172.1)*0.3;   // ~0.42 g O2 per litre
+const CAT_OSC_CELLS=5;   // the brick in slices along the flow: it fills from the front, as a real one does
+function catStoreLambda(lam,burn,y,z){
+  const L=typeof o2Loop!=='undefined'?o2Loop:null;
+  if(!L||!L.live||!(L.dt>0)||!(engine.catConv>0)||state.coolant<50)return lam;
+  if(!Array.isArray(L.osc))L.osc=new Array(CAT_OSC_CELLS).fill(0.5);
+  const capMol=CAT_OSC_G_PER_L*engine.displacement_L*engine.catConv/0.97/32/CAT_OSC_CELLS;
+  const nC=burn*1000/(MW_C+y*MW_H+z*MW_O),aS=1+y/4-z/2;
+  let flux=(lam-1)*aS*nC;                                                 // mol/s of O2 over (+) or short of (-) stoichiometric
+  for(let i=0;i<CAT_OSC_CELLS;i++){
+    const share=flux>0?1-L.osc[i]:L.osc[i];                               // what this slice can still take, or still give
+    const take=flux*share;
+    L.osc[i]=clamp(L.osc[i]+take*L.dt/capMol,0,1);
+    flux-=take;
+  }
+  return 1+flux/(aS*nC);
+}
 function updatePhysics(){
   if(isElectric())return;   // the bench step does it (stepMotorBench)
-  if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
-  updateEnginePhysics();
+  o2Trim=o2LoopFactor();
+  try{
+    if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
+    updateEnginePhysics();
+  }finally{o2Trim=1;}
 }
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
@@ -12149,7 +12178,7 @@ function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
-  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map));
+  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
     state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
@@ -12181,7 +12210,7 @@ function updateEnginePhysics(){
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
-  const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
+  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));
@@ -12257,6 +12286,80 @@ function lambdaSensorMv(lam){
   }
   return 1000*LAMBDA_NERNST*Math.log(0.21/Math.max(1e-40,p));
 }
+// The wideband's own output is its pump current, Ip. Bosch Motorsport, Lambda Sensor LSU 4.9 data sheet (69034379, 2026):
+// [Ip mA, lambda], monotonic from 0.65 to air; the ECU reads lambda back through the same table. Accuracy there:
+// 0.80 +/- 0.01, 1.016 +/- 0.007, 1.70 +/- 0.05. Its heater (same sheet) starts at 8.5 V and ramps at most 0.4 V/s to
+// 13 V, so the sensor is not ready for (13 - 8.5) / 0.4 = 11.25 s after start, plus a condensation phase the sheet leaves
+// to the application (not modelled).
+const LSU49_IP=[[-2.000,0.650],[-1.602,0.700],[-1.243,0.750],[-0.927,0.800],[-0.800,0.822],[-0.652,0.850],[-0.405,0.900],
+  [-0.183,0.950],[-0.106,0.970],[-0.040,0.990],[0,1.003],[0.015,1.010],[0.097,1.050],[0.193,1.100],[0.250,1.132],[0.329,1.179],
+  [0.671,1.429],[0.938,1.701],[1.150,1.990],[1.385,2.434],[1.700,3.413],[2.000,5.391],[2.150,7.506],[2.250,10.119]];
+const LSU_READY_S=(13-8.5)/0.4;
+function lambdaSensorIp(lam){
+  const T=LSU49_IP;if(lam<=T[0][1])return T[0][0];if(lam>=T[T.length-1][1])return T[T.length-1][0];
+  let i=1;while(T[i][1]<lam)i++;
+  const a=T[i-1],b=T[i];return a[0]+(b[0]-a[0])*(lam-a[1])/(b[1]-a[1]);
+}
+function lambdaFromIp(ip){
+  const T=LSU49_IP;if(ip<=T[0][0])return T[0][1];if(ip>=T[T.length-1][0])return 99;   // past the table: air
+  let i=1;while(T[i][0]<ip)i++;
+  const a=T[i-1],b=T[i];return a[1]+(b[1]-a[1])*(ip-a[0])/(b[0]-a[0]);
+}
+// ---- The closed fuel loop (trial) ----
+// A real ECU never holds lambda still. It reads the sensor late: the charge burns about one cycle after it is metered
+// (2 revs, 4-stroke), then the gas flows to the sensor, then the element answers. A narrowband sensor says only RICH or
+// LEAN, so the ECU jumps its trim (P) and ramps it (I) the other way until the sensor flips: a limit cycle, lambda a few
+// % either side of 1 and the voltage swinging ~0.1-0.9 V, ~1 Hz at idle and 2-3 Hz at cruise (Kiencke & Nielsen,
+// Automotive Control Systems, ch. 4). A wideband one gives lambda itself, so a PI on the error settles with no cycle.
+// O2_PIPE_VOL: valve-to-sensor volume, x displacement (probable: manifold + downpipe). O2_T_RATIO: exhaust over intake
+// temperature, ~900 K / 300 K (probable). O2_SENSOR_TAU: element response (probable: Bosch quotes < 100 ms for LSF/LSU).
+// O2_P, O2_I: jump and ramp of a narrowband trim (probable: no maker publishes a calibration).
+// The narrowband element's own lag is on its voltage, slower falling than rising. Bosch LSF 4.2 (Bosch sensors catalogue
+// 2022, "Type LSF-4.2"): 600 -> 300 mV in < 125 ms, 300 -> 600 mV in < 60 ms. A first-order lag between this model's
+// ~850 and ~70 mV crosses those in 0.835 and 0.788 time constants, so tau <= 150 and <= 76 ms; the bounds are used.
+// The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
+// 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
+const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
+let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+function o2LoopActive(){
+  const s=engine.lambdaSensor;
+  return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
+    (s!=='wide'||obd.runS>=LSU_READY_S)&&
+    state.coolant>=70&&state.map<0.85*Math.max(1,wotMapAt(state.rpm));
+}
+function o2DeadTime(){
+  const rps=Math.max(5,state.rpm/60),Vd=engine.displacement_L;
+  const flow=Vd*rps*engine.chargesPerRev*Math.max(0.2,state.ve||0.8)*Math.max(0.2,state.map||0.4)*O2_T_RATIO;   // L/s of exhaust
+  return 1/(rps*engine.chargesPerRev)+O2_PIPE_VOL*Vd/flow;   // one cycle late, then the pipe
+}
+// The voltage the sensor sends now: the loop's own reading while it runs, else the gas at the sensor.
+function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambdaSensorMv(lam);}
+function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
+function o2LoopStep(dt){
+  const L=o2Loop;L.dt=dt;
+  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
+  L.t+=dt;
+  if(!L.hist.length)L.hist.push([L.t,L.seen]);
+  const dTime=o2DeadTime();let late=L.hist[0][1];
+  while(L.hist.length>1&&L.hist[1][0]<=L.t-dTime)L.hist.shift();
+  if(L.hist[0][0]<=L.t-dTime)late=L.hist[0][1];
+  L.seen+=(late-L.seen)*(1-Math.exp(-dt/O2_SENSOR_TAU));   // the element's own lag
+  if(engine.lambdaSensor==='narrow'){
+    const v=lambdaSensorMv(late);if(L.mv==null)L.mv=v;
+    L.mv+=(v-L.mv)*(1-Math.exp(-dt/(v<L.mv?O2_TAU_FALL:O2_TAU_RISE)));   // what the ECU reads
+    const side=L.mv>450?1:-1;                                // rich: lean it off
+    if(side!==L.side){L.trim+=side*O2_P;L.side=side;}
+    L.trim+=side*O2_I*dt;
+  }else{
+    // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
+    const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
+    const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
+    L.int=(L.int||0)+e*dt;
+    L.trim=-kc*(e+L.int/ti);
+  }
+  L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);
+  const lam=curAFR(state.rpm,liveMap())/engine.stoichAFR*(1+L.trim);L.hist.push([L.t,lam]);   // what this frame burns
+}
 // What the sensor says of the tune: +1 too lean, -1 too rich, 0 fine or not judged. Judged only where the ECU runs
 // closed loop: warm (70 C, as P0420) and below the band the factory map enriches in (85% of the full-load pressure,
 // baseFuelLambda). A narrowband sensor can only hold lambda 1, so a mixture set anywhere else there (the AFR slider, a
@@ -12282,8 +12385,12 @@ function updateLambdaTile(){
   if(s==='none'){V.textContent='—';U.textContent=tr('NO SENSOR');}
   else if(!run){V.textContent='—';U.textContent=tr(s==='wide'?'WIDEBAND':'NARROWBAND');}
   else{
-    if(s==='wide'){V.textContent=lam>9?tr('AIR'):Math.max(LAMBDA_WIDE_MIN,lam).toFixed(2);U.textContent='λ • '+tr('WIDEBAND');}
-    else{const mv=lambdaSensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
+    if(s==='wide'){
+      if(obd.runS<LSU_READY_S){V.textContent='—';U.textContent=tr('HEATING');}
+      else{const l=o2LoopActive()?o2Loop.seen:lam,ip=lambdaSensorIp(l);
+        V.textContent=l>9?tr('AIR'):lambdaFromIp(ip).toFixed(2);U.textContent='λ • '+ip.toFixed(2)+' mA • '+tr('WIDEBAND');}
+    }
+    else{const mv=o2SensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
     if(!state.fuelCut&&lambdaTrimFault(lam))cls=' warning';
   }
   el.className='stat'+cls;
@@ -34946,7 +35053,7 @@ function ecuLam(){return state.fuelCut||(typeof obdRunning==='function'&&!obdRun
 const ECU_SIG={
   ice:[['rpm','ENGINE SPEED','rpm',0,200,()=>state.rpm],['map','MANIFOLD PRESSURE','bar',2,0.1,()=>state.map||1],
     ['lam','LAMBDA','',2,0.05,()=>engine.stoichAFR?state.afr/engine.stoichAFR:1],['knock','KNOCK RISK','%',0,10,()=>state.knockRisk],
-    ['o2','O2 SENSOR','mV',0,50,()=>lambdaSensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
+    ['o2','O2 SENSOR','mV',0,50,()=>o2SensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
     ['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW],['clt','COOLANT','°C',0,5,()=>state.coolant]],
   ev:[['v','PACK VOLTAGE','V',0,10,()=>state.systemVoltage],['a','PACK CURRENT','A',0,10,()=>state.battI],
     ['wind','WINDING TEMP','°C',0,5,()=>state.mT?state.mT.w:0],['soc','CHARGE','%',0,2,()=>(state.soc||0)*100],
@@ -35482,7 +35589,8 @@ function loop(now){
   stepThermal(dt);
   stepEngine(dt);
   stepElectrical(dt);
-  updatePhysics();
+  o2LoopStep(dt);
+  o2Loop.live=true;try{updatePhysics();}finally{o2Loop.live=false;}   // only the live bench feels the loop
   stepWear(dt);
   obdStep(dt);
   if(dynoSweep&&engine){

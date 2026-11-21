@@ -67,6 +67,80 @@ function lambdaSensorMv(lam){
   }
   return 1000*LAMBDA_NERNST*Math.log(0.21/Math.max(1e-40,p));
 }
+// The wideband's own output is its pump current, Ip. Bosch Motorsport, Lambda Sensor LSU 4.9 data sheet (69034379, 2026):
+// [Ip mA, lambda], monotonic from 0.65 to air; the ECU reads lambda back through the same table. Accuracy there:
+// 0.80 +/- 0.01, 1.016 +/- 0.007, 1.70 +/- 0.05. Its heater (same sheet) starts at 8.5 V and ramps at most 0.4 V/s to
+// 13 V, so the sensor is not ready for (13 - 8.5) / 0.4 = 11.25 s after start, plus a condensation phase the sheet leaves
+// to the application (not modelled).
+const LSU49_IP=[[-2.000,0.650],[-1.602,0.700],[-1.243,0.750],[-0.927,0.800],[-0.800,0.822],[-0.652,0.850],[-0.405,0.900],
+  [-0.183,0.950],[-0.106,0.970],[-0.040,0.990],[0,1.003],[0.015,1.010],[0.097,1.050],[0.193,1.100],[0.250,1.132],[0.329,1.179],
+  [0.671,1.429],[0.938,1.701],[1.150,1.990],[1.385,2.434],[1.700,3.413],[2.000,5.391],[2.150,7.506],[2.250,10.119]];
+const LSU_READY_S=(13-8.5)/0.4;
+function lambdaSensorIp(lam){
+  const T=LSU49_IP;if(lam<=T[0][1])return T[0][0];if(lam>=T[T.length-1][1])return T[T.length-1][0];
+  let i=1;while(T[i][1]<lam)i++;
+  const a=T[i-1],b=T[i];return a[0]+(b[0]-a[0])*(lam-a[1])/(b[1]-a[1]);
+}
+function lambdaFromIp(ip){
+  const T=LSU49_IP;if(ip<=T[0][0])return T[0][1];if(ip>=T[T.length-1][0])return 99;   // past the table: air
+  let i=1;while(T[i][0]<ip)i++;
+  const a=T[i-1],b=T[i];return a[1]+(b[1]-a[1])*(ip-a[0])/(b[0]-a[0]);
+}
+// ---- The closed fuel loop (trial) ----
+// A real ECU never holds lambda still. It reads the sensor late: the charge burns about one cycle after it is metered
+// (2 revs, 4-stroke), then the gas flows to the sensor, then the element answers. A narrowband sensor says only RICH or
+// LEAN, so the ECU jumps its trim (P) and ramps it (I) the other way until the sensor flips: a limit cycle, lambda a few
+// % either side of 1 and the voltage swinging ~0.1-0.9 V, ~1 Hz at idle and 2-3 Hz at cruise (Kiencke & Nielsen,
+// Automotive Control Systems, ch. 4). A wideband one gives lambda itself, so a PI on the error settles with no cycle.
+// O2_PIPE_VOL: valve-to-sensor volume, x displacement (probable: manifold + downpipe). O2_T_RATIO: exhaust over intake
+// temperature, ~900 K / 300 K (probable). O2_SENSOR_TAU: element response (probable: Bosch quotes < 100 ms for LSF/LSU).
+// O2_P, O2_I: jump and ramp of a narrowband trim (probable: no maker publishes a calibration).
+// The narrowband element's own lag is on its voltage, slower falling than rising. Bosch LSF 4.2 (Bosch sensors catalogue
+// 2022, "Type LSF-4.2"): 600 -> 300 mV in < 125 ms, 300 -> 600 mV in < 60 ms. A first-order lag between this model's
+// ~850 and ~70 mV crosses those in 0.835 and 0.788 time constants, so tau <= 150 and <= 76 ms; the bounds are used.
+// The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
+// 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
+const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
+let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+function o2LoopActive(){
+  const s=engine.lambdaSensor;
+  return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
+    (s!=='wide'||obd.runS>=LSU_READY_S)&&
+    state.coolant>=70&&state.map<0.85*Math.max(1,wotMapAt(state.rpm));
+}
+function o2DeadTime(){
+  const rps=Math.max(5,state.rpm/60),Vd=engine.displacement_L;
+  const flow=Vd*rps*engine.chargesPerRev*Math.max(0.2,state.ve||0.8)*Math.max(0.2,state.map||0.4)*O2_T_RATIO;   // L/s of exhaust
+  return 1/(rps*engine.chargesPerRev)+O2_PIPE_VOL*Vd/flow;   // one cycle late, then the pipe
+}
+// The voltage the sensor sends now: the loop's own reading while it runs, else the gas at the sensor.
+function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambdaSensorMv(lam);}
+function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
+function o2LoopStep(dt){
+  const L=o2Loop;L.dt=dt;
+  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
+  L.t+=dt;
+  if(!L.hist.length)L.hist.push([L.t,L.seen]);
+  const dTime=o2DeadTime();let late=L.hist[0][1];
+  while(L.hist.length>1&&L.hist[1][0]<=L.t-dTime)L.hist.shift();
+  if(L.hist[0][0]<=L.t-dTime)late=L.hist[0][1];
+  L.seen+=(late-L.seen)*(1-Math.exp(-dt/O2_SENSOR_TAU));   // the element's own lag
+  if(engine.lambdaSensor==='narrow'){
+    const v=lambdaSensorMv(late);if(L.mv==null)L.mv=v;
+    L.mv+=(v-L.mv)*(1-Math.exp(-dt/(v<L.mv?O2_TAU_FALL:O2_TAU_RISE)));   // what the ECU reads
+    const side=L.mv>450?1:-1;                                // rich: lean it off
+    if(side!==L.side){L.trim+=side*O2_P;L.side=side;}
+    L.trim+=side*O2_I*dt;
+  }else{
+    // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
+    const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
+    const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
+    L.int=(L.int||0)+e*dt;
+    L.trim=-kc*(e+L.int/ti);
+  }
+  L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);
+  const lam=curAFR(state.rpm,liveMap())/engine.stoichAFR*(1+L.trim);L.hist.push([L.t,lam]);   // what this frame burns
+}
 // What the sensor says of the tune: +1 too lean, -1 too rich, 0 fine or not judged. Judged only where the ECU runs
 // closed loop: warm (70 C, as P0420) and below the band the factory map enriches in (85% of the full-load pressure,
 // baseFuelLambda). A narrowband sensor can only hold lambda 1, so a mixture set anywhere else there (the AFR slider, a
@@ -92,8 +166,12 @@ function updateLambdaTile(){
   if(s==='none'){V.textContent='—';U.textContent=tr('NO SENSOR');}
   else if(!run){V.textContent='—';U.textContent=tr(s==='wide'?'WIDEBAND':'NARROWBAND');}
   else{
-    if(s==='wide'){V.textContent=lam>9?tr('AIR'):Math.max(LAMBDA_WIDE_MIN,lam).toFixed(2);U.textContent='λ • '+tr('WIDEBAND');}
-    else{const mv=lambdaSensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
+    if(s==='wide'){
+      if(obd.runS<LSU_READY_S){V.textContent='—';U.textContent=tr('HEATING');}
+      else{const l=o2LoopActive()?o2Loop.seen:lam,ip=lambdaSensorIp(l);
+        V.textContent=l>9?tr('AIR'):lambdaFromIp(ip).toFixed(2);U.textContent='λ • '+ip.toFixed(2)+' mA • '+tr('WIDEBAND');}
+    }
+    else{const mv=o2SensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
     if(!state.fuelCut&&lambdaTrimFault(lam))cls=' warning';
   }
   el.className='stat'+cls;

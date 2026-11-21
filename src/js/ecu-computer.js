@@ -60,7 +60,7 @@ function ecuLam(){return state.fuelCut||(typeof obdRunning==='function'&&!obdRun
 const ECU_SIG={
   ice:[['rpm','ENGINE SPEED','rpm',0,200,()=>state.rpm],['map','MANIFOLD PRESSURE','bar',2,0.1,()=>state.map||1],
     ['lam','LAMBDA','',2,0.05,()=>engine.stoichAFR?state.afr/engine.stoichAFR:1],['knock','KNOCK RISK','%',0,10,()=>state.knockRisk],
-    ['o2','O2 SENSOR','mV',0,50,()=>lambdaSensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
+    ['o2','O2 SENSOR','mV',0,50,()=>o2SensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
     ['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW],['clt','COOLANT','°C',0,5,()=>state.coolant]],
   ev:[['v','PACK VOLTAGE','V',0,10,()=>state.systemVoltage],['a','PACK CURRENT','A',0,10,()=>state.battI],
     ['wind','WINDING TEMP','°C',0,5,()=>state.mT?state.mT.w:0],['soc','CHARGE','%',0,2,()=>(state.soc||0)*100],
