@@ -815,7 +815,7 @@ function simulateLapCore(key,opts){
     }
     state.iat=iat0;
   }
-  // A water-to-air charge cooler's heat soak on the lap (build W2A_BUILD). The curve was drawn with its loop at the air's
+  // A water-to-air charge cooler's heat soak on the lap (build 429). The curve was drawn with its loop at the air's
   // temperature; round the lap the loop warms where the charge pours heat in faster than the radiator gives it out.
   // Walk it (w2aLapSoak) at each point's revs, boost and the driver's throttle, scale the drive by the charge's density
   // there, and solve again; twice, as the turbo block does. Air-to-air cores have no loop and are left as they were.
@@ -989,7 +989,7 @@ function simulateLapCore(key,opts){
     replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice(),fadeR:fadeR.slice(),
       useF:Array.from(useF),useR:Array.from(useR),eb:Array.from(ebA),frB:Array.from(frB)},
     engBrakeUseMax:engUseMax,
-    // a water-to-air loop's temperature over the timed lap and the least share of the drive it left (build W2A_BUILD)
+    // a water-to-air loop's temperature over the timed lap and the least share of the drive it left (build 429)
     ...(icSoak?{icLoop:{T:Array.from(icSoak.T),tMax:Math.max(...icSoak.T),shareMin:Math.min(...icSoak.share)}}:{}),
     // the electric drive over the timed lap (build 180): its hottest, how much of the lap it was cut back, the energy
     // (only on an electric car's lap, so an engine's result is the object it always was)

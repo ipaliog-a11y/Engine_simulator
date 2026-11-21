@@ -1,4 +1,4 @@
-// The water-to-air charge cooler, the model (build W2A_BUILD; plans/v1-finish.md item 6).
+// The water-to-air charge cooler, the model (build 429; plans/v1-finish.md item 6).
 //
 // WHY THIS EXISTS. An intercooler part can now be cooled by a coolant loop: a core (charge to coolant), a pump and a
 // front radiator (coolant to air), each exchanger's effectiveness from its NTU, and the loop's temperature walked in time

@@ -219,7 +219,7 @@ function icEps(P,m){
   const UA=1/(1/icChargeUA(P,m)+1/A.UA),Cc=m*IC_CP,Ca=A.C,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
   return xfEps(NTU,Cr)*Cmin/Cc;
 }
-// ---- the water-to-air charge cooler (build W2A_BUILD; plans/v1-finish.md item 6) ----
+// ---- the water-to-air charge cooler (build 429; plans/v1-finish.md item 6) ----
 // The core in the charge path is cooled by a coolant loop: a pump drives the coolant through it and through a
 // low-temperature radiator at the front of the car, which gives the heat to the air. An intercooler part with
 // type 'water' is one; its w, h, d are the core's, fpi the radiator's cooling fins, and it adds the pump's flow
@@ -273,7 +273,7 @@ function w2aStep(L,a,Tw,Tc,Ta,dt){
   const Qin=a*(Tc-Tw),Qout=L.b*(Tw+Qin/L.Cw-Ta);
   return Tw+(Qin-Qout)*dt/L.mcp;
 }
-// The loop round a lap (build W2A_BUILD): pt(i) gives a point's time step dt, the charge flow there m (its throttle's
+// The loop round a lap (build 429): pt(i) gives a point's time step dt, the charge flow there m (its throttle's
 // share of the flat-out flow mFull) and the compressor's outlet Tc. A preparation lap from the air's temperature, then
 // the timed one; at each point the torque's share is the charge's density with the loop as it is there against the
 // cold loop the curve was drawn with: the same pressure, so (Tcold + 273) / (That + 273).
@@ -433,7 +433,7 @@ function normPart(p){
     housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
   if(p.kind==='intercooler')return {id,kind:'intercooler',name:String(p.name||'INTERCOOLER').slice(0,40),
     w:n(p.w,'w',600),h:n(p.h,'h',250),d:n(p.d,'d',75),fpi:n(p.fpi,'fpi',14),pipe_m:n(p.pipe_m,'pipe_m',3),
-    // a water-to-air core's loop (build W2A_BUILD); an air-to-air part stays as it was
+    // a water-to-air core's loop (build 429); an air-to-air part stays as it was
     ...(p.type==='water'?{type:'water',pump_lpm:n(p.pump_lpm,'pump_lpm',W2A_START.pump_lpm),loop_L:n(p.loop_L,'loop_L',W2A_START.loop_L),
       radW:n(p.radW,'radW',W2A_START.radW),radH:n(p.radH,'radH',W2A_START.radH),radD:n(p.radD,'radD',W2A_START.radD)}:{})};
   if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
@@ -638,7 +638,7 @@ function icReport(x){
     const sv=Object.assign({},state);Object.assign(state,{iat:25});
     const m=airFlowAt(r,map),tin=compOutletT(map,r),tout=effIAT(map,r);Object.assign(state,sv);
     Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,313)});
-    // a water-to-air loop (build W2A_BUILD): held flat out at peak power until it settles, in the same 25 C air
+    // a water-to-air loop (build 429): held flat out at peak power until it settles, in the same 25 C air
     const G=icGeom(e);
     if(G&&G.type==='water'){const L=w2aLoop(G,m),Q=L.Cc*L.steady*(tin-25);
       Object.assign(o,{water:true,steady:L.steady,toutSteady:tin-Q/L.Cc,loopT:25+Q/L.b-Q/L.Cw,tau:L.tau,kw:Q/1000});}

@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Water-to-air intercoolers, the model (build W2A_BUILD)
+### Water-to-air intercoolers, the model (build 429)
 
 - An intercooler part can now be **cooled by a coolant loop** (PARTS, INTERCOOLER: COOLED BY, or START FROM WATER-TO-AIR):
   the core, a pump's flow, the coolant in the loop and a front radiator's face and depth.
