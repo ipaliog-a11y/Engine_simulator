@@ -42,9 +42,13 @@ recorded numbers reports its range and the mean error against the real cars.
    *Build 426:* LS3 and LS7 on GM's cam cards (0.050" duration on the model's sin² lift law); LS3, Coyote and LT4 on
    their real valves; the LT4 a two-valve head. Peak hp LS3 +7.9 → +22.1%, LS7 +15.6 → +17.0%, Coyote −1.7 → +3.7%,
    LT4 −6.6 → −7.4% (mean 8.0 → 12.6%); torque mean 7.3 → 6.1%. Owner's ruling: test60 `KNOWN` gains the LS3 and Coyote
-   ('limiter'). Open: the model's missing top-end fade (LS3 and LS7 stay over 10%); a **top-end-fade model build is
-   added before group 8** (owner, build 426). No full cam card for the Coyote or LT4 (no separation found), no stock
-   runner length or plenum volume for any of the four, and all four keep an unsourced `exhaust:'sport'`.
+   ('limiter'). Open: the model's missing top-end fade (LS3 and LS7 stay over 10%; item 5b). No full cam card for
+   the Coyote or LT4 (no separation found), no stock runner length or plenum volume for any of the four, and all four keep an unsourced `exhaust:'sport'`.
+5b. **Top-end fade** (owner, build 426): the model's power keeps rising to the limiter on six engines (Hellcat, LS7, RS3
+   2.5 TFSI, BAC Mono Duratec, LS3, Coyote; test60 KNOWN 'limiter'). Derive the high-rpm loss from physics (friction
+   mean effective pressure against piston speed, e.g. Chen–Flynn / Patton–Nitschke–Heywood; valve-train and breathing
+   limits: port Mach index, valve float), no fitting. Report every engine's peak-power move; the KNOWN 'limiter'
+   entries should shrink.
 6. **Water-to-air intercoolers, the model** (decision 22; register B4). The charge-air cooler as a coolant loop: the
    core's effectiveness from its NTU (Kays & London), the pump's flow, the front low-temperature radiator, and the
    loop's heat soak in time on a lap. Effectiveness and pressure drop beside the air-to-air part (builds 255–256).
