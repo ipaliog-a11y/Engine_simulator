@@ -72,8 +72,10 @@ const HYB_ENGINE_PRESETS=[
   // The Nissan Qashqai e-POWER (2022; build 193, step 3.4): a series hybrid. The KR15DDT, a 1.5 turbo three (84 x 90.1 mm,
   // variable compression 8-14:1, the model's fixed 12:1 between them), 116 kW (158 PS), drives a generator only; a 140 kW /
   // 330 Nm motor drives the front wheels through one reduction, with a 2.1 kWh pack (Nissan; UK press release).
+  // Water-to-air (build 430): a water-cooled (air-to-water) intercooler with the TD03 turbo (Nissan KR engine,
+  // motorreviewer / Wikipedia, probable). Core, pump and radiator: the starting part's (probable).
   {cat:'Hybrid',name:'Nissan KR15DDT 1.5 VC-T + series (Qashqai e-POWER)',real:{hp:155.6,hpRpm:5000,tq:250,tqRpm:2400,motorKW:140,motorNm:330},
-   unsure:['stator','redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',
+   unsure:['stator','redline','compression','boost'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:3,bore_mm:84,stroke_mm:90.1,compression:12,redline:5600,intake:'turbo',boost_bar:0.4,turboSize:'small',intercooler:'water',
     injector:'direct',vvt:true,cam:'stock',valves:4,octane:95,airFilter:'stock',exhaust:'stock',cat:'stock',intakeSys:'efi',hyMode:'series',hyDeploy:'full',
     evMotorType:'pm',evRotorD:160,evStatorOD:241,evStack:100,evPoles:8,evTurns:23,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:14000,
     evInverter:'igbt',evAmps:450,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:2.1,evYear:2021}},

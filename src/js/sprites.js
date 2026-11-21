@@ -390,7 +390,7 @@ function drawEngineSprite(buf,e,t){
     if(e.intake!=='turbo'){buf.rect(top.x0-9,iy+3,6,2,dark);filterAt(top.x0-9,iy+4);}
   }
   // ---- forced induction ----
-  const icW=e.intake==='na'?0:e.intercooler==='large'?7:e.intercooler==='small'?5:0,icH=e.intercooler==='large'?24:14;
+  const icW=e.intake==='na'?0:e.intercooler==='large'||e.intercooler==='water'?7:e.intercooler==='small'?5:0,icH=e.intercooler==='large'?24:14;
   const icX=Math.max(right+8,112),icY=56-icH;
   if(icW){buf.rect(icX,icY,icW,icH,dark);for(let y=icY+1;y<icY+icH-1;y+=2)buf.rect(icX+1,y,icW-2,1,'#6a6a7a');}
   if(e.intake==='turbo'){

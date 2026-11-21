@@ -18,6 +18,29 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Water-to-air intercoolers, per car (build 430)
+
+`plans/v1-finish.md`, item 7. Seven presets whose makers fit a coolant-cooled charge cooler now carry the water-to-air
+core of build 429 (INTERCOOLER: WATER-TO-AIR, a factory choice on the engine page and in PARTS' START FROM).
+
+- **Which, with sources:** Hellcat (two coolant-cooled bricks under the blower, own pump and radiator); LT4 in the ZL1
+  (GM press release, 2014: dual coolant-to-air intercoolers in the blower housing); Ford GT 5.4 (Ford 4G7Z-8K226-AA with a
+  front heat exchanger; SAE 2004-01-1257); EA288 2.0 TDI (VW: intake manifold with a water-cooled charge-air cooler);
+  S55 in the M2 Competition and S63 in the X5 M (BMW's indirect charge-air cooling); KR15DDT in the Qashqai e-POWER
+  (water-cooled intercooler; probable). Sources beside each preset.
+- **Geometry:** no maker publishes core, pump or radiator sizes, so all seven take the part's starting values
+  (300 × 200 × 100 mm core, 20 L/min, 4 L, 600 × 300 × 30 mm radiator), marked probable. The core is grown for the
+  engine's flow by the factory rule (icFactoryGeom), as every factory core is: Hellcat 242, X5 M 238, ZL1 232 mm tall.
+- **Power (car, against the real figure):** Hellcat 717 → 670 hp (real 707), ZL1 602 → 580 (650), X5 M 552 → 532 (575),
+  M2 Competition 397 → 386 (410), Ford GT 526 → 571 (550; it had the small air core), Golf TDI 147 → 146 (148),
+  Qashqai 153 → 152 (155.6). Mean error of the seven: 3.2% → 5.3%.
+- **Lap (tech, s):** Hellcat +0.04, ZL1 +0.01, X5 M +0.30, M2 +0.00, Ford GT −0.02, Golf TDI +0.08, Qashqai +0.00.
+  Other cars move only in the race hashes they share with these.
+- **Left open:** the cores are the starting part, one brick, where the Hellcat, LT4 and S63 have two; real sizes would
+  move these numbers and are the likely cause of the lost power. Not moved for want of a maker's statement: McLaren
+  720S/750S, Urus, Giulia Quadrifoglio, Cayenne Turbo 958 (aftermarket coolers for some are water-to-air; the factory
+  type was not found). The 992 Turbo S, B48 (330e), EA888 (Golf GTI) and the rest are air-to-air.
+
 ### Water-to-air intercoolers, the model (build 429)
 
 - An intercooler part can now be **cooled by a coolant loop** (PARTS, INTERCOOLER: COOLED BY, or START FROM WATER-TO-AIR):

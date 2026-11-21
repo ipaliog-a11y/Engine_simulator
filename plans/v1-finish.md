@@ -63,6 +63,9 @@ recorded numbers reports its range and the mean error against the real cars.
    (a/Cc)/(1 + a/b − a/Cw), dyno on the cold loop, the lap walks the loop in time. No preset moved (fingerprint identical).
 7. **Water-to-air intercoolers, per car.** Each preset whose maker publishes a water-to-air charge cooler moves to the
    new part (the build lists which, with sources). Report each car's power and lap moves.
+   *Build 430:* seven presets moved (Hellcat, LT4, Ford GT 5.4, EA288 TDI, S55, S63, KR15DDT), each on the starting
+   part (probable; no maker publishes the loop). Peak hp −6.6% (Hellcat) to +8.6% (Ford GT); mean error 3.2 → 5.3%.
+   Open: real core and radiator sizes (two bricks on three of them); 720S/750S, Urus, Giulia QV, Cayenne 958 unverified.
 8. **`catRampTop`: a research build.** A measured back pressure for a catalyst brick and a silencer together (SAE
    papers, catalyst makers' flow data). If a source is found, the cat and silencer are derived and the entry closes;
    if not, the build says so and the owner rules (see questions).

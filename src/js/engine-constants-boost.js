@@ -246,7 +246,12 @@ const INTERCOOLER={
   // The quoted effectiveness each carried (0.62, 0.82) is retired (build 256): it comes from the core (icEps).
   none: {label:'NONE',      pipe:1.0,core:0.0},
   small:{label:'SMALL CORE',pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},
-  large:{label:'LARGE CORE',pipe:3.0,core:4.5,w:600,h:250,d:75,fpi:14}
+  large:{label:'LARGE CORE',pipe:3.0,core:4.5,w:600,h:250,d:75,fpi:14},
+  // water-to-air (build 430, plans/v1-finish.md item 7): the starting part of build 429 (W2A_START, src/js/parts.js),
+  // for the cars whose makers fit a coolant-cooled charge cooler. No maker publishes its core, pump or radiator, so
+  // every size here is probable: a 300 x 200 x 100 mm core by the throttle (0.8 m of pipe), 20 L/min, 4 L and a
+  // 600 x 300 x 30 mm radiator. The core is sized for the engine by the factory rule (icFactoryGeom), as the others are.
+  water:{label:'WATER-TO-AIR',type:'water',pipe:0.8,core:2.4,w:300,h:200,d:100,fpi:16,pump_lpm:20,loop_L:4,radW:600,radH:300,radD:30}
 };
 // Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
 // stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small

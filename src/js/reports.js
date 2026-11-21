@@ -9,7 +9,7 @@ function reportSpecRows(){
   const e=engine,d=e.displacement_L;
   const unit=e.type==='rotary'?e.cylinders+'-ROTOR':e.cylinders+'-CYL '+(LAYOUT_LABEL[e.layout]||'');
   let ind;
-  const ic=e.intercooler==='none'?', no intercooler':', '+(e.intercooler==='large'?'large':'small')+' intercooler';
+  const ic=e.intercooler==='none'?', no intercooler':', '+(e.intercooler==='large'?'large':e.intercooler==='water'?'water-to-air':'small')+' intercooler';
   if(e.intake==='na')ind='Naturally aspirated';
   else if(e.intake==='turbo')ind=(TURBO_CONFIG[e.turboConfig]||{label:''}).label+' turbo, '+e.turboSize+' frame @ '+e.boost_bar.toFixed(2)+' bar'+ic+(e.vgt?', variable geometry':'')+(e.antilag?', anti-lag':'');
   else ind=(SC_TYPE[e.scType]||{label:''}).label+' supercharger @ '+e.boost_bar.toFixed(2)+' bar'+ic;

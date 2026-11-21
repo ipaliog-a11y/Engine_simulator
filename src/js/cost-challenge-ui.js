@@ -16,7 +16,7 @@ function computeCost(){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
   }
   if(engine.intake!=='na'){
-    c+={none:0,small:450,large:950}[engine.intercooler]||0;
+    c+={none:0,small:450,large:950,water:950}[engine.intercooler]||0;   // water-to-air: as the large core (no price source)
     c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
   }
   c+={none:0,small:500,large:900}[engine.nitrous]||0;
@@ -136,7 +136,7 @@ function updateDesignSummary(){
   const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">'+tr('Note:')+' '+tr(LAYOUT_LABEL[engine.layout])+' '+tr('bank visuals are simplified for now.')+'</span>':'';
   const unitWord=engine.type==='rotary'?(engine.cylinders+tr('-ROTOR')):(engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]));
   let induction;
-  const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
+  const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':engine.intercooler==='water'?'W2A':'SM')+' IC)';
   if(engine.intake==='na')induction=tr('Naturally aspirated');
   else if(engine.intake==='turbo'){
     induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(boostHalfRpm())+' rpm';

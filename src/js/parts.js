@@ -247,7 +247,7 @@ const W2A_TUBE={hw:2.0,tp:0.4},W2A_RTUBE=1.5,W2A_AL=0.15,W2A_CL={rho:1065,cp:340
 const W2A_PITCH=IC_FIN.h+W2A_TUBE.hw+2*W2A_TUBE.tp,W2A_SIGMA=IC_FIN.h/W2A_PITCH*0.85;
 // A starting water-to-air part: a 300 x 200 x 100 mm core beside the throttle (0.8 m of charge pipe), a 20 L/min pump,
 // 4 L in the loop and a 600 x 300 x 30 mm radiator (sizes as sold for such kits: probable).
-const W2A_START={w:300,h:200,d:100,fpi:16,pipe_m:0.8,pump_lpm:20,loop_L:4,radW:600,radH:300,radD:30};
+const W2A_START=(W=>({w:W.w,h:W.h,d:W.d,fpi:W.fpi,pipe_m:W.pipe,pump_lpm:W.pump_lpm,loop_L:W.loop_L,radW:W.radW,radH:W.radH,radD:W.radD}))(INTERCOOLER.water);
 // The coolant's film conductance (W/K) over n parallel-plate tubes hi mm high inside, wide mm across the flow, long mm
 // along it, at a flow q m3/s.
 function w2aDuctUA(q,n,hi,wide,long){
@@ -304,7 +304,7 @@ function icDpBar(m,map){
   if(!(m>0)||engine.intake==='na')return 0;
   const d=icDp(engine,m,Math.max(1,map),313);return (d.core+d.pipe)/1e5;
 }
-const icClass=p=>icGrossL(p)<Math.sqrt(icGrossL(INTERCOOLER.small)*icGrossL(INTERCOOLER.large))?'small':'large';
+const icClass=p=>p.type==='water'?'water':icGrossL(p)<Math.sqrt(icGrossL(INTERCOOLER.small)*icGrossL(INTERCOOLER.large))?'small':'large';
 // The pressure drop through the core and its pipe at a charge flow m (kg/s), pressure pBar (absolute) and mean charge
 // temperature Tk. Core: the charge passages' offset-strip fins by Manglik & Bergles' correlation (Exp. Thermal Fluid
 // Sci. 10, 1995) on a typical bar-and-plate passage (2.5 mm pitch, 7 mm high, 0.2 mm fin, 3.2 mm strips: probable),
@@ -383,7 +383,7 @@ const PART_DEF={
   cam:    {field:'camPart',    cls:'cam',       select:'edCam',       def:'stock',valid:k=>!!CAM[k],       clsOf:camClass,
     label:k=>CAM[k].label,newName:'MY CAM',factory:['stock','sport','race','atkinson']},
   intercooler:{field:'icPart',cls:'intercooler',select:'edIntercooler',def:'large',valid:k=>!!INTERCOOLER[k],clsOf:icClass,
-    label:k=>INTERCOOLER[k].label,newName:'MY INTERCOOLER',factory:['small','large'],from:v=>v===true?'large':v===false?'none':v},
+    label:k=>INTERCOOLER[k].label,newName:'MY INTERCOOLER',factory:['small','large','water'],from:v=>v===true?'large':v===false?'none':v},
   head:   {field:'headPart',   cls:'valveSpring',select:'edSpring',    def:'stock',valid:k=>!!VALVE_SPRING[k],clsOf:headClass,
     label:k=>VALVE_SPRING[k].label,newName:'MY HEAD',factory:['stock','perf','race']},
   turbo:  {field:'turboPart',  cls:'turboSize', select:'edTurboSize', def:'medium',valid:k=>!!TURBO[k],    clsOf:turboClass,
@@ -671,7 +671,7 @@ function turboReport(x){
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
-  if(kind==='intercooler'&&key==='water')return normPart(Object.assign({kind,type:'water',name:tr('WATER-TO-AIR')},W2A_START));
+  if(kind==='intercooler'&&key==='water'){const F=icFactoryGeom(engine,'water');return normPart(Object.assign({kind,type:'water',name:tr('WATER-TO-AIR')},W2A_START,{h:F.h}));}
   if(kind==='intercooler'){const F=icFactoryGeom(engine,INTERCOOLER[key]&&INTERCOOLER[key].w?key:'large');
     return normPart({kind,name:tr(F.label),w:F.w,h:F.h,d:F.d,fpi:F.fpi,pipe_m:F.pipe});}
   // the head the engine has: its valve, the factory throat, and the springs of that step as the maker sized them
