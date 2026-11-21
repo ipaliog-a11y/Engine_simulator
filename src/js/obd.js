@@ -90,7 +90,7 @@ function o2DeadTime(){
 }
 function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
 function o2LoopStep(dt){
-  const L=o2Loop;
+  const L=o2Loop;L.dt=dt;
   if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);return;}
   L.t+=dt;
   if(!L.hist.length)L.hist.push([L.t,L.seen]);

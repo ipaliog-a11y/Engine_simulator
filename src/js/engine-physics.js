@@ -1439,8 +1439,9 @@ function computeEmissions(){
     const hot=state.coolant<50?0.3:1;
     oxEff=engine.catConv*hot;pmEff=engine.catConv*hot;redEff=(engine.cat==='stock'?0.9:0)*hot;
   }else{
-    const w=Math.exp(-Math.pow((lam-1.0)/0.02,2));
-    const leanO2=clamp((lam-1.0)/0.05,0,1),richRed=clamp((1.0-lam)/0.05,0,1),litoff=state.coolant<50?0.25:1;
+    const lc=catStoreLambda(lam,burn,y,z);   // the mixture the converter acts on, after its oxygen storage
+    const w=Math.exp(-Math.pow((lc-1.0)/0.02,2));
+    const leanO2=clamp((lc-1.0)/0.05,0,1),richRed=clamp((1.0-lc)/0.05,0,1),litoff=state.coolant<50?0.25:1;
     oxEff=engine.catConv*litoff*Math.max(w,leanO2*0.85);
     redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
   }
@@ -1460,6 +1461,30 @@ function computeEmissions(){
   if(engine.ci)state.emRating=Math.round(clamp(100-(coBad*14+hcBad*12+noxBad*36+pmBad*34),0,100));
   else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
+}
+// The catalyst's oxygen storage (trial). Its ceria gives up oxygen (2 CeO2 -> Ce2O3 + 1/2 O2) when the gas is rich and
+// takes it back when lean, so a converter fed a mixture swinging a few % about lambda 1 sees close to lambda 1 until the
+// store runs full or empty. Storage and release go as the free and the filled share of the store (Brandt, Wang &
+// Grizzle, IEEE TCST 8(5), 2000). Capacity: ~30 g of CeO2 per litre of brick (probable: a 150-200 g/L washcoat, about
+// a fifth of it ceria), at most 0.25 mol O2 per mol CeO2 (1.39 g/L), of which ~30% takes part at a 1-3 Hz swing
+// (probable); a brick of the engine's swept volume (probable), scaled by the cat's conversion against the stock one's.
+// Only the live bench, where the closed loop swings the mixture, steps it; everywhere else it is lambda itself.
+const CAT_OSC_G_PER_L=30*(0.25*32/172.1)*0.3;   // ~0.42 g O2 per litre
+const CAT_OSC_CELLS=5;   // the brick in slices along the flow: it fills from the front, as a real one does
+function catStoreLambda(lam,burn,y,z){
+  const L=typeof o2Loop!=='undefined'?o2Loop:null;
+  if(!L||!L.live||!(L.dt>0)||!(engine.catConv>0)||state.coolant<50)return lam;
+  if(!Array.isArray(L.osc))L.osc=new Array(CAT_OSC_CELLS).fill(0.5);
+  const capMol=CAT_OSC_G_PER_L*engine.displacement_L*engine.catConv/0.97/32/CAT_OSC_CELLS;
+  const nC=burn*1000/(MW_C+y*MW_H+z*MW_O),aS=1+y/4-z/2;
+  let flux=(lam-1)*aS*nC;                                                 // mol/s of O2 over (+) or short of (-) stoichiometric
+  for(let i=0;i<CAT_OSC_CELLS;i++){
+    const share=flux>0?1-L.osc[i]:L.osc[i];                               // what this slice can still take, or still give
+    const take=flux*share;
+    L.osc[i]=clamp(L.osc[i]+take*L.dt/capMol,0,1);
+    flux-=take;
+  }
+  return 1+flux/(aS*nC);
 }
 function updatePhysics(){
   if(isElectric())return;   // the bench step does it (stepMotorBench)
