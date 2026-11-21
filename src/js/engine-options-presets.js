@@ -270,7 +270,7 @@ const ENGINE_VALVES={
   // Build 331 (owner's ruling): the LS7 takes its real valves although it lands 15.6% over its 505 hp; the gap is its
   // cam or intake, not the valves (named in the CHANGELOG).
   'GM LS7 (Corvette Z06 C6)':{iv:55.88,ev:40.89,src:'GM via Corvette Action Center, LS7 engine p.13: titanium intake 2.20 in, sodium exhaust 1.61 in'},
-  // Build 426 (plans/v1-finish.md item 5): the three V8s held back for their cams ship their valves on the owner's rule.
+  // Build 427 (plans/v1-finish.md item 5): the three V8s held back for their cams ship their valves on the owner's rule.
   'GM LS3 (Corvette C6)':{iv:55.0,ev:40.4,src:'GM: LS3 intake 2.165 in, exhaust 1.590 in'},
   'Ford Coyote 5.0 (Mustang GT 2018)':{iv:37.7,ev:32,src:'Ford Performance, Coyote Technical Reference (Gen 3): 37.7 / 32 mm'},
   'GM LT4 6.2 supercharged (Camaro ZL1)':{iv:54.1,ev:40.39,src:'GM parts 12650770 / 12678746: intake 2.13 in, exhaust 1.59 in'},
@@ -313,7 +313,7 @@ const ENGINE_VALVES={
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
-// A real engine's own cam card (build 426, plans/v1-finish.md item 5), in place of its factory class's duration, separation
+// A real engine's own cam card (build 427, plans/v1-finish.md item 5), in place of its factory class's duration, separation
 // and lift (CAM). d050: intake duration at 0.050 in of tappet lift, crank degrees; lift: intake valve lift, in; rocker:
 // the rocker ratio that lift is quoted at; lsa: lobe separation, degrees. The model's duration is seat to seat on its own
 // sin^2 lift law (intakeFill), so the card's 0.050 in is found on that law: lift(t) = L sin^2(pi t/dur) reaches h at

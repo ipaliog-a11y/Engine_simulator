@@ -1,4 +1,4 @@
-// A real engine's own cam card (build 426, plans/v1-finish.md item 5).
+// A real engine's own cam card (build 427, plans/v1-finish.md item 5).
 //
 // WHY THIS EXISTS. The LS3 and LS7 now run on their makers' cams (ENGINE_CAMS) in place of their class's, and the LS3,
 // LT4 and Coyote on their own valves. What must hold:

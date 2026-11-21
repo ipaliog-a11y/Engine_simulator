@@ -1,7 +1,7 @@
 // Workshop bays follow the open card.
 //
 // WHY THIS EXISTS. The engine preview was a dot grid, the same in every section. What must hold:
-//   · BUILD shows the workshop, TEST the garage and DRIVE the pit;
+//   · no picture strip under the mode bar (removed in build 419 at the owner's ask: it cost a phone screen of scroll);
 //   · switching an engine card changes the bay key and the preview is not empty;
 //   · VEHICLE has no drawn car beside its showroom picture (build 224's rule), and a phone width keeps a bay;
 //   · no page errors.
@@ -17,17 +17,8 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 await page.evaluate(() => { const t = document.getElementById('titleScreen'); if (t) t.hidden = true; });
 await page.waitForTimeout(300);
 
-const room = async () => page.evaluate(() => getComputedStyle(document.getElementById('modeRoom')).backgroundImage);
-await page.evaluate(() => setTab('design'));
-const buildRoom = await room();
-await page.evaluate(() => setTab('engine'));
-const testRoom = await room();
-await page.evaluate(() => setTab('track'));
-const driveRoom = await room();
-console.log(buildRoom, testRoom, driveRoom);
-if (!/workshop-pickup/.test(buildRoom)) fails.push('BUILD has no workshop');
-if (!/garage-f355/.test(testRoom)) fails.push('TEST has no garage');
-if (!/pit-f355/.test(driveRoom)) fails.push('DRIVE has no pit');
+const strip = await page.evaluate(() => !!document.getElementById('modeRoom') || !!document.querySelector('.mode-room'));
+if (strip) fails.push('the picture strip under the mode bar is back');
 
 await page.evaluate(() => setTab('design'));
 await page.waitForTimeout(250);

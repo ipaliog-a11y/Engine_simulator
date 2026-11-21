@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### The four V8s on their own cams and valves (build 426)
+### The four V8s on their own cams and valves (build 427)
 
 - The LS3 and LS7 run on their makers' cam cards in place of their class's cam (`ENGINE_CAMS`): LS3 204° at 0.050",
   0.551" on a 1.7 rocker, separation 117° (Summit Racing; Engine Tech's catalogue says 116°); LS7 211° at 0.050",
@@ -36,6 +36,12 @@ they are accurate about *what* shipped but not about the day it shipped.
   no separation, both cams phased) or the LT4 (189/223° at 0.050", 0.492/0.551", no separation). No stock runner
   length or plenum volume was found for any of the four. All four keep an unsourced `exhaust:'sport'`, and the Coyote
   an unsourced variable runner (its Gen 3 manifold has charge-motion valves, not two lengths).
+### No picture strip under the menus, a two-row top menu and a compact challenge card on phones (build 426)
+
+- The picture strip under the BUILD / TEST / DRIVE bar (workshop, garage, pit) is gone in every mode. The title screen keeps its pictures.
+- On a phone (≤900 px wide) the top strip is two short rows: engine | car, then FILE · GUIDE · OPTIONS · MENU. The ENGINE and CAR labels are dropped there, and MENU no longer runs off the right edge.
+- On a phone the challenge result shows three smaller tiles to a row instead of two: 12 tiles take 4 rows, not 6.
+- `test240` now checks that the strip stays gone, instead of checking its pictures.
 
 ### Sixteen more real engines get their own valves (build 425)
 

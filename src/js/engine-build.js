@@ -60,7 +60,7 @@ function readEngineFromForm(){
   // Change either on the form and the head is no longer that maker's, so the packing rule sizes the valves again.
   {const m=/^([\d.]+)\/([\d.]+)@([\d.]+)x(\d)$/.exec(g('edValveSpec').value||'');
    if(m&&Math.abs(+m[3]-e.bore_mm)<1e-6&&+m[4]===e.valves){e.ivValve_mm=+m[1];e.evValve_mm=+m[2];}}
-  // A real engine's own cam card (build 426) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
+  // A real engine's own cam card (build 427) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
   {const m=/^([\d.]+)\/([\d.]+)\/([\d.]+)@(\w+)$/.exec(g('edCamSpec').value||'');
    if(m&&!e.camPart&&m[4]===e.cam){e.camDur_deg=+m[1];e.camLsa_deg=+m[2];e.camLift_mm=+m[3];}}
   return e;

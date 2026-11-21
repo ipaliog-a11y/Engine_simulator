@@ -287,7 +287,7 @@ function turboClass(p){
 // The cam as the physics reads it: the factory cam's, or a designed one's dimensions over its class's fitted grades.
 function camSpec(e){
   const F=CAM[e.cam]||CAM.stock,P=e.camPart;
-  if(!P)return e.camDur_deg>0?Object.assign({},F,{dur:e.camDur_deg,lsa:e.camLsa_deg,lift_mm:e.camLift_mm}):F;   // a real engine's card (build 426)
+  if(!P)return e.camDur_deg>0?Object.assign({},F,{dur:e.camDur_deg,lsa:e.camLsa_deg,lift_mm:e.camLift_mm}):F;   // a real engine's card (build 427)
   return Object.assign({},F,{dur:P.dur,lsa:P.lsa,accel:(CAM_PROFILE[P.profile]||CAM_PROFILE.gentle).accel,lift_mm:P.lift_mm,vvtMax:P.vvt_deg});
 }
 // Each kind: the engine field that carries the part, the field that carries the factory class, the ENGINE tab's select.
