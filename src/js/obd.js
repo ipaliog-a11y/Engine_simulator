@@ -67,6 +67,51 @@ function lambdaSensorMv(lam){
   }
   return 1000*LAMBDA_NERNST*Math.log(0.21/Math.max(1e-40,p));
 }
+// ---- The closed fuel loop (trial) ----
+// A real ECU never holds lambda still. It reads the sensor late: the charge burns about one cycle after it is metered
+// (2 revs, 4-stroke), then the gas flows to the sensor, then the element answers. A narrowband sensor says only RICH or
+// LEAN, so the ECU jumps its trim (P) and ramps it (I) the other way until the sensor flips: a limit cycle, lambda a few
+// % either side of 1 and the voltage swinging ~0.1-0.9 V, ~1 Hz at idle and 2-3 Hz at cruise (Kiencke & Nielsen,
+// Automotive Control Systems, ch. 4). A wideband one gives lambda itself, so a PI on the error settles with no cycle.
+// O2_PIPE_VOL: valve-to-sensor volume, x displacement (probable: manifold + downpipe). O2_T_RATIO: exhaust over intake
+// temperature, ~900 K / 300 K (probable). O2_SENSOR_TAU: element response (probable: Bosch quotes < 100 ms for LSF/LSU).
+// O2_P, O2_I: jump and ramp of a narrowband trim (probable: no maker publishes a calibration).
+const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25;
+let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+function o2LoopActive(){
+  const s=engine.lambdaSensor;
+  return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
+    state.coolant>=70&&state.map<0.85*Math.max(1,wotMapAt(state.rpm));
+}
+function o2DeadTime(){
+  const rps=Math.max(5,state.rpm/60),Vd=engine.displacement_L;
+  const flow=Vd*rps*engine.chargesPerRev*Math.max(0.2,state.ve||0.8)*Math.max(0.2,state.map||0.4)*O2_T_RATIO;   // L/s of exhaust
+  return 1/(rps*engine.chargesPerRev)+O2_PIPE_VOL*Vd/flow;   // one cycle late, then the pipe
+}
+function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
+function o2LoopStep(dt){
+  const L=o2Loop;
+  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);return;}
+  L.t+=dt;
+  if(!L.hist.length)L.hist.push([L.t,L.seen]);
+  const dTime=o2DeadTime();let late=L.hist[0][1];
+  while(L.hist.length>1&&L.hist[1][0]<=L.t-dTime)L.hist.shift();
+  if(L.hist[0][0]<=L.t-dTime)late=L.hist[0][1];
+  L.seen+=(late-L.seen)*(1-Math.exp(-dt/O2_SENSOR_TAU));   // the element's own lag
+  if(engine.lambdaSensor==='narrow'){
+    const side=lambdaSensorMv(L.seen)>450?1:-1;             // rich: lean it off
+    if(side!==L.side){L.trim+=side*O2_P;L.side=side;}
+    L.trim+=side*O2_I*dt;
+  }else{
+    // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
+    const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
+    const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=L.seen/target-1;
+    L.int=(L.int||0)+e*dt;
+    L.trim=-kc*(e+L.int/ti);
+  }
+  L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);
+  const lam=curAFR(state.rpm,liveMap())/engine.stoichAFR*(1+L.trim);L.hist.push([L.t,lam]);   // what this frame burns
+}
 // What the sensor says of the tune: +1 too lean, -1 too rich, 0 fine or not judged. Judged only where the ECU runs
 // closed loop: warm (70 C, as P0420) and below the band the factory map enriches in (85% of the full-load pressure,
 // baseFuelLambda). A narrowband sensor can only hold lambda 1, so a mixture set anywhere else there (the AFR slider, a

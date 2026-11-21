@@ -349,7 +349,8 @@ function loop(now){
   stepThermal(dt);
   stepEngine(dt);
   stepElectrical(dt);
-  updatePhysics();
+  o2LoopStep(dt);
+  o2Loop.live=true;try{updatePhysics();}finally{o2Loop.live=false;}   // only the live bench feels the loop
   stepWear(dt);
   obdStep(dt);
   if(dynoSweep&&engine){

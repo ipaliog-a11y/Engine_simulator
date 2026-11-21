@@ -203,8 +203,9 @@ function mappedAFR(rpm,map){
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
 // (smoke, turbine temperature), whatever the map or the slider asks for.
+let o2Trim=1;   // the closed loop's live trim, set only while the live bench steps (updatePhysics)
 function curAFR(rpm,map){
-  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map)):state.afr;
+  const afr=engine.afrMode==='auto'?veMeteredAFR(rpm,map,mappedAFR(rpm,map))*o2Trim:state.afr;
   return engine.ci?Math.max(afr,engine.stoichAFR*dieselLambdaFloor(rpm)):afr;
 }
 // ---- Fuel-map visualiser: a load×RPM grid of the target AFR (shown when the mixture is AUTO) ----
@@ -1462,8 +1463,11 @@ function computeEmissions(){
 }
 function updatePhysics(){
   if(isElectric())return;   // the bench step does it (stepMotorBench)
-  if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
-  updateEnginePhysics();
+  o2Trim=o2LoopFactor();
+  try{
+    if(isHybrid())return hybUpdatePhysics(updateEnginePhysics);   // at the engine's own throttle, or off (build 190)
+    updateEnginePhysics();
+  }finally{o2Trim=1;}
 }
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
@@ -1475,7 +1479,7 @@ function updateEnginePhysics(){
   const map=liveMap();
   // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
   // readout, fuel flow, emissions and wear all reflect the mapped value.
-  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map));
+  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
     state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
@@ -1507,7 +1511,7 @@ function updateEnginePhysics(){
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
-  const key=[buildRev,state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
+  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));
