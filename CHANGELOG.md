@@ -18,6 +18,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The ECU's closed fuel loop, the catalyst's oxygen storage and the Bosch lambda sensors (build 430)
+
+- **The live bench now runs a closed loop.** The ECU reads its sensor late (one engine cycle, then the gas to the
+  sensor, then the element) and corrects. With a narrowband sensor it jumps and ramps its trim, so lambda swings about 1
+  and the voltage flips between ~100 and ~900 mV, as on a real car: 4A-GE at part load, lambda 0.993-1.013 at 2.5 Hz;
+  idle about 2 Hz. With a wideband sensor a PI settles on the map's target with no swing. Before, the tile sat at 450 mV.
+- **The catalyst stores oxygen** (ceria, five slices along the brick, Brandt, Wang & Grizzle 2000). Under the swing,
+  cruise CO is +7% over a steady lambda 1, HC and NOx within 1%; without the store it was 4-5x.
+- **Narrowband: Bosch LSF 4.2.** Its voltage lags 150 ms falling and 76 ms rising, from the sheet's switching times
+  (600-300 mV < 125 ms, 300-600 mV < 60 ms; Bosch sensors catalogue 2022). The model gives 52 mV at lambda 1.10 (sheet
+  50 +/- 30).
+- **Wideband: Bosch LSU 4.9.** The tile shows lambda and the pump current in mA, from the sheet's Ip table, and reads
+  HEATING for the first 11.25 s, the sheet's heater ramp (8.5 to 13 V at most 0.4 V/s).
+- **Nothing else moves:** the loop and the store run on the live bench only. The fingerprint is identical to main.
+- **Left open:** the narrowband reads 895 mV at lambda 0.97 against the sheet's 800 +/- 55 (a real electrode is not at
+  full equilibrium rich; not tuned). Its slower fall makes the loop run ~0.3% lean, which real ECUs offset with a rich
+  bias; there is no published value, so none is added. The trim's 1% jump and 5%/s ramp, the pipe volume, the exhaust
+  temperature ratio and the store's ~0.42 g O2 per litre are probable values, marked in the code. The LSU 4.9's
+  response time is not on its sheet (100 ms used). P0171/P0172 still judge the steady mixture, not the trim.
+  test207's wideband runs now last 12 s, past the heater's ready time.
+
 ### Water-to-air intercoolers, the model (build 429)
 
 - An intercooler part can now be **cooled by a coolant loop** (PARTS, INTERCOOLER: COOLED BY, or START FROM WATER-TO-AIR):
