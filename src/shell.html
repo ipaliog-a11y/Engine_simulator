@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 419</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 426</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -438,12 +438,7 @@
 <div class="field"><label for="vhSusp">SUSPENSION</label><select id="vhSusp"><option value="comfort">COMFORT</option><option value="sport">SPORT</option><option value="coilover">COILOVERS</option><option value="race">RACE/ADJUST</option></select></div>
 <div class="field"><label for="vhGeoF">FRONT GEOMETRY</label><select id="vhGeoF"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="solid">SOLID AXLE</option></select></div>
 <div class="field"><label for="vhGeoR">REAR GEOMETRY</label><select id="vhGeoR"><option value="strut">MACPHERSON STRUT</option><option value="wishbone">DOUBLE WISHBONE</option><option value="multilink">MULTI-LINK</option><option value="twist">TWIST BEAM</option><option value="solid">SOLID AXLE</option></select></div>
-<div class="field"><label for="vhSpringF">FRONT SPRINGS</label><select id="vhSpringF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhSpringR">REAR SPRINGS</label><select id="vhSpringR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhBarF">FRONT ANTI-ROLL BAR</label><select id="vhBarF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhBarR">REAR ANTI-ROLL BAR</label><select id="vhBarR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhDamperF">FRONT DAMPERS</label><select id="vhDamperF"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
-<div class="field"><label for="vhDamperR">REAR DAMPERS</label><select id="vhDamperR"><option value="-2">SOFT −2</option><option value="-1">SOFT −1</option><option value="0" selected>STANDARD</option><option value="1">STIFF +1</option><option value="2">STIFF +2</option></select></div>
+<div class="field"><label for="vhSuspPart">SPRINGS, BARS &amp; DAMPERS</label><select id="vhSuspPart"><option value="kit">THE KIT'S</option></select></div>
 <div class="field"><label for="btnSusp">QUARTER CAR</label><button id="btnSusp" type="button">SUSPENSION CALCULATOR…</button></div>
 <div class="field"><label for="btnGG">GRIP</label><button id="btnGG" type="button">G-G DIAGRAM…</button></div>
 </div></section>
@@ -688,6 +683,46 @@
 <div class="part-guide" id="pyGuide"></div>
 <div class="part-chart"><div class="gw-leg" id="pyLegend"></div><canvas id="pyCanvas" role="img" aria-label="The aquaplaning speed and the tyre's stiffness against the cold pressure"></canvas></div>
 <div class="btn-row part-btns"><button type="button" id="pySave">SAVE PART</button><button type="button" id="pySaveFit">SAVE &amp; FIT</button></div>
+</div>
+<div id="partsSusp" hidden>
+<div class="design-section">My springs, bars and dampers</div>
+<div class="part-list" id="psList"></div>
+<div class="pick-row"><div class="field"><label for="psFrom">START FROM</label><select id="psFrom"><option value="kit">THE KIT'S, ON THIS CAR</option></select></div>
+<div class="field"><label>&nbsp;</label><button type="button" id="psNew">NEW SET</button><button type="button" id="psReset" title="Put the dimensions back to the kit's, keeping the name">RESET</button></div></div>
+<div class="hint">Fitted from the VEHICLE tab's SPRINGS, BARS &amp; DAMPERS, each axle's rates come from these dimensions in place of the kit's. A motion ratio is the part's travel over the wheel's.</div>
+<div class="design-grid">
+<div class="field"><label for="psName">NAME</label><input type="text" id="psName" maxlength="40"></div>
+</div>
+<div class="design-section">Front axle</div>
+<div class="design-grid">
+<div class="field"><label for="ps_wireDF_mm">WIRE (mm)</label><input type="number" id="ps_wireDF_mm" min="5" max="25" step="0.1"></div>
+<div class="field"><label for="ps_coilDF_mm">COIL, MEAN (mm)</label><input type="number" id="ps_coilDF_mm" min="40" max="250" step="1"></div>
+<div class="field"><label for="ps_coilsF">ACTIVE COILS</label><input type="number" id="ps_coilsF" min="2" max="20" step="0.1"></div>
+<div class="field"><label for="ps_mrF">SPRING MOTION RATIO</label><input type="number" id="ps_mrF" min="0.3" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_barDF_mm">BAR (mm, 0 NONE)</label><input type="number" id="ps_barDF_mm" min="0" max="45" step="0.1"></div>
+<div class="field"><label for="ps_barArmF_mm">BAR ARM (mm)</label><input type="number" id="ps_barArmF_mm" min="80" max="400" step="1"></div>
+<div class="field"><label for="ps_barLF_mm">BAR LENGTH (mm)</label><input type="number" id="ps_barLF_mm" min="300" max="1600" step="1"></div>
+<div class="field"><label for="ps_barMrF">BAR MOTION RATIO</label><input type="number" id="ps_barMrF" min="0.2" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_dampF">DAMPER, BOUND (N·s/m)</label><input type="number" id="ps_dampF" min="100" max="30000" step="10"></div>
+<div class="field"><label for="ps_rbF">REBOUND / BOUND</label><input type="number" id="ps_rbF" min="1" max="5" step="0.1"></div>
+</div>
+<div class="design-section">Rear axle</div>
+<div class="design-grid">
+<div class="field"><label for="ps_wireDR_mm">WIRE (mm)</label><input type="number" id="ps_wireDR_mm" min="5" max="25" step="0.1"></div>
+<div class="field"><label for="ps_coilDR_mm">COIL, MEAN (mm)</label><input type="number" id="ps_coilDR_mm" min="40" max="250" step="1"></div>
+<div class="field"><label for="ps_coilsR">ACTIVE COILS</label><input type="number" id="ps_coilsR" min="2" max="20" step="0.1"></div>
+<div class="field"><label for="ps_mrR">SPRING MOTION RATIO</label><input type="number" id="ps_mrR" min="0.3" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_barDR_mm">BAR (mm, 0 NONE)</label><input type="number" id="ps_barDR_mm" min="0" max="45" step="0.1"></div>
+<div class="field"><label for="ps_barArmR_mm">BAR ARM (mm)</label><input type="number" id="ps_barArmR_mm" min="80" max="400" step="1"></div>
+<div class="field"><label for="ps_barLR_mm">BAR LENGTH (mm)</label><input type="number" id="ps_barLR_mm" min="300" max="1600" step="1"></div>
+<div class="field"><label for="ps_barMrR">BAR MOTION RATIO</label><input type="number" id="ps_barMrR" min="0.2" max="1.2" step="0.01"></div>
+<div class="field"><label for="ps_dampR">DAMPER, BOUND (N·s/m)</label><input type="number" id="ps_dampR" min="100" max="30000" step="10"></div>
+<div class="field"><label for="ps_rbR">REBOUND / BOUND</label><input type="number" id="ps_rbR" min="1" max="5" step="0.1"></div>
+</div>
+<div class="design-section">On this car</div>
+<div class="part-guide" id="psGuide"></div>
+<div class="part-chart"><div class="gw-leg" id="psLegend"></div><canvas id="psCanvas" role="img" aria-label="Each axle's roll stiffness from its springs and bar, this part against the car now"></canvas></div>
+<div class="btn-row part-btns"><button type="button" id="psSave">SAVE PART</button><button type="button" id="psSaveFit">SAVE &amp; FIT</button></div>
 </div>
 </div>
 

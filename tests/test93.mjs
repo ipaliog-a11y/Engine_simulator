@@ -39,10 +39,11 @@ const r = await page.evaluate(() => {
   out.real = PRESETS.filter(p => p.engine.type === 'diesel' && p.real).map(p => { load(p.name);
     return { name: p.name, rated: p.real.hpRpm, gov: engine.govRpm, peak: engine.score.peakHPrpm, hp: engine.score.peakHP, real: p.real.hp, rl: engine.redline,
       tqMaxShare: tqAt(engine.redline) / engine.score.peakTQ }; });
-  // 3. off: the old curve (peak at the limiter for the Cummins, untouched below the rated speed)
-  // the ECU's boost taper is its own control (build 199 gave the Cummins one): off on both sides, so this sees the governor alone
-  load('Cummins', { taperRpm: 0 }); const onLow = tqAt(2000), onPeak = engine.score.peakHPrpm;
-  load('Cummins', { govRpm: 0, taperRpm: 0 }); out.off = { offPeak: engine.score.peakHPrpm, onPeak, onLow, offLow: tqAt(2000), rl: engine.redline };
+  // 3. off: the old curve (peak at the limiter, untouched below the rated speed). Build 425 (owner's ruling): on the EA288,
+  // a diesel still on the valve ratio; the Cummins's own valves (ENGINE_VALVES) now roll its ungoverned peak off at 3300
+  // of its 3500, and the 1GD-FTV's at 4100 of 4500. The ECU's boost taper is its own control: off on both sides.
+  load('EA288', { taperRpm: 0 }); const onLow = tqAt(2000), onPeak = engine.score.peakHPrpm;
+  load('EA288', { govRpm: 0, taperRpm: 0 }); out.off = { offPeak: engine.score.peakHPrpm, onPeak, onLow, offLow: tqAt(2000), rl: engine.redline };
   // 4. a diesel's field, and the save
   load('Cummins'); const sv = serializeBuild('t', ''); load('2JZ'); const petrolOff = document.getElementById('edGovRpm').disabled;
   applyBuild(JSON.parse(JSON.stringify(sv)));
@@ -69,8 +70,8 @@ for (const x of r.real) {
   if (!(Math.abs(x.tqMaxShare) < 0.005)) fails.push(`${x.name}: ${(x.tqMaxShare * 100).toFixed(0)}% of its torque at its governed maximum`);
 }
 
-console.log(`\n== off: Cummins peak at ${r.off.offPeak} rpm (on: ${r.off.onPeak}); at 2000 rpm ${r.off.offLow.toFixed(1)} / ${r.off.onLow.toFixed(1)} Nm ==`);
-if (!(r.off.offPeak >= r.off.rl - 100)) fails.push('with the governor off the Cummins does not make its peak at its limit again');
+console.log(`\n== off: EA288 peak at ${r.off.offPeak} rpm (on: ${r.off.onPeak}); at 2000 rpm ${r.off.offLow.toFixed(1)} / ${r.off.onLow.toFixed(1)} Nm ==`);
+if (!(r.off.offPeak >= r.off.rl - 100)) fails.push('with the governor off the EA288 does not make its peak at its limit again');
 if (Math.abs(r.off.offLow - r.off.onLow) > 1e-6) fails.push('the governor changes the torque below the rated speed');
 console.log(`== the field: off on a petrol engine ${r.ui.petrolOff}, on on a diesel ${r.ui.dieselOn}, saved ${r.ui.saved} ==`);
 if (!r.ui.petrolOff || !r.ui.dieselOn || r.ui.saved !== 2800) fails.push('the rated-speed field is not a diesel\'s, or does not survive a save');

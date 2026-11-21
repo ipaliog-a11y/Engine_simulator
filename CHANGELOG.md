@@ -18,12 +18,144 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### No picture strip under the menus, a two-row top menu and a compact challenge card on phones (build 419)
+### No picture strip under the menus, a two-row top menu and a compact challenge card on phones (build 426)
 
 - The picture strip under the BUILD / TEST / DRIVE bar (workshop, garage, pit) is gone in every mode. The title screen keeps its pictures.
 - On a phone (≤900 px wide) the top strip is two short rows: engine | car, then FILE · GUIDE · OPTIONS · MENU. The ENGINE and CAR labels are dropped there, and MENU no longer runs off the right edge.
 - On a phone the challenge result shows three smaller tiles to a row instead of two: 12 tiles take 4 rows, not 6.
 - `test240` now checks that the strip stays gone, instead of checking its pictures.
+
+### Sixteen more real engines get their own valves (build 425)
+
+`plans/v1-finish.md`, group 1, valves batch 2 of 4 (register `EV_RATIO`). 43 of 93 engines are now sourced.
+
+- **Sources:** the LT6 (GM, via The Drive and Corvsport) and the Cummins 6.7 (MAHLE's OE-referenced exhaust valve). Stock-size replacement valves (std) for the Audi 2.5 TFSI, BMW B48, Lancia 831 and Ferrari F136. Marked `unsure`: Ford GT 5.4, 993 Turbo, 3.5 EcoBoost, Duratec 2.3 (Cosworth's head taken as stock), Duramax L5P, 2ZR-FXE, S63, both Huracán V10s (exhaust from a +1 mm part) and 1VD-FTV.
+- **All 16 ship** on the owner's rule; none held back.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | BMW B48 (330e) | 190 → 175 (182), −7.9% | 262 → 263 |
+  | Ford Duratec 2.3 (BAC Mono) | 253 → 263 (280), +4.0% | 247 → 249 |
+  | Lamborghini 5.2 V10 (Huracán LP610-4) | 547 → 565 (602), +3.3% | 546 → 545 |
+  | Lamborghini 5.2 V10 (Huracán STO) | 547 → 565 (631), +3.3% | 546 → 545 |
+  | Ford 5.4 SC (Ford GT) | 511 → 526 (550), +2.9% | 651 → 649 |
+  | Audi 2.5 TFSI (RS3 8V) | 387 → 397 (394), +2.6% | 482 → 473 |
+  | Cummins 6.7 (Ram HD) | 404 → 413 (400), +2.2% | 1098 → 1099 |
+  | Ferrari F136 (458) | 526 → 536 (562), +1.9% | 475 → 478 |
+  | BMW S63 (X5 M F85) | 558 → 552 (575), −1.1% | 746 → 744 |
+  | GM LT6 (Z06 C8) | 619 → 626 (670), +1.1% | 574 → 578 |
+  | Lancia 831 (Integrale Evo) | 204 → 206 (210), +1.0% | 327 → 326 |
+  | Porsche M64/60 (993 Turbo) | 425 → 421 (408), −0.9% | 564 → 566 |
+  | the other four (1VD-FTV, 3.5 EcoBoost, L5P, 2ZR-FXE) | within ±0.3% | within ±0.5% |
+
+  Mean error of the 16 against published figures: power 5.8% → 4.8%, torque 7.9% → 7.9%.
+- **Fingerprint:** only these 16 engines' cars move (0–100 at most −0.18 s, the Ram), plus lap hashes on 'tech' (the shared racing-line cache). The Prius's and 330e's fuel cycles move with their engines.
+- **test176** now also fails if `ENGINE_VALVES` lists fewer than 43 engines.
+- **Two known gaps added on the owner's ruling** (test60 `KNOWN`, shrink-only): the Audi 2.5 TFSI (RS3) and the Duratec 2.3 (BAC Mono) now peak at their limiters, 397 hp at 7000 rpm (published 394 at 5850) and 263 hp at 8000 (published 280 at 7700). It is the model's missing top-end fade, the same as the Hellcat and LS7 group.
+- **test93 (owner's ruling):** the governor-off check now runs on the EA288, a diesel still on the ratio, which peaks at its 4800 rpm limit. With its own valves the ungoverned Cummins rolls off at 3300 of 3500 rpm, and the 1GD-FTV at 4100 of 4500. The check itself is unchanged.
+- **Left on the ratio** (no usable source, or sources disagree): Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57; Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. The LS3, LT4 and Coyote stay held back for plan item 5.
+
+### Each real circuit's pit-lane length (build 424)
+
+- 20 of the 32 real circuits now race with their own pit lane, from pit-in to pit-out, in place of 400 m. Each is
+  cited beside its value in `src/js/race.js`. The sources are SRO and WEC briefings and TSL timing maps, pitpass,
+  and US tracks' published pit-road lengths. 13 are marked unsure (`RACE_PIT_LANE_UNSURE`).
+- The lanes run from Brands Hatch's 275 m to the Indianapolis pit lane's 690 m. Bahrain moves from 426 to 441 m (WEC
+  briefing). Spa takes F1's 653 m by the owner's ruling, because the game's Spa is the F1 layout. SRO's endurance
+  lane there, 994 m, would have cost a 911 GT3 30.4 s a stop, over `test182`'s 30 s limit, which stays.
+- Across every circuit a stop now costs a Civic Type R or a 911 GT3 11.2–31.4 s (was 11–19 s). The most is the 911 at
+  the Indianapolis oval, whose 690 m lane is past `test182`'s 30 s sanity limit; that test checks only Spa, Albert
+  Park and Ashdown. The guide's figure is updated. No race result in the fingerprint moves,
+  because its three-lap Spa race makes no stop. I found no real pit-loss figure to check against.
+- Open: 12 circuits have no source and keep 400 m: Shanghai, Mexico, Interlagos, Yas Marina, Hockenheim, Red Bull
+  Ring, Sochi, Moscow, Oschersleben, Norisring, VIR and Road Atlanta. FIA event notes draw the lane but give no
+  length. Seven values (Spa's alternative, Le Mans, Bahrain, Hungaroring, Catalunya, Silverstone, Brands Hatch) come
+  from briefings that refuse automated download, read only as a search index quotes them. Zandvoort's 385 m is from
+  2020, before its 2024 extension.
+
+### Five more overhang splits from the makers' own sheets (build 423)
+
+- Front and rear overhangs now come from the maker's sheet for five cars, each adding up with its wheelbase to the
+  car's length: Toyota Aygo 675/440 mm and GR86 860/830 mm (Toyota UK tech specs), Land Cruiser 200 930/1170 mm
+  (Toyota UK V8 press kit, 2008, same length and wheelbase), Hyundai Ioniq Hybrid 880/890 mm (Hyundai France press
+  information, 2016), Toyota Prius 950/889 mm (Toyota USA product information, preliminary, 2015). Each is cited
+  beside the value (`ovSrc`). Overhangs read from the side view: 78 → 73 (test171's budget lowered to match).
+- Still open: 73 cars. VW, Porsche, Ferrari, Lamborghini, Honda, Mazda, Suzuki, Ford, GM, Stellantis and Nissan
+  press data list length and wheelbase but no overhangs. BMW Canada's product guides list them for the X5 M
+  (906/1055) and M2 (on 4894 and 4476 mm North-American bodies, 14-15 mm longer than ours), so where the extra
+  length sits is unknown and they were not used.
+
+### Tyre sizes from the makers' sheets, and the two missing widths (build 422)
+
+Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
+
+- **Tyre sizes** (`CAR_DIMS`): 20 of the 26 cars that had no published size now carry one, with its source in a new
+  `tySrc`. Six come from the maker or the maker's catalogue and lose `unsure`: Alto Works (Suzuki sheet), AE86
+  (185/70R13, Toyota catalogue), S2000 (front 205/55R16, Honda factsheet), Murciélago LP640 (Lamborghini press
+  release), 911 Carrera RS 2.7 (185/70R15 and 215/60R15, Porsche media kit), Beat (155/65R13 and 165/60R14, Honda
+  catalogue). Fourteen are probable (fitment databases, dealers, period road tests) and stay `unsure`.
+- **Widths**: Radical SR3 RSX 1.799 m (dealer ad, topspeed.com), Ram 2500 2.019 m (autopadre.com, without mirrors).
+  Both are probable (`wSrc`, `unsure` w). `NO_WIDTH_KNOWN` is empty, and `test171`'s unsure budget goes from 37 to 33.
+- **Presets**: six cars' fits follow the sourced size: AE86, Diablo VT (17-inch, 335/35 rear), BAC Mono (205/45R17,
+  255/40R17), 911 RS 2.7, Beat (14-inch rear), Atom 3.5 (225/45R16 rear).
+- **Derived tables follow**: the light-roadster class's most common wheel is now 16-inch, not 15-inch (its six real
+  cars, `tools/class-medians.mjs`; no recorded number moves). `CAR_PRICE` was rerun with `tools/car-prices.mjs`: the
+  Diablo VT is −100, the BAC Mono +100 and the 911 RS −50.
+- **What moved** (fingerprint against build 421): only those six cars. 0–100 moves −1.0% to +1.1%, top speed −0.4% to
+  +4.8%, tech laps −1.0% to +1.2%. The mean error of their 12 real figures (0–100, top speed) goes from 7.66% to
+  8.44%. The owner ruled that the sourced sizes ship.
+- **Named gap**: the Beat's top speed goes from 157 to 165 km/h (real 140), because its sourced rear tyre is 14-inch,
+  not 13-inch. 0–100 gets worse on the AE86, Diablo VT, BAC Mono, Beat and Atom (by 0.6–1.4 points), and better on the
+  911 RS.
+- **Left open**: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf GTI Mk1 and Amarok (no source reached). E-Type and
+  Mustang 1965 came on cross-ply sizes (6.40-15, 6.95-14) that the size format can't hold. The Radical runs slicks
+  (200/580-15, 265/605-16).
+
+### test72 opens DRIVE before it taps RACE on a phone (build 421)
+
+- `test72` failed on `main`: its phone pass tapped RACE while TEST was the open section. Since build 394 the bar shows only the open section's tabs on every screen, so RACE (under DRIVE) is hidden there. That was on purpose; the app is fine.
+- The test now opens DRIVE first, as a person would. No change to the app; fingerprint identical.
+
+### Springs, anti-roll bars and dampers are a part, their rates from their dimensions (build 420)
+
+`plans/v1-finish.md` build 12; retires `SPRING_STEP/BAR_STEP/DAMPER_STEP` from the fitted register (4 open, from 6).
+
+- **A new part, SPRINGS, BARS & DAMPERS** (PARTS tab, fitted from the VEHICLE tab), in place of the six SOFT −2 … STIFF +2 steps. Per axle:
+  - coil spring: wire, mean coil diameter, active coils; k = G d⁴ / (8 D³ n), G 77.2 GPa (chrome-silicon wire, Shigley table 10-5);
+  - anti-roll bar: diameter, arm, length; roll stiffness (G π d⁴/32 / L)(MR t / a)², G 79.3 GPa (Shigley table A-5; Milliken, RCVD ch. 16);
+  - damper: its bound slope (N·s/m, a dyno's figure) and rebound over bound, which the stepped car now reads (build 364's 3:1 when unfitted);
+  - motion ratios for the spring/damper and the bar: each at the wheel by MR².
+- **Unfitted cars keep the kit's rates**, so nothing moves: no preset carries a published spring, bar or damper rate, and none carries the part. START FROM writes the kit's rates on this car as a part (a 100 mm coil of 8 coils, a 1000 mm bar on 200 mm arms, motion ratio 1, the wire and bar sized to the rate): fitted as it starts, it moves nothing (≤ 6e-6). These starting dimensions are not any real car's.
+- **Cost:** the part replaces both axles' springs, bars and dampers, $2000 (the old per-axle step prices).
+- **Saves:** a build saved with steps or the old ROLL BALANCE now loads on the kit.
+- **Tests updated in the open:** `test85`, `test95`, `test127` and `test128` fit the part (the kit's, scaled to the old steps) where they set steps; the same behaviours hold, the numbers unchanged. `test127`'s part costs $2000, not one axle's $350; `test95`'s old save loads on the kit, not as a front bar; the Greek checks of the removed selects are dropped (Greek paused). `test157` checks the new select. `test166`: OPEN 6 → 4, also dropping `TYRE_KZ`, which build 418 retired but left in the register (test166 failed on `main`).
+- **New `test256`:** the formulas, motion ratios, the stepped car's rebound ratio, SAVE & FIT, the kit's part moving nothing.
+- **Left open:** hollow bars, the bar arms' bending and the bushes' give, progressive and preloaded springs, the damper's valve itself (shims and blow-off: its curve is taken as straight), and a separate damper motion ratio.
+
+### Seventeen more real engines get their own valves (build 419)
+
+`plans/v1-finish.md`, group 1, valves batch 1 of 4 (register `EV_RATIO`). Each engine's intake and exhaust valve sizes are now taken from a source in place of the packing rule and 0.83 of the intake. That makes 27 of 93 engines sourced.
+
+- **Sources:** BMW S62 (BMW training manual), Hellcat (Dodge Garage), Viper 8.4 (Chrysler press kit), Rover K 1.8 (Freelander workshop manual), Ford 289 (CarTech) and Ford 2.3 EcoBoost (Ford Performance plus stock-size valves). K20A, C30A, VR38DETT, VG30DETT and XU9JA come from stock-size replacement valves (std). B16B, VQ37VHR, EA888, M156, Buick LC2 and M102 are marked `unsure`.
+- **Owner's ruling:** a sourced valve is used whichever way it moves the engine, and none is held back for its result. The Rover K and the 289 move more than 5%, both toward their published power.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | Rover K 1.8 (Elise S1) | 137 → 112 (118), −18.2% | 167 → 167 |
+  | Ford 289 (Mustang 1965) | 286 → 261 (225), −8.7% | 408 → 412 |
+  | VW EA888 (Golf GTI Mk7) | 217 → 225 (220), +3.7% | 348 → 348 |
+  | Dodge Hellcat | 692 → 717 (707), +3.6% | 997 → 998 |
+  | Dodge Viper 8.4 | 626 → 647 (600), +3.4% | 788 → 789 |
+  | Ford 2.3 EcoBoost | 346 → 335 (350), −3.2% | 494 → 495 |
+  | Nissan VQ37VHR | 341 → 332 (332), −2.6% | 378 → 378 |
+  | Honda K20A | 205 → 210 (245), +2.4% | 185 → 186 |
+  | Nissan VR38DETT | 546 → 543 (565), −0.5% | 666 → 673 |
+  | the other eight | within ±1% | within ±1% |
+
+  Mean error of the 17 against published figures: power 8.2% → 7.1%, torque 7.9% → 8.0%.
+- **Two known gaps added on the owner's ruling** (named lists, shrink-only). test60 `KNOWN`: the Hellcat's 'limiter', the same missing top-end fade as the LS7 group; it peaks at 6200 rpm against the published 6000. test76: the Golf GTI Mk7 at 711 °C at Spa, which fails if it runs any hotter; the extra 8 hp from its EA888 valves causes it. The 710 °C line stays for every other light car.
+- **test176** now uses the GR Yaris (G16E, still on the rule) as its example of an unlisted engine, since the Golf Mk7 is now sourced.
+- **Left on the ratio**, because no usable source was found or the sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
 
 ### Tyre pressure sets the tyre's stiffness, load capacity and grip (build 418)
 

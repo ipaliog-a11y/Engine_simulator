@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 419
+# PIXEL POWERTRAIN v0.8 build 426
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -206,7 +206,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   **tyres** (compound + width/profile/wheel diameter → grip &
   rolling radius), **aero** (front/rear/floor downforce vs drag), **brakes** (type + rotor size →
   stopping power & fade resistance), **suspension** (the setup's ride frequency and camber, each axle's
-  springs and anti-roll bar from soft to stiff, and each axle's own geometry: strut, double wishbone, multi-link,
+  springs, anti-roll bars and dampers, the kit's or a set designed on the PARTS tab from their dimensions,
+  and each axle's own geometry: strut, double wishbone, multi-link,
   twist beam or solid axle) and **weight reduction**.
   Your current engine is dropped in and the sim computes **0–100 km/h**, **400 / 800 / 1000 m**
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a

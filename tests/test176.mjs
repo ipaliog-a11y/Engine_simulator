@@ -11,8 +11,8 @@
 //   · the exhaust valve is the part's own (build 286): a wider one leaves the gas hotter, and a part saved without
 //     one takes 0.83 of its intake;
 //   · a real engine whose valves are sourced (ENGINE_VALVES, build 287) has them; they go when its bore changes and
-//     stay through a save; an engine not listed keeps the packing rule; every listed engine (build 330) reaches the
-//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule;
+//     stay through a save; an engine not listed (the GR Yaris's G16E) keeps the packing rule; every listed engine (build 330) reaches the
+//     engine of that name with its sizes, so a misspelt key cannot silently leave it on the rule (27 engines by build 419, 43 by build 425, and never fewer);
 //   · a port-timed engine is told a head of valves changes nothing.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -47,9 +47,10 @@ const r = await page.evaluate(() => {
   { const b = serializeBuild('t', ''); const bore = document.getElementById('edBore');
     bore.value = 88; buildEngine(); o.own.rebored = engine.ivDia_mm;
     applyBuild(JSON.parse(JSON.stringify(b))); o.own.back = [engine.ivDia_mm, engine.evDia_mm]; }
+  o.own.n = Object.keys(ENGINE_VALVES).length;
   o.own.miss = Object.entries(ENGINE_VALVES).filter(([n, v]) => { const c = FACTORY_CARS.find(c => c.engine === n);
     if (!c) return true; loadVehiclePreset(c); return engine.ivDia_mm !== v.iv || engine.evDia_mm !== v.ev; }).map(([n]) => n);
-  load('Golf GTI (Mk7'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
+  load('GR Yaris'); o.own.rule = [engine.ivDia_mm / engine.bore_mm, engine.evDia_mm / engine.ivDia_mm];
   // 2. the physics, on the M3
   load('BMW M3 (E46');
   const base = partFromFactory('stock', 'head'), R = x => headReport(Object.assign({}, base, x));
@@ -95,6 +96,7 @@ const rd = a => a.map(x => Math.round(x)).join(' / ');
 console.log(`== a real engine's own valves: M3 ${r.own.iv} / ${r.own.ev} mm; bored to 88 mm ${r.own.rebored.toFixed(2)} mm; after a save ${r.own.back.join(' / ')}; an unlisted engine ${r.own.rule.map(x => x.toFixed(2)).join(' of the bore, exhaust ')} of the intake ==`);
 if (r.own.iv !== 35 || r.own.ev !== 30.5) fails.push("the M3 does not have BMW's valves (35 / 30.5 mm)");
 console.log(`== ${'sourced engines that do not reach their valves'}: ${r.own.miss.length ? r.own.miss.join(', ') : 'none'} ==`);
+if (r.own.n < 43) fails.push(`ENGINE_VALVES lists ${r.own.n} engines, fewer than the 43 sourced by build 425`);
 if (r.own.miss.length) fails.push('ENGINE_VALVES entries that do not reach their engine: ' + r.own.miss.join(', '));
 if (Math.abs(r.own.rebored - 0.39 * 88) > 1e-9) fails.push('a head on another bore kept the old bore\'s valves');
 if (r.own.back[0] !== 35 || r.own.back[1] !== 30.5) fails.push('a saved build lost its real valves');

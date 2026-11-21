@@ -24,7 +24,17 @@ recorded numbers reports its range and the mean error against the real cars.
 1. **Valves, batch 1 of 4** (`EV_RATIO`). Each engine's intake and exhaust valve diameters from the maker, a workshop
    manual or a parts catalogue (10 of 93 sourced today). About 20 engines per build, the most-used first. Each build
    reports peak power and torque moves per engine. An engine with no source stays on the ratio and is listed.
+   *Build 419:* 17 engines sourced (27 of 93 now), all shipped on the owner's ruling (a sourced valve is used whichever
+   way it moves). Peak hp −18.2% (Rover K) to +3.7%; mean hp error of the 17: 8.2% → 7.1%, torque 7.9% → 8.0%. Left on the
+   ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
+   Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
 2. **Valves, batch 2 of 4.**
+   *Build 425:* 16 engines sourced (43 of 93 now), all shipped. Peak hp −7.9% (B48 in the 330e) to +4.0% (BAC Mono's
+   Duratec); mean hp error of the 16: 5.8% → 4.8%, torque 7.9% → 7.9%. Left on the ratio, no usable source found or sources
+   disagree: Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57;
+   Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. GM LS3, LT4 and Ford Coyote
+   stay held back for item 5. Owner's rulings: test60 `KNOWN` gains the RS3's 2.5 TFSI and the BAC Mono's Duratec ('limiter');
+   test93's governor-off check moves from the Cummins to the EA288, which is still on the ratio.
 3. **Valves, batch 3 of 4.**
 4. **Valves, batch 4 of 4.** The register entry closes when every engine is sourced or named.
 5. **The four V8s over 10%** (LS7, LS3, LT4, Coyote; decision 16): chase the cam timing and the intake, not the valves.
@@ -65,15 +75,29 @@ recorded numbers reports its range and the mean error against the real cars.
 12. **Spring, bar and damper rates from their parts** (`SPRING_STEP/BAR_STEP/DAMPER_STEP`). A coil spring's rate from
     wire diameter, coil diameter and active coils; a bar's from its diameter, arms and length; a damper's from its
     valve (the damper part's ratio, build 364). Presets keep their published rates where they exist.
+    *Build 420:* a SPRINGS, BARS & DAMPERS part replaces the six SOFT/STIFF steps: coil k = G d⁴/(8 D³ n), bar
+    (GJ/L)(MR t/a)², the damper's bound slope and rebound ratio, each at the wheel by MR². No preset carries a published
+    rate or the part, so unfitted cars keep the kit's and nothing moves (fingerprint identical). Open: hollow bars, arm
+    bending and bushes, progressive springs, the damper's valve (shims, blow-off).
 
 ## Group 7: data (sourcing only)
 
 13. **83 overhang splits** (front/rear overhang from the maker's dimension drawing), in one or two builds.
     *Build 416:* five splits from a same-body auto-data.net page (M3 E46, Golf TDI Mk7, 330d, 911 RS 2.7, 330e).
-    Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
-    build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
+    *Build 423:* five from the makers' own sheets (Aygo, Land Cruiser 200, GR86, Ioniq Hybrid, Prius), after ~1.5 h
+    of searching. Open: 73 cars. Most makers' press data (VW, Porsche, Ferrari, Lamborghini, Honda, Mazda, Suzuki,
+    Ford, GM, Stellantis, Nissan) gives length and wheelbase but no overhangs; BMW Canada's product guides give them
+    for the X5 M and M2, but on North-American bodies 14-15 mm longer, so they were not used.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
+    *Build 422:* 20 sizes sourced (6 from the maker, 14 probable), both widths (probable); six presets' fits follow,
+    and the Beat's top speed is a named gap (157→165 km/h, real 140). Open: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf
+    GTI Mk1, Amarok (unsourced), E-Type and Mustang 1965 (cross-ply sizes), Radical (slicks).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
+    *Build 424:* 20 of the 32 real circuits get a sourced lane (pit-in to pit-out), mostly from SRO and WEC briefings
+    and TSL timing maps; 13 are unsure. Spa takes F1's 653 m (owner's ruling; SRO's endurance lane is 994 m). Bahrain
+    426 -> 441 m. Open: shanghai, mexico, interlagos, yasmarina, hockenheim, spielberg, sochi, moscow, oschersleben,
+    norisring, vir, road_atlanta (no source; FIA event notes give no length), and seven SRO/WEC values read only as
+    quoted by a search index.
 
 ## Group 8: known gaps to rule on or close (after groups 1 and 2)
 
@@ -98,6 +122,8 @@ Then the owner checks the finish line and tags v1.0.
   move beyond the plan.
 - `test56`: the 13B's 90% boost at 3175 rpm (real ~3000; since build 290) stays a named gap until after v1.0
   (`SPOOL_KNOWN` in the test). Group 8's review build lists it.
+- Sourcing builds ship the sourced values with their gaps named, whichever way they move the numbers. They stop for
+  the owner only if a test needs a known-gap list widened or a limit loosened (build 422).
 - A build that lets the scope's signals be chosen and plots the simulated lambda sensor runs alongside.
 
 ## Open questions for the owner

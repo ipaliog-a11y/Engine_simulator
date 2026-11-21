@@ -45,6 +45,10 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
+  // build 425 (owner's ruling, valves batch 2): with their sourced valves these two peak at their limiters (RS3 397 hp at
+  // 7000, real 394 at 5850; BAC Mono 263 at 8000, real 280 at 7700): the model's missing top-end fade, as the Hellcat and LS7.
+  'Audi 2.5 TFSI (RS3 8V)': ['limiter'],
+  'Ford Duratec 2.3 Cosworth (BAC Mono)': ['limiter'],
   // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
   // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
   // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
@@ -78,6 +82,9 @@ const KNOWN = {
   'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)': ['limiter'],
   'BMW S14B23 (M3 E30)': ['limiter'],
   'Mercedes M102 2.3-16 (190E)': ['limiter'],
+  // build 419 (owner's ruling): the same missing top-end fade; with its sourced valves (Dodge Garage, 2.14 / 1.65 in) the
+  // Hellcat peaks at 6200 rpm against the published 6000 (717 hp vs 707)
+  'Dodge 6.2 Hellcat (Challenger SRT)': ['limiter'],
   'BMW S62 4.9 V8 (M5 E39)': ['limiter'],
   'Honda E07A MTREC (Beat)': ['limiter'],
   'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],

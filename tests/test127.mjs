@@ -13,8 +13,9 @@
 //   · on a lap: a perfectly smooth surface gives the old lap exactly; the Nordschleife (a public road) costs more
 //     than a smooth GP circuit; on the same racing line, dampers far too soft are slower than the kit's;
 //   · the 0-100, the braking and the skidpad do not change (a smooth test surface);
-//   · FRONT/REAR DAMPERS: off STANDARD they cost and make the car (modified), REFIT puts them back, a save keeps
-//     them, a save from before has none and gets the kit's; the summary and the guide say it, in Greek too.
+//   · dampers as a SPRINGS, BARS & DAMPERS part (build 419; until then FRONT/REAR DAMPERS steps): fitted they cost
+//     and make the car (modified), REFIT puts the kit's back, a save keeps the part, a save without one gets the kit's;
+//     the summary and the guide say it, in Greek too.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -36,7 +37,10 @@ const r = await page.evaluate(() => {
   // 1. the quarter car
   const kit = SUSPENSION[vehicle.suspension];
   o.q = { kit: vehicle.suspension, kitZeta: kit.zeta, zetaF: vehicle.zetaF, zetaR: vehicle.zetaR, hop: vehicle.hopHz };
-  set('vhDamperF', 1); o.q.step = vehicle.zetaF / o.q.zetaF; set('vhDamperF', 0);
+  // a part: the kit's, its dampers' bound slope scaled front and rear
+  const kitP = partFromFactory('kit', 'susp'), damped = (kF, kR) => Object.assign({}, kitP, { id: '', name: 'D' + kF + '/' + kR, dampF: kitP.dampF * kF, dampR: kitP.dampR * kR });
+  const dpart = (kF, kR) => set('vhSuspPart', 'part:' + ensurePart(damped(kF, kR)));
+  dpart(1.3, 1); o.q.step = vehicle.zetaF / o.q.zetaF; set('vhSuspPart', 'kit');
   const qF = quarterCar(vehicle, 'F');
   o.scale = { a: vehicle.roughF * Math.sqrt(8e-6 * 30), b: vehicle.roughF * Math.sqrt(32e-6 * 30), c: vehicle.roughF * Math.sqrt(8e-6 * 120) };
   // 2. the swing and the ride against the damping, and against the springs
@@ -58,29 +62,28 @@ const r = await page.evaluate(() => {
     nordSmooth: lap('nord', { line: nordLine, road: 0 }), nord: lap('nord', { line: nordLine }),
     roads: { mixed: trackRoad('mixed'), nord: trackRoad('nord'), cota: trackRoad('cota'), sakhir: trackRoad('sakhir') }
   };
-  // dampers far too soft (four steps under SOFT -2 is out of the menu's reach, so set directly), on the same line
-  const keep = [vehicle.damperF, vehicle.damperR];
-  const roughWith = st => { vehicle.damperF = vehicle.damperR = st; const a = quarterCoef(quarterCar(vehicle, 'F')), b = quarterCoef(quarterCar(vehicle, 'R')); vehicle.roughF = a.F; vehicle.roughR = b.F; };
+  // dampers far too soft (1.3^-6 of the kit's, under the part's limits, so set directly), on the same line
+  const roughWith = st => { vehicle.suspPart = st ? damped(1.3 ** st, 1.3 ** st) : null; const a = quarterCoef(quarterCar(vehicle, 'F')), b = quarterCoef(quarterCar(vehicle, 'R')); vehicle.roughF = a.F; vehicle.roughR = b.F; };
   roughWith(-6); o.lap.nordLoose = lap('nord', { line: nordLine });
   roughWith(0); o.lap.nordKit = lap('nord', { line: nordLine });
-  vehicle.damperF = keep[0]; vehicle.damperR = keep[1]; buildVehicle();
+  vehicle.suspPart = null; buildVehicle();
   // 5. the test surface
   const perf = () => { const a = simulateAccel(); return [a.t100, a.vmax, vehicle.brakeDecelCap, latMuEff(vehicle.mass * G, G)].map(x => +(+x).toFixed(6)).join('|'); };
-  const p0 = perf(); set('vhDamperF', -2); set('vhDamperR', 2); o.perfSame = perf() === p0;
+  const p0 = perf(); dpart(1 / 1.69, 1.69); o.perfSame = perf() === p0;
   // 6. the parts
   o.parts = { modified: !isFactoryFit(vehicle), cost: vehicle.cost };
-  set('vhDamperF', 0); set('vhDamperR', 0); o.parts.base = vehicle.cost; set('vhDamperR', 2); o.parts.one = vehicle.cost;
-  const saved = serializeBuild('t', ''); load('Golf GTI (Mk7'); applyBuild(saved);
-  o.parts.saved = { r: document.getElementById('vhDamperR').value, damperR: vehicle.damperR };
-  const old = JSON.parse(JSON.stringify(saved)); if (old.vehicle) { delete old.vehicle.damperF; delete old.vehicle.damperR; }
-  applyBuild(old); o.parts.old = { f: document.getElementById('vhDamperF').value, r: document.getElementById('vhDamperR').value, zeta: vehicle.zetaF };
-  set('vhDamperF', 1); document.getElementById('btnRefit').click();
-  o.parts.refit = document.getElementById('vhDamperF').value;
+  set('vhSuspPart', 'kit'); o.parts.base = vehicle.cost; dpart(1, 1.69); o.parts.one = vehicle.cost;
+  const want = vehicle.suspPart.dampR, saved = serializeBuild('t', ''); load('Golf GTI (Mk7'); applyBuild(saved);
+  o.parts.saved = { sel: document.getElementById('vhSuspPart').value.startsWith('part:'), same: !!vehicle.suspPart && vehicle.suspPart.dampR === want };
+  const old = JSON.parse(JSON.stringify(saved)); if (old.vehicle) delete old.vehicle.suspPart;
+  applyBuild(old); o.parts.old = { sel: document.getElementById('vhSuspPart').value, zeta: vehicle.zetaF };
+  dpart(1.3, 1); document.getElementById('btnRefit').click();
+  o.parts.refit = document.getElementById('vhSuspPart').value;
   // 7. the words
   setTab('vehicle'); updateVehicleSummary();
   o.summary = document.getElementById('vehicleSummary') ? document.getElementById('vehicleSummary').innerText : '';
   applyLang('el'); updateVehicleSummary(); setTab('guide'); showGuide('dampers');
-  o.el = { summary: document.getElementById('vehicleSummary') ? document.getElementById('vehicleSummary').innerText : '', label: document.querySelector('label[for="vhDamperF"]').textContent,
+  o.el = { summary: document.getElementById('vehicleSummary') ? document.getElementById('vehicleSummary').innerText : '', 
     guide: document.querySelector('#gp-dampers .guide-title').textContent };
   applyLang('en'); showGuide(null);
   return o;
@@ -89,8 +92,8 @@ await browser.close();
 
 const f = (x, d = 2) => (+x).toFixed(d), pc = x => f((x - 1) * 100, 3) + '%';
 console.log(`== quarter car: ${r.q.kit} kit at ${r.q.kitZeta} of critical; the car's ${f(r.q.zetaF)} / ${f(r.q.zetaR)}, a step x${f(r.q.step, 3)}; wheel hop ${f(r.q.hop, 1)} Hz ==`);
-if (Math.abs(r.q.zetaF - r.q.kitZeta) > 0.005 || Math.abs(r.q.zetaR - r.q.kitZeta) > 0.005) fails.push('the dampers are not at the kit\'s ratio at STANDARD');
-if (Math.abs(r.q.step - 1.3) > 0.005) fails.push(`a damper step is x${f(r.q.step, 3)}, not 1.3`);
+if (Math.abs(r.q.zetaF - r.q.kitZeta) > 0.005 || Math.abs(r.q.zetaR - r.q.kitZeta) > 0.005) fails.push('the dampers are not at the kit\'s ratio unfitted');
+if (Math.abs(r.q.step - 1.3) > 0.005) fails.push(`a part with 1.3x the kit's bound slope damps x${f(r.q.step, 3)}, not 1.3`);
 if (!(r.q.hop > 10 && r.q.hop < 16)) fails.push(`wheel hop at ${f(r.q.hop, 1)} Hz, outside a road car's 10-16`);
 const s4 = r.scale.b / r.scale.a, s4v = r.scale.c / r.scale.a;
 console.log(`== the swing: ${f(r.scale.a, 0)} N; 4x rougher x${f(s4, 3)}, 4x faster x${f(s4v, 3)} (both should be x2) ==`);
@@ -119,15 +122,15 @@ if (L.roads.nord !== 'road' || L.roads.cota !== 'bumpy' || L.roads.sakhir !== 's
 console.log(`== the 0-100, braking and skidpad with the dampers changed: ${r.perfSame ? 'unchanged' : 'MOVED'} ==`);
 if (!r.perfSame) fails.push('the dampers move the performance tests, which run on a smooth surface');
 console.log(`== parts: ${JSON.stringify(r.parts)} ==`);
-if (!r.parts.modified) fails.push('dampers off STANDARD do not make the car (modified)');
-if (r.parts.one - r.parts.base !== 350) fails.push(`one axle's dampers off STANDARD cost ${r.parts.one - r.parts.base}, not 350`);
-if (r.parts.saved.r !== '2' || r.parts.saved.damperR !== 2) fails.push('a save does not keep the dampers');
-if (r.parts.old.f !== '0' || r.parts.old.r !== '0') fails.push('a save from before build 216 does not get the kit\'s dampers');
-if (r.parts.refit !== '0') fails.push('REFIT does not put the dampers back');
+if (!r.parts.modified) fails.push('a SPRINGS, BARS & DAMPERS part does not make the car (modified)');
+if (r.parts.one - r.parts.base !== 2000) fails.push(`a SPRINGS, BARS & DAMPERS part costs ${r.parts.one - r.parts.base}, not 2000 (both axles' springs, bars and dampers)`);
+if (!r.parts.saved.sel || !r.parts.saved.same) fails.push('a save does not keep the part');
+if (r.parts.old.sel !== 'kit') fails.push('a save without the part does not get the kit\'s dampers');
+if (r.parts.refit !== 'kit') fails.push('REFIT does not put the kit\'s dampers back');
 console.log(`== summary: ${(r.summary.match(/Dampers[^\n]*/) || [''])[0]} ==`);
-console.log(`== Greek: ${r.el.label} · ${r.el.guide} · ${(r.el.summary.match(/Αμορτισέρ[^\n]*/) || [''])[0]} ==`);
+console.log(`== Greek: ${r.el.guide} · ${(r.el.summary.match(/Αμορτισέρ[^\n]*/) || [''])[0]} ==`);
 if (!/Dampers 0\.\d\d \/ 0\.\d\d of critical .*wheel hop \d+ Hz .*ride \d\.\d\d m\/s²/.test(r.summary)) fails.push('the summary does not show the damping, the wheel hop and the ride');
-if (!/ΑΜΟΡΤΙΣΕΡ/.test(r.el.label) || !/Αμορτισέρ/.test(r.el.guide) || !/Αμορτισέρ/.test(r.el.summary)) fails.push('the dampers are not in Greek');
+if (!/Αμορτισέρ/.test(r.el.guide) || !/Αμορτισέρ/.test(r.el.summary)) fails.push('the dampers are not in Greek');
 
 if (errors.length) console.log('ERRORS:\n  ' + errors.join('\n  '));
 if (fails.length) console.log('\nFAIL:\n  ' + fails.join('\n  '));
