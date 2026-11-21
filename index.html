@@ -12255,6 +12255,25 @@ function lambdaSensorMv(lam){
   }
   return 1000*LAMBDA_NERNST*Math.log(0.21/Math.max(1e-40,p));
 }
+// The wideband's own output is its pump current, Ip. Bosch Motorsport, Lambda Sensor LSU 4.9 data sheet (69034379, 2026):
+// [Ip mA, lambda], monotonic from 0.65 to air; the ECU reads lambda back through the same table. Accuracy there:
+// 0.80 +/- 0.01, 1.016 +/- 0.007, 1.70 +/- 0.05. Its heater (same sheet) starts at 8.5 V and ramps at most 0.4 V/s to
+// 13 V, so the sensor is not ready for (13 - 8.5) / 0.4 = 11.25 s after start, plus a condensation phase the sheet leaves
+// to the application (not modelled).
+const LSU49_IP=[[-2.000,0.650],[-1.602,0.700],[-1.243,0.750],[-0.927,0.800],[-0.800,0.822],[-0.652,0.850],[-0.405,0.900],
+  [-0.183,0.950],[-0.106,0.970],[-0.040,0.990],[0,1.003],[0.015,1.010],[0.097,1.050],[0.193,1.100],[0.250,1.132],[0.329,1.179],
+  [0.671,1.429],[0.938,1.701],[1.150,1.990],[1.385,2.434],[1.700,3.413],[2.000,5.391],[2.150,7.506],[2.250,10.119]];
+const LSU_READY_S=(13-8.5)/0.4;
+function lambdaSensorIp(lam){
+  const T=LSU49_IP;if(lam<=T[0][1])return T[0][0];if(lam>=T[T.length-1][1])return T[T.length-1][0];
+  let i=1;while(T[i][1]<lam)i++;
+  const a=T[i-1],b=T[i];return a[0]+(b[0]-a[0])*(lam-a[1])/(b[1]-a[1]);
+}
+function lambdaFromIp(ip){
+  const T=LSU49_IP;if(ip<=T[0][0])return T[0][1];if(ip>=T[T.length-1][0])return 99;   // past the table: air
+  let i=1;while(T[i][0]<ip)i++;
+  const a=T[i-1],b=T[i];return a[1]+(b[1]-a[1])*(ip-a[0])/(b[0]-a[0]);
+}
 // ---- The closed fuel loop (trial) ----
 // A real ECU never holds lambda still. It reads the sensor late: the charge burns about one cycle after it is metered
 // (2 revs, 4-stroke), then the gas flows to the sensor, then the element answers. A narrowband sensor says only RICH or
@@ -12274,6 +12293,7 @@ let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
 function o2LoopActive(){
   const s=engine.lambdaSensor;
   return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
+    (s!=='wide'||obd.runS>=LSU_READY_S)&&
     state.coolant>=70&&state.map<0.85*Math.max(1,wotMapAt(state.rpm));
 }
 function o2DeadTime(){
@@ -12302,7 +12322,7 @@ function o2LoopStep(dt){
   }else{
     // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
     const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
-    const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=L.seen/target-1;
+    const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
     L.int=(L.int||0)+e*dt;
     L.trim=-kc*(e+L.int/ti);
   }
@@ -12334,7 +12354,11 @@ function updateLambdaTile(){
   if(s==='none'){V.textContent='—';U.textContent=tr('NO SENSOR');}
   else if(!run){V.textContent='—';U.textContent=tr(s==='wide'?'WIDEBAND':'NARROWBAND');}
   else{
-    if(s==='wide'){V.textContent=lam>9?tr('AIR'):Math.max(LAMBDA_WIDE_MIN,lam).toFixed(2);U.textContent='λ • '+tr('WIDEBAND');}
+    if(s==='wide'){
+      if(obd.runS<LSU_READY_S){V.textContent='—';U.textContent=tr('HEATING');}
+      else{const l=o2LoopActive()?o2Loop.seen:lam,ip=lambdaSensorIp(l);
+        V.textContent=l>9?tr('AIR'):lambdaFromIp(ip).toFixed(2);U.textContent='λ • '+ip.toFixed(2)+' mA • '+tr('WIDEBAND');}
+    }
     else{const mv=o2SensorMv(lam);V.textContent=Math.round(mv);U.textContent='mV • '+tr(mv>455?'RICH':mv<445?'LEAN':'STOICH');}
     if(!state.fuelCut&&lambdaTrimFault(lam))cls=' warning';
   }

@@ -24,9 +24,9 @@ const r = await page.evaluate(() => {
   const load = over => applyBuild({ engine: Object.assign({}, base.engine, over), tune: Object.assign({}, STD_TUNE),
     vehicle: Object.assign({}, DEFAULT_VEHICLE), name: 'lambda' });
   // part load for 6 s: the codes stored, and the tile
-  const run = afr => {
+  const run = (afr, n = 120) => {
     obdReset(); state.coolant = 90; state.throttle = 0.3; state.load = 0.4; if (afr) state.afr = afr;
-    for (let i = 0; i < 120; i++) { stepEngine(0.05); updatePhysics(); obdStep(0.05); }
+    for (let i = 0; i < n; i++) { stepEngine(0.05); updatePhysics(); obdStep(0.05); }
     updateUI();
     const el = document.getElementById('statLambda');
     return { codes: Object.keys(obd.codes).filter(k => /P017/.test(k)).join(','), lam: +(state.afr / engine.stoichAFR).toFixed(3),
@@ -35,8 +35,8 @@ const r = await page.evaluate(() => {
   const o = {};
   load({ cat: 'stock', intakeSys: 'efi', injector: 'port', afrMode: 'auto' }); o.narrowKind = engine.lambdaSensor; o.narrowAuto = run();
   load({ cat: 'stock', intakeSys: 'efi', injector: 'port', afrMode: 'fixed' }); o.rich = run(12.5); o.lean = run(16.5); o.stoich = run(14.7);
-  load({ cat: 'stock', intakeSys: 'efi', injector: 'direct', afrMode: 'auto' }); o.wideKind = engine.lambdaSensor; o.wideAuto = run();
-  load({ cat: 'stock', intakeSys: 'efi', injector: 'direct', afrMode: 'fixed' }); o.wideLean = run(16.5);
+  load({ cat: 'stock', intakeSys: 'efi', injector: 'direct', afrMode: 'auto' }); o.wideKind = engine.lambdaSensor; o.wideHeat = run(); o.wideAuto = run(0, 240);   // the LSU 4.9 heater: ready at 11.25 s
+  load({ cat: 'stock', intakeSys: 'efi', injector: 'direct', afrMode: 'fixed' }); o.wideLean = run(16.5, 240);
   load({ cat: 'none', intakeSys: 'efi', injector: 'port', afrMode: 'fixed' }); o.noneKind = engine.lambdaSensor; o.none = run(12.5);
   load({ cat: 'stock', intakeSys: 'carb2' }); o.carbKind = engine.lambdaSensor;
   const d = FACTORY_ENGINES.find(p => p.engine.type === 'diesel'); applyBuild({ engine: Object.assign({}, d.engine), tune: Object.assign({}, STD_TUNE), vehicle: Object.assign({}, DEFAULT_VEHICLE), name: d.name });
@@ -56,6 +56,7 @@ show('no catalyst, AFR 12.5', r.none); show('diesel, factory map', r.diesel);
 if (r.narrowAuto.codes || r.stoich.codes || r.wideAuto.codes || r.diesel.codes) fails.push('a correct tune stores a mixture code');
 if (r.rich.codes !== 'P0172' || !r.rich.warn || !/mV/.test(r.rich.u) || !(+r.rich.v > 800)) fails.push('a narrowband engine run rich at part load does not store P0172 and read rich');
 if (r.lean.codes !== 'P0171' || !(+r.lean.v < 100)) fails.push('a narrowband engine run lean at part load does not store P0171 and read lean');
+if (!/HEATING/.test(r.wideHeat.u)) fails.push('a wideband sensor reads before its heater is ready');
 if (r.wideLean.codes || Math.abs(+r.wideLean.v - r.wideLean.lam) > 0.006 || !/λ/.test(r.wideLean.u)) fails.push('a wideband engine run lean does not read its lambda, or stores a code');
 if (r.none.codes || r.none.v !== '—') fails.push('an engine with no catalyst has a lambda reading or a mixture code');
 
