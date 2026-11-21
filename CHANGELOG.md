@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Five more overhang splits from the makers' own sheets (build 423)
+
+- Front and rear overhangs now come from the maker's sheet for five cars, each adding up with its wheelbase to the
+  car's length: Toyota Aygo 675/440 mm and GR86 860/830 mm (Toyota UK tech specs), Land Cruiser 200 930/1170 mm
+  (Toyota UK V8 press kit, 2008, same length and wheelbase), Hyundai Ioniq Hybrid 880/890 mm (Hyundai France press
+  information, 2016), Toyota Prius 950/889 mm (Toyota USA product information, preliminary, 2015). Each is cited
+  beside the value (`ovSrc`). Overhangs read from the side view: 78 → 73 (test171's budget lowered to match).
+- Still open: 73 cars. VW, Porsche, Ferrari, Lamborghini, Honda, Mazda, Suzuki, Ford, GM, Stellantis and Nissan
+  press data list length and wheelbase but no overhangs. BMW Canada's product guides list them for the X5 M
+  (906/1055) and M2 (on 4894 and 4476 mm North-American bodies, 14-15 mm longer than ours), so where the extra
+  length sits is unknown and they were not used.
+
 ### Tyre sizes from the makers' sheets, and the two missing widths (build 422)
 
 Group 7, build 14 of `plans/v1-finish.md` (`NO_WIDTH_KNOWN` closes).
