@@ -326,8 +326,9 @@ function raceCarModel(entry,key,opts){
 //   zandvoort 385   GT4 European Series briefing, Zandvoort 2020, D; unsure, the lane was lengthened for 2024
 //   sakhir    441   FIA WEC 8 Hours of Bahrain 2025 briefing notes, Q (was 426, a secondary preview, build 299)
 //   lemans    532.08 FIA WEC 24 Hours of Le Mans 2026 briefing notes, Q (533.5 in 2023's)
-//   spa       993.83 GT World Challenge Europe briefing notes, Spa 2019, Q: the long (endurance) lane, entry at T19,
-//                   exit at T4; F1's short lane is quoted at 653 m (oversteer48.com, a fan guide)
+//   spa       653   F1's lane (oversteer48.com, a fan guide), the owner's ruling: the game's Spa is the F1 GP layout.
+//                   The other layout's lane, SRO's long endurance one (pit-in at T19, pit-out at T4), is 993.83 m
+//                   (GT World Challenge Europe briefing notes, Spa 2019, Q)
 //   hungaro   365   GT World Challenge Europe briefing notes, Budapest 2019, Q
 //   catalunya 369   GT World Challenge Europe briefing, Barcelona, Q
 //   silverstone 335 GT World Challenge Europe briefing, Silverstone, Q
@@ -340,7 +341,7 @@ function raceCarModel(entry,key,opts){
 // interlagos (quoted at 380 m and 1140 m, by where it is measured from), yasmarina, hockenheim, spielberg, sochi, moscow,
 // oschersleben, norisring, vir, road_atlanta. These and every drawn circuit take `other`.
 const RACE_PIT_LANE={melbourne:281,montreal:405,suzuka:415.2,sepang:422.7,cota:509.3,nurgp:378.2,monza:418,laguna:375,
-  zandvoort:385,sakhir:441,lemans:532.08,spa:993.83,hungaro:365,catalunya:369,silverstone:335,brands:275,daytona:488,
+  zandvoort:385,sakhir:441,lemans:532.08,spa:653,hungaro:365,catalunya:369,silverstone:335,brands:275,daytona:488,
   indy:690,indy_road:690,lime_rock:307,other:400};
 const RACE_PIT_LANE_UNSURE=['montreal','zandvoort','sakhir','lemans','spa','hungaro','catalunya','silverstone','brands',
   'daytona','indy','indy_road','lime_rock'];

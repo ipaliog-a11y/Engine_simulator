@@ -18,6 +18,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Each real circuit's pit-lane length (build 424)
+
+- 20 of the 32 real circuits now race with their own pit lane, from pit-in to pit-out, in place of 400 m. Each is
+  cited beside its value in `src/js/race.js`. The sources are SRO and WEC briefings and TSL timing maps, pitpass,
+  and US tracks' published pit-road lengths. 13 are marked unsure (`RACE_PIT_LANE_UNSURE`).
+- The lanes run from Brands Hatch's 275 m to the Indianapolis pit lane's 690 m. Bahrain moves from 426 to 441 m (WEC
+  briefing). Spa takes F1's 653 m by the owner's ruling, because the game's Spa is the F1 layout. SRO's endurance
+  lane there, 994 m, would have cost a 911 GT3 30.4 s a stop, over `test182`'s 30 s limit, which stays.
+- Across every circuit a stop now costs a Civic Type R or a 911 GT3 11.2–31.4 s (was 11–19 s). The most is the 911 at
+  the Indianapolis oval, whose 690 m lane is past `test182`'s 30 s sanity limit; that test checks only Spa, Albert
+  Park and Ashdown. The guide's figure is updated. No race result in the fingerprint moves,
+  because its three-lap Spa race makes no stop. I found no real pit-loss figure to check against.
+- Open: 12 circuits have no source and keep 400 m: Shanghai, Mexico, Interlagos, Yas Marina, Hockenheim, Red Bull
+  Ring, Sochi, Moscow, Oschersleben, Norisring, VIR and Road Atlanta. FIA event notes draw the lane but give no
+  length. Seven values (Spa's alternative, Le Mans, Bahrain, Hungaroring, Catalunya, Silverstone, Brands Hatch) come
+  from briefings that refuse automated download, read only as a search index quotes them. Zandvoort's 385 m is from
+  2020, before its 2024 extension.
+
 ### Five more overhang splits from the makers' own sheets (build 423)
 
 - Front and rear overhangs now come from the maker's sheet for five cars, each adding up with its wheelbase to the

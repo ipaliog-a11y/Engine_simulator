@@ -882,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 423</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 424</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3361,7 +3361,7 @@ slip work (rising with <i>u</i>, the share of the tyre's grip in use) and rollin
 <b>Brakes</b> run the lap solver's rotor model (heat in from the braking power, convection and radiation out, the vanes pumping air) every step of the race, so their temperature carries from lap to lap; where the rotors fade, a braking zone runs to its apex as <i>v² = v<sub>apex</sub>² + (fade now / fade on the solved lap) · (v² − v<sub>apex</sub>²)</i>.
 </div>
 <div class="guide-limit" data-gk="raceLimit">
-Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car within a second behind loses 1.5% in the spray; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Physics, not rules: the tow is the drag a following car loses in the wake, measured on model vans in a wind tunnel (Zabat et al. 1995), turned into speed through the car's own power; dirty air is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner speed through the car's own downforce; the pit lane's cost is its length (400 m where no circuit's own is published) at a 60 km/h limit, against the car's own speed past it, its braking into the lane and its launch out of the box: 11–19 s for a Civic Type R or a 911 GT3. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
+Rules, not physics: refuelling at 2.5 L/s and 6 s for tyres; in the wet a car within a second behind loses 1.5% in the spray; defending costs 1% through the next corner; a late-braking move sticks with 0.4 + 2 · (grip difference) + 1.5 · (fade difference) + 0.3 · (aggression difference) − 0.15 against a defending car; a pass needs about 4 km/h more on a 12 m wide circuit (more on a narrower one); each lap is drawn up to 0.6% off the limit with a 1.2% chance of a mistake, more on tired tyres, faded brakes, in the wet and when pushing. When the rain comes and how fast a line dries are drawn from the seed. Cars share one racing line. The tyre temperature, window, wear and wet-grip constants are fitted to published ranges. Physics, not rules: the tow is the drag a following car loses in the wake, measured on model vans in a wind tunnel (Zabat et al. 1995), turned into speed through the car's own power; dirty air is the downforce lost behind a 2017-21 Formula 1 car (44% at 10 m, 35% at 20 m), turned into corner speed through the car's own downforce; the pit lane's cost is its length (the circuit's own, 275–690 m, from race briefings and timing maps for 20 real circuits; 400 m elsewhere) at a 60 km/h limit, against the car's own speed past it, its braking into the lane and its launch out of the box: 11–31 s for a Civic Type R or a 911 GT3, the most on the Indianapolis oval's long lane. Fuel is a flat-out driver's: over a lap at the limit the engines run at a lap-average BSFC of 265–325 g/kWh (25–31% efficient), on full throttle half the lap, and burn 19 L/100 km (an MX-5) to 71 (a Hellcat) at Spa. Owners report about the same for mid-size cars (an E46 M3 or a Civic Type R ~35 L/100 km on track) and 20–40% less for big-power cars, because they drive below the limit.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="tyres">Tyres &amp; grip</a> · <a data-gp="lapsolve">Solving a lap</a> · <a data-gp="brakes">Brakes &amp; fade</a> · <a data-gp="fuels">Fuels &amp; octane</a> · <a data-gp="champ">Championship</a></div>
@@ -17362,8 +17362,9 @@ function raceCarModel(entry,key,opts){
 //   zandvoort 385   GT4 European Series briefing, Zandvoort 2020, D; unsure, the lane was lengthened for 2024
 //   sakhir    441   FIA WEC 8 Hours of Bahrain 2025 briefing notes, Q (was 426, a secondary preview, build 299)
 //   lemans    532.08 FIA WEC 24 Hours of Le Mans 2026 briefing notes, Q (533.5 in 2023's)
-//   spa       993.83 GT World Challenge Europe briefing notes, Spa 2019, Q: the long (endurance) lane, entry at T19,
-//                   exit at T4; F1's short lane is quoted at 653 m (oversteer48.com, a fan guide)
+//   spa       653   F1's lane (oversteer48.com, a fan guide), the owner's ruling: the game's Spa is the F1 GP layout.
+//                   The other layout's lane, SRO's long endurance one (pit-in at T19, pit-out at T4), is 993.83 m
+//                   (GT World Challenge Europe briefing notes, Spa 2019, Q)
 //   hungaro   365   GT World Challenge Europe briefing notes, Budapest 2019, Q
 //   catalunya 369   GT World Challenge Europe briefing, Barcelona, Q
 //   silverstone 335 GT World Challenge Europe briefing, Silverstone, Q
@@ -17376,7 +17377,7 @@ function raceCarModel(entry,key,opts){
 // interlagos (quoted at 380 m and 1140 m, by where it is measured from), yasmarina, hockenheim, spielberg, sochi, moscow,
 // oschersleben, norisring, vir, road_atlanta. These and every drawn circuit take `other`.
 const RACE_PIT_LANE={melbourne:281,montreal:405,suzuka:415.2,sepang:422.7,cota:509.3,nurgp:378.2,monza:418,laguna:375,
-  zandvoort:385,sakhir:441,lemans:532.08,spa:993.83,hungaro:365,catalunya:369,silverstone:335,brands:275,daytona:488,
+  zandvoort:385,sakhir:441,lemans:532.08,spa:653,hungaro:365,catalunya:369,silverstone:335,brands:275,daytona:488,
   indy:690,indy_road:690,lime_rock:307,other:400};
 const RACE_PIT_LANE_UNSURE=['montreal','zandvoort','sakhir','lemans','spa','hungaro','catalunya','silverstone','brands',
   'daytona','indy','indy_road','lime_rock'];
