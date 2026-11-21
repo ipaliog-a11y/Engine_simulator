@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 428</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 429</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -551,7 +551,7 @@
 <div id="partsIc" hidden>
 <div class="design-section">My intercoolers</div>
 <div class="part-list" id="pxList"></div>
-<div class="pick-row"><div class="field"><label for="pxFrom">START FROM</label><select id="pxFrom"><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option></select></div>
+<div class="pick-row"><div class="field"><label for="pxFrom">START FROM</label><select id="pxFrom"><option value="small">SMALL CORE</option><option value="large">LARGE CORE</option><option value="water">WATER-TO-AIR</option></select></div>
 <div class="field"><label>&nbsp;</label><button type="button" id="pxNew">NEW INTERCOOLER</button><button type="button" id="pxReset" title="Put the dimensions back to the factory part chosen above, keeping the name">RESET</button></div></div>
 <div class="design-section">Intercooler</div>
 <div class="design-grid">
@@ -561,6 +561,17 @@
 <div class="field"><label for="pxD">CORE DEPTH (mm)</label><input type="number" id="pxD" min="30" max="120" step="1"></div>
 <div class="field"><label for="pxFpi">COOLING FINS PER INCH</label><input type="number" id="pxFpi" min="8" max="30" step="1"></div>
 <div class="field"><label for="pxPipe">CHARGE PIPE LENGTH (m)</label><input type="number" id="pxPipe" min="0.3" max="5" step="0.1"></div>
+<div class="field"><label for="pxType">COOLED BY</label><select id="pxType"><option value="air">AIR-TO-AIR</option><option value="water">WATER-TO-AIR</option></select></div>
+</div>
+<div id="pxWater" hidden>
+<div class="design-section">Coolant loop (fins per inch above: the radiator's)</div>
+<div class="design-grid">
+<div class="field"><label for="pxPump">PUMP FLOW (L/min)</label><input type="number" id="pxPump" min="2" max="60" step="1"></div>
+<div class="field"><label for="pxLoop">COOLANT IN THE LOOP (L)</label><input type="number" id="pxLoop" min="1" max="15" step="0.5"></div>
+<div class="field"><label for="pxRadW">RADIATOR WIDTH (mm)</label><input type="number" id="pxRadW" min="200" max="900" step="10"></div>
+<div class="field"><label for="pxRadH">RADIATOR HEIGHT (mm)</label><input type="number" id="pxRadH" min="100" max="600" step="10"></div>
+<div class="field"><label for="pxRadD">RADIATOR DEPTH (mm)</label><input type="number" id="pxRadD" min="16" max="80" step="1"></div>
+</div>
 </div>
 <div class="design-section">On this engine</div>
 <div class="part-guide" id="pxGuide"></div>

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 428
+# PIXEL POWERTRAIN v0.8 build 429
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -162,7 +162,8 @@ manifold (build 206): runner length and bore, and a variable length with a flap.
 its media and housing, whose pressure drop at the flow the engine draws is now what any filter costs. The fourth is the
 camshaft (build 249): duration, lift, lobe separation, lobe profile and the VVT phaser's range. The fifth is the
 intercooler (build 255): core face, depth, cooling fins and charge pipe. Since build 256 every core's effectiveness
-comes from its fins and its pressure drop is made up by the compressor.
+comes from its fins and its pressure drop is made up by the compressor. A core can be water-to-air (build 429): a coolant
+loop with a pump and a front radiator, whose temperature a lap walks in time (heat soak).
 The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
 and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.
