@@ -29,7 +29,7 @@ recorded numbers reports its range and the mean error against the real cars.
    ratio, no usable source or sources disagree: Toyota FA24D, 4A-GE, G16E; Mazda Skyactiv-G 2.0, B6-ZE; BMW S55; Porsche 911/83.
    Known gaps added (owner): test60 Hellcat 'limiter'; test76 Golf GTI Mk7 at 711 °C at Spa.
 2. **Valves, batch 2 of 4.**
-   *Build 424:* 16 engines sourced (43 of 93 now), all shipped. Peak hp −7.9% (B48 in the 330e) to +4.0% (BAC Mono's
+   *Build 425:* 16 engines sourced (43 of 93 now), all shipped. Peak hp −7.9% (B48 in the 330e) to +4.0% (BAC Mono's
    Duratec); mean hp error of the 16: 5.8% → 4.8%, torque 7.9% → 7.9%. Left on the ratio, no usable source found or sources
    disagree: Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57;
    Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. GM LS3, LT4 and Ford Coyote
@@ -93,6 +93,11 @@ recorded numbers reports its range and the mean error against the real cars.
     and the Beat's top speed is a named gap (157→165 km/h, real 140). Open: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf
     GTI Mk1, Amarok (unsourced), E-Type and Mustang 1965 (cross-ply sizes), Radical (slicks).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
+    *Build 424:* 20 of the 32 real circuits get a sourced lane (pit-in to pit-out), mostly from SRO and WEC briefings
+    and TSL timing maps; 13 are unsure. Spa takes F1's 653 m (owner's ruling; SRO's endurance lane is 994 m). Bahrain
+    426 -> 441 m. Open: shanghai, mexico, interlagos, yasmarina, hockenheim, spielberg, sochi, moscow, oschersleben,
+    norisring, vir, road_atlanta (no source; FIA event notes give no length), and seven SRO/WEC values read only as
+    quoted by a search index.
 
 ## Group 8: known gaps to rule on or close (after groups 1 and 2)
 

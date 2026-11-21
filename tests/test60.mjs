@@ -45,7 +45,7 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
-  // build 424 (owner's ruling, valves batch 2): with their sourced valves these two peak at their limiters (RS3 397 hp at
+  // build 425 (owner's ruling, valves batch 2): with their sourced valves these two peak at their limiters (RS3 397 hp at
   // 7000, real 394 at 5850; BAC Mono 263 at 8000, real 280 at 7700): the model's missing top-end fade, as the Hellcat and LS7.
   'Audi 2.5 TFSI (RS3 8V)': ['limiter'],
   'Ford Duratec 2.3 Cosworth (BAC Mono)': ['limiter'],

@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Sixteen more real engines get their own valves (build 424)
+### Sixteen more real engines get their own valves (build 425)
 
 `plans/v1-finish.md`, group 1, valves batch 2 of 4 (register `EV_RATIO`). 43 of 93 engines are now sourced.
 
@@ -47,6 +47,24 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Two known gaps added on the owner's ruling** (test60 `KNOWN`, shrink-only): the Audi 2.5 TFSI (RS3) and the Duratec 2.3 (BAC Mono) now peak at their limiters, 397 hp at 7000 rpm (published 394 at 5850) and 263 hp at 8000 (published 280 at 7700). It is the model's missing top-end fade, the same as the Hellcat and LS7 group.
 - **test93 (owner's ruling):** the governor-off check now runs on the EA288, a diesel still on the ratio, which peaks at its 4800 rpm limit. With its own valves the ungoverned Cummins rolls off at 3300 of 3500 rpm, and the 1GD-FTV at 4100 of 4500. The check itself is unchanged.
 - **Left on the ratio** (no usable source, or sources disagree): Toyota 1GD-FTV, 1KR-FE; Ford 1.0 EcoBoost, Cosworth YB; Jaguar XK 3.8; VW EA827 1.6, EA288; BMW N57; Alfa 690T; McLaren M840T; Porsche 4.0 GT3; Renault M5Pt; Suzuki K14C; Hyundai Kappa 1.6. The LS3, LT4 and Coyote stay held back for plan item 5.
+
+### Each real circuit's pit-lane length (build 424)
+
+- 20 of the 32 real circuits now race with their own pit lane, from pit-in to pit-out, in place of 400 m. Each is
+  cited beside its value in `src/js/race.js`. The sources are SRO and WEC briefings and TSL timing maps, pitpass,
+  and US tracks' published pit-road lengths. 13 are marked unsure (`RACE_PIT_LANE_UNSURE`).
+- The lanes run from Brands Hatch's 275 m to the Indianapolis pit lane's 690 m. Bahrain moves from 426 to 441 m (WEC
+  briefing). Spa takes F1's 653 m by the owner's ruling, because the game's Spa is the F1 layout. SRO's endurance
+  lane there, 994 m, would have cost a 911 GT3 30.4 s a stop, over `test182`'s 30 s limit, which stays.
+- Across every circuit a stop now costs a Civic Type R or a 911 GT3 11.2–31.4 s (was 11–19 s). The most is the 911 at
+  the Indianapolis oval, whose 690 m lane is past `test182`'s 30 s sanity limit; that test checks only Spa, Albert
+  Park and Ashdown. The guide's figure is updated. No race result in the fingerprint moves,
+  because its three-lap Spa race makes no stop. I found no real pit-loss figure to check against.
+- Open: 12 circuits have no source and keep 400 m: Shanghai, Mexico, Interlagos, Yas Marina, Hockenheim, Red Bull
+  Ring, Sochi, Moscow, Oschersleben, Norisring, VIR and Road Atlanta. FIA event notes draw the lane but give no
+  length. Seven values (Spa's alternative, Le Mans, Bahrain, Hungaroring, Catalunya, Silverstone, Brands Hatch) come
+  from briefings that refuse automated download, read only as a search index quotes them. Zandvoort's 385 m is from
+  2020, before its 2024 extension.
 
 ### Five more overhang splits from the makers' own sheets (build 423)
 

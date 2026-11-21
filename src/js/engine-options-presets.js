@@ -297,7 +297,7 @@ const ENGINE_VALVES={
   'Mercedes M102 2.3-16 (190E)':{iv:38,ev:33,unsure:true,src:'RPM Depot M102 16V overhaul valves, 190E 2.3-16: 38 and 33 mm (std; which is which not stated)'},
   'Ford Windsor 289 4-bbl (Mustang 1965)':{iv:45.21,ev:36.83,src:'CarTech, Ford Small-Block General Data: every 289 head 1.780 / 1.450 in'},
   'Rover K-series 1.8 (Elise S1)':{iv:27.7,ev:24.1,src:'Land Rover Freelander workshop manual, K 1.8 general data: inlet 27.6-27.8, exhaust 24.0-24.2 mm'},
-  // Build 424 (plans/v1-finish.md, valves batch 2 of 4), on the same rules.
+  // Build 425 (plans/v1-finish.md, valves batch 2 of 4), on the same rules.
   'GM LT6 flat-plane V8 (Corvette Z06 C8)':{iv:42,ev:35,src:'GM via The Drive and Corvsport, LT6 technical details: titanium intake 42 mm, sodium-filled exhaust 35 mm'},
   'Cummins 6.7 (Ram HD 2019 HO)':{iv:33,ev:33,src:'MAHLE 211-4670 exhaust (cross-ref. Cummins 4955210) 33.00 mm; stock-size 6.7 intake valves 1.299 in (std)'},
   'Ford 5.4 supercharged V8 (Ford GT)':{iv:37,ev:32,unsure:true,src:'Stock-size Ford GT 5.4 intake valve 37 mm (std); exhaust 32 mm from owners (themustangsource.com)'},

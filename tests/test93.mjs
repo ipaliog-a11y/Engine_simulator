@@ -39,7 +39,7 @@ const r = await page.evaluate(() => {
   out.real = PRESETS.filter(p => p.engine.type === 'diesel' && p.real).map(p => { load(p.name);
     return { name: p.name, rated: p.real.hpRpm, gov: engine.govRpm, peak: engine.score.peakHPrpm, hp: engine.score.peakHP, real: p.real.hp, rl: engine.redline,
       tqMaxShare: tqAt(engine.redline) / engine.score.peakTQ }; });
-  // 3. off: the old curve (peak at the limiter, untouched below the rated speed). Build 424 (owner's ruling): on the EA288,
+  // 3. off: the old curve (peak at the limiter, untouched below the rated speed). Build 425 (owner's ruling): on the EA288,
   // a diesel still on the valve ratio; the Cummins's own valves (ENGINE_VALVES) now roll its ungoverned peak off at 3300
   // of its 3500, and the 1GD-FTV's at 4100 of 4500. The ECU's boost taper is its own control: off on both sides.
   load('EA288', { taperRpm: 0 }); const onLow = tqAt(2000), onPeak = engine.score.peakHPrpm;
