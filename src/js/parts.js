@@ -88,7 +88,7 @@ const CAM_PROFILE={
 // tyre pressures 80-350 kPa cold: a drag radial's ~12 psi to a van's 3.5 bar (makers' load tables)
 const PART_LIMITS={front_kPa:[80,350],rear_kPa:[80,350],bar_pct:[30,70],mcF_mm:[14,28],mcR_mm:[14,28],rearPistonD_mm:[25,60],rearPistons:[1,3],rearRotor_mm:[200,450],preload_Nm:[0,400],ramp_deg:[25,90],faces:[1,10],rFace_mm:[25,70],rRamp_mm:[20,60],span_mm:[600,2200],height_mm:[30,400],chord_mm:[80,600],angle_deg:[0,25],camber_pct:[0,12],plate_mm:[0,400],valveD_mm:[15,75],exValveD_mm:[12,65],throat:[0.75,0.92],seat_N:[100,1500],rate_Nmm:[10,200],dur:[180,320],lift_mm:[4,16],lsa:[98,130],vvt_deg:[0,60],primD_mm:[25,76],primL_mm:[200,1000],pipes:[1,2],sysD_mm:[30,110],sysL_m:[0.8,4.5],
   runnerL_mm:[40,800],runnerD_mm:[20,80],shortL_mm:[40,400],area_m2:[0.02,3],inletD_mm:[30,160],
-  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],
+  w:[150,900],h:[80,800],d:[30,120],fpi:[8,30],pipe_m:[0.3,5],pump_lpm:[2,60],loop_L:[1,15],radW:[200,900],radH:[100,600],radD:[16,80],
   // a turbo's compressor 30-120 mm at the exducer (a kei car's to a big diesel's), its turbine 25-130 mm, a housing
   // A/R of 0.25-1.6 (on this model's convention, setTurbineAR: the frames' housings run 0.35-1.06)
   compD_mm:[30,120],turbD_mm:[25,130],ar:[0.25,1.6],
@@ -173,7 +173,9 @@ const filterClass=p=>({none:'none',open:'perf',airbox:'stock'})[p.housing]||'sto
 // IC_SIGMA: the share of a bar-and-plate core's gross volume the charge flows through (charge layers about half the
 // stack, their internal fins taking ~15% of that; probable), so also the charge side's free-flow share of its h x d end.
 const IC_SIGMA=0.4,IC_FIN={s:2.5,h:7,t:0.2,l:3.2};   // IC_FIN: the charge passages' offset-strip fins (see icDp)
-const icGrossL=p=>p.w*p.h*p.d/1e6, icCoreL=p=>icGrossL(p)*IC_SIGMA;
+// (a water-to-air core's charge share is its own, W2A_SIGMA, below)
+const icSig=p=>p&&p.type==='water'?W2A_SIGMA:IC_SIGMA;
+const icGrossL=p=>p.w*p.h*p.d/1e6, icCoreL=p=>icGrossL(p)*icSig(p);
 // The core's effectiveness at a charge flow m (kg/s), from its dimensions (build 256; it was the factory cores' quoted
 // 0.62 and 0.82, INTERCOOLER.eff). UA is the two sides in series, each a film coefficient from a measured j-factor
 // over its surface with its fins' efficiency (aluminium, k 180 and 200 W/m K):
@@ -189,20 +191,100 @@ const icGrossL=p=>p.w*p.h*p.d/1e6, icCoreL=p=>icGrossL(p)*IC_SIGMA;
 const IC_LOUVER={Lp:1.0,th:27,Fl:8,Ll:6.4,df:0.1,Tp:16},IC_FACE_V=11,IC_PR=0.71,IC_CP=1005;
 const IC_DH=(F=>4*F.s*F.h*F.l/(2*(F.s*F.l+F.h*F.l+F.t*F.h)+F.t*F.s)/1000)({s:2.5,h:7,t:0.2,l:3.2});
 const finEff=(h,k,t,L)=>{const x=Math.sqrt(2*h/(k*t))*L;return x>0?Math.tanh(x)/x:1;};
-function icEps(P,m){
-  if(!P||!P.w||!(m>0))return 0;
-  const F=IC_FIN,L=IC_LOUVER,w=P.w/1e3,h=P.h/1e3,d=P.d/1e3,muc=2.08e-5,mua=1.84e-5,rhoa=1.18,pr=Math.pow(IC_PR,-2/3);
-  const G=m/(h*d*IC_SIGMA),Re=G*IC_DH/muc,al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s;
+// The charge side's conductance (W/K: fin-efficiency-weighted film coefficient times surface) at a charge flow m (kg/s).
+function icChargeUA(P,m){
+  const F=IC_FIN,w=P.w/1e3,h=P.h/1e3,d=P.d/1e3,muc=2.08e-5,pr=Math.pow(IC_PR,-2/3),sig=icSig(P);
+  const G=m/(h*d*sig),Re=G*IC_DH/muc,al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s;
   const jc=0.6522*Math.pow(Re,-0.5403)*Math.pow(al,-0.1541)*Math.pow(de,0.1499)*Math.pow(ga,-0.0678)
     *Math.pow(1+5.269e-5*Math.pow(Re,1.340)*Math.pow(al,0.504)*Math.pow(de,0.456)*Math.pow(ga,-1.055),0.1);
-  const hc=jc*G*IC_CP*pr,Ac=4*w*h*d*IC_SIGMA/IC_DH,oc=1-F.h/(F.s+F.h)*(1-finEff(hc,180,F.t/1e3,F.h/2e3));
-  const Fp=25.4/P.fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=IC_FACE_V/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
-  const ja=Math.pow(ReL,-0.49)*Math.pow(L.th/90,0.27)*Math.pow(Fp/L.Lp,-0.14)*Math.pow(L.Fl/L.Lp,-0.29)*Math.pow(P.d/L.Lp,-0.23)
+  const hc=jc*G*IC_CP*pr,Ac=4*w*h*d*sig/IC_DH,oc=1-F.h/(F.s+F.h)*(1-finEff(hc,180,F.t/1e3,F.h/2e3));
+  return oc*hc*Ac;
+}
+// The cooling air's side of a louvred face W x H x D mm with fpi fins: its conductance (W/K) and the air's capacity rate.
+function icAirUA(W,H,D,fpi){
+  const L=IC_LOUVER,w=W/1e3,h=H/1e3,d=D/1e3,mua=1.84e-5,rhoa=1.18,pr=Math.pow(IC_PR,-2/3);
+  const Fp=25.4/fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=IC_FACE_V/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
+  const ja=Math.pow(ReL,-0.49)*Math.pow(L.th/90,0.27)*Math.pow(Fp/L.Lp,-0.14)*Math.pow(L.Fl/L.Lp,-0.29)*Math.pow(D/L.Lp,-0.23)
     *Math.pow(L.Ll/L.Lp,0.68)*Math.pow(L.Tp/L.Lp,-0.28)*Math.pow(L.df/L.Lp,-0.05);
   const ha=ja*rhoa*Vc*IC_CP*pr,Aa=w*h*d*(L.Fl/L.Tp)*(2e3/Fp+2e3/L.Fl),fa=(1/Fp)/(1/Fp+1/L.Fl);
   const oa=1-fa*(1-finEff(ha,200,L.df/1e3,L.Fl/2e3));
-  const UA=1/(1/(oc*hc*Ac)+1/(oa*ha*Aa)),Cc=m*IC_CP,Ca=rhoa*IC_FACE_V*w*h*IC_CP,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
-  return (1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1)))*Cmin/Cc;
+  return {UA:oa*ha*Aa,C:rhoa*IC_FACE_V*w*h*IC_CP};
+}
+// Cross-flow, both fluids unmixed (Incropera; Kays & London's chart): effectiveness from NTU and Cr = Cmin/Cmax.
+const xfEps=(NTU,Cr)=>1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1));
+function icEps(P,m){
+  if(!P||!P.w||!(m>0))return 0;
+  if(P.type==='water')return w2aLoop(P,m).cold;
+  const A=icAirUA(P.w,P.h,P.d,P.fpi);
+  const UA=1/(1/icChargeUA(P,m)+1/A.UA),Cc=m*IC_CP,Ca=A.C,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
+  return xfEps(NTU,Cr)*Cmin/Cc;
+}
+// ---- the water-to-air charge cooler (build 429; plans/v1-finish.md item 6) ----
+// The core in the charge path is cooled by a coolant loop: a pump drives the coolant through it and through a
+// low-temperature radiator at the front of the car, which gives the heat to the air. An intercooler part with
+// type 'water' is one; its w, h, d are the core's, fpi the radiator's cooling fins, and it adds the pump's flow
+// (pump_lpm), the loop's coolant (loop_L) and the radiator's face and depth (radW, radH, radD, mm).
+//   charge side    IC_FIN's offset-strip fins, as an air-to-air core's (Manglik & Bergles), in layers between
+//                  coolant tubes W2A_TUBE.hw high inside with walls tp thick (a bar-and-plate core; probable). Its
+//                  free-flow share is the charge layers' share of the pitch less the fins' 15% (as IC_SIGMA's).
+//   coolant side   each tube a smooth parallel-plate duct, the coolant across the core's depth: laminar, fully
+//                  developed, both walls heated, Nu = 7.54 (Shah & London, Laminar Flow Forced Convection in Ducts,
+//                  1978; Incropera Table 8.1); turbulent past Re 2300 by Gnielinski. Plain tubes: a maker's core
+//                  often has turbulator inserts, whose gain is not modelled (it errs cool-side low).
+//   the coolant    50% ethylene glycol near 40 C: rho 1065 kg/m3, cp 3400 J/kg K, mu 2.5e-3 Pa s, k 0.40 W/m K
+//                  (ASHRAE Handbook - Fundamentals, ch. 31, glycol tables; probable, read off at 40 C).
+//   the radiator   its air side is an air-to-air core's (Chang & Wang's louvred fins at IC_FACE_V); one tube per
+//                  louvre tube pitch IC_LOUVER.Tp of its height, W2A_RTUBE high inside (probable), the coolant along
+//                  its width.
+//   the metal      W2A_AL of each exchanger's gross volume is aluminium, 2700 kg/m3 and 900 J/kg K (a brazed core's
+//                  share: probable), heated with the coolant.
+// In a closed loop the core takes a (Tc - Tw1) from the charge, a = eps1 Cmin1, and the radiator gives b (Tw2 - Ta),
+// b = eps2 Cmin2, the coolant rising Q/Cw through the core (Tw2 = Tw1 + Q/Cw). Settled, the share of the charge's rise
+// the loop gives back is (a/Cc) / (1 + a/b - a/Cw); with the loop still at the air's temperature (Tw1 = Ta) it is a/Cc.
+// A dyno pull takes the cold loop: it is short against the loop's time constant (w2aLoop().tau, about a minute). The
+// lap walks the loop's temperature in time (w2aLapSoak).
+const W2A_TUBE={hw:2.0,tp:0.4},W2A_RTUBE=1.5,W2A_AL=0.15,W2A_CL={rho:1065,cp:3400,mu:2.5e-3,k:0.40};
+const W2A_PITCH=IC_FIN.h+W2A_TUBE.hw+2*W2A_TUBE.tp,W2A_SIGMA=IC_FIN.h/W2A_PITCH*0.85;
+// A starting water-to-air part: a 300 x 200 x 100 mm core beside the throttle (0.8 m of charge pipe), a 20 L/min pump,
+// 4 L in the loop and a 600 x 300 x 30 mm radiator (sizes as sold for such kits: probable).
+const W2A_START={w:300,h:200,d:100,fpi:16,pipe_m:0.8,pump_lpm:20,loop_L:4,radW:600,radH:300,radD:30};
+// The coolant's film conductance (W/K) over n parallel-plate tubes hi mm high inside, wide mm across the flow, long mm
+// along it, at a flow q m3/s.
+function w2aDuctUA(q,n,hi,wide,long){
+  const C=W2A_CL,Dh=2*hi/1e3,u=q/(n*hi/1e3*wide/1e3),Re=C.rho*u*Dh/C.mu,Pr=C.cp*C.mu/C.k;
+  let Nu=7.54;
+  if(Re>2300){const f=Math.pow(0.790*Math.log(Re)-1.64,-2);Nu=Math.max(Nu,f/8*(Re-1000)*Pr/(1+12.7*Math.sqrt(f/8)*(Math.pow(Pr,2/3)-1)));}
+  return Nu*C.k/Dh*2*n*wide/1e3*long/1e3;
+}
+// The loop at a charge flow m (kg/s): a and b (W/K), the coolant's and the charge's capacity rates, the share given
+// back cold and settled, the loop's heat capacity (J/K) and its time constant settling at this flow (s).
+function w2aLoop(P,m){
+  const C=W2A_CL,q=P.pump_lpm/60000,Cw=C.rho*q*C.cp,Cc=m*IC_CP;
+  const nC=P.h/W2A_PITCH,UA1=1/(1/icChargeUA(P,m)+1/w2aDuctUA(q,nC,W2A_TUBE.hw,P.w,P.d));
+  const C1=Math.min(Cc,Cw),a=xfEps(UA1/C1,C1/Math.max(Cc,Cw))*C1;
+  const A=icAirUA(P.radW,P.radH,P.radD,P.fpi),nR=P.radH/IC_LOUVER.Tp;
+  const UA2=1/(1/A.UA+1/w2aDuctUA(q,nR,W2A_RTUBE,P.radD,P.radW)),C2=Math.min(A.C,Cw),b=xfEps(UA2/C2,C2/Math.max(A.C,Cw))*C2;
+  const mcp=P.loop_L/1e3*C.rho*C.cp+W2A_AL*(icGrossL(P)/1e3+P.radW*P.radH*P.radD/1e9)*2700*900;
+  return {a,b,Cw,Cc,cold:a/Cc,steady:a/Cc/(1+a/b-a/Cw),mcp,tau:mcp/(a+b-a*b/Cw)};
+}
+// One step of the loop: the coolant leaving the radiator at Tw (C), the charge reaching the core at Tc with a = a(m),
+// the air at Ta, for dt s. The heat in a (Tc - Tw); out b (Tw + Qin/Cw - Ta).
+function w2aStep(L,a,Tw,Tc,Ta,dt){
+  const Qin=a*(Tc-Tw),Qout=L.b*(Tw+Qin/L.Cw-Ta);
+  return Tw+(Qin-Qout)*dt/L.mcp;
+}
+// The loop round a lap (build 429): pt(i) gives a point's time step dt, the charge flow there m (its throttle's
+// share of the flat-out flow mFull) and the compressor's outlet Tc. A preparation lap from the air's temperature, then
+// the timed one; at each point the torque's share is the charge's density with the loop as it is there against the
+// cold loop the curve was drawn with: the same pressure, so (Tcold + 273) / (That + 273).
+function w2aLapSoak(P,n,pt,Ta){
+  const L0=w2aLoop(P,0.1),T=new Float64Array(n),share=new Float64Array(n);let Tw=Ta;
+  for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
+    const q=pt(i);
+    if(lap){const aF=w2aLoop(P,q.mFull).a/(q.mFull*IC_CP),cold=q.Tc-aF*(q.Tc-Ta),hot=q.Tc-aF*(q.Tc-Tw);T[i]=Tw;share[i]=(cold+273.15)/(hot+273.15);}
+    Tw=w2aStep(L0,q.m>0?w2aLoop(P,q.m).a:0,Tw,q.Tc,Ta,q.dt);
+  }
+  return {T,share};
 }
 // A factory core is sized for its engine (build 256, one rule for every car, as the factory air filter is): its listed
 // size, or taller when the engine's full flow (at the redline at full boost) is more than that size is rated to carry.
@@ -229,11 +311,11 @@ const icClass=p=>icGrossL(p)<Math.sqrt(icGrossL(INTERCOOLER.small)*icGrossL(INTE
 // plus the tanks' contraction and expansion, Kc + Ke ~ 1.0 at sigma 0.4 (Kays & London). Pipe: Blasius, smooth tube.
 const IC_KTANK=1.0;
 function icDp(e,m,pBar,Tk){
-  const G0=icGeom(e)||{},rho=pBar*1e5/(287*Tk),mu=1.85e-5*Math.pow(Tk/300,0.7);
+  const G0=icGeom(e)||{},sig=icSig(G0),rho=pBar*1e5/(287*Tk),mu=1.85e-5*Math.pow(Tk/300,0.7);
   let core=0;
   if(G0.w){
     const F=IC_FIN,Dh=IC_DH;
-    const al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s,G=m/(G0.h*G0.d/1e6*IC_SIGMA),Re=G*Dh/mu;
+    const al=F.s/F.h,de=F.t/F.l,ga=F.t/F.s,G=m/(G0.h*G0.d/1e6*sig),Re=G*Dh/mu;
     const f=9.6243*Math.pow(Re,-0.7422)*Math.pow(al,-0.1856)*Math.pow(de,0.3053)*Math.pow(ga,-0.2659)
       *Math.pow(1+7.669e-8*Math.pow(Re,4.429)*Math.pow(al,0.920)*Math.pow(de,3.767)*Math.pow(ga,0.236),0.1);
     core=(4*f*(G0.w/1000)/Dh+IC_KTANK)*G*G/(2*rho);
@@ -350,7 +432,10 @@ function normPart(p){
     media:FILTER_MEDIA[p.media]?p.media:'paper',area_m2:n(p.area_m2,'area_m2',0.4),
     housing:FILTER_HOUSING[p.housing]?p.housing:'airbox',inletD_mm:n(p.inletD_mm,'inletD_mm',70)};
   if(p.kind==='intercooler')return {id,kind:'intercooler',name:String(p.name||'INTERCOOLER').slice(0,40),
-    w:n(p.w,'w',600),h:n(p.h,'h',250),d:n(p.d,'d',75),fpi:n(p.fpi,'fpi',14),pipe_m:n(p.pipe_m,'pipe_m',3)};
+    w:n(p.w,'w',600),h:n(p.h,'h',250),d:n(p.d,'d',75),fpi:n(p.fpi,'fpi',14),pipe_m:n(p.pipe_m,'pipe_m',3),
+    // a water-to-air core's loop (build 429); an air-to-air part stays as it was
+    ...(p.type==='water'?{type:'water',pump_lpm:n(p.pump_lpm,'pump_lpm',W2A_START.pump_lpm),loop_L:n(p.loop_L,'loop_L',W2A_START.loop_L),
+      radW:n(p.radW,'radW',W2A_START.radW),radH:n(p.radH,'radH',W2A_START.radH),radD:n(p.radD,'radD',W2A_START.radD)}:{})};
   if(p.kind==='head')return {id,kind:'head',name:String(p.name||'HEAD').slice(0,40),valveD_mm:n(p.valveD_mm,'valveD_mm',34),
     exValveD_mm:n(p.exValveD_mm==null||p.exValveD_mm===''?NaN:p.exValveD_mm,'exValveD_mm',+(EV_RATIO*n(p.valveD_mm,'valveD_mm',34)).toFixed(4)),
     throat:n(p.throat,'throat',THROAT_RATIO),seat_N:n(p.seat_N,'seat_N',250),rate_Nmm:n(p.rate_Nmm,'rate_Nmm',22)};
@@ -552,7 +637,12 @@ function icReport(x){
     if(!o.boosted)return o;
     const sv=Object.assign({},state);Object.assign(state,{iat:25});
     const m=airFlowAt(r,map),tin=compOutletT(map,r),tout=effIAT(map,r);Object.assign(state,sv);
-    return Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,313)});
+    Object.assign(o,{m,eff:icEffAt(m),eff0:e.icEff,tin,tout,dp:icDp(e,m,map,313)});
+    // a water-to-air loop (build 429): held flat out at peak power until it settles, in the same 25 C air
+    const G=icGeom(e);
+    if(G&&G.type==='water'){const L=w2aLoop(G,m),Q=L.Cc*L.steady*(tin-25);
+      Object.assign(o,{water:true,steady:L.steady,toutSteady:tin-Q/L.Cc,loopT:25+Q/L.b-Q/L.Cw,tau:L.tau,kw:Q/1000});}
+    return o;
   });
 }
 // What the designer reads out for a head on this engine.
@@ -581,6 +671,7 @@ function turboReport(x){
 // A factory part, as this engine has it, written down as a part: the start of a design.
 function partFromFactory(key,kind){
   kind=kind||'exhaust';
+  if(kind==='intercooler'&&key==='water')return normPart(Object.assign({kind,type:'water',name:tr('WATER-TO-AIR')},W2A_START));
   if(kind==='intercooler'){const F=icFactoryGeom(engine,INTERCOOLER[key]&&INTERCOOLER[key].w?key:'large');
     return normPart({kind,name:tr(F.label),w:F.w,h:F.h,d:F.d,fpi:F.fpi,pipe_m:F.pipe});}
   // the head the engine has: its valve, the factory throat, and the springs of that step as the maker sized them
@@ -712,8 +803,9 @@ const PART_UI={
     spec:p=>p.dur+'° · '+p.lift_mm+' mm · LSA '+p.lsa+'° · '+tr(CAM_PROFILE[p.profile].label)},
   intercooler:{reset:'pxReset',box:'partsIc',list:'pxList',from:'pxFrom',neu:'pxNew',save:'pxSave',saveFit:'pxSaveFit',guide:'pxGuide',canvas:'pxCanvas',legend:'pxLegend',
     none:"No intercoolers designed yet. Start from one of the factory cores below.",
-    fields:['pxName','pxW','pxH','pxD','pxFpi','pxPipe'],
-    spec:p=>p.w+' × '+p.h+' × '+p.d+' mm · '+p.fpi+' fpi · '+p.pipe_m+' m'},
+    fields:['pxName','pxType','pxW','pxH','pxD','pxFpi','pxPipe','pxPump','pxLoop','pxRadW','pxRadH','pxRadD'],
+    spec:p=>(p.type==='water'?tr('WATER-TO-AIR')+' · ':'')+p.w+' × '+p.h+' × '+p.d+' mm · '+p.fpi+' fpi · '+p.pipe_m+' m'
+      +(p.type==='water'?' · '+p.pump_lpm+' L/min · '+p.radW+' × '+p.radH+' × '+p.radD+' mm':'')},
   head:{reset:'phReset',box:'partsHead',list:'phList',from:'phFrom',neu:'phNew',save:'phSave',saveFit:'phSaveFit',guide:'phGuide',canvas:'phCanvas',legend:'phLegend',
     none:"No cylinder heads designed yet. Start from this engine's head with one of the factory springs below.",
     fields:['phName','phValve','phExValve','phThroat','phSeat','phRate'],
@@ -776,6 +868,8 @@ function partToEditor(kind,p){
   const peak=Math.round((engine.score&&engine.score.peakHPrpm||engine.redline*0.9)/100)*100;
   if(kind==='intercooler'){
     pv('pxName').value=p.name;pv('pxW').value=p.w;pv('pxH').value=p.h;pv('pxD').value=p.d;pv('pxFpi').value=p.fpi;pv('pxPipe').value=p.pipe_m;
+    const q=p.type==='water'?p:W2A_START;pv('pxType').value=p.type==='water'?'water':'air';
+    pv('pxPump').value=q.pump_lpm;pv('pxLoop').value=q.loop_L;pv('pxRadW').value=q.radW;pv('pxRadH').value=q.radH;pv('pxRadD').value=q.radD;
     return;
   }
   if(kind==='wing'||kind==='fwing'){
@@ -826,7 +920,8 @@ function partFromEditor(kind){
   kind=kind||'exhaust';
   const ed=partsUI.edit[kind],newName=tr(PART_DEF[kind].newName);
   if(kind==='intercooler')return normPart({kind,id:ed&&ed.id,name:pv('pxName').value.trim()||newName,w:pv('pxW').value,
-    h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value});
+    h:pv('pxH').value,d:pv('pxD').value,fpi:pv('pxFpi').value,pipe_m:pv('pxPipe').value,
+    type:pv('pxType').value,pump_lpm:pv('pxPump').value,loop_L:pv('pxLoop').value,radW:pv('pxRadW').value,radH:pv('pxRadH').value,radD:pv('pxRadD').value});
   if(kind==='wing'||kind==='fwing')return normPart({kind,id:ed&&ed.id,name:pv('pwName').value.trim()||newName,span_mm:pv('pwSpan').value,
     chord_mm:pv('pwChord').value,angle_deg:pv('pwAngle').value,camber_pct:pv('pwCamber').value,plate_mm:pv('pwPlate').value,height_mm:pv('pwHeight').value});
   if(kind==='brake')return normPart({kind,id:ed&&ed.id,name:pv('pkName').value.trim()||newName,bar_pct:pv('pkBar').value,mcF_mm:pv('pkMcF').value,
@@ -988,6 +1083,7 @@ function previewCam(){
   drawPartCurves('cam',now,r);
 }
 function previewIc(){
+  pv('pxWater').hidden=pv('pxType').value!=='water';
   const p=partFromEditor('intercooler'),now=icReport(engine.icPart||engine.intercooler),r=icReport(p);
   partsUI.last={kind:'intercooler',p,now,r};
   const kPa=x=>fmt(x/1000,1)+' kPa',lines=[];
@@ -997,6 +1093,9 @@ function previewIc(){
     lines.push(tr('Effectiveness at peak power')+': <b>'+fmt(r.eff,2)+'</b> <span class="dim">('+tr('now')+' '+fmt(now.eff,2)
       +'; '+tr('at 1 bar and the redline')+' '+fmt(r.eff0,2)+'; '+tr('in 11 m/s of cooling air, about a car at motorway speed')+')</span>');
     lines.push(tr('The charge leaves the compressor at')+' '+fmt(r.tin)+' °C '+tr('and the core at')+' <b>'+fmt(r.tout)+' °C</b> <span class="dim">('+tr('now')+' '+fmt(now.tout)+' °C, '+tr('in 25 °C air')+')</span>');
+    if(r.water)lines.push(tr('Held flat out the loop settles at')+' '+fmt(r.loopT)+' °C '+tr('and the charge at')+' <b>'+fmt(r.toutSteady)+' °C</b>'
+      +' <span class="dim">('+tr('effectiveness')+' '+fmt(r.steady,2)+', '+fmt(r.kw,1)+' kW '+tr('through the radiator')+'; '+tr('time constant')+' '+fmt(r.tau)+' s: '
+      +tr('a dyno pull starts with the loop at the air\'s temperature, a lap warms it')+')</span>');
     lines.push(tr('Core')+': '+fmt(icGrossL(p),1)+' L, '+tr('holding')+' '+fmt(icCoreL(p),1)+' L '+tr('of charge')+'; '+tr('the charge system to fill')+': <b>'+fmt(r.vol,1)+' L</b> <span class="dim">('+tr('now')+' '+fmt(now.vol,1)+'; '+tr('more to fill spools slower')+')</span>');
     lines.push(tr('Pressure drop at peak power')+': <b>'+kPa(r.dp.core+r.dp.pipe)+'</b> ('+tr('core')+' '+kPa(r.dp.core)+', '+tr('pipe')+' '+kPa(r.dp.pipe)+')'
       +' <span class="dim">('+tr('now')+' '+kPa(now.dp.core+now.dp.pipe)+'; '+tr('design practice: about 7-14 kPa, 1-2 psi, at full flow; the compressor makes it up on top of the boost')+')</span>');
