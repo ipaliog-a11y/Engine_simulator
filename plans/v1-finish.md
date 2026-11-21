@@ -78,9 +78,14 @@ recorded numbers reports its range and the mean error against the real cars.
 
 13. **83 overhang splits** (front/rear overhang from the maker's dimension drawing), in one or two builds.
     *Build 416:* five splits from a same-body auto-data.net page (M3 E46, Golf TDI Mk7, 330d, 911 RS 2.7, 330e).
-    Open: 78 cars. auto-data.net (whole generations swept) and conceptcarz have no overhangs for them; the second
-    build needs the makers' own drawings (press kits, workshop manuals), one car at a time.
+    *Build 423:* five from the makers' own sheets (Aygo, Land Cruiser 200, GR86, Ioniq Hybrid, Prius), after ~1.5 h
+    of searching. Open: 73 cars. Most makers' press data (VW, Porsche, Ferrari, Lamborghini, Honda, Mazda, Suzuki,
+    Ford, GM, Stellantis, Nissan) gives length and wheelbase but no overhangs; BMW Canada's product guides give them
+    for the X5 M and M2, but on North-American bodies 14-15 mm longer, so they were not used.
 14. **26 tyre sizes and the two missing widths** (`NO_WIDTH_KNOWN` closes).
+    *Build 422:* 20 sizes sourced (6 from the maker, 14 probable), both widths (probable); six presets' fits follow,
+    and the Beat's top speed is a named gap (157→165 km/h, real 140). Open: Aygo, Golf TDI Mk7, Land Cruiser 200, Golf
+    GTI Mk1, Amarok (unsourced), E-Type and Mustang 1965 (cross-ply sizes), Radical (slicks).
 15. **Each real circuit's pit-lane length** (FIA circuit sheets, the circuits' own data).
 
 ## Group 8: known gaps to rule on or close (after groups 1 and 2)
@@ -106,6 +111,8 @@ Then the owner checks the finish line and tags v1.0.
   move beyond the plan.
 - `test56`: the 13B's 90% boost at 3175 rpm (real ~3000; since build 290) stays a named gap until after v1.0
   (`SPOOL_KNOWN` in the test). Group 8's review build lists it.
+- Sourcing builds ship the sourced values with their gaps named, whichever way they move the numbers. They stop for
+  the owner only if a test needs a known-gap list widened or a limit loosened (build 422).
 - A build that lets the scope's signals be chosen and plots the simulated lambda sensor runs alongside.
 
 ## Open questions for the owner

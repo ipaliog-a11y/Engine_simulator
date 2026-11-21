@@ -5,7 +5,7 @@
 //   · every factory car has an entry in CAR_DIMS with a source, and CAR_DIMS has no car that is not a preset;
 //   · carDims() gives a body that adds up: front overhang + wheelbase + rear overhang is the length, both
 //     overhangs are positive, the body is wider than its tracks (not an open-wheeler) and taller than its tyres;
-//   · a tyre is a real size: its diameter 0.50-0.90 m, the rear no narrower than the front;
+//   · a tyre is a real size (tySrc names where a size not on src comes from): its diameter 0.50-0.90 m, the rear no narrower than the front;
 //   · the gaps are named and may only shrink: cars with no published width, and the counts of entries with an
 //     unsure figure and of overhang splits read from the side view;
 //   · no page errors.
@@ -19,10 +19,9 @@ const errors = [], fails = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 'load' });
 
-// no width found: Radical publishes none for the RSX that was reachable; the Ram's page gives it only with mirrors
-const NO_WIDTH_KNOWN = ['Radical SR3 RSX 1500 (2015)', 'Ram 2500 HO Cummins (2019)'];
+const NO_WIDTH_KNOWN = [];                          // emptied in build 417 (Radical and Ram widths sourced)
 const OPEN_WHEEL = /Ariel Atom|BAC Mono/;          // the wheels stand outside the body
-const UNSURE_BUDGET = 37, READ_OVERHANG_BUDGET = 78;   // 83 until build 416 (five same-body splits)
+const UNSURE_BUDGET = 33, READ_OVERHANG_BUDGET = 73;   // 83 until build 416 (five same-body splits), 78 until build 423 (five makers' sheets)
 
 const R = await page.evaluate(() => {
   const names = FACTORY_CARS.map(p => p.name);
