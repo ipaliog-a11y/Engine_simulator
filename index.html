@@ -882,7 +882,7 @@ body[data-group="more"] .mode-room{display:none}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 422</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 423</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -20571,7 +20571,8 @@ const CAR_PROFILES={
 // ovF: the front overhang in m, only where the source publishes both overhangs and they add up with its
 // wheelbase to its length; elsewhere carDims() splits (len - wheelbase) as CAR_PROFILES reads the side view.
 // ovSrc: the overhangs are from that page instead: another version of the same body, with the same length and
-// wheelbase on the page (build 416).
+// wheelbase on the page (build 416), or the maker's own sheet named in full, whose overhangs and wheelbase add up
+// to the same length (build 423).
 // src: 'ad:<page>' is auto-data.net/en/<page>, the car's own page on a database of makers' figures;
 // 'wp:<Article>' is the spec box of that English Wikipedia article. Read in November 2026.
 // unsure names what is not that page's figure for this car:
@@ -20585,7 +20586,7 @@ const CAR_PROFILES={
 // The wheelbase and the tracks are not repeated here: the preset and SUSP_REAL hold them.
 const CAR_DIMS={
   'Suzuki Alto Works (HA36S, 2015)':{len:3.395,w:1.475,h:1.475,tyF:'165/55R15',tyR:'165/55R15',src:'ad:suzuki-alto-viii-0.7-52hp-4wd-automatic-35907',tySrc:'Suzuki spec sheet, Dec 2015 (suzuki.co.jp digital library, altoworks/34.pdf)',unsure:['h']},
-  'Toyota Aygo 1.0 (2014)':{len:3.455,w:1.615,h:1.460,tyF:'165/65R14',tyR:'165/65R14',src:'ad:toyota-aygo-ii-1.0-vvt-i-69hp-21940',unsure:['tyres']},
+  'Toyota Aygo 1.0 (2014)':{len:3.455,w:1.615,h:1.460,ovF:0.675,tyF:'165/65R14',tyR:'165/65R14',src:'ad:toyota-aygo-ii-1.0-vvt-i-69hp-21940',unsure:['tyres'],ovSrc:'Toyota UK media, Aygo technical specifications, Jan 2021 (210127M): 675/2340/440 mm, length 3455'},
   'Fiat 500 TwinAir 85 (2011)':{len:3.546,w:1.627,h:1.488,tyF:'185/55R15',tyR:'185/55R15',src:'ad:fiat-500-312-0.9-twin-air-85hp-start-stop-18352'},
   'Ford Fiesta 1.0 EcoBoost 125 (2013)':{len:3.969,w:1.722,h:1.495,tyF:'195/55R15',tyR:'195/55R15',rimF:6,rimR:6,src:'ad:ford-fiesta-vii-mk7-facelift-2012-3-door-1.0-ecoboost-125hp-46883'},
   'VW Golf GTI (Mk7, 2013)':{len:4.268,w:1.799,h:1.442,tyF:'225/45R17',tyR:'225/45R17',rimF:7.5,rimR:7.5,src:'ad:volkswagen-golf-vii-5-door-gti-2.0-tsi-220hp-18409'},
@@ -20630,7 +20631,7 @@ const CAR_DIMS={
   'Porsche Cayenne Turbo (958.2, 2014)':{len:4.855,w:1.939,h:1.702,tyF:'265/50R19',tyR:'265/50R19',rimF:8.5,rimR:8.5,src:'ad:porsche-cayenne-ii-facelift-2014-turbo-4.8-v8-520hp-tiptronic-21439'},
   'Lamborghini Urus (2018)':{len:5.112,w:2.016,h:1.638,tyF:'285/45R21',tyR:'315/40R21',rimF:9.5,rimR:10.5,src:'ad:lamborghini-urus-4.0-v8-650hp-4wd-automatic-32263'},
   'Jeep Grand Cherokee SRT (WK2, 2014)':{len:4.859,w:1.958,h:1.756,tyF:'295/45R20',tyR:'295/45R20',src:'ad:jeep-grand-cherokee-iv-wk2-facelift-2013-srt-6.4-v8-476hp-4x4-automatic-31186',unsure:['len']},
-  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':{len:4.950,w:1.970,h:1.865,tyF:'285/60R18',tyR:'285/60R18',src:'ad:toyota-land-cruiser-j200-facelift-2013-4.5d-v8-272hp-automatic-18527',unsure:['tyres']},
+  'Toyota Land Cruiser 200 VX 4.5 D-4D (2015)':{len:4.950,w:1.970,h:1.865,ovF:0.930,tyF:'285/60R18',tyR:'285/60R18',src:'ad:toyota-land-cruiser-j200-facelift-2013-4.5d-v8-272hp-automatic-18527',unsure:['tyres'],ovSrc:'Toyota UK media, Land Cruiser V8 press kit 2008 (Landcruiser_fulltxt_UK.pdf), specifications: 930/2850/1170 mm, length 4950'},
   'Radical SR3 RSX 1500 (2015)':{w:1.799,wSrc:'probable: Team Stradale (dealer) ad and topspeed.com, 1799 mm',tyF:'200/50R15',tyR:'275/50R15',src:'wp:Radical_SR3',tySrc:'open: the RSX runs Dunlop slicks 200/580-15 and 265/605-16 (lapmeta), not a road size',unsure:['tyres','w']},
   'BAC Mono 2.3 (2011)':{len:3.952,w:1.836,h:1.110,tyF:'205/45R17',tyR:'255/40R17',rimF:7.5,rimR:8.5,src:'ad:bac-mono-2.5-305hp-automatic-32126',tySrc:'probable: bac-mono.com spec and Pirelli 2019 (for the Mono 2.5)',unsure:['h','tyres']},
   'Nissan 370Z (Z34, 2009)':{len:4.250,w:1.845,h:1.310,ovF:0.840,tyF:'225/50R18',tyR:'245/45R18',rimF:8,rimR:9,src:'ad:nissan-370z-3.7-328hp-664'},
@@ -20665,7 +20666,7 @@ const CAR_DIMS={
   'Renault Mégane R.S. Trophy (2018)':{len:4.372,w:1.874,h:1.445,ovF:0.916,tyF:'245/35R19',tyR:'245/35R19',rimF:8.5,rimR:8.5,src:'ad:renault-megane-iv-rs-trophy-1.8-300hp-33897'},
   'Suzuki Swift Sport (ZC33S, 2018)':{len:3.890,w:1.735,h:1.495,tyF:'195/50R17',tyR:'195/50R17',rimF:6.5,rimR:6.5,src:'ad:suzuki-swift-vi-sport-1.4-140hp-32530'},
   'Honda Civic Type R (EK9, 1997)':{len:4.180,w:1.695,h:1.360,tyF:'195/55R15',tyR:'195/55R15',rimF:6,rimR:6,src:'ad:honda-civic-type-r-ek9-1.6-185hp-47228'},
-  'Toyota GR86 (2022)':{len:4.265,w:1.775,h:1.310,tyF:'215/40R18',tyR:'215/40R18',rimF:7.5,rimR:7.5,src:'ad:toyota-86-ii-gr-2.4-d-4s-235hp-43105'},
+  'Toyota GR86 (2022)':{len:4.265,w:1.775,h:1.310,ovF:0.860,tyF:'215/40R18',tyR:'215/40R18',rimF:7.5,rimR:7.5,src:'ad:toyota-86-ii-gr-2.4-d-4s-235hp-43105',ovSrc:'Toyota UK media, GR86 technical specifications, May 2022 (220523M): 860/2575/830 mm, length 4265'},
   'Porsche 718 Cayman GT4 (2020)':{len:4.456,w:1.801,h:1.269,tyF:'245/35R20',tyR:'295/30R20',rimF:8.5,rimR:11,src:'ad:porsche-718-cayman-982-gt4-4.0-420hp-41345'},
   'BMW M2 Competition (F87, 2018)':{len:4.461,w:1.854,h:1.410,tyF:'245/35R19',tyR:'265/35R19',rimF:9,rimR:10,src:'ad:bmw-m2-coupe-f87-competition-3.0-410hp-33006'},
   'Ariel Atom 3.5 (2013)':{len:3.410,w:1.890,h:1.195,tyF:'195/50R15',tyR:'225/45R16',rimF:7,rimR:8,src:'wp:Ariel_Atom',tySrc:'probable: Atom 3 (PistonHeads guide) and Ariel A052 sizes; the 3.5R is 245/45R16 (Ariel literature)',unsure:['len','tyres']},
@@ -20679,8 +20680,8 @@ const CAR_DIMS={
   'Tesla Model 3 RWD (2021)':{len:4.694,w:1.849,h:1.443,ovF:0.841,tyF:'235/45R18',tyR:'235/45R18',src:'ad:tesla-model-3-facelift-2020-60-kwh-325hp-44977'},
   'Tesla Model Y Long Range (2022)':{len:4.751,w:1.921,h:1.624,ovF:0.875,tyF:'255/45R19',tyR:'255/45R19',rimF:9.5,rimR:9.5,src:'ad:tesla-model-y-long-range-78.1-kwh-347hp-54410'},
   'Tesla Model S Plaid (2021)':{len:5.021,w:1.987,h:1.431,ovF:0.961,tyF:'265/35R21',tyR:'295/30R21',rimF:9.5,rimR:10.5,src:'ad:tesla-model-s-facelift-2021-plaid-100-kwh-1020hp-tri-motor-awd-42385',unsure:['len']},
-  'Hyundai Ioniq Hybrid (2016)':{len:4.470,w:1.820,h:1.450,tyF:'195/65R15',tyR:'195/65R15',rimF:6,rimR:6,src:'ad:hyundai-ioniq-1.6-gdi-141hp-hybrid-dct-30706'},
-  'Toyota Prius (2016)':{len:4.540,w:1.760,h:1.470,tyF:'195/65R15',tyR:'195/65R15',rimF:6.5,rimR:6.5,src:'ad:toyota-prius-iv-xw50-1.8-vvt-i-122hp-hybrid-e-cvt-22776'},
+  'Hyundai Ioniq Hybrid (2016)':{len:4.470,w:1.820,h:1.450,ovF:0.880,tyF:'195/65R15',tyR:'195/65R15',rimF:6,rimR:6,src:'ad:hyundai-ioniq-1.6-gdi-141hp-hybrid-dct-30706',ovSrc:'Hyundai France, IONIQ press information (Amsterdam 2016), technical specifications: 880/2700/890 mm, length 4470'},
+  'Toyota Prius (2016)':{len:4.540,w:1.760,h:1.470,ovF:0.950,tyF:'195/65R15',tyR:'195/65R15',rimF:6.5,rimR:6.5,src:'ad:toyota-prius-iv-xw50-1.8-vvt-i-122hp-hybrid-e-cvt-22776',ovSrc:'Toyota USA, 2016 Prius Liftback product information (preliminary, Nov 2015): 37.4/106.3/35.0 in, length 178.7'},
   'Nissan Qashqai e-POWER (2022)':{len:4.425,w:1.835,h:1.625,tyF:'235/55R18',tyR:'235/55R18',rimF:7.5,rimR:7.5,src:'ad:nissan-qashqai-iii-j12-e-power-1.5-vc-t-190hp-full-hybrid-automatic-46241'},
   'BMW 330e (2020)':{len:4.709,w:1.827,h:1.444,ovF:0.799,tyF:'225/50R17',tyR:'225/50R17',rimF:7.5,rimR:7.5,src:'ad:bmw-3-series-sedan-g20-330e-292hp-plug-in-hybrid-steptronic-37654',ovSrc:'ad:bmw-3-series-sedan-g20-330i-258hp-xdrive-steptronic-37973'},
   'Porsche 918 Spyder (2013)':{len:4.643,w:1.940,h:1.167,tyF:'265/35R20',tyR:'325/30R21',rimF:9.5,rimR:12.5,src:'ad:porsche-918-spyder-4.6-v8-887hp-hybrid-pdk-21380'},

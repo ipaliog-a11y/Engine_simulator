@@ -21,7 +21,7 @@ await page.goto(pathToFileURL(path.join(repo, 'index.html')).href, { waitUntil: 
 
 const NO_WIDTH_KNOWN = [];                          // emptied in build 417 (Radical and Ram widths sourced)
 const OPEN_WHEEL = /Ariel Atom|BAC Mono/;          // the wheels stand outside the body
-const UNSURE_BUDGET = 33, READ_OVERHANG_BUDGET = 78;   // 83 until build 416 (five same-body splits)
+const UNSURE_BUDGET = 33, READ_OVERHANG_BUDGET = 73;   // 83 until build 416 (five same-body splits), 78 until build 423 (five makers' sheets)
 
 const R = await page.evaluate(() => {
   const names = FACTORY_CARS.map(p => p.name);
