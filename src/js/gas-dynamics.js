@@ -395,6 +395,9 @@ function intakeFill(rpm,adv,L,Tres,Cd){
 //     rho0 A_r u = A_v p_end / sqrt(R T0) psi(max(x*, pc/p_end)),  psi(x) = sqrt(2g/(g-1) (x^(2/g) - x^((g+1)/g)))
 // with the column's momentum giving u = (P - p_end)/a (P: the plenum's pressure plus the column's inertia). Solved on
 // p_end by bisection, both sides monotone. Reverse flow (cylinder above plenum) stays incompressible: it is slow.
+// OVERLAP, named: Taylor's port-Mach loss (veMachLoss, valvetrain.js) is a measured VE curve, so it already carries
+// the valve's real flow losses, compressibility among them, past Z = 0.5. Both stay; the share counted twice is not
+// separated (on the presets Z <= 0.54 at the limiter, veMachLoss >= 0.985).
 // kv = A_v / (rho0 A_r sqrt(R T0)).
 const CRIT_X_AIR=Math.pow(2/(GAMMA_AIR+1),GAMMA_AIR/(GAMMA_AIR-1));
 const psiAir=x=>{x=Math.max(CRIT_X_AIR,Math.min(1,x));return Math.sqrt(2*GAMMA_AIR/(GAMMA_AIR-1)*Math.max(0,Math.pow(x,2/GAMMA_AIR)-Math.pow(x,(GAMMA_AIR+1)/GAMMA_AIR)));};

@@ -121,7 +121,7 @@ function computeVE(rpm,map){
   }
   // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
   // leaves the charge that much thinner.
-  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
+  ve*=1-(window.__noCatRamp?0:engine.catRampTop)*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
   ve*=1-(filterDp(Q)+carbDp(Q))/101325;
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
