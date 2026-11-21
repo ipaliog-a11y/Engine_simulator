@@ -301,7 +301,7 @@ function drawRace(){
     if(x.dnf&&s.v<0.1&&s.flag===3)continue;
     if(s.flag===1||(x.fin&&s.v<0.1&&t>x.fin.t+0.5)){pitN.push(x);continue;}
     // a smooth place and heading along the line; the car moves off it to pass over about a second, not at once
-    const car=Object.assign(scenePose(M.line,s.pos),{col:RACE_COLS[x.c.id],brk:s.dv<-3,pos:x.pos});
+    const car=Object.assign(scenePose(M.line,s.pos),{name:M.name,col:RACE_COLS[x.c.id],brk:s.dv<-1.5?Math.min(1,-s.dv/12):0,pos:x.pos});
     const off=2.4*s.passF*s.passF*(3-2*s.passF);
     car.x+=Math.sin(car.hd)*off;car.y-=Math.cos(car.hd)*off;
     cars.push(car);

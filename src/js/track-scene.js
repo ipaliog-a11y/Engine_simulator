@@ -2,7 +2,7 @@
 // The camera, the ground and the car are the draft view. The solver is not touched.
 // Dressing (rail, trees, boards, flags) is drawn, not surveyed, and the car does not ride it.
 // One closure, so the short names in here (T, project, quad, shade…) stay out of the page's one script.
-const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP } = (() => {
+const { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP, _sceneBridge } = (() => {
 let T = null;
 let WX = { key: "dry", wet: 0, rain: 0, cloud: 0.05 };
 let TOD = "day";
@@ -72,7 +72,7 @@ function sceneNear(cam, x, y) {
 
 function sceneWeather(kind, wet) {
   const x = wet || 0;
-  if (kind === "night") { TOD = "night"; return; }
+  if (kind === "night" || kind === "sunset") { TOD = kind; return; }
   TOD = "day";
   if (kind === "rain" && x > 0.02) WX = { key: "rain", wet: Math.min(0.7, x), rain: Math.min(1, x / 0.7), cloud: 0.8 };
   else if (kind === "drying") WX = { key: "drying", wet: x, rain: 0, cloud: 0.18 };
@@ -137,6 +137,12 @@ function sceneProject(cam, x, y, h) { return project(cam, x, y, h || 0); }
 // and the picture keeps the page's chunky pixels. At full size the textured fills kept the page busy
 // enough that a click on the timing tower could miss its row (test72).
 function scenePaint(ctx, cam, opts) {
+  if (typeof window !== "undefined" && typeof window.scenePaintV2 === "function" && window._useSceneV2 !== false) {
+    return window.scenePaintV2(ctx, cam, opts);
+  }
+  return _legacyScenePaint(ctx, cam, opts);
+}
+function _legacyScenePaint(ctx, cam, opts) {
   const k = Math.min(1, SCENE_MAX_W / cam.W);
   const W = Math.max(1, Math.round(cam.W * k)), H = Math.max(1, Math.round(cam.H * k));
   if (!LAYER) LAYER = document.createElement("canvas");
@@ -1362,5 +1368,23 @@ function sceneLoadTex() {
   }).catch(() => {});
 }
 sceneLoadTex();
-return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP };
+const _sceneBridge = {
+  getT: () => T,
+  getWX: () => WX,
+  getTOD: () => TOD,
+  getLAYER: () => LAYER,
+  setLAYER: v => { LAYER = v; },
+  getBASE: () => BASE,
+  setBASE: v => { BASE = v; },
+  SCENE_MAX_W,
+  project,
+  worldMatrix,
+  drawStill,
+  drawLimits,
+  drawHeadlights,
+  drawCar,
+  drawAtmosphere,
+  legacyPaint: _legacyScenePaint
+};
+return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProject, scenePaint, scenePose, sceneBlend, sceneCurv, SCENE_TRAP, _sceneBridge };
 })();

@@ -231,5 +231,6 @@
   "test256.mjs": 2708,
   "test257.mjs": 3000,
   "test258.mjs": 11200,
-  "test259.mjs": 5000
+  "test259.mjs": 5000,
+  "test-sprite-stacks.mjs": 500
 }

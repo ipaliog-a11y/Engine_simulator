@@ -18,6 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Sprite-stacked cars and Mode B tiled track renderer (build 431)
+
+- **Sprite-stacked 3D cars (`src/js/car-stacks.js`).** Loads pre-sliced horizontal strip PNGs from `assets/cars/stacks/`
+  and lazily bakes a 64-heading + 3-steer-pose (`-28° / 0° / +28°`) atlas (24-car LRU cap), with a pure Canvas 2D
+  fallback baker so `file://` opens without canvas-taint errors. Ships the first four sliced cars (`Toyota GR Yaris
+  (2020)`, `Honda S2000 (AP1, 2000)`, `Porsche 911 GT3 (991.2, 2017)`, `Ferrari F40 (1987)`) plus the batch slicing
+  pipeline (`tools/generate-stack-prompts.mjs`, `tools/slice-cars.mjs`, `assets/cars/stacks/prompts.json`); unsheeted
+  and custom cars fall back seamlessly to legacy `drawCar`.
+- **Mode B tiled track renderer and 3D props (`src/js/track-scene-v2.js`).** Caches 160 m × 160 m world tiles at
+  4 px/m (24-tile LRU cap), places depth-sorted 3D voxel-stacked trees, tire walls, grandstands, pit buildings and a
+  start/finish gantry, batches tire smoke and wet spray particles, supports day/sunset/night lighting with twin
+  headlamp beams and brake/taillight washes, and adds a locked north-up follow camera (`sceneFollow`).
+- **Wired through `_sceneBridge` in `src/js/track-scene.js`** and updated `src/js/track-view.js` and `src/js/race-tab.js`
+  to pass car preset names, proportional braking and steering angle. Remaining ~96 cars stay on the fallback renderer
+  until sliced in subsequent batches.
+
 ### The ECU's closed fuel loop, the catalyst's oxygen storage and the Bosch lambda sensors (build 430)
 
 - **The live bench now runs a closed loop.** The ECU reads its sensor late (one engine cycle, then the gas to the

@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "format": "horizontal-slice-strip-png",
+  "note": "Each strip PNG satisfies stripW === sliceW * slices (asserted on load in src/js/car-stacks.js).",
+  "generatedAt": "2026-11-21T20:41:36.899Z",
+  "count": 4,
+  "cars": {
+    "Toyota GR Yaris (2020)": {
+      "name": "Toyota GR Yaris (2020)",
+      "slug": "toyota-gr-yaris-2020",
+      "file": "toyota-gr-yaris-2020.png",
+      "checkFile": "toyota-gr-yaris-2020.check.png",
+      "slices": 26,
+      "sliceW": 44,
+      "sliceL": 81,
+      "stripW": 1144,
+      "stripH": 81,
+      "sceneSpacing": 0.4765,
+      "frontAxleFrac": 0.7952,
+      "dims": {
+        "len": 3.995,
+        "w": 1.805,
+        "h": 1.455
+      },
+      "flags": {
+        "slices": 26,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "xyScale": 1.24
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2020 Toyota GR Yaris three-door hot hatch, sloping coupe roofline, wide flared arches, roof spoiler, white paint with black roof, accurate body shape and proportions for this exact model and generation (length 4.00m, width 1.80m, height 1.46m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Honda S2000 (AP1, 2000)": {
+      "name": "Honda S2000 (AP1, 2000)",
+      "slug": "honda-s2000-ap1-2000",
+      "file": "honda-s2000-ap1-2000.png",
+      "checkFile": "honda-s2000-ap1-2000.check.png",
+      "slices": 24,
+      "sliceW": 45,
+      "sliceL": 89,
+      "stripW": 1080,
+      "stripH": 89,
+      "sceneSpacing": 0.4784,
+      "frontAxleFrac": 0.8129,
+      "dims": {
+        "len": 4.135,
+        "w": 1.75,
+        "h": 1.27
+      },
+      "flags": {
+        "slices": 24,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "up",
+        "bgTol": 36,
+        "xyScale": 1.24
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a Honda S2000 (AP1, 2000), accurate body shape and proportions for this exact model and generation (length 4.13m, width 1.75m, height 1.27m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Porsche 911 GT3 (991.2, 2017)": {
+      "name": "Porsche 911 GT3 (991.2, 2017)",
+      "slug": "porsche-911-gt3-991-2-2017",
+      "file": "porsche-911-gt3-991-2-2017.png",
+      "checkFile": "porsche-911-gt3-991-2-2017.check.png",
+      "slices": 24,
+      "sliceW": 43,
+      "sliceL": 93,
+      "stripW": 1032,
+      "stripH": 93,
+      "sceneSpacing": 0.4534,
+      "frontAxleFrac": 0.7497,
+      "dims": {
+        "len": 4.562,
+        "w": 1.852,
+        "h": 1.271
+      },
+      "flags": {
+        "slices": 24,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "xyScale": 1.24
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2017 Porsche 911 GT3 991.2, rear-engined coupe with classic 911 sloping roofline, large fixed rear wing on the engine lid, round headlights, GT silver paint, centre-lock wheels, accurate body shape and proportions for this exact model and generation (length 4.56m, width 1.85m, height 1.27m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Ferrari F40 (1987)": {
+      "name": "Ferrari F40 (1987)",
+      "slug": "ferrari-f40-1987",
+      "file": "ferrari-f40-1987.png",
+      "checkFile": "ferrari-f40-1987.check.png",
+      "slices": 22,
+      "sliceW": 44,
+      "sliceL": 90,
+      "stripW": 968,
+      "stripH": 90,
+      "sceneSpacing": 0.4431,
+      "frontAxleFrac": 0.7483,
+      "dims": {
+        "len": 4.358,
+        "w": 1.97,
+        "h": 1.124
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "xyScale": 1.24
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 1987 Ferrari F40 mid-engined supercar, sharp wedge, pop-up headlights closed, NACA ducts, tall full-width rear wing on the tail, louvred plexiglass engine cover, Rosso Corsa red paint, accurate body shape and proportions for this exact model and generation (length 4.36m, width 1.97m, height 1.12m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    }
+  }
+}

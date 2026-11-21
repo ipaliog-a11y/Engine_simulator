@@ -289,7 +289,7 @@ function drawTrack(){
   sceneWeather('dry',0);
   let car=null;
   if(live){
-    car=Object.assign(scenePose(T.line,live.i+live.f),{col:carLivery(vehicle),brk:live.brk>0.05,pos:1});   // a smooth place and heading
+    car=Object.assign(scenePose(T.line,live.i+live.f),{name:vehicle.chLabel,col:carLivery(vehicle),brk:live.brk||0,steer:(live.steer||0)*Math.PI/180,pos:1});   // a smooth place and heading
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
