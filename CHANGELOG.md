@@ -18,6 +18,33 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Three more real engines get their own valves (build 428)
+
+`plans/v1-finish.md`, group 1, valves batch 3 of 4 (register `EV_RATIO`). 49 of 93 engines are now sourced.
+
+- **Sources:** Honda's S07B page gives the S07A's valves (intake 24.5 mm; exhaust 20.5, the S07B's 20.0 plus the 0.5 it
+  lost). Marked `unsure`: the Radical RPE 1500, on Kibblewhite's stock-size Hayabusa valves (33 / 27.5 mm), taken as its
+  head; the F355's F129B, on Supertech's stock-size 355 valves (three intakes 26.5 mm, two exhausts 28.5 mm), which a
+  FerrariChat post swaps.
+- **All 3 ship** on the owner's rule; none held back.
+
+  | engine | peak hp, rule → own (published) | peak torque Nm |
+  |---|---|---|
+  | Radical RPE 1500 (SR3 RSX) | 203 → 207 (210), +2.0% | 166 → 167 (179) |
+  | Ferrari F129B (F355) | 385 → 386 (375), +0.3% | 350 → 350 (363) |
+  | Honda S07A (S660) | 68 → 68 (64), 0% | 102 → 102 (104) |
+
+  Mean error of the 3 against published figures: power 4.1% → 3.5%, torque 4.3% → 4.1%.
+- **Fingerprint:** only these three cars move (0–100 at most +0.03 s, the S660), plus lap hashes on 'tech' (the shared
+  racing-line cache).
+- **test176** now also fails if `ENGINE_VALVES` lists fewer than 49 engines.
+- **Left on the ratio** (no usable source found, or sources disagree): Suzuki K6A, F6A; Fiat TwinAir; Honda E07A;
+  Nissan KR15DDT; VW 3.0 V6 TDI (stock-size EA897 intakes of 27.5 mm against the workshop manual's 28.7 mm for the
+  earlier 3.0 TDI); Audi 2.1 20V; Lamborghini LP400 3.9, Diablo 5.7, Murciélago 6.5, Urus 4.0 TT (one paper, not opened,
+  gives the EA824's 33.85 / 28 mm); BMW S70/2; Ferrari Dino 135, F120A, Colombo 4.4, F140B, F140; Porsche Carrera GT
+  5.7, 992 Turbo 3.7, Cayenne 4.8 TT, GT4 4.0, 918 4.6. Most exotic heads have no published sizes and no stock-size
+  replacement listing; parts sites that might (design911) refuse automated reads.
+
 ### The four V8s on their own cams and valves (build 427)
 
 - The LS3 and LS7 run on their makers' cam cards in place of their class's cam (`ENGINE_CAMS`): LS3 204° at 0.050",
