@@ -59,6 +59,8 @@ recorded numbers reports its range and the mean error against the real cars.
 6. **Water-to-air intercoolers, the model** (decision 22; register B4). The charge-air cooler as a coolant loop: the
    core's effectiveness from its NTU (Kays & London), the pump's flow, the front low-temperature radiator, and the
    loop's heat soak in time on a lap. Effectiveness and pressure drop beside the air-to-air part (builds 255–256).
+   *Build W2A_BUILD:* the model, as a type of the intercooler part (PARTS). Core and radiator ε from NTU, settled loop
+   (a/Cc)/(1 + a/b − a/Cw), dyno on the cold loop, the lap walks the loop in time. No preset moved (fingerprint identical).
 7. **Water-to-air intercoolers, per car.** Each preset whose maker publishes a water-to-air charge cooler moves to the
    new part (the build lists which, with sources). Report each car's power and lap moves.
 8. **`catRampTop`: a research build.** A measured back pressure for a catalyst brick and a silencer together (SAE

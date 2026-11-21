@@ -815,6 +815,31 @@ function simulateLapCore(key,opts){
     }
     state.iat=iat0;
   }
+  // A water-to-air charge cooler's heat soak on the lap (build W2A_BUILD). The curve was drawn with its loop at the air's
+  // temperature; round the lap the loop warms where the charge pours heat in faster than the radiator gives it out.
+  // Walk it (w2aLapSoak) at each point's revs, boost and the driver's throttle, scale the drive by the charge's density
+  // there, and solve again; twice, as the turbo block does. Air-to-air cores have no loop and are left as they were.
+  let icSoak=null;
+  const icP=pt.kind!=='electric'&&engine.intake!=='na'?icGeom(engine):null;
+  if(icP&&icP.type==='water'){
+    const base=boostShare?Float64Array.from(boostShare):new Float64Array(n).fill(1),iat0=state.iat;state.iat=20;
+    const rpmOf=i=>{const g=holdAt[i]>=0?holdAt[i]:gearAt(v[i]).gear;return clamp(v[i]*ratios[g]*fd/rT*60/TWO_PI,idle,rl);};
+    for(let it=0;it<2;it++){
+      const sh=boostShare;
+      const thrS=driverPedal(i=>{
+        const j=(i+1)%n,g=holdAt[i]>=0?inGear(v[i],holdAt[i]):gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
+        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
+                   +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
+        return need<=0?0:need/Math.max(1,g.F*(sh?sh[i]:1));
+      },0.35);
+      icSoak=w2aLapSoak(icP,n,i=>{
+        const j=(i+1)%n,rpm=rpmOf(i),map=1+(boostLap?Math.min(boostLap[i],boostAvail(rpm)):boostAvail(rpm)),mFull=airFlowAt(rpm,map);
+        return {dt:p[i].ds3/Math.max(2,(v[i]+v[j])/2),mFull,m:thrS[i]*mFull,Tc:compOutletT(map,rpm)};
+      },20);
+      boostShare=Float64Array.from(base,(b,i)=>b*icSoak.share[i]);passes();
+    }
+    state.iat=iat0;
+  }
   let GW=gearWalk();ebA.set(GW.eb);   // the gearbox through the lap as it is now driven
   // The electric drive's heat over the lap (build 180). The torque asked of the motor at each point: flat out wherever the
   // car is accelerating on power (the driver's foot is down whatever the controller then gives), what the speed profile
@@ -964,6 +989,8 @@ function simulateLapCore(key,opts){
     replay:{tAt,thr,brk,cut:Array.from(cutAt),gLat,gLong,rpm:rpmAt,map:mapAt,steer,pwr,tF:BT.TF,tR:BT.TR,fade:fadeF.slice(),fadeR:fadeR.slice(),
       useF:Array.from(useF),useR:Array.from(useR),eb:Array.from(ebA),frB:Array.from(frB)},
     engBrakeUseMax:engUseMax,
+    // a water-to-air loop's temperature over the timed lap and the least share of the drive it left (build W2A_BUILD)
+    ...(icSoak?{icLoop:{T:Array.from(icSoak.T),tMax:Math.max(...icSoak.T),shareMin:Math.min(...icSoak.share)}}:{}),
     // the electric drive over the timed lap (build 180): its hottest, how much of the lap it was cut back, the energy
     // (only on an electric car's lap, so an engine's result is the object it always was)
     ...(evHeat?{ev:{wMax:Math.max(...evHeat.tW),rMax:Math.max(...evHeat.tR),bMax:Math.max(...evHeat.tB),

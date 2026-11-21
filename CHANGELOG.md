@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Water-to-air intercoolers, the model (build W2A_BUILD)
+
+- An intercooler part can now be **cooled by a coolant loop** (PARTS, INTERCOOLER: COOLED BY, or START FROM WATER-TO-AIR):
+  the core, a pump's flow, the coolant in the loop and a front radiator's face and depth.
+- The core's charge side is the air-to-air core's (Manglik & Bergles offset-strip fins); its coolant side plain tubes,
+  laminar Nu 7.54 (Shah & London) or Gnielinski. The radiator's air side is the air-to-air core's louvred fins (Chang &
+  Wang). Each exchanger's effectiveness from its NTU (cross-flow, both unmixed, Kays & London). Coolant: 50% glycol
+  (ASHRAE, probable); tube sizes and the metal's share probable.
+- Settled, the loop gives back (a/Cc)/(1 + a/b − a/Cw). A dyno pull takes the loop at the air's temperature (its time
+  constant is ~40 s); a lap walks it in time (a preparation lap, then the timed one) and scales the drive by the
+  charge's density. The starting part on the Focus RS: 0.70 cold, 0.45 settled at the redline flow; on the first circuit
+  the loop reaches 35 °C in 20 °C air and takes up to 4% of the drive.
+- No preset moves (that is build 7): the fingerprint is identical. Air-to-air cores are unchanged.
+- Left open: turbulator inserts in the coolant tubes (a maker's core often has them; plain tubes make pump flow matter
+  little); the radiator sees ambient air, not air pre-heated by others in the stack; a supercharger's part-throttle
+  bypass; knock follows the dyno's charge temperature, not the soaked one.
+
 ### Three more real engines get their own valves (build 428)
 
 `plans/v1-finish.md`, group 1, valves batch 3 of 4 (register `EV_RATIO`). 49 of 93 engines are now sourced.
