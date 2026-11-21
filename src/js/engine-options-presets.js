@@ -309,7 +309,11 @@ const ENGINE_VALVES={
   'Lamborghini 5.2 V10 (Huracán STO)':{iv:33.85,ev:28,unsure:true,src:'As the LP610-4: GSC and ZRP stock-size intake 33.85 mm, exhaust 28 mm (std)'},
   'Lancia 831 2.0 16V turbo (Delta Integrale Evo)':{iv:34.4,ev:28.4,src:'Supertech LIVN-1001 / LEVI-1001 stock-size Delta 16V valves: 34.4 / 28.4 mm (std)'},
   'Ferrari F136 FB V8 (458 Italia)':{iv:37.8,ev:31,src:'Supertech FEIVC-F136 / FEEVC-F136 stock-size 458 valves: 37.8 / 31.0 mm (std)'},
-  'Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)':{iv:30.1,ev:27,unsure:true,src:'australiancar.reviews and mymotorlist 1VD-FTV pages: 30.1 / 27.0 mm, not a Toyota sheet'}
+  'Toyota 1VD-FTV 4.5 V8 diesel (Land Cruiser 200)':{iv:30.1,ev:27,unsure:true,src:'australiancar.reviews and mymotorlist 1VD-FTV pages: 30.1 / 27.0 mm, not a Toyota sheet'},
+  // Build 428 (plans/v1-finish.md, valves batch 3 of 4), on the same rules.
+  'Honda S07A turbo (S660)':{iv:24.5,ev:20.5,src:'Honda, S07B technical page: intake 24.0 mm against the S07A\'s 24.5; exhaust 20.0 mm, 0.5 mm less than the S07A\'s'},
+  'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
+  'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
