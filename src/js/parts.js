@@ -845,6 +845,7 @@ function renderParts(){
   types.querySelectorAll('button[data-kind]').forEach(b=>b.addEventListener('click',()=>{partsUI.kind=b.dataset.kind;renderParts();}));
   const noEng=!PART_DEF[partsUI.kind].on&&(!engine||isElectric());   // the car's parts need no engine
   pv('partsNoEngine').hidden=!noEng;
+  if(pv('partPreviewWrap'))pv('partPreviewWrap').hidden=noEng;
   for(const k in PART_UI)pv(PART_UI[k].box).hidden=noEng||PART_UI[partsUI.kind].box!==PART_UI[k].box;
   if(noEng)return;
   const kind=partsUI.kind,U=PART_UI[kind],D=PART_DEF[kind];
@@ -995,6 +996,7 @@ const headline=(what,r,now)=>tr(what)+': <b>'+r.peakHP+' hp</b> @ '+r.peakHPrpm+
   +' <span class="dim">('+tr('now')+' '+now.peakHP+' hp, '+now.peakTQ+' Nm: '+dlt(r.peakHP,now.peakHP)+' hp, '+dlt(r.peakTQ,now.peakTQ)+' Nm)</span>';
 function previewPart(kind){
   kind=kind||'exhaust';
+  if(typeof syncPartPreview3D==='function')syncPartPreview3D(kind);
   if(kind==='intake')return previewIntake();
   if(kind==='filter')return previewFilter();
   if(kind==='cam')return previewCam();
@@ -1373,7 +1375,7 @@ function drawPartCurves(kind,now,r){
   g.fillStyle='#fa4';g.fillText('hp',R+4,T+8);g.fillStyle='#6fc';g.fillText('Nm',4,T+8);
   pv(U.legend).innerHTML='<span style="color:#fa4">━ '+esc(tr(kind==='intake'?'this intake':kind==='filter'?'this filter':kind==='cam'?'this cam':kind==='head'?'this head':kind==='turbo'?'this turbo':kind==='intercooler'?'this intercooler':'this exhaust'))+'</span> <span style="color:#c84">┅ '+esc(tr('now'))+'</span>';
 }
-function schedulePreview(){clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
+function schedulePreview(){if(typeof markPartPreviewDirty==='function')markPartPreviewDirty();clearTimeout(partsUI.timer);partsUI.timer=setTimeout(()=>{if(vizMode==='parts')previewPart(partsUI.kind);},120);}
 function wireParts(){
   loadParts();fillPartSelects();
   const wired=new Set();
@@ -1396,5 +1398,5 @@ function wireParts(){
   });
   pv('pfSize').addEventListener('click',()=>{const r=filterReport(partFromEditor('filter'));pv('pfArea').value=+(r.Q/FILTER_FACE_V).toFixed(3);previewPart('filter');});
   pv('piMatch').addEventListener('click',()=>{pv('piD').value=+portRunnerD(engine).toFixed(1);previewPart('intake');});
-  window.addEventListener('resize',()=>{if(vizMode==='parts'&&partsUI.last)drawPartCurves(partsUI.last.kind,partsUI.last.now,partsUI.last.r);});
+  window.addEventListener('resize',()=>{if(vizMode==='parts'){if(typeof markPartPreviewDirty==='function')markPartPreviewDirty();if(partsUI.last)drawPartCurves(partsUI.last.kind,partsUI.last.now,partsUI.last.r);}});
 }

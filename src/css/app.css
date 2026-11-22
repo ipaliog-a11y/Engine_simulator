@@ -110,7 +110,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .eng-view-bar button{font-size:7px;padding:4px 7px;background:#12121e;color:#9aa0b8;border:2px solid #2a2c40;box-shadow:none;cursor:pointer}
 .eng-view-bar button:hover{border-color:#5a6080;color:#e0e4f4}
 .eng-view-bar button.active{border-color:#00ccff;color:#00ccff;background:#101a28}
-.eng-view-bar #engCutawayBtn.active{border-color:#ffcc00;color:#ffcc00;background:#201b10}
+.eng-view-bar #engCutawayBtn.active,.eng-view-bar #partCutawayBtn.active{border-color:#ffcc00;color:#ffcc00;background:#201b10}
 .design-section{font-size:8px;color:#00ccff;margin:12px 0 6px;border-bottom:2px solid #26263a;padding-bottom:3px;text-transform:uppercase}
 /* Fields are a size, not a share of the panel. A 1fr/1fr grid stretched every select and number box to
    half of a ~1200px panel, which read as two long horizontal lines per row. Cells of 170-220px pack as

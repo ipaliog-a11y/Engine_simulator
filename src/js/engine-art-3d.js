@@ -121,6 +121,24 @@ Pix3D.prototype={
       this.quad([a[0],a[1],zMax],[a[0],a[1],zMin],[b[0],b[1],zMin],[b[0],b[1],zMax],col,id,opts);
     }
   },
+  prismX(yzPts,x0,x1,col,id,opts){
+    opts=opts||{};
+    const n=yzPts.length;let cy=0,cz=0;
+    for(let i=0;i<n;i++){cy+=yzPts[i][0];cz+=yzPts[i][1];}
+    cy/=n;cz/=n;
+    const xMin=Math.min(x0,x1),xMax=Math.max(x0,x1);
+    if(!opts.noCaps){
+      for(let i=0;i<n;i++){
+        const a=yzPts[i],b=yzPts[(i+1)%n];
+        this.tri([xMax,cy,cz],[xMax,a[0],a[1]],[xMax,b[0],b[1]],col,id,opts);
+        this.tri([xMin,cy,cz],[xMin,b[0],b[1]],[xMin,a[0],a[1]],col,id,opts);
+      }
+    }
+    for(let i=0;i<n;i++){
+      const a=yzPts[i],b=yzPts[(i+1)%n];
+      this.quad([xMax,a[0],a[1]],[xMin,a[0],a[1]],[xMin,b[0],b[1]],[xMax,b[0],b[1]],col,id,opts);
+    }
+  },
   box(cx,cy,cz,sx,sy,sz,col,id,opts){
     const hx=sx*0.5,hy=sy*0.5,hz=sz*0.5;
     this.prismZ([[cx-hx,cy-hy],[cx+hx,cy-hy],[cx+hx,cy+hy],[cx-hx,cy+hy]],cz-hz,cz+hz,col,id,opts);
@@ -134,19 +152,43 @@ Pix3D.prototype={
     let ux=ay*ref[2]-az*ref[1],uy=az*ref[0]-ax*ref[2],uz=ax*ref[1]-ay*ref[0];
     const ul=Math.hypot(ux,uy,uz)||1;ux/=ul;uy/=ul;uz/=ul;
     const vx=ay*uz-az*uy,vy=az*ux-ax*uz,vz=ax*uy-ay*ux;
-    const rot=opts.rot||0,ring0=[],ring1=[];
-    for(let i=0;i<segs;i++){
-      const a=rot+i*Math.PI*2/segs,ca=Math.cos(a),sa=Math.sin(a);
+    const rot=opts.rot||0,arc=opts.arc||Math.PI*2,openArc=arc<Math.PI*1.99,count=openArc?segs+1:segs,ring0=[],ring1=[];
+    for(let i=0;i<count;i++){
+      const a=rot+i*arc/segs,ca=Math.cos(a),sa=Math.sin(a);
       const bx=ux*ca+vx*sa,by=uy*ca+vy*sa,bz=uz*ca+vz*sa;
       ring0.push([p0[0]+bx*r0,p0[1]+by*r0,p0[2]+bz*r0]);
       ring1.push([p1[0]+bx*r1,p1[1]+by*r1,p1[2]+bz*r1]);
     }
     for(let i=0;i<segs;i++){
-      const j=(i+1)%segs,cSide=opts.stripe&&(i%2===0)?opts.stripe:col;
+      const j=openArc?i+1:(i+1)%segs,cSide=opts.stripe&&(i%2===0)?opts.stripe:col;
       this.quad(ring0[i],ring0[j],ring1[j],ring1[i],cSide,id,opts);
       if(!opts.open0&&r0>0.2)this.tri(p0,ring0[j],ring0[i],opts.cap0Col||col,id,opts);
       if(!opts.open1&&r1>0.2)this.tri(p1,ring1[i],ring1[j],opts.cap1Col||col,id,opts);
     }
+  },
+  helixY(cx,y0,y1,cz,coilR,wireR,turns,col,id,opts){
+    opts=opts||{};
+    const steps=Math.max(16,Math.round(turns*(opts.segsPerTurn||10))),pts=[];
+    for(let i=0;i<=steps;i++){
+      const u=i/steps,a=u*turns*Math.PI*2+(opts.rot||0);
+      pts.push([cx+Math.cos(a)*coilR,y0+(y1-y0)*u,cz+Math.sin(a)*coilR]);
+    }
+    this.tube(pts,wireR,opts.tubeSegs||6,col,id,{spec:opts.spec||22});
+  },
+  gearZ(cx,cy,z0,z1,rOut,teeth,rot,col,id,opts){
+    opts=opts||{};
+    this.cylinder([cx,cy,z0],[cx,cy,z1],rOut*0.90,rOut*0.90,Math.min(20,Math.max(12,teeth)),col,id,{rot,spec:opts.spec||18});
+    const zm=(z0+z1)*0.5,th=Math.abs(z1-z0)*0.44;
+    for(let k=0;k<teeth;k++){
+      const a=rot+k*Math.PI*2/teeth;
+      this.cylinder([cx+Math.cos(a)*rOut*0.84,cy+Math.sin(a)*rOut*0.84,zm],[cx+Math.cos(a)*rOut*1.03,cy+Math.sin(a)*rOut*1.03,zm],th,th*0.72,4,shadeHex(col,0.14),id,{spec:20});
+    }
+  },
+  plinth(halfX,halfZ,y,col){
+    this.box(0,y-4,0,halfX*2,8,halfZ*2,col||'#1a1e2e',1,{spec:6});
+    const step=Math.max(40,Math.round(halfX*0.5));
+    for(let x=-halfX+step;x<halfX;x+=step)this.box(x,y+0.5,0,3,1.5,halfZ*1.9,'#2a3048',1,{flat:true});
+    for(let z=-halfZ+step;z<halfZ;z+=step)this.box(0,y+0.5,z,halfX*1.9,1.5,3,'#2a3048',1,{flat:true});
   },
   pulleyZ(cx,cy,z0,z1,r,rot,col,id,opts){
     opts=opts||{};

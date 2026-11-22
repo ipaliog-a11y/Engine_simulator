@@ -385,6 +385,8 @@ function stepPreviews(dt){
   if(!previewStill){previewT+=dt;previewAcc+=dt;}
   if(vizMode==='design'&&(engPreviewDirty||(!previewStill&&previewAcc>=0.042))){
     previewAcc=0;renderEnginePreview();
+  }else if(vizMode==='parts'&&typeof renderPartPreview==='function'&&(partPreviewDirty||(!previewStill&&previewAcc>=0.042))){
+    previewAcc=0;renderPartPreview();
   }
 }
 // ---- top-down car for the track map ----

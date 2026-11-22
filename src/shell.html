@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 433</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 434</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -466,6 +466,10 @@
 <div class="design-section">Type of part</div>
 <div class="part-types" id="partTypes"></div>
 <div class="hint" id="partsNoEngine" hidden>An electric drive has no exhaust, intake, air filter, cam or cylinder head. Build a combustion engine on the ENGINE tab to design parts for it.</div>
+<div id="partPreviewWrap">
+<canvas id="partPreview3d" class="pix-preview eng" role="img" aria-label="Pixel-art 3D view of the part as designed"></canvas>
+<div class="eng-view-bar" id="partViewBar" role="group" aria-label="Part preview angle"><button type="button" data-partview="iso34" class="active" aria-pressed="true">3/4</button><button type="button" data-partview="front" aria-pressed="false">FRONT</button><button type="button" data-partview="side" aria-pressed="false">SIDE</button><button type="button" data-partview="top" aria-pressed="false">TOP</button><button type="button" id="partCutawayBtn" aria-pressed="false">X-RAY</button><button type="button" id="partAxleBtn" hidden aria-pressed="false">FRONT AXLE</button></div>
+</div>
 <div id="partsExhaust">
 <div class="design-section">My exhausts</div>
 <div class="part-list" id="partList"></div>
@@ -1078,6 +1082,7 @@
 <!-- @include js/car-stacks.js -->
 <!-- @include js/sprites.js -->
 <!-- @include js/engine-art-3d.js -->
+<!-- @include js/parts-art-3d.js -->
 <!-- @include js/engine-view.js -->
 <!-- @include js/track-tex.js -->
 <!-- @include js/track-scene.js -->
