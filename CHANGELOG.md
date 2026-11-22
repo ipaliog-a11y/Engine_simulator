@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Fourteen more sprite-stacked cars (Batch 1 complete + 6 from Batch 2, build 432)
+
+- **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`
+  in `src/js/car-stacks.js`), bringing the total to **18 / 100**:
+  - Batch 1 complete (8 new): Suzuki Alto Works (HA36S, 2015), Toyota Aygo 1.0 (2014), Fiat 500 TwinAir 85 (2011),
+    Ford Fiesta 1.0 EcoBoost 125 (2013), VW Golf GTI (Mk7, 2013), Honda Civic Type R (FK8, 2017), Mazda MX-5 1.6 (NA,
+    1989), Toyota Corolla Levin GT-APEX (AE86).
+  - Batch 2 partial (6 new): BMW M3 (E46, 2000), Toyota Supra RZ (A80, 1993), Nissan Skyline GT-R V-spec (R34, 1999),
+    Subaru Impreza WRX STI (GD, 2004), Mitsubishi Lancer Evolution IX (2006), Ford Mustang GT (2018).
+- **Fixed `tools/generate-stack-prompts.mjs`** fallback for cars with partial `CAR_DIMS` entries so `prompts.json`
+  status tracking (`18 sliced, 82 pending`) runs cleanly. Remaining 82 cars stay on the fallback renderer until sliced.
+
 ### Sprite-stacked cars and Mode B tiled track renderer (build 431)
 
 - **Sprite-stacked 3D cars (`src/js/car-stacks.js`).** Loads pre-sliced horizontal strip PNGs from `assets/cars/stacks/`

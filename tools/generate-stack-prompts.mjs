@@ -46,8 +46,8 @@ function buildPrompt(subject, dims) {
 }
 
 const entries = Object.entries(showroom.cars || {}).map(([name, info], idx) => {
-  const d = CAR_DIMS[name] || { len: 4.35, w: 1.8, h: 1.35 };
-  const dims = { len: Number(d.len.toFixed(3)), w: Number(d.w.toFixed(3)), h: Number(d.h.toFixed(3)) };
+  const d = CAR_DIMS[name] || {};
+  const dims = { len: Number((d.len || 4.35).toFixed(3)), w: Number((d.w || 1.8).toFixed(3)), h: Number((d.h || 1.35).toFixed(3)) };
   const subject = extractSubject(info.prompt, name);
   const viewsFile = path.join(STACKS_DIR, `${info.slug}.views.png`);
   const stripFile = path.join(STACKS_DIR, `${info.slug}.png`);

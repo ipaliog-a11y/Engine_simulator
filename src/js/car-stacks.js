@@ -20,7 +20,21 @@ const CAR_STACKS = {
   "Toyota GR Yaris (2020)": {"slug":"toyota-gr-yaris-2020","slices":26,"sliceW":44,"sliceL":81,"spacing":0.4765,"frontAxle":0.7952,"len":3.995,"w":1.805,"h":1.455},
   "Honda S2000 (AP1, 2000)": {"slug":"honda-s2000-ap1-2000","slices":24,"sliceW":45,"sliceL":89,"spacing":0.4784,"frontAxle":0.8129,"len":4.135,"w":1.75,"h":1.27},
   "Porsche 911 GT3 (991.2, 2017)": {"slug":"porsche-911-gt3-991-2-2017","slices":24,"sliceW":43,"sliceL":93,"spacing":0.4534,"frontAxle":0.7497,"len":4.562,"w":1.852,"h":1.271},
-  "Ferrari F40 (1987)": {"slug":"ferrari-f40-1987","slices":22,"sliceW":44,"sliceL":90,"spacing":0.4431,"frontAxle":0.7483,"len":4.358,"w":1.97,"h":1.124}
+  "Ferrari F40 (1987)": {"slug":"ferrari-f40-1987","slices":22,"sliceW":44,"sliceL":90,"spacing":0.4431,"frontAxle":0.7483,"len":4.358,"w":1.97,"h":1.124},
+  "Suzuki Alto Works (HA36S, 2015)": {"slug":"suzuki-alto-works-ha36s-2015","slices":24,"sliceW":32,"sliceL":69,"spacing":0.5246,"frontAxle":0.7672,"len":3.395,"w":1.475,"h":1.475},
+  "Toyota Aygo 1.0 (2014)": {"slug":"toyota-aygo-mk2-2014","slices":24,"sliceW":33,"sliceL":70,"spacing":0.5177,"frontAxle":0.7505,"len":3.455,"w":1.615,"h":1.46},
+  "Fiat 500 TwinAir 85 (2011)": {"slug":"fiat-500-twinair-2011","slices":24,"sliceW":33,"sliceL":72,"spacing":0.5287,"frontAxle":0.7416,"len":3.546,"w":1.627,"h":1.488},
+  "Ford Fiesta 1.0 EcoBoost 125 (2013)": {"slug":"ford-fiesta-ecoboost-mk7-2013","slices":24,"sliceW":35,"sliceL":80,"spacing":0.5273,"frontAxle":0.7455,"len":3.969,"w":1.722,"h":1.495},
+  "VW Golf GTI (Mk7, 2013)": {"slug":"volkswagen-golf-gti-mk7-2013","slices":24,"sliceW":36,"sliceL":86,"spacing":0.5085,"frontAxle":0.7553,"len":4.268,"w":1.799,"h":1.442},
+  "Honda Civic Type R (FK8, 2017)": {"slug":"honda-civic-type-r-fk8-2017","slices":24,"sliceW":38,"sliceL":92,"spacing":0.5066,"frontAxle":0.7599,"len":4.557,"w":1.877,"h":1.434},
+  "Mazda MX-5 1.6 (NA, 1989)": {"slug":"mazda-mx-5-na-1989","slices":22,"sliceW":34,"sliceL":80,"spacing":0.4726,"frontAxle":0.7327,"len":3.975,"w":1.675,"h":1.23},
+  "Toyota Corolla Levin GT-APEX (AE86)": {"slug":"toyota-corolla-levin-ae86-1985","slices":22,"sliceW":33,"sliceL":85,"spacing":0.5158,"frontAxle":0.7475,"len":4.2,"w":1.645,"h":1.335},
+  "BMW M3 (E46, 2000)": {"slug":"bmw-m3-e46-2000","slices":22,"sliceW":36,"sliceL":91,"spacing":0.5306,"frontAxle":0.7291,"len":4.492,"w":1.78,"h":1.372},
+  "Toyota Supra RZ (A80, 1993)": {"slug":"toyota-supra-a80-1993","slices":22,"sliceW":36,"sliceL":91,"spacing":0.49,"frontAxle":0.7589,"len":4.52,"w":1.81,"h":1.275},
+  "Nissan Skyline GT-R V-spec (R34, 1999)": {"slug":"nissan-skyline-gt-r-r34-1999","slices":22,"sliceW":36,"sliceL":93,"spacing":0.5249,"frontAxle":0.744,"len":4.6,"w":1.785,"h":1.36},
+  "Subaru Impreza WRX STI (GD, 2004)": {"slug":"subaru-impreza-wrx-sti-gd-2004","slices":24,"sliceW":35,"sliceL":89,"spacing":0.508,"frontAxle":0.7574,"len":4.415,"w":1.74,"h":1.44},
+  "Mitsubishi Lancer Evolution IX (2006)": {"slug":"mitsubishi-lancer-evolution-ix-2006","slices":24,"sliceW":36,"sliceL":92,"spacing":0.5149,"frontAxle":0.7496,"len":4.534,"w":1.77,"h":1.45},
+  "Ford Mustang GT (2018)": {"slug":"ford-mustang-gt-s550-2018","slices":22,"sliceW":39,"sliceL":97,"spacing":0.5333,"frontAxle":0.7258,"len":4.788,"w":1.915,"h":1.379}
 };
 
 const _stackCache = new Map();     // slug -> { status, img, atlas, lastUsed }

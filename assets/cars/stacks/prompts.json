@@ -1,7 +1,6 @@
 {
-  "generatedAt": "2026-11-21T20:41:36.900Z",
+  "generatedAt": "2026-11-22T15:08:44.205Z",
   "total": 100,
-  "sliced": 4,
   "cars": [
     {
       "index": 1,
@@ -14,7 +13,7 @@
         "h": 1.475
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2015 Suzuki Alto Works (HA36S) kei-car five-door hatchback, tiny boxy body, upright tailgate, red accents, pearl white paint, small alloy wheels, accurate body shape and proportions for this exact model and generation (length 3.40m, width 1.48m, height 1.48m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -28,7 +27,7 @@
         "h": 1.46
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2014 Toyota Aygo second generation small city car five-door hatchback, X-shaped front, short overhangs, steep glass tailgate, bright red paint, accurate body shape and proportions for this exact model and generation (length 3.46m, width 1.61m, height 1.46m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -42,7 +41,7 @@
         "h": 1.488
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2011 Fiat 500 (312) three-door city car, rounded retro bubble shape, short bonnet, round headlights, chrome trim, pastel mint green paint, accurate body shape and proportions for this exact model and generation (length 3.55m, width 1.63m, height 1.49m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -56,7 +55,7 @@
         "h": 1.495
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2013 Ford Fiesta Mk7 facelift three-door hatchback, Aston-style trapezoid grille, rising beltline, blue paint, accurate body shape and proportions for this exact model and generation (length 3.97m, width 1.72m, height 1.50m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -70,7 +69,7 @@
         "h": 1.442
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2013 Volkswagen Golf GTI Mk7 three-door hot hatch, thick C-pillar, red grille stripe, honeycomb grille, red brake calipers, tornado red paint, 18-inch alloys, accurate body shape and proportions for this exact model and generation (length 4.27m, width 1.80m, height 1.44m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -98,7 +97,7 @@
         "h": 1.434
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2017 Honda Civic Type R FK8 five-door hatchback, aggressive vents, big rear wing, sloping fastback tail, championship white paint, black wheels, red accents, accurate body shape and proportions for this exact model and generation (length 4.56m, width 1.88m, height 1.43m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -112,7 +111,7 @@
         "h": 1.23
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 1989 Mazda MX-5 Miata NA two-seat roadster, soft top folded down, pop-up headlights closed, classic red paint, small five-spoke alloys, accurate body shape and proportions for this exact model and generation (length 3.98m, width 1.68m, height 1.23m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -126,7 +125,7 @@
         "h": 1.335
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 1985 Toyota Corolla Levin GT-APEX AE86 two-door notchback coupe with fixed headlights, boxy 1980s shape, panda two-tone white over black paint, black lower body, accurate body shape and proportions for this exact model and generation (length 4.20m, width 1.65m, height 1.33m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -154,7 +153,7 @@
         "h": 1.372
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2000 BMW M3 E46 two-door coupe, power-dome bonnet, side gills on front fenders, kidney grille, Laguna Seca blue paint, double-spoke alloys, accurate body shape and proportions for this exact model and generation (length 4.49m, width 1.78m, height 1.37m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -182,7 +181,7 @@
         "h": 1.275
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 1993 Toyota Supra RZ A80 mk4 two-door coupe, long rounded nose, large hoop rear wing, curvy body, super white paint, accurate body shape and proportions for this exact model and generation (length 4.52m, width 1.81m, height 1.27m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -196,7 +195,7 @@
         "h": 1.36
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 1999 Nissan Skyline GT-R V-spec R34 two-door coupe, boxy muscular shape, adjustable rear wing on the boot, Bayside Blue paint, six-spoke wheels, accurate body shape and proportions for this exact model and generation (length 4.60m, width 1.78m, height 1.36m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -210,7 +209,7 @@
         "h": 1.44
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2004 Subaru Impreza WRX STI GD four-door sedan, bonnet scoop, tall rear wing on the boot, World Rally Blue paint, gold wheels, accurate body shape and proportions for this exact model and generation (length 4.42m, width 1.74m, height 1.44m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -224,7 +223,7 @@
         "h": 1.45
       },
       "recommendedSlices": 24,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2006 Mitsubishi Lancer Evolution IX four-door sedan, vented bonnet, large rear wing on the boot, white paint, BBS-style wheels, accurate body shape and proportions for this exact model and generation (length 4.53m, width 1.77m, height 1.45m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
@@ -280,7 +279,7 @@
         "h": 1.379
       },
       "recommendedSlices": 22,
-      "status": "pending",
+      "status": "sliced",
       "prompt": "Chunky pixel art orthographic model sheet of a 2018 Ford Mustang GT S550 facelift fastback coupe, long bonnet with vents, sloping fastback roof, short rear deck, Race Red paint, accurate body shape and proportions for this exact model and generation (length 4.79m, width 1.92m, height 1.38m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     },
     {
