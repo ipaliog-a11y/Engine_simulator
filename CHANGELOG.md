@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 433)
+### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 435)
 
 - **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`
   in `src/js/car-stacks.js`), bringing the total to **32 / 100** (Batches 1–3 complete):
@@ -30,6 +30,18 @@ they are accurate about *what* shipped but not about the day it shipped.
   - Batch 4 started (1 new): Lamborghini Huracán LP610-4 (2014).
 - Updated `assets/cars/stacks/prompts.json` status (`32 sliced, 68 pending`). Remaining 68 cars continue on the fallback
   renderer until sliced.
+
+### 3D-to-8-bit preview on the parts designer (build 434)
+
+- **Added a live `280 × 156` Z-buffered 3D-to-8-bit preview to the Parts Designer** (`src/js/parts-art-3d.js`, reusing `Pix3D` from `src/js/engine-art-3d.js` with `prismX`, `helixY`, `gearZ`, `plinth` and partial-arc `cylinder` helpers). All 13 ready part types (exhaust, intake manifold, air filter, camshaft, intercooler air/water-to-air, cylinder head, turbocharger, rear/front wings, clutch-plate LSD, brake balance & rotor/caliper, front/rear tyre pressure, and springs/bars/dampers) build directly from their editor dimensions in millimetres, with exhaust, intake and camshaft matching the active engine's cylinder/bank count.
+- **Added one shared `#partPreview3d` canvas and `#partViewBar`** in `#partsPanel` (`3/4`, `FRONT`, `SIDE`, `TOP`, `X-RAY` cutaway, suspension `FRONT`/`REAR AXLE` toggle, plus horizontal drag-to-orbit), stepped at ~24 fps only while the `PARTS` tab is open. No physics numbers changed.
+- **Added `tests/test261.mjs`** covering all 13 part kinds in normal and `X-RAY` mode, the 4 camera views, live dimension updates, suspension axle toggling and phone-width layout.
+
+### Real-engine 3D-to-8-bit preview on the engine designer (build 433)
+
+- **Replaced the flat `150 × 78` schematic sprite with a `280 × 156` Z-buffered 3D-to-8-bit renderer** (`src/js/engine-art-3d.js`, wired through `src/js/sprites.js` and `src/js/electric-ui.js`). Every layout (inline, V, boxer, rotary, electric drive) is built in real millimetres from bore, stroke, cylinder/rotor count and motor dimensions under one camera, so pulleys, cam sprockets, belts, flywheel, manifold-mounted turbos, crossflow/in-valley induction and headers foreshorten consistently with cel-shading, Bayer dithering and 1 px outlines.
+- **Added interactive angle and cutaway controls** (`3/4 EXH`, `3/4 INT`, `FRONT`, `SIDE`, `X-RAY`, plus horizontal drag-to-orbit on `#enginePreview`), throttled live motion to ~24 fps and kept the same `PixBuf` interface for saved garage thumbnails. No physics numbers changed.
+- **Updated `tests/test64.mjs`** to measure the I4 vs I6 pixel span across the shaded sprite instead of one flat hex on row 55, and added `tests/test260.mjs` for camera views, `X-RAY`, EV motor coverage and phone-width layout.
 
 ### Fourteen more sprite-stacked cars (Batch 1 complete + 6 from Batch 2, build 432)
 

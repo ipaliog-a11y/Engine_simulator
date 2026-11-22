@@ -83,7 +83,9 @@ const eng = await page.evaluate(() => {
   const draw = o => { const b = new PixBuf(ENG_GW, ENG_GH); drawEngineSprite(b, Object.assign({}, DEFAULT_ENGINE, o), 0); return b; };
   out.turboDiffers = sig(draw({ intake: 'na' })) !== sig(draw({ intake: 'turbo', boost_bar: 1 }));
   out.layoutDiffers = sig(draw({ layout: 'inline', cylinders: 6 })) !== sig(draw({ layout: 'v', cylinders: 6 }));
-  const width = b => { let lo = ENG_GW, hi = 0; for (let x = 0; x < ENG_GW; x++) if (b.get(x, 55) === '#6a6a7a') { lo = Math.min(lo, x); hi = Math.max(hi, x); } return hi - lo; };
+  // Build 433 replaced the flat single-colour 150x78 block with a cel-shaded 280x156 3D-to-8-bit sprite,
+  // so measure the drawn engine's horizontal span instead of one flat hex at row 55.
+  const width = b => { let lo = ENG_GW, hi = 0; for (let y = 0; y < ENG_GH; y++) for (let x = 0; x < ENG_GW; x++) if (b.c[y * ENG_GW + x]) { if (x < lo) lo = x; if (x > hi) hi = x; } return hi - lo; };
   out.i4 = width(draw({ layout: 'inline', cylinders: 4, intake: 'na' })); out.i6 = width(draw({ layout: 'inline', cylinders: 6, intake: 'na' }));
   return out;
 });
