@@ -3,7 +3,7 @@
   "format": "horizontal-slice-strip-png",
   "note": "Each strip PNG satisfies stripW === sliceW * slices (asserted on load in src/js/car-stacks.js).",
   "generatedAt": "2026-11-21T20:41:36.899Z",
-  "count": 18,
+  "count": 32,
   "cars": {
     "Toyota GR Yaris (2020)": {
       "name": "Toyota GR Yaris (2020)",
@@ -490,6 +490,384 @@
         "layout": "2x2"
       },
       "prompt": "Chunky pixel art orthographic model sheet of a 2018 Ford Mustang GT S550 facelift fastback coupe, long bonnet with vents, sloping fastback roof, short rear deck, Race Red paint, accurate body shape and proportions for this exact model and generation (length 4.79m, width 1.92m, height 1.38m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Audi RS3 Sportback (8V, 2017)": {
+      "name": "Audi RS3 Sportback (8V, 2017)",
+      "slug": "audi-rs3-sportback-8v-2017",
+      "file": "audi-rs3-sportback-8v-2017.png",
+      "checkFile": "audi-rs3-sportback-8v-2017.check.png",
+      "slices": 22,
+      "sliceW": 37,
+      "sliceL": 88,
+      "stripW": 814,
+      "stripH": 88,
+      "sceneSpacing": 0.5468,
+      "frontAxleFrac": 0.7138,
+      "dims": {
+        "len": 4.335,
+        "w": 1.8,
+        "h": 1.411
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2017 Audi RS3 Sportback 8V five-door hatchback, honeycomb single-frame grille, roof spoiler, Nardo grey paint, accurate body shape and proportions for this exact model and generation (length 4.33m, width 1.80m, height 1.41m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Chevrolet Corvette (C6, LS3, 2008)": {
+      "name": "Chevrolet Corvette (C6, LS3, 2008)",
+      "slug": "chevrolet-corvette-c6-2008",
+      "file": "chevrolet-corvette-c6-2008.png",
+      "checkFile": "chevrolet-corvette-c6-2008.check.png",
+      "slices": 22,
+      "sliceW": 37,
+      "sliceL": 90,
+      "stripW": 814,
+      "stripH": 90,
+      "sceneSpacing": 0.4823,
+      "frontAxleFrac": 0.7479,
+      "dims": {
+        "len": 4.435,
+        "w": 1.845,
+        "h": 1.245
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2008 Chevrolet Corvette C6 two-door coupe, long low bonnet, exposed fixed headlights, fastback roof with targa line, short tail with small ducktail, Victory Red paint, accurate body shape and proportions for this exact model and generation (length 4.43m, width 1.84m, height 1.25m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Chevrolet Corvette Z06 (C6, 2006)": {
+      "name": "Chevrolet Corvette Z06 (C6, 2006)",
+      "slug": "chevrolet-corvette-z06-c6-2006",
+      "file": "chevrolet-corvette-z06-c6-2006.png",
+      "checkFile": "chevrolet-corvette-z06-c6-2006.check.png",
+      "slices": 22,
+      "sliceW": 39,
+      "sliceL": 90,
+      "stripW": 858,
+      "stripH": 90,
+      "sceneSpacing": 0.4765,
+      "frontAxleFrac": 0.7607,
+      "dims": {
+        "len": 4.46,
+        "w": 1.928,
+        "h": 1.237
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2006 Chevrolet Corvette Z06 C6 fixed-roof coupe, wide fenders, front fender vents, bonnet scoop, Velocity Yellow paint, silver spoke wheels, accurate body shape and proportions for this exact model and generation (length 4.46m, width 1.93m, height 1.24m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Dodge Challenger SRT Hellcat (2015)": {
+      "name": "Dodge Challenger SRT Hellcat (2015)",
+      "slug": "dodge-challenger-srt-hellcat-2015",
+      "file": "dodge-challenger-srt-hellcat-2015.png",
+      "checkFile": "dodge-challenger-srt-hellcat-2015.check.png",
+      "slices": 24,
+      "sliceW": 39,
+      "sliceL": 102,
+      "stripW": 936,
+      "stripH": 102,
+      "sceneSpacing": 0.5152,
+      "frontAxleFrac": 0.7577,
+      "dims": {
+        "len": 5.017,
+        "w": 1.923,
+        "h": 1.448
+      },
+      "flags": {
+        "slices": 24,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2015 Dodge Challenger SRT Hellcat two-door muscle car, long boxy body, retro 1970 style flat sides, bonnet with scoop, rear spoiler, black paint, accurate body shape and proportions for this exact model and generation (length 5.02m, width 1.92m, height 1.45m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Ferrari F355 Berlinetta (1994)": {
+      "name": "Ferrari F355 Berlinetta (1994)",
+      "slug": "ferrari-f355-berlinetta-1994",
+      "file": "ferrari-f355-berlinetta-1994.png",
+      "checkFile": "ferrari-f355-berlinetta-1994.check.png",
+      "slices": 20,
+      "sliceW": 38,
+      "sliceL": 86,
+      "stripW": 760,
+      "stripH": 86,
+      "sceneSpacing": 0.4972,
+      "frontAxleFrac": 0.7324,
+      "dims": {
+        "len": 4.25,
+        "w": 1.9,
+        "h": 1.17
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 1994 Ferrari F355 Berlinetta mid-engined coupe, pop-up headlights closed, side air intake behind the doors, flying buttress roofline, Rosso Corsa red paint, five-spoke star wheels, accurate body shape and proportions for this exact model and generation (length 4.25m, width 1.90m, height 1.17m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Lamborghini Diablo VT (1993)": {
+      "name": "Lamborghini Diablo VT (1993)",
+      "slug": "lamborghini-diablo-vt-1993",
+      "file": "lamborghini-diablo-vt-1993.png",
+      "checkFile": "lamborghini-diablo-vt-1993.check.png",
+      "slices": 20,
+      "sliceW": 41,
+      "sliceL": 90,
+      "stripW": 820,
+      "stripH": 90,
+      "sceneSpacing": 0.4683,
+      "frontAxleFrac": 0.7299,
+      "dims": {
+        "len": 4.46,
+        "w": 2.04,
+        "h": 1.105
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 1993 Lamborghini Diablo VT wedge supercar, very long low wedge, pop-up headlights closed, large side intakes, scissor-door shape, purple-violet paint, accurate body shape and proportions for this exact model and generation (length 4.46m, width 2.04m, height 1.10m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "McLaren F1 (1994)": {
+      "name": "McLaren F1 (1994)",
+      "slug": "mclaren-f1-1994",
+      "file": "mclaren-f1-1994.png",
+      "checkFile": "mclaren-f1-1994.check.png",
+      "slices": 20,
+      "sliceW": 37,
+      "sliceL": 87,
+      "stripW": 740,
+      "stripH": 87,
+      "sceneSpacing": 0.4858,
+      "frontAxleFrac": 0.7353,
+      "dims": {
+        "len": 4.287,
+        "w": 1.82,
+        "h": 1.14
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 1994 McLaren F1 mid-engined supercar, low teardrop canopy, roof scoop intake, dihedral door lines, smooth curved tail, papaya orange paint, accurate body shape and proportions for this exact model and generation (length 4.29m, width 1.82m, height 1.14m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Porsche 911 Turbo (993, 1995)": {
+      "name": "Porsche 911 Turbo (993, 1995)",
+      "slug": "porsche-911-turbo-993-1995",
+      "file": "porsche-911-turbo-993-1995.png",
+      "checkFile": "porsche-911-turbo-993-1995.check.png",
+      "slices": 22,
+      "sliceW": 36,
+      "sliceL": 86,
+      "stripW": 792,
+      "stripH": 86,
+      "sceneSpacing": 0.497,
+      "frontAxleFrac": 0.7372,
+      "dims": {
+        "len": 4.245,
+        "w": 1.795,
+        "h": 1.285
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 1995 Porsche 911 Turbo 993, classic rounded air-cooled 911 shape, wide rear arches, fixed rear wing with intakes, Guards Red paint, hollow-spoke alloys, accurate body shape and proportions for this exact model and generation (length 4.25m, width 1.79m, height 1.28m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Ferrari Enzo (2002)": {
+      "name": "Ferrari Enzo (2002)",
+      "slug": "ferrari-enzo-2002",
+      "file": "ferrari-enzo-2002.png",
+      "checkFile": "ferrari-enzo-2002.check.png",
+      "slices": 20,
+      "sliceW": 41,
+      "sliceL": 95,
+      "stripW": 820,
+      "stripH": 95,
+      "sceneSpacing": 0.4867,
+      "frontAxleFrac": 0.7218,
+      "dims": {
+        "len": 4.702,
+        "w": 2.035,
+        "h": 1.147
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2002 Ferrari Enzo hypercar, F1-style pointed nose, bubble canopy cockpit, long rear deck, butterfly door lines, Rosso Corsa red paint, accurate body shape and proportions for this exact model and generation (length 4.70m, width 2.04m, height 1.15m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Porsche Carrera GT (2004)": {
+      "name": "Porsche Carrera GT (2004)",
+      "slug": "porsche-carrera-gt-2004",
+      "file": "porsche-carrera-gt-2004.png",
+      "checkFile": "porsche-carrera-gt-2004.check.png",
+      "slices": 20,
+      "sliceW": 39,
+      "sliceL": 93,
+      "stripW": 780,
+      "stripH": 93,
+      "sceneSpacing": 0.4936,
+      "frontAxleFrac": 0.7358,
+      "dims": {
+        "len": 4.613,
+        "w": 1.921,
+        "h": 1.166
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2004 Porsche Carrera GT mid-engined roadster with targa roof, long cabin, twin roll-hoop fairings, rear wing, GT silver paint, five-spoke wheels, accurate body shape and proportions for this exact model and generation (length 4.61m, width 1.92m, height 1.17m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Ford GT (2005)": {
+      "name": "Ford GT (2005)",
+      "slug": "ford-gt-2005",
+      "file": "ford-gt-2005.png",
+      "checkFile": "ford-gt-2005.check.png",
+      "slices": 20,
+      "sliceW": 40,
+      "sliceL": 94,
+      "stripW": 800,
+      "stripH": 94,
+      "sceneSpacing": 0.4781,
+      "frontAxleFrac": 0.726,
+      "dims": {
+        "len": 4.645,
+        "w": 1.955,
+        "h": 1.125
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2005 Ford GT mid-engined supercar, low GT40-style shape, side scoop behind the doors, roof-cut doors, Heritage Gulf light blue paint with orange stripe, accurate body shape and proportions for this exact model and generation (length 4.64m, width 1.96m, height 1.13m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Lamborghini Murciélago LP640 (2006)": {
+      "name": "Lamborghini Murciélago LP640 (2006)",
+      "slug": "lamborghini-murcielago-lp640-2006",
+      "file": "lamborghini-murcielago-lp640-2006.png",
+      "checkFile": "lamborghini-murcielago-lp640-2006.check.png",
+      "slices": 20,
+      "sliceW": 42,
+      "sliceL": 93,
+      "stripW": 840,
+      "stripH": 93,
+      "sceneSpacing": 0.4808,
+      "frontAxleFrac": 0.7271,
+      "dims": {
+        "len": 4.61,
+        "w": 2.058,
+        "h": 1.135
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2006 Lamborghini Murcielago LP640 V12 supercar, wedge one-box profile, large side intake behind the door, scissor doors line, Arancio orange paint, accurate body shape and proportions for this exact model and generation (length 4.61m, width 2.06m, height 1.14m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Ferrari 458 Italia (2010)": {
+      "name": "Ferrari 458 Italia (2010)",
+      "slug": "ferrari-458-italia-2010",
+      "file": "ferrari-458-italia-2010.png",
+      "checkFile": "ferrari-458-italia-2010.check.png",
+      "slices": 22,
+      "sliceW": 39,
+      "sliceL": 92,
+      "stripW": 858,
+      "stripH": 92,
+      "sceneSpacing": 0.4706,
+      "frontAxleFrac": 0.7238,
+      "dims": {
+        "len": 4.527,
+        "w": 1.937,
+        "h": 1.213
+      },
+      "flags": {
+        "slices": 22,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2010 Ferrari 458 Italia mid-engined coupe, swept-back headlights, side intake, sloping glass engine cover, Rosso Corsa red paint, accurate body shape and proportions for this exact model and generation (length 4.53m, width 1.94m, height 1.21m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
+    },
+    "Lamborghini Huracán LP610-4 (2014)": {
+      "name": "Lamborghini Huracán LP610-4 (2014)",
+      "slug": "lamborghini-huracan-lp610-4-2014",
+      "file": "lamborghini-huracan-lp610-4-2014.png",
+      "checkFile": "lamborghini-huracan-lp610-4-2014.check.png",
+      "slices": 20,
+      "sliceW": 39,
+      "sliceL": 90,
+      "stripW": 780,
+      "stripH": 90,
+      "sceneSpacing": 0.4938,
+      "frontAxleFrac": 0.7286,
+      "dims": {
+        "len": 4.459,
+        "w": 1.924,
+        "h": 1.165
+      },
+      "flags": {
+        "slices": 20,
+        "colours": 48,
+        "shade": 0.15,
+        "topNose": "down",
+        "bgTol": 36,
+        "layout": "2x2"
+      },
+      "prompt": "Chunky pixel art orthographic model sheet of a 2014 Lamborghini Huracan LP610-4 mid-engined supercar, sharp wedge, hexagonal side intake, low flat roof, Verde Mantis lime green paint, accurate body shape and proportions for this exact model and generation (length 4.46m, width 1.92m, height 1.17m), with rich 3-tone hue-shifted pixel shading (deep cool-shifted shadows, saturated midtones, bright warm top highlights along ridges and edges), bold 3-4px stripes/accents, and crisp specular pixels on glass. Four views in a clean 1x4 horizontal row on a completely flat solid white background:\n1. TOP view looking straight down, front pointing DOWN.\n2. SIDE view, front pointing LEFT.\n3. FRONT view.\n4. BACK view.\nStrictly orthographic: zero perspective, zero tilt, zero 3/4 angle. Identical scale across all four views so length, width, and height match pixel for pixel. Bold 1px dark outline around each view, solid flat color clusters, crisp internal panel shading, zero anti-aliasing, zero soft edges, zero cast ground shadows, zero grid lines, zero text, generous empty space between views."
     }
   }
 }

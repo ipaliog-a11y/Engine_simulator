@@ -18,6 +18,19 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 433)
+
+- **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`
+  in `src/js/car-stacks.js`), bringing the total to **32 / 100** (Batches 1–3 complete):
+  - Batch 2 complete (3 new): Audi RS3 Sportback (8V, 2017), Chevrolet Corvette (C6, LS3, 2008), Chevrolet Corvette Z06
+    (C6, 2006).
+  - Batch 3 complete (10 new): Dodge Challenger SRT Hellcat (2015), Ferrari F355 Berlinetta (1994), Lamborghini Diablo
+    VT (1993), McLaren F1 (1994), Porsche 911 Turbo (993, 1995), Ferrari Enzo (2002), Porsche Carrera GT (2004), Ford GT
+    (2005), Lamborghini Murciélago LP640 (2006), Ferrari 458 Italia (2010).
+  - Batch 4 started (1 new): Lamborghini Huracán LP610-4 (2014).
+- Updated `assets/cars/stacks/prompts.json` status (`32 sliced, 68 pending`). Remaining 68 cars continue on the fallback
+  renderer until sliced.
+
 ### Fourteen more sprite-stacked cars (Batch 1 complete + 6 from Batch 2, build 432)
 
 - **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`
