@@ -516,25 +516,10 @@ function drawMotorView(dt){
   ctx.fillStyle='#667';ctx.fillText(tr('No cutaway for a motor yet: the bench\'s instruments instead.'),12,H-12);
 }
 
-// ---- the motor as pixel art (the ENGINE tab's preview and the garage) ----
-function drawMotorSprite(buf,e,t){
-  const D=clamp(e.evRotorD||150,80,260),Ls=clamp(e.evStack||134,40,250);
-  const h=Math.round(18+D/9),w=Math.round(30+Ls/5),x0=Math.round(70-w/2),y0=Math.round(52-h/2);
-  const body='#5a5a6a',hi='#8a8a9a',lo='#3a3a48',fin='#4a4a58';
-  buf.rect(x0-8,y0+4,8,h-8,lo);buf.rect(x0+w,y0+4,8,h-8,lo);                      // end bells
-  buf.rect(x0,y0,w,h,body);buf.rect(x0,y0,w,2,hi);buf.rect(x0,y0+h-2,w,2,lo);
-  for(let k=4;k<w-2;k+=4)buf.rect(x0+k,y0+1,1,h-2,fin);                           // cooling fins / jacket ribs
-  if(e.evCooling==='jacket'||e.evCooling==='spray'||e.evCooling==='slot'){buf.rect(x0+6,y0-4,3,4,'#3a6a9a');buf.rect(x0+w-9,y0-4,3,4,'#3a6a9a');}
-  const spin=Math.floor((t||0)*8)%2;
-  buf.rect(x0+w+8,y0+Math.round(h/2)-2,14,4,'#c0c0d0');buf.rect(x0+w+18,y0+Math.round(h/2)-2+spin,2,4-spin,'#9a9aaa');   // shaft
-  // the inverter on top and its orange high-voltage cables
-  buf.rect(x0+Math.round(w/2)-10,y0-12,20,8,'#2a3a2a');buf.rect(x0+Math.round(w/2)-10,y0-12,20,1,'#5a7a5a');
-  buf.rect(x0+Math.round(w/2)-6,y0-4,2,4,'#ff8800');buf.rect(x0+Math.round(w/2)+4,y0-4,2,4,'#ff8800');
-  // the battery underneath, as long as its capacity
-  const bw=Math.round(clamp(20+(e.evKWh||75)*0.9,24,140)),bx=Math.round(70-bw/2);
-  buf.rect(bx,68,bw,7,'#22303a');buf.rect(bx,68,bw,1,'#44606a');
-  for(let k=4;k<bw-2;k+=6)buf.rect(bx+k,70,4,3,e.evChem==='lfp'?'#3a7a5a':e.evChem==='lead'?'#5a5a5a':'#3a5a8a');
-  buf.rect(bx+bw-2,64,2,4,'#ff8800');buf.rect(bx+bw-2,y0+h-2,2,64-(y0+h-2),'#ff8800');
-  buf.outline('#000000');
+// ---- the motor as 3D-to-8-bit pixel art (engine-art-3d.js; ENGINE tab preview and garage) ----
+function drawMotorSprite(buf,e,t,opts){
+  const R=getEng3D(buf.w,buf.h);
+  drawMotor3D(R,e||DEFAULT_ENGINE,t||0,opts);
+  R.blitToPixBuf(buf);
 }
 const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';

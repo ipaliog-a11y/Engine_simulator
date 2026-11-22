@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Real-engine 3D-to-8-bit preview on the engine designer (build 433)
+
+- **Replaced the flat `150 × 78` schematic sprite with a `280 × 156` Z-buffered 3D-to-8-bit renderer** (`src/js/engine-art-3d.js`, wired through `src/js/sprites.js` and `src/js/electric-ui.js`). Every layout (inline, V, boxer, rotary, electric drive) is built in real millimetres from bore, stroke, cylinder/rotor count and motor dimensions under one camera, so pulleys, cam sprockets, belts, flywheel, manifold-mounted turbos, crossflow/in-valley induction and headers foreshorten consistently with cel-shading, Bayer dithering and 1 px outlines.
+- **Added interactive angle and cutaway controls** (`3/4 EXH`, `3/4 INT`, `FRONT`, `SIDE`, `X-RAY`, plus horizontal drag-to-orbit on `#enginePreview`), throttled live motion to ~24 fps and kept the same `PixBuf` interface for saved garage thumbnails. No physics numbers changed.
+- **Updated `tests/test64.mjs`** to measure the I4 vs I6 pixel span across the shaded sprite instead of one flat hex on row 55, and added `tests/test260.mjs` for camera views, `X-RAY`, EV motor coverage and phone-width layout.
+
 ### Fourteen more sprite-stacked cars (Batch 1 complete + 6 from Batch 2, build 432)
 
 - **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`
