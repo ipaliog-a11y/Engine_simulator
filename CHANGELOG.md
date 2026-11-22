@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### 3D-to-8-bit preview on the parts designer (build 434)
+
+- **Added a live `280 × 156` Z-buffered 3D-to-8-bit preview to the Parts Designer** (`src/js/parts-art-3d.js`, reusing `Pix3D` from `src/js/engine-art-3d.js` with `prismX`, `helixY`, `gearZ`, `plinth` and partial-arc `cylinder` helpers). All 13 ready part types (exhaust, intake manifold, air filter, camshaft, intercooler air/water-to-air, cylinder head, turbocharger, rear/front wings, clutch-plate LSD, brake balance & rotor/caliper, front/rear tyre pressure, and springs/bars/dampers) build directly from their editor dimensions in millimetres, with exhaust, intake and camshaft matching the active engine's cylinder/bank count.
+- **Added one shared `#partPreview3d` canvas and `#partViewBar`** in `#partsPanel` (`3/4`, `FRONT`, `SIDE`, `TOP`, `X-RAY` cutaway, suspension `FRONT`/`REAR AXLE` toggle, plus horizontal drag-to-orbit), stepped at ~24 fps only while the `PARTS` tab is open. No physics numbers changed.
+- **Added `tests/test261.mjs`** covering all 13 part kinds in normal and `X-RAY` mode, the 4 camera views, live dimension updates, suspension axle toggling and phone-width layout.
+
 ### Real-engine 3D-to-8-bit preview on the engine designer (build 433)
 
 - **Replaced the flat `150 × 78` schematic sprite with a `280 × 156` Z-buffered 3D-to-8-bit renderer** (`src/js/engine-art-3d.js`, wired through `src/js/sprites.js` and `src/js/electric-ui.js`). Every layout (inline, V, boxer, rotary, electric drive) is built in real millimetres from bore, stroke, cylinder/rotor count and motor dimensions under one camera, so pulleys, cam sprockets, belts, flywheel, manifold-mounted turbos, crossflow/in-valley induction and headers foreshorten consistently with cel-shading, Bayer dithering and 1 px outlines.
