@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 440</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 441</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4444,8 +4444,9 @@ const FUELS={
 // valvetrain (2-stroke/rotary: cam & VVT don't apply). imep/eff/bsfc scale peak pressure,
 // thermal efficiency and thirst; the cr/redline/afr ranges retarget the design sliders.
 const ENGINE_TYPE={
+  // crMax 18 (was 14): lets high-CR petrol builds run into the real physical limits (knock, pre-ignition, peak pressure, crevice loss)
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
-             crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
+             crDef:11,crMin:8,crMax:18,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
   diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:1.00,
              crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:2000,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,
@@ -4957,10 +4958,11 @@ function wallTrace(e,rpm,map,egr=0){
   // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
   const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
   const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
-  let T=T1,num=0,den=0,pE=0,TE=0;
+  let T=T1,num=0,den=0,pE=0,TE=0,pMax=p1;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
     const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
     const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
     const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
     num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
@@ -4973,7 +4975,7 @@ function wallTrace(e,rpm,map,egr=0){
     const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX};
+  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
@@ -10207,6 +10209,8 @@ function syncDesignEnable(){
   const maxCyl=tp.maxCyl||12, cylSel=g('edCyl');
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
+  g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
+  g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
@@ -10438,6 +10442,7 @@ function buildEngineCore(prevStoich,quiet){
   engine.wotRich=wotNeedsEnrichment();   // the ECU's full-load enrichment, where the exhaust needs it (build 202); before peakEgts, which reads it
   if(buildKnockLimit())buildBoostTable(26);   // knock past the furthest retard and richest mixture lowers the boost (build 307)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
+  {const c=peakCylLoads();engine.peakPmax=c.pMax;engine.peakPreIgn=c.preIgn;}   // peak cylinder pressure (bar) and pre-ignition integral
 
   buildRev++;dynoCache=null;
   engine.cost=computeCost();
@@ -11080,10 +11085,19 @@ function egrRate(rpm,map){
   const load=map/Math.max(0.5,wotMapAt(rpm));
   return engine.egrMax*clamp((load-0.3)/0.2,0,1)*(engine.egrFull?1:clamp((1-load)/0.15,0,1));
 }
+// Top-land crevice trapping (Heywood §6.4, Namazian & Heywood SAE 820088): piston crevice volume is fixed by the
+// ring pack while clearance volume Vc = Vd/(rc-1) shrinks with CR, so the trapped unburned share grows with (rc-1).
+// Anchored at COMB_INEFF_SI (0.035) at rc = 10 where REAL_TO_FUELAIR sits, so road engines stay put while extreme CR
+// rolls SI brake efficiency over ~15-17:1 alongside wall heat and ring friction (Caris & Nelson SAE 1959; Heywood fig. 15-4).
+const CR_CREV_REF=10;
+function creviceEta(cr){
+  const f=clamp(COMB_INEFF_SI*(Math.max(1.5,cr)-1)/(CR_CREV_REF-1),0,0.35);
+  return (1-f)/(1-COMB_INEFF_SI);
+}
 function sparkGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.7;
   const x=egrRate(rpm,map),air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve*(1-x);   // kg of trapped air per m3 swept (less the EGR)
-  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x);
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x)*(e.ports?1:creviceEta(e.compression));
   return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
@@ -11140,11 +11154,12 @@ function burnCycle(){
 }
 // retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
 // burn sending a hotter exhaust (build 307).
-function endGasIntegral(rpm,map,ca50,retard){
+function endGasTrace(rpm,map,ca50,retard){
   const prevR=_retardNow;_retardNow=Math.max(0,retard||0);
-  try{return endGasIntegralAt(rpm,map,ca50);}finally{_retardNow=prevR;}
+  try{return endGasTraceAt(rpm,map,ca50);}finally{_retardNow=prevR;}
 }
-function endGasIntegralAt(rpm,map,ca50){
+function endGasIntegral(rpm,map,ca50,retard){return endGasTrace(rpm,map,ca50,retard).I;}
+function endGasTraceAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
   const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
   const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
@@ -11180,18 +11195,23 @@ function endGasIntegralAt(rpm,map,ca50){
   // where the gas has longest.
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,V0=V00,x0=0,pPrev=p1;
+  let T=T1,Tu=T1,I=0,Ipre=0,V0=V00,x0=0,pPrev=p1,pMax=p1;
   const c1=dt*1000/onF,pRef=5e5;
   for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
     const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
     Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
-    if(p>pRef)I+=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
+    if(p>pRef){
+      const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
+      I+=dI;
+      if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
+    }
     T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
     V0=Vn;x0=xn;
   }
-  return I;
+  return {I,Ipre,pMax:pMax/1e5};
 }
 // Rotaries and two-strokes keep the points score this replaced (knockScorePorted, below, as it was in build 122):
 // the end-gas integral above is a four-stroke poppet engine's cycle, and a Wankel's end gas (a thin trailing pocket
@@ -11249,20 +11269,56 @@ function knockCa50(rpm,map,adv){
   const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
   return burnCycle().ca50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
 }
+// Peak cylinder pressure structural ceiling for spark-ignition petrol engines (bar): modern high-output turbo
+// DI petrols (Audi 2.5 TFSI, GR Yaris G16E-GTS) are designed up to ~130-140 bar (Bosch Automotive Handbook; Heywood).
+// Diesels use rate-shaped injection and dieselImepLimit() to cap firing pressure, so wallTrace's single-zone Wiebe
+// burn is not used as a CI structural check.
+const PMAX_LIMIT_SI=140, PMAX_LIMIT_CI=200;
+const cylPmaxLimit=()=>engine.ci?PMAX_LIMIT_CI:PMAX_LIMIT_SI;
+function cylTraceAt(rpm,map,adv){
+  const e=engine;
+  if(e.ci||e.ports)return {I:0,Ipre:0,pMax:0};
+  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  let tr=_knockCache.m.get(key);
+  if(tr==null){
+    tr=endGasTrace(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
+    if(_knockCache.m.size>20000)_knockCache.m.clear();
+    _knockCache.m.set(key,tr);
+  }
+  return tr;
+}
 function knockAt(rpm,map,adv){
   const e=engine;
   if(e.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
   if(e.ports)return knockScorePorted(rpm,map,adv);
-  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
-  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
-  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
-  let I=_knockCache.m.get(key);
-  if(I==null){
-    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
-    if(_knockCache.m.size>20000)_knockCache.m.clear();
-    _knockCache.m.set(key,I);
+  const tr=cylTraceAt(rpm,map,adv);
+  return clamp(KNOCK_TARGET*tr.I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
+}
+// Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
+function peakCylLoads(){
+  const e=engine;
+  let pMax=0,preIgn=0;
+  for(let r=1000;r<=e.redline;r+=400){
+    const m=wotMapAt(r),adv=activeAdvance(r,m);
+    const tr=cylTraceAt(r,m,adv);
+    if(tr.pMax>pMax)pMax=tr.pMax;
+    if(tr.Ipre>preIgn)preIgn=tr.Ipre;
   }
-  return clamp(KNOCK_TARGET*I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
+  return {pMax,preIgn};
+}
+// Summary of how much boost the ECU's knock limiter pulled below the engine's target curve.
+function knockBoostCutInfo(){
+  const e=engine,tb=e.knockLimTable;
+  if(!tb||!(e.maxBoost>0))return null;
+  let maxCut=0,minLim=e.maxBoost;
+  for(const p of tb){
+    const ask=Math.min(e.maxBoost*boostTaperFrac(p.rpm)*govBoostFrac(p.rpm),tqLimitBoost(p.rpm));
+    const cut=ask-p.bar;
+    if(cut>maxCut){maxCut=cut;minLim=p.bar;}
+  }
+  return maxCut>0.05?{maxCut,minLim}:null;
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO = an ECU that runs
 // best-torque spark where the end gas survives it, and otherwise the most advance at which it just does
@@ -12041,6 +12097,8 @@ function stepWear(dt){
   let w=0,worst=0,cause='';
   const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
+  add(state.preIgn>=1.0?(state.preIgn-0.9)*0.12:0,'PRE-IGNITION');               // autoignition before spark: spark retard cannot stop it
+  {const pLim=cylPmaxLimit();add(state.cylPmax>pLim?(state.cylPmax-pLim)/40*0.055:0,'OVER-PRESSURE');}   // head gasket / conrod limit
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
@@ -12233,7 +12291,7 @@ function updateEnginePhysics(){
   // readout, fuel flow, emissions and wear all reflect the mapped value.
   if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
-    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
+    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     computeEmissions();return;
   }
@@ -12241,6 +12299,8 @@ function updateEnginePhysics(){
   const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+  if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
+  else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
     state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
@@ -20704,6 +20764,8 @@ function scoreEngine(){
   const boostStress=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
   const outputStress=Math.max(0,hpPerL-110)*0.30;      // highly-strung specific output
   rel-=Math.max(boostStress,outputStress);
+  {const pLim=cylPmaxLimit();if(engine.peakPmax>pLim)rel-=clamp((engine.peakPmax-pLim)/40,0,1)*35;}   // peak cylinder pressure past structural ceiling
+  if(engine.peakPreIgn>=1.0)rel-=clamp((engine.peakPreIgn-0.9)*35,0,45);                              // pre-ignition (autoignition before spark)
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
   // The vane ring is the hottest MOVING part in the exhaust, and this is the real reason VGT is a
   // diesel technology rather than a universal one. The nickel-base alloys the vanes and their
@@ -29498,6 +29560,24 @@ function diagnoseEngine(){
       tr('Worst knock on a stoich WOT sweep is {k}, above the limit of {t}.')
         .replace('{k}',Math.round(knock)).replace('{t}',KNOCK_TARGET),
       tr('More octane, less compression or boost, a larger intercooler, or AUTO ignition timing.'));
+  // Compression pre-ignition: autoignition before the spark fires — retarding timing cannot stop it.
+  if(e.peakPreIgn>=1.0)
+    add('err','preign',tr('PRE-IGNITION'),
+      tr('Mixture autoignites before spark (I={v}) — retarding timing cannot stop it.').replace('{v}',e.peakPreIgn.toFixed(2)),
+      tr('Lower compression or boost, use higher octane, or cool the intake charge.'));
+  // Peak cylinder pressure past structural ceiling (130 bar SI / 200 bar CI).
+  if(e.peakPmax>cylPmaxLimit())
+    add('err','pmax',tr('PEAK CYLINDER PRESSURE'),
+      tr('Peak cylinder pressure reaches {p} bar (limit {l} bar) — head gasket and conrod risk.')
+        .replace('{p}',Math.round(e.peakPmax)).replace('{l}',cylPmaxLimit()),
+      tr('Lower compression or boost, or retard ignition timing.'));
+  // ECU knock limiter actively pulling boost down to hold knock at the limit.
+  {const cut=knockBoostCutInfo();
+    if(cut)
+      add('info','knockboost',tr('ECU BOOST CUT (KNOCK)'),
+        tr('ECU pulled boost down by {c} bar (to {b} bar) to hold off knock.')
+          .replace('{c}',cut.maxCut.toFixed(2)).replace('{b}',cut.minLim.toFixed(2)),
+        tr('Lower compression, add octane, fit a larger intercooler, or lower target boost.'));}
   // Cam-overlap lope only — engine.lumpiness also folds in diesel clatter and two-stroke ring-ding for
   // the sound, which are not a lumpy idle. VVT multiplies the same way the sound does.
   {const ov=Math.max(0,e.overlap||0),camLope=(ov/90)*(e.vvt?0.7:1);
@@ -37769,6 +37849,7 @@ function icdCompute(){
     return {hp:s.peakHP,hpRpm:s.peakHPrpm,tq:s.peakTQ,tqRpm:s.peakTQrpm,disp:e.displacement_L,overall:s.overall,grade:s.grade,rel:s.reliability,
       safety:s.safety,knock:100-s.safety,cost:e.cost,redline:e.redline,float:e.floatRpm||0,ports:!!e.ports,rotary:e.type==='rotary',
       piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar,
+      pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -37779,6 +37860,8 @@ function icdCompute(){
 }
 const icdKnockOver=r=>r.knock>KNOCK_TARGET+0.5;   // past the end-gas limit an AUTO ECU retards to (share-scoring.js)
 const icdFloatShort=r=>r.float>0&&r.float<r.redline;
+const icdPmaxOver=r=>r.pMax>r.pMaxLim;
+const icdPreIgn=r=>r.preIgn>=1.0;
 
 function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
@@ -37809,15 +37892,21 @@ const ICD=new DesignCards({
     (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1))),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',
   curve:r=>({xMax:r.redline,mark:null,pts:r.pts}),
-  // what holds it back: the valvetrain against the redline, and knock against its limit
+  // what holds it back: the valvetrain against the redline, knock, and peak cylinder pressure
   limits:r=>{
     const groups=[];
     if(r.float>0)groups.push({head:'REVS',rows:[['valve float',r.float],['redline',r.redline]],lit:icdFloatShort(r)?0:1,fmt:v=>dcFmt(v/1000,1)+'k'});
-    groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)?0:1,fmt:v=>dcFmt(v)});
+    groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)||icdPreIgn(r)?0:1,fmt:v=>dcFmt(v)});
+    if(r.pMax>0)groups.push({head:'CYL PRESSURE',rows:[['peak',r.pMax],['limit',r.pMaxLim]],lit:icdPmaxOver(r)?0:1,fmt:v=>dcFmt(v)+' bar'});
     let v;
     if(icdFloatShort(r))v=tr('The valves float at {f} rpm, before the {r} rpm redline: stiffer springs, lighter valves or a lower redline.')
       .replace('{f}',dcFmt(Math.round(r.float/100)*100)).replace('{r}',dcFmt(r.redline));
+    else if(icdPreIgn(r))v=tr('Mixture autoignites before spark (pre-ignition): lower compression or boost, or add octane.');
+    else if(icdPmaxOver(r))v=tr('Peak cylinder pressure reaches {p} bar (limit {l} bar): lower compression or boost.')
+      .replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));
     else if(icdKnockOver(r))v=tr('It knocks past what the ECU can hold off: more octane, less compression or boost, or AUTO ignition timing.');
+    else if(r.knockCut)v=tr('ECU pulled boost down by {c} bar to hold off knock: lower compression, add octane, or fit a larger intercooler.')
+      .replace('{c}',r.knockCut.maxCut.toFixed(2));
     else v=tr('Breathing sets the peak: {hp} hp at {rpm} rpm, with knock under its limit.').replace('{hp}',dcFmt(r.hp)).replace('{rpm}',dcFmt(r.hpRpm))+
       (r.float>0?' '+tr('The valves are safe to {f} rpm.').replace('{f}',dcFmt(Math.round(r.float/100)*100)):'');
     return {groups,verdict:v};
@@ -37826,7 +37915,10 @@ const ICD=new DesignCards({
   summary:icdSummary,
   warnings:r=>{const w={};
     if(icdFloatShort(r))w.edRedline=tr('The valves float at {f} rpm, under this redline.').replace('{f}',dcFmt(Math.round(r.float/100)*100));
-    if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
+    if(icdPreIgn(r))w.edCR=tr('Pre-ignition: mixture autoignites before spark.');
+    else if(icdPmaxOver(r)){w.edCR=tr('Peak cylinder pressure ({p} bar) exceeds the {l} bar limit.').replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));if(r.boost>0)w.edBoost=w.edCR;}
+    else if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
+    else if(r.knockCut){w.edCR=tr('ECU is cutting boost by {c} bar to stop knock.').replace('{c}',r.knockCut.maxCut.toFixed(2));w.edBoost=w.edCR;}
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
   // low against high: the cylinder for what it shapes, the power curve for all four

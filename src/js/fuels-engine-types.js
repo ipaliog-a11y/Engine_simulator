@@ -23,8 +23,9 @@ const FUELS={
 // valvetrain (2-stroke/rotary: cam & VVT don't apply). imep/eff/bsfc scale peak pressure,
 // thermal efficiency and thirst; the cr/redline/afr ranges retarget the design sliders.
 const ENGINE_TYPE={
+  // crMax 18 (was 14): lets high-CR petrol builds run into the real physical limits (knock, pre-ignition, peak pressure, crevice loss)
   petrol4:  {label:'PETROL 4-STROKE',strokeDiv:4*Math.PI,ci:false,ports:false,imep:1.00,eff:1.00,bsfc:1.00,
-             crDef:11,crMin:8,crMax:14,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
+             crDef:11,crMin:8,crMax:18,redlineDef:7000,redMin:5000,redMax:9500,fuel:null,maxCyl:12},
   diesel:   {label:'DIESEL (CI)',    strokeDiv:4*Math.PI,ci:true, ports:false,imep:1.02,eff:1.30,bsfc:1.00,
              crDef:18,crMin:15,crMax:24,redlineDef:4800,redMin:2000,redMax:5800,fuel:'diesel',maxCyl:12},
   twostroke:{label:'2-STROKE',       strokeDiv:2*Math.PI,ci:false,ports:true, imep:0.60,eff:0.80,bsfc:1.45,

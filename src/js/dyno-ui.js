@@ -46,6 +46,24 @@ function diagnoseEngine(){
       tr('Worst knock on a stoich WOT sweep is {k}, above the limit of {t}.')
         .replace('{k}',Math.round(knock)).replace('{t}',KNOCK_TARGET),
       tr('More octane, less compression or boost, a larger intercooler, or AUTO ignition timing.'));
+  // Compression pre-ignition: autoignition before the spark fires — retarding timing cannot stop it.
+  if(e.peakPreIgn>=1.0)
+    add('err','preign',tr('PRE-IGNITION'),
+      tr('Mixture autoignites before spark (I={v}) — retarding timing cannot stop it.').replace('{v}',e.peakPreIgn.toFixed(2)),
+      tr('Lower compression or boost, use higher octane, or cool the intake charge.'));
+  // Peak cylinder pressure past structural ceiling (130 bar SI / 200 bar CI).
+  if(e.peakPmax>cylPmaxLimit())
+    add('err','pmax',tr('PEAK CYLINDER PRESSURE'),
+      tr('Peak cylinder pressure reaches {p} bar (limit {l} bar) — head gasket and conrod risk.')
+        .replace('{p}',Math.round(e.peakPmax)).replace('{l}',cylPmaxLimit()),
+      tr('Lower compression or boost, or retard ignition timing.'));
+  // ECU knock limiter actively pulling boost down to hold knock at the limit.
+  {const cut=knockBoostCutInfo();
+    if(cut)
+      add('info','knockboost',tr('ECU BOOST CUT (KNOCK)'),
+        tr('ECU pulled boost down by {c} bar (to {b} bar) to hold off knock.')
+          .replace('{c}',cut.maxCut.toFixed(2)).replace('{b}',cut.minLim.toFixed(2)),
+        tr('Lower compression, add octane, fit a larger intercooler, or lower target boost.'));}
   // Cam-overlap lope only — engine.lumpiness also folds in diesel clatter and two-stroke ring-ding for
   // the sound, which are not a lumpy idle. VVT multiplies the same way the sound does.
   {const ov=Math.max(0,e.overlap||0),camLope=(ov/90)*(e.vvt?0.7:1);

@@ -353,10 +353,19 @@ function egrRate(rpm,map){
   const load=map/Math.max(0.5,wotMapAt(rpm));
   return engine.egrMax*clamp((load-0.3)/0.2,0,1)*(engine.egrFull?1:clamp((1-load)/0.15,0,1));
 }
+// Top-land crevice trapping (Heywood §6.4, Namazian & Heywood SAE 820088): piston crevice volume is fixed by the
+// ring pack while clearance volume Vc = Vd/(rc-1) shrinks with CR, so the trapped unburned share grows with (rc-1).
+// Anchored at COMB_INEFF_SI (0.035) at rc = 10 where REAL_TO_FUELAIR sits, so road engines stay put while extreme CR
+// rolls SI brake efficiency over ~15-17:1 alongside wall heat and ring friction (Caris & Nelson SAE 1959; Heywood fig. 15-4).
+const CR_CREV_REF=10;
+function creviceEta(cr){
+  const f=clamp(COMB_INEFF_SI*(Math.max(1.5,cr)-1)/(CR_CREV_REF-1),0,0.35);
+  return (1-f)/(1-COMB_INEFF_SI);
+}
 function sparkGrossImep(rpm,map,ve){
   const e=engine,st=e.stoichAFR||14.7;
   const x=egrRate(rpm,map),air=map*1e5/(287*(effIAT(map,rpm)+273.15))*ve*(1-x);   // kg of trapped air per m3 swept (less the EGR)
-  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x);
+  const eta=REAL_TO_FUELAIR*(1-Math.pow(Math.max(1.5,e.compression),1-GAMMA_FA))*wallImepFactor(rpm,x)*(e.ports?1:creviceEta(e.compression));
   return eta*e.typeImep*air/st*(e.fuelLHV||44)*1e6*sparkMixture(curAFR(rpm,map)/st)/1e5;   // bar
 }
 function tempFactors(coolant,oil){
@@ -413,11 +422,12 @@ function burnCycle(){
 }
 // retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
 // burn sending a hotter exhaust (build 307).
-function endGasIntegral(rpm,map,ca50,retard){
+function endGasTrace(rpm,map,ca50,retard){
   const prevR=_retardNow;_retardNow=Math.max(0,retard||0);
-  try{return endGasIntegralAt(rpm,map,ca50);}finally{_retardNow=prevR;}
+  try{return endGasTraceAt(rpm,map,ca50);}finally{_retardNow=prevR;}
 }
-function endGasIntegralAt(rpm,map,ca50){
+function endGasIntegral(rpm,map,ca50,retard){return endGasTrace(rpm,map,ca50,retard).I;}
+function endGasTraceAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
   const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
   const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
@@ -453,18 +463,23 @@ function endGasIntegralAt(rpm,map,ca50){
   // where the gas has longest.
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,V0=V00,x0=0,pPrev=p1;
+  let T=T1,Tu=T1,I=0,Ipre=0,V0=V00,x0=0,pPrev=p1,pMax=p1;
   const c1=dt*1000/onF,pRef=5e5;
   for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
     const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
     Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
-    if(p>pRef)I+=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
+    if(p>pRef){
+      const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
+      I+=dI;
+      if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
+    }
     T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
     V0=Vn;x0=xn;
   }
-  return I;
+  return {I,Ipre,pMax:pMax/1e5};
 }
 // Rotaries and two-strokes keep the points score this replaced (knockScorePorted, below, as it was in build 122):
 // the end-gas integral above is a four-stroke poppet engine's cycle, and a Wankel's end gas (a thin trailing pocket
@@ -522,20 +537,56 @@ function knockCa50(rpm,map,adv){
   const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
   return burnCycle().ca50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
 }
+// Peak cylinder pressure structural ceiling for spark-ignition petrol engines (bar): modern high-output turbo
+// DI petrols (Audi 2.5 TFSI, GR Yaris G16E-GTS) are designed up to ~130-140 bar (Bosch Automotive Handbook; Heywood).
+// Diesels use rate-shaped injection and dieselImepLimit() to cap firing pressure, so wallTrace's single-zone Wiebe
+// burn is not used as a CI structural check.
+const PMAX_LIMIT_SI=140, PMAX_LIMIT_CI=200;
+const cylPmaxLimit=()=>engine.ci?PMAX_LIMIT_CI:PMAX_LIMIT_SI;
+function cylTraceAt(rpm,map,adv){
+  const e=engine;
+  if(e.ci||e.ports)return {I:0,Ipre:0,pMax:0};
+  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  let tr=_knockCache.m.get(key);
+  if(tr==null){
+    tr=endGasTrace(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
+    if(_knockCache.m.size>20000)_knockCache.m.clear();
+    _knockCache.m.set(key,tr);
+  }
+  return tr;
+}
 function knockAt(rpm,map,adv){
   const e=engine;
   if(e.ci)return 0;   // compression ignition — no spark knock (limited by smoke/EGT instead)
   if(e.ports)return knockScorePorted(rpm,map,adv);
-  if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
-  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
-  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
-  let I=_knockCache.m.get(key);
-  if(I==null){
-    I=endGasIntegral(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
-    if(_knockCache.m.size>20000)_knockCache.m.clear();
-    _knockCache.m.set(key,I);
+  const tr=cylTraceAt(rpm,map,adv);
+  return clamp(KNOCK_TARGET*tr.I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
+}
+// Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
+function peakCylLoads(){
+  const e=engine;
+  let pMax=0,preIgn=0;
+  for(let r=1000;r<=e.redline;r+=400){
+    const m=wotMapAt(r),adv=activeAdvance(r,m);
+    const tr=cylTraceAt(r,m,adv);
+    if(tr.pMax>pMax)pMax=tr.pMax;
+    if(tr.Ipre>preIgn)preIgn=tr.Ipre;
   }
-  return clamp(KNOCK_TARGET*I+nitrousImep()*4,0,100);   // nitrous raises cylinder pressure → more knock
+  return {pMax,preIgn};
+}
+// Summary of how much boost the ECU's knock limiter pulled below the engine's target curve.
+function knockBoostCutInfo(){
+  const e=engine,tb=e.knockLimTable;
+  if(!tb||!(e.maxBoost>0))return null;
+  let maxCut=0,minLim=e.maxBoost;
+  for(const p of tb){
+    const ask=Math.min(e.maxBoost*boostTaperFrac(p.rpm)*govBoostFrac(p.rpm),tqLimitBoost(p.rpm));
+    const cut=ask-p.bar;
+    if(cut>maxCut){maxCut=cut;minLim=p.bar;}
+  }
+  return maxCut>0.05?{maxCut,minLim}:null;
 }
 // The spark advance actually run at an operating point. FIXED = the designed value; AUTO = an ECU that runs
 // best-torque spark where the end gas survives it, and otherwise the most advance at which it just does
@@ -1314,6 +1365,8 @@ function stepWear(dt){
   let w=0,worst=0,cause='';
   const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
   add(state.knockRisk>55?(state.knockRisk-55)/45*0.060:0,'DETONATION');          // knock is the big killer
+  add(state.preIgn>=1.0?(state.preIgn-0.9)*0.12:0,'PRE-IGNITION');               // autoignition before spark: spark retard cannot stop it
+  {const pLim=cylPmaxLimit();add(state.cylPmax>pLim?(state.cylPmax-pLim)/40*0.055:0,'OVER-PRESSURE');}   // head gasket / conrod limit
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
@@ -1506,7 +1559,7 @@ function updateEnginePhysics(){
   // readout, fuel flow, emissions and wear all reflect the mapped value.
   if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
   if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
-    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;
+    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
     state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
     computeEmissions();return;
   }
@@ -1514,6 +1567,8 @@ function updateEnginePhysics(){
   const r=calcAtRpm(state.rpm,map);
   state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
   state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+  if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
+  else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
 
   if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
     state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;

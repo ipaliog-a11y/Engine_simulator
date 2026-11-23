@@ -204,10 +204,11 @@ function wallTrace(e,rpm,map,egr=0){
   // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
   const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
   const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
-  let T=T1,num=0,den=0,pE=0,TE=0;
+  let T=T1,num=0,den=0,pE=0,TE=0,pMax=p1;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
     const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
     const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
     const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
     num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
@@ -220,7 +221,7 @@ function wallTrace(e,rpm,map,egr=0){
     const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX};
+  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
