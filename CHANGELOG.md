@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Gas engine sound fixes, physics detail and faster calibration (build 437)
+
+- **Fixed high-RPM misfires in the GAS sound model** (`src/js/sound.js`): the 3° spark trigger window was smaller than a crank step above 5,000 rpm at `simHz = 10 kHz`, dropping ~50% of firings at 10,000 rpm. Scaling the window with `rpm * 6 * dt` restores 100/100 firings at 12,000 rpm across four-strokes, two-strokes and rotaries.
+- **Rebalanced `GasChannel` and low-RPM levelling**: replaced the zero-mean ring-modulated noise + unnormalised `sampleRate` derivative with a sample-rate-invariant mix of tonal exhaust pressure (`ac`), modest turbulent noise (`18%`), and a 400 Hz-normalised derivative (`35%`), preserving low-end rumble (44.1/48 kHz RMS ratio `0.989`). Scaled the AGC release to at least two firing periods (min 60 ms) to stop intra-cycle pumping at idle.
+- **Added real build geometry, fresh-charge reversion and hot exhaust delays**: `Gas` now tracks fresh-charge fraction for natural cam-overlap reversion and idle lope (Heywood §9.4), uses real exhaust valve diameter/count, fuel `stoich`/`LHV`, VVT `camAdv`, turbine collector restriction, hot exhaust sound speed (~528 m/s vs 343 m/s), and `exhSigma` unequal-length primary spread.
+- **Cut calibration mute and CPU overhead**: `calibrateGas` now steps all six speeds in a single `OfflineAudioContext` with caching (0.1 ms on hit), caches the worklet Blob URL, keeps playing during recalibration, checks build identity instead of per-frame `JSON.stringify`, and strips dead `Math.cbrt` and 2D `py` math from the 40 kHz fluid loop.
+- **Updated `tests/test84.mjs`** to cover high-RPM ignition, overlap fresh-charge reversion, hot exhaust speed / UEL primary spread, `GasChannel` sample-rate invariance and calibration caching.
+
 ### Drive landing pages, Track conditions, and ECU removal from Drive (build 436)
 
 - **Removed the ECU laptop from Drive tabs.** `ecuWants()` now restricts `#ecuComputer` and `#btnEcu` to `LIVE` and `DYNO` (`src/js/ecu-computer.js`), removing the non-functional ECU panel from `TRACK`, `RACE`, `CHAMP`, and `CHALLENGES`.
