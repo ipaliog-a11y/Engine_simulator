@@ -3,7 +3,7 @@
 const ECU_N=600;
 const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
 function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
-function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuWants(){return vizMode==='engine'||vizMode==='dyno';}
 function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
 function ecuSync(){
   const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');

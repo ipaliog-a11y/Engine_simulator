@@ -895,7 +895,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 435</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 436</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4204,7 +4204,19 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="panel" id="trackPanel" style="display:none">
 <h2>Lap Time</h2>
+<div id="trackSetup">
 <div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
+<div class="race-row">
+<div class="field"><label for="trkWeather">WEATHER</label><select id="trkWeather"><option value="dry">DRY</option><option value="damp">DAMP</option><option value="wet">WET</option></select></div>
+<div class="field"><label for="trkAir">AIR °C</label><select id="trkAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
+</div>
+<div class="field"><label for="trkTyre">TYRES</label><select id="trkTyre"><option value="own">OWN TYRES</option><option value="inter">INTERS</option><option value="wet">FULL WET</option></select></div>
+<div class="perf-head" id="trkPreviewHead">—</div>
+<div class="perf-note" id="trkPreviewNote"></div>
+<div class="build-row"><button id="btnTrackStart">START LAP</button></div>
+<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button></div>
+</div>
+<div id="trackLive" hidden>
 <div class="perf-head" id="lapHead">—</div>
 <div class="design-section">Live timing</div>
 <div class="replay-row" id="trackReplayRow">
@@ -4220,9 +4232,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="build-row">
 <button id="btnLapPng" title="Save the hot lap report as an image">LAP REPORT PNG</button>
 <button id="btnLapPdf" title="Save the hot lap report as a PDF">PDF</button>
+<button id="btnTrackSetup">CHANGE TRACK</button>
 </div>
-<div class="build-row">
-<button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
@@ -4271,7 +4282,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
-<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button><button id="btnImportRoad" title="Load an open road for the economy run from your own GPX file">IMPORT GPX ROAD</button></div>
+<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">START CHALLENGE</button><button id="btnChalBack" hidden>CHANGE CHALLENGE</button><button id="btnImportRoad" title="Load an open road for the economy run from your own GPX file">IMPORT GPX ROAD</button></div>
 <input type="file" id="roadGpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 <h3 class="chal-rank-h">RANK CARS</h3>
 <div id="chalRankCars"></div>
@@ -14565,8 +14576,8 @@ function buildVehicle(){
     }else{perf.zt=null;perf.zd=null;}
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
-  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
-  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
+  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof trackUI!=='undefined'&&trackUI.phase==='live'&&typeof refreshLap==='function')refreshLap();
+  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof chalUI!=='undefined'&&chalUI.phase==='live'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop. Returns stopping distance (m) and time (s).
@@ -16570,7 +16581,9 @@ function simulateLapCore(key,opts){
   // camber (latMuEff, build 109), less the diff's scrub.
   const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
-  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const airC=opts&&opts.air!=null?opts.air:null;
+  const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
+  const down=v=>0.5*rho*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
   // The vertical term is capped at ±0.6 g: real suspension runs out of travel and hits the bump
   // stops, so a deep compression stops adding grip long before the maths says it should — and
@@ -16581,7 +16594,7 @@ function simulateLapCore(key,opts){
   const KVCAP=0.6*m*G;
   const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
   const normalLoad=(i,vv)=>loadAt(p[i],vv);
-  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
+  const drag=v=>0.5*rho*vehicle.cdA*v*v;
   const rollF=v=>crrAt(vehicle.crr,v)*m*G;
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
   // Every gear that would over-rev is skipped — INCLUDING the top one. That last part is the rev
@@ -16637,7 +16650,7 @@ function simulateLapCore(key,opts){
       // pass 1: re-solve with that term evaluated and clamped at the speed just found
       const kvTerm=it===0?-m*q.kv*muLat:0;
       const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
-      const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+      const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
@@ -16932,9 +16945,9 @@ function simulateLapCore(key,opts){
     let bites=false;for(let i=0;i<n;i++)if(brakeBound[i]&&ebA[i]>0){bites=true;break;}
     if(bites)passes();   // the engine adds to brakes that were the limit somewhere: solve again with it
   }
-  const th=vehicle.brakeTh;
+  const th=airC!=null?Object.assign({},vehicle.brakeTh,{amb:airC}):vehicle.brakeTh;
   function brakeTemps(){
-    const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
+    const amb0=airC!=null?airC:BRAKE_AMBIENT,st={F:amb0,R:amb0},TF=new Array(n),TR=new Array(n);
     for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
@@ -19162,14 +19175,14 @@ function trackSoundState(st){
 // back (and is quiet while the replay is paused), and every other tab is quiet.
 function soundSource(){
   if(vizMode==='dyno')return state;
-  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  if(vizMode==='track'&&trackUI.phase==='live'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
   const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
   if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
   return null;
 }
 function driftSoundSample(){
   const R=typeof chalResult!=='undefined'?chalResult:null;
-  return vizMode==='challenges'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+  return vizMode==='challenges'&&chalUI.phase==='live'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
 }
 // ---- tyre screech on the powerslide replay (build 362) ----
 // A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same
@@ -27488,7 +27501,7 @@ function bindTrackZoom(){
     // the screen and its y from right to left
     if(trackPage.open&&trackPage.rot)return {x:(e.clientY-r.top)*vizW/r.height,y:(r.right-e.clientX)*vizH/r.width};
     return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
-  const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
+  const active=()=>(vizMode==='track'&&trackUI.phase==='live'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
     e.preventDefault();
@@ -27732,21 +27745,86 @@ function wrapItems(items,x,y,maxW,lh,gap){
   }
   return y;
 }
+const trackUI={phase:'setup',weather:'dry',air:22,tyre:'own'};
+function trackWetness(wx){
+  if(wx==='wet')return RACE.wetFull;
+  if(wx==='damp'||wx==='drying')return 0.4*RACE.wetFull;
+  return 0;
+}
+function trackWeatherLabel(wx){
+  const m={dry:'DRY',damp:'DAMP',wet:'WET',rain:'RAIN LATER',drying:'DRYING'};
+  return tr(m[wx]||'DRY');
+}
+function syncTrackPanel(){
+  const s=document.getElementById('trackSetup'),l=document.getElementById('trackLive');
+  const live=trackUI.phase==='live'&&!!lapResult;
+  if(s)s.hidden=live;
+  if(l)l.hidden=!live;
+}
+function renderTrackSetup(){
+  syncTrackPanel();
+  const head=document.getElementById('trkPreviewHead'),note=document.getElementById('trkPreviewNote');
+  const T=TRACKS[trackKey]?buildTrack(trackKey):null;
+  if(!T){if(head)head.textContent='—';if(note)note.textContent='';return;}
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  if(head)head.innerHTML='<b>'+esc(T.label)+'</b> • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('corners')+' • '+elev+' m '+tr('elevation');
+  if(note)note.textContent=tr(T.blurb||'');
+}
+// Shared circuit map preview for the Drive landing pages (TRACK, RACE, CHAMP).
+function drawTrackPreview(key,opts){
+  const W=vizW,H=vizH,o=opts||{};
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const T=TRACKS[key]?buildTrack(key):null;
+  if(!T){
+    drawPixelRect(0,0,W,28,'#12121c');
+    ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText(o.title||tr('TEST TRACK'),12,19);
+    return;
+  }
+  const wx=o.weather||'dry',w=o.wet!=null?o.wet:trackWetness(wx);
+  const topBar=34,botLines=(o.sub&&o.sub.length)?o.sub.length:1,botBar=26+botLines*13;
+  sceneBind(T);
+  sceneWeather(wx==='rain'?'dry':wx==='drying'?'damp':wx,w);
+  const cam=sceneOverview(W,H,{t:topBar,b:botBar,l:12,r:12});
+  scenePaint(ctx,cam,{cars:[]});
+  ctx.fillStyle='rgba(13,13,24,0.82)';ctx.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  ctx.fillText((o.title||tr('TEST TRACK'))+' • '+T.label,12,19);
+  if(o.air!=null||o.weather){
+    ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=w>0?'#66ccff':'#88aacc';
+    const tag=trackWeatherLabel(wx)+(o.air!=null?'  '+o.air+'°C':'');
+    ctx.fillText(tag,W-12,19);ctx.textAlign='left';
+  }
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  ctx.font='7px "Press Start 2P"';
+  wrapItems([(T.length/1000).toFixed(2)+' km',T.wLabel+' '+tr('wide'),T.corners+' '+tr('corners'),elev+'m '+tr('elevation')]
+    .map((t,k)=>({fg:'#99a',txt:(k?'• ':'')+t})),12,H-botBar+14,W-24,12,7);
+  if(o.sub&&o.sub.length){
+    ctx.font='7px "Press Start 2P"';
+    o.sub.forEach((line,i)=>{ctx.fillStyle=i===0?C.green:'#889';ctx.fillText(line,12,H-botBar+30+i*13);});
+  }
+}
 function drawTrack(){
   trackGrid();
   const W=vizW,H=vizH,narrow=W<560;
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  drawPixelRect(0,0,W,28,'#12121c');
-  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   const L=lapResult;
-  ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
-  if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
+  if(trackUI.phase!=='live'||!L){
+    drawTrackPreview(trackKey,{weather:trackUI.weather,air:trackUI.air,title:tr('TEST TRACK'),
+      sub:[!powertrain().ready()||!vehicle.mass?tr('BUILD AN ENGINE FIRST'):tr('Select a circuit and conditions, then press START LAP.')]});
+    return;
+  }
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   const live=L.replay?replayAt(L,lapReplay.t):null;
   const T=L.track,topBar=narrow?74:62,botBar=narrow?58:52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   const z=trackView.z||1;
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
   sceneBind(T);
-  sceneWeather('dry',0);
+  sceneWeather(cond.weather,cond.wet);
   let car=null;
   if(live){
     car=Object.assign(scenePose(T.line,live.i+live.f),{name:vehicle.chLabel,col:carLivery(vehicle),brk:live.brk||0,steer:(live.steer||0)*Math.PI/180,pos:1});   // a smooth place and heading
@@ -27764,6 +27842,8 @@ function drawTrack(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
+  ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=cond.wet>0?'#66ccff':'#88aacc';
+  ctx.fillText(trackWeatherLabel(cond.weather)+'  '+cond.air+'°C',W-12,19);ctx.textAlign='left';
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
   let lx0=narrow?12:14+ctx.measureText(fmtLap(L.lap)).width*2;
@@ -27795,7 +27875,9 @@ function renderLap(){
   if(!head||!grid)return;
   const L=lapResult;
   if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
-  head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
+  const tyreTag=cond.tyre==='inter'?' • '+tr('INTERS'):cond.tyre==='wet'?' • '+tr('FULL WET'):'';
+  head.innerHTML='<b>'+L.track.label+'</b> • '+trackWeatherLabel(cond.weather)+' '+cond.air+'°C'+tyreTag+' • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=
     cell(tr('LAP TIME'),fmtLap(L.lap),'','hero wide')+
@@ -28092,14 +28174,18 @@ function drawRace(){
   const R=raceUI.run;
   ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
   if(!R||raceUI.phase!=='live'){
-    ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
     if(raceUI.phase==='computing'){
+      ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
       ctx.fillText(raceUI.progTxt,12,60);
       ctx.fillStyle='#26263a';ctx.fillRect(12,72,W-24,10);ctx.fillStyle=C.green;ctx.fillRect(12,72,(W-24)*raceUI.prog,10);
     }else{
-      ctx.fillText(tr('Pick two or more cars on the right,'),12,60);
-      ctx.fillText(tr('then START RACE. Nobody drives:'),12,76);
-      ctx.fillText(tr('the cars race on their own physics.'),12,92);
+      const g=id=>document.getElementById(id);
+      const key=(g('raceTrk')&&g('raceTrk').value)||trackKey;
+      const wx=(g('raceWeather')&&g('raceWeather').value)||'dry';
+      const air=+(g('raceAir')&&g('raceAir').value)||RACE.air;
+      const laps=clamp(Math.round(+(g('raceLaps')&&g('raceLaps').value)||5),1,100);
+      drawTrackPreview(key,{weather:wx,air,title:tr('RACE'),
+        sub:[laps+' '+tr('LAPS')+' • '+raceUI.entrants.length+' '+tr('ENTRANTS')+' • '+tr('Pick two or more cars, then START RACE.')]});
     }
     return;
   }
@@ -28792,6 +28878,30 @@ function refreshChamp(){
     const S=champActive();if(S)champRenderSeason(S);else champBackHub();
   }else champRenderHub();
 }
+function drawChamp(){
+  const S=champActive();
+  if(champUI.phase==='season'&&S&&S.calendar&&S.calendar.length){
+    const idx=Math.min(S.roundIdx,S.calendar.length-1),rd=S.calendar[idx];
+    const dist=rd.durationMin?rd.durationMin+' '+tr('min'):rd.laps+' '+tr('LAPS');
+    const sub=S.done
+      ?[tr('SEASON COMPLETE')+' • '+(S.standings[0]?S.standings[0].name:'—')]
+      :[tr('ROUND')+' '+(idx+1)+'/'+S.calendar.length+' • '+dist+' • '+tr('Press RUN ROUND to race.')];
+    drawTrackPreview(rd.track,{weather:rd.weather||'dry',title:tr(S.name),sub});
+    return;
+  }
+  const sel=document.getElementById('champSeries');
+  const ser=(sel&&champSeries(sel.value))||(S&&!S.done&&champSeries(S.seriesId))||CHAMP_SERIES[0];
+  if(!ser||!ser.calendar||!ser.calendar.length){
+    drawTrackPreview(trackKey,{weather:'dry',title:tr('CHAMPIONSHIP'),sub:[tr('Pick a series on the right, then START SEASON.')]});
+    return;
+  }
+  const rd0=ser.calendar[0];
+  const cls=CHAMP_CLASSES[ser.classId];
+  const cal=ser.calendar.map((r,i)=>'R'+(i+1)+' '+((TRACKS[r.track]||{}).label||r.track)).join(' · ');
+  const calLine=cal.length>76?cal.slice(0,75)+'…':cal;
+  drawTrackPreview(rd0.track,{weather:rd0.weather||'dry',title:tr(ser.name),
+    sub:[ser.calendar.length+' '+tr('ROUNDS')+(cls?' • '+tr(cls.label):'')+' • '+tr('Pick a series and press START SEASON.'),calLine]});
+}
 // ---- the full-screen track view (build 143): the lap, its live instruments and the replay controls ----
 // For a phone. ⛶ in the live-timing row moves the map canvas and the replay controls into a page that fills
 // the screen (the same elements, so the replay, zoom and pan keep working), asks for real full screen and a
@@ -28883,15 +28993,42 @@ function loadGpxTrack(text,fallbackName){
   const key='gpx_'+Date.now().toString(36);
   TRACKS[key]=def;delete trackCache[key];
   trackKey=key;refreshTrackList();saveImportedTracks();
-  buildVehicle();refreshLap();
   const T=buildTrack(key);
   flash(trIn('msg','IMPORTED')+' '+def.label+' • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('CORNERS'));
   setTab('track');
+  refreshLap();
 }
 function refreshLap(){
-  if(!powertrain().ready()||!vehicle.mass){lapResult=null;}
-  else lapResult=simulateLap(trackKey);
+  if(!powertrain().ready()||!vehicle.mass){lapResult=null;renderLap();syncTrackPanel();return;}
+  const wx=trackUI.weather||'dry',air=trackUI.air!=null?trackUI.air:22,tyreKey=trackUI.tyre||'own';
+  const w=trackWetness(wx);
+  if(w===0&&tyreKey==='own'&&air===22){
+    lapResult=simulateLap(trackKey);
+    if(lapResult)lapResult.cond={weather:wx,wet:0,air,tyre:tyreKey,grip:1};
+  }else{
+    const ty=raceCompound(tyreKey==='own'?(vehicle.tireType||'sport'):tyreKey);
+    const ownMu=(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).mu||vehicle.mu||1;
+    let grip=tyreKey==='own'?1:Math.min(1,ty.mu/ownMu);
+    if(w>0){
+      // Same wet-grip fixed point as raceWetLap (Wong Table 1.3 + Horne NASA TN D-2056 hydroplaning).
+      const T=buildTrack(trackKey),line=lineFor(T,trackKey),base=simulateLap(trackKey,{air,line,quick:true});
+      const coldKPa=vehicle.tyreColdKPa||0;
+      let gWet=1;
+      if(base&&base.v&&line.length){
+        for(let it=0;it<4;it++){
+          const s=Math.sqrt(gWet);let tw=0,gw=0;
+          for(let i=0;i<line.length;i++){const v=Math.max(2,base.v[i]*s),dt=line[i].ds3/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,T.width||12,coldKPa);}
+          gWet=tw>0?gw/tw:1;
+        }
+      }
+      grip*=gWet;
+    }
+    lapResult=withRaceTrim(grip,0,()=>simulateLap(trackKey,{air}));
+    if(lapResult)lapResult.cond={weather:wx,wet:w,air,tyre:tyreKey,grip};
+  }
+  if(lapResult)trackUI.phase='live';
   renderLap();
+  syncTrackPanel();
 }
 // ---- the dyno result as a static sheet ----
 // The DYNO canvas draws the pull with small tags, and the figures under it are the scorecard's — two
@@ -29360,8 +29497,8 @@ function setTab(mode){
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
-  if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
+  if(mode==='track'){buildVehicle();trackUI.phase='setup';renderTrackSetup();}
+  if(mode==='challenges'){buildVehicle();chalShowSetup();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   if(typeof ecuSync==='function')ecuSync();
@@ -35312,14 +35449,9 @@ let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
-function refreshChallenge(){
-  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
-  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
-  const ch=runChallengeById(activeRunChallenge);
-  chalResult=solveRunChallenge(ch.id);
-  chalHover.i=-1;
-  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+const chalUI={phase:'setup'};
+function chalSyncFields(ch){
+  const live=chalUI.phase==='live';
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   if(typeof syncUserRoadUi==='function')syncUserRoadUi();
@@ -35328,7 +35460,33 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
+  const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
+}
+function chalShowSetup(){
+  chalUI.phase='setup';
+  const ch=runChallengeById(activeRunChallenge);
+  chalSyncFields(ch);
+  chalHover.i=-1;chalHover.map=null;
+  const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
+  if(head){
+    const road=ch.road&&typeof buildRoad==='function'?buildRoad(ch.road):null;
+    head.innerHTML='<b>'+esc(tr(ch.name))+'</b>'+(road?' · '+(road.length/1000).toFixed(1)+' km · '+road.corners+' '+tr('corners'):'');
+  }
+  if(grid)grid.innerHTML='';
+  if(note)note.textContent=tr(ch.desc);
+}
+function refreshChallenge(){
+  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
+  const ch=runChallengeById(activeRunChallenge);
+  chalResult=solveRunChallenge(ch.id);
+  chalUI.phase='live';
+  chalHover.i=-1;
+  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
+  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalSyncFields(ch);
   renderRunChallenge();
 }
 function renderRunChallenge(){
@@ -35910,8 +36068,83 @@ function drawMooseChallenge(g,R){
   g.strokeStyle='#2a3344';g.beginPath();g.moveTo(0,strip);g.lineTo(vizW,strip);g.stroke();
   if(chalMooseView==='plan')drawMoosePlan(g,R,0,strip,vizW,vizH-strip);else drawMooseFrontal(g,R,0,strip,vizW,vizH-strip);
 }
+function drawChallengePreview(g,ch){
+  const W=vizW,H=vizH,topBar=34,botBar=52;
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,W,H);
+  let stats='';
+  if(ch.road&&typeof buildRoad==='function'){
+    const T=buildRoad(ch.road);
+    if(T&&T.pts&&T.pts.length>1){
+      const p=T.pts,n=p.length,pad=24,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
+      const sc=Math.min((W-2*pad)/dx,(H-topBar-botBar-2*pad)/dy);
+      const ox=(W-dx*sc)/2,oy=topBar+(H-topBar-botBar-dy*sc)/2;
+      const MX=q=>ox+(q.x-T.minX)*sc,MY=q=>oy+(T.maxY-q.y)*sc;
+      g.strokeStyle='#2a3344';g.lineWidth=Math.max(4,T.width*sc);g.lineJoin='round';g.lineCap='round';
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.strokeStyle='#4aa3ff';g.lineWidth=2;
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.fillStyle='#00ff88';g.beginPath();g.arc(MX(p[0]),MY(p[0]),5,0,Math.PI*2);g.fill();
+      g.fillStyle='#ff5555';g.beginPath();g.arc(MX(p[n-1]),MY(p[n-1]),5,0,Math.PI*2);g.fill();
+      let z0=Infinity,z1=-Infinity;for(const q of p){const z=q.z||0;if(z<z0)z0=z;if(z>z1)z1=z;}
+      stats=(T.length/1000).toFixed(1)+' km • '+T.corners+' '+tr('corners')+' • '+Math.round(z1-z0)+'m '+tr('elevation')+
+        (ch.kind==='stage'?' • '+tr('SET TIME')+' '+ch.target+' s':' • '+tr('PACE')+' '+Math.round(chalPaceFactor*100)+'%');
+    }
+  }else{
+    const cx=W/2,cy=topBar+(H-topBar-botBar)/2,rMax=Math.min(W-80,H-topBar-botBar-44)/2;
+    g.lineCap='round';g.lineJoin='round';
+    if(ch.kind==='moose'){
+      const x0=cx-W*0.36,x1=cx+W*0.36,lx=x1-x0,yLo=cy+28,yHi=cy-28;
+      g.strokeStyle='#2a3344';g.lineWidth=34;
+      g.beginPath();g.moveTo(x0,yLo);g.lineTo(x0+lx*0.28,yLo);g.bezierCurveTo(x0+lx*0.38,yLo,x0+lx*0.40,yHi,x0+lx*0.50,yHi);
+      g.lineTo(x0+lx*0.62,yHi);g.bezierCurveTo(x0+lx*0.72,yHi,x0+lx*0.74,yLo,x0+lx*0.84,yLo);g.lineTo(x1,yLo);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#00ff88';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      g.fillStyle='#ff7722';
+      for(const [fx,fy] of [[0.06,yLo-18],[0.16,yLo-18],[0.26,yLo-18],[0.06,yLo+18],[0.16,yLo+18],[0.26,yLo+18],
+        [0.46,yHi-18],[0.56,yHi-18],[0.64,yHi-18],[0.46,yHi+18],[0.56,yHi+18],[0.64,yHi+18],
+        [0.82,yLo-18],[0.92,yLo-18],[0.82,yLo+18],[0.92,yLo+18]])g.fillRect(x0+lx*fx-3,fy-3,6,6);
+      stats='ISO 3888-2 • 61 m • '+tr('DOUBLE LANE CHANGE');
+    }else if(ch.kind==='drift'){
+      const R=rMax*0.58;
+      g.strokeStyle='#2a3344';g.lineWidth=26;
+      g.beginPath();g.moveTo(cx-R*2,cy+R);g.lineTo(cx-R,cy+R);g.arc(cx-R,cy,R,Math.PI/2,-Math.PI/2,true);
+      g.arc(cx+R,cy,R,-Math.PI/2,Math.PI/2,false);g.lineTo(cx+R*2,cy+R);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#ffaa00';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      stats=tr('S-ROUTE')+' • '+tr('2 LINKED CORNERS')+' • '+tr('POWERSLIDE');
+    }else if(ch.kind==='skidpad'){
+      const R=rMax*0.82;
+      g.strokeStyle='#2a3344';g.lineWidth=22;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();g.setLineDash([]);
+      stats='200 ft (61.0 m) '+tr('CIRCLE')+' • '+tr('STEADY LATERAL g');
+    }else if(ch.kind==='spiral'){
+      const drawSp=()=>{g.beginPath();for(let k=0;k<=120;k++){const a=k/120*Math.PI*2,r=rMax*(0.32+0.62*k/120),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;drawSp();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;drawSp();g.setLineDash([]);
+      stats='12 m → 30.5 m '+tr('SPIRAL')+' • '+tr('RISING SPEED');
+    }else if(ch.kind==='fig8'){
+      const A=Math.min(W*0.36,rMax*1.45);
+      const draw8=()=>{g.beginPath();for(let k=0;k<=160;k++){const t=k/160*Math.PI*2,d=1+Math.sin(t)*Math.sin(t),x=cx+A*Math.cos(t)/d,y=cy+A*Math.sin(t)*Math.cos(t)/d;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;draw8();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;draw8();g.setLineDash([]);
+      stats=tr('LEMNISCATE')+' • '+tr('BOTH DIRECTIONS');
+    }
+  }
+  g.fillStyle='rgba(13,13,24,0.86)';g.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  g.fillStyle=C.yellow;g.font='10px "Press Start 2P"';
+  g.fillText(tr('CHALLENGES')+' • '+tr(ch.name),12,19);
+  g.font='7px "Press Start 2P"';g.fillStyle='#99a';
+  g.fillText(stats||tr(ch.desc).slice(0,72),12,H-botBar+16);
+  g.fillStyle=C.green;
+  g.fillText(tr('Select a challenge and press START CHALLENGE.'),12,H-botBar+34);
+}
 function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  if(chalUI.phase!=='live'||!R){
+    if(canvas.style.touchAction!=='')canvas.style.touchAction='';
+    drawChallengePreview(g,runChallengeById(activeRunChallenge));
+    return;
+  }
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
@@ -38290,7 +38523,7 @@ function gfRender(){
 const ECU_N=600;
 const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
 function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
-function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuWants(){return vizMode==='engine'||vizMode==='dyno';}
 function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
 function ecuSync(){
   const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');
@@ -38648,16 +38881,16 @@ function bindControls(){
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
     chalSel.value=activeRunChallenge;
-    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
+    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;chalShowSetup();});
   }
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
-    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalDe=document.getElementById('chalDriftEntry'),chalDm=document.getElementById('chalDriftMethod');
   if(chalDe){chalDe.value=String(chalDriftEntry);
-    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;refreshChallenge();}});}
+    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   if(chalDm){chalDm.value=chalDriftMethod;
-    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;refreshChallenge();}});}
+    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalInfo=document.getElementById('chalInfoBtn');
   if(chalInfo)chalInfo.addEventListener('click',()=>{const n=document.getElementById('chalNote');if(!n)return;
     n.hidden=!n.hidden;chalInfo.setAttribute('aria-expanded',String(!n.hidden));chalInfo.classList.toggle('on',!n.hidden);});
@@ -38670,17 +38903,29 @@ function bindControls(){
     chalPace.value=String(chalPaceFactor);
     chalPace.addEventListener('change',e=>{
       const f=+e.target.value;
-      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;refreshChallenge();}
+      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}
     });
   }
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  const btnChalBk=document.getElementById('btnChalBack');
+  if(btnChalBk)btnChalBk.addEventListener('click',()=>chalShowSetup());
   if(typeof bindChalRank==='function')bindChalRank();
   bindUserRoad();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
-  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
+  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;renderTrackSetup();});}
+  const trkWx=document.getElementById('trkWeather');
+  if(trkWx)trkWx.addEventListener('change',e=>{trackUI.weather=e.target.value;renderTrackSetup();});
+  const trkAir=document.getElementById('trkAir');
+  if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
+  const trkTy=document.getElementById('trkTyre');
+  if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
+  const btnTrkGo=document.getElementById('btnTrackStart');
+  if(btnTrkGo)btnTrkGo.addEventListener('click',()=>{buildVehicle();refreshLap();lapReplay.t=0;lapReplay.playing=true;const pb=document.getElementById('btnReplay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');pb.setAttribute('aria-pressed','true');}});
+  const btnTrkSet=document.getElementById('btnTrackSetup');
+  if(btnTrkSet)btnTrkSet.addEventListener('click',()=>{if(trackPage.open)closeTrackPage();trackUI.phase='setup';renderTrackSetup();});
   const bImp=document.getElementById('btnImportGpx'),gIn=document.getElementById('gpxInput');
   if(bImp&&gIn){
     bImp.addEventListener('click',()=>gIn.click());
@@ -38902,9 +39147,10 @@ function loop(now){
   if(appCovered()){requestAnimationFrame(loop);return;}
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
-  else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='track'){if(trackUI.phase==='live')stepReplay(dt);drawTrack();}
   else if(vizMode==='challenges')drawChallenge();
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
+  else if(vizMode==='champ')drawChamp();
   else stepPreviews(dt);
   updateUI();
   requestAnimationFrame(loop);

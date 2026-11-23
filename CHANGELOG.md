@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Drive landing pages, Track conditions, and ECU removal from Drive (build 436)
+
+- **Removed the ECU laptop from Drive tabs.** `ecuWants()` now restricts `#ecuComputer` and `#btnEcu` to `LIVE` and `DYNO` (`src/js/ecu-computer.js`), removing the non-functional ECU panel from `TRACK`, `RACE`, `CHAMP`, and `CHALLENGES`.
+- **Added landing pages with live previews to all four Drive sub-tabs:**
+  - **TRACK** opens on `#trackSetup` with an overview map preview (showing live weather), circuit/condition selectors, and `START LAP` instead of immediately running the car; `CHANGE TRACK` returns to setup.
+  - **RACE** draws a live overview map preview of the selected circuit and weather during setup instead of blank text.
+  - **CHAMP** renders `drawChamp()` in the main loop, previewing the selected series' opening circuit and calendar (or the active season's next round).
+  - **CHALLENGES** opens in setup with a route map preview for road challenges (`buildRoad`) and a top-down course layout preview for closed-course tests (moose, powerslide, skid pad, spiral, figure 8); `START CHALLENGE` solves and `CHANGE CHALLENGE` returns to setup.
+- **Added Track conditions to TRACK** (`WEATHER`: Dry / Damp / Wet, `AIR °C`: 5–35 °C, `TYRES`: Own / Inters / Full Wet), reusing Race's wet-grip and hydroplaning physics (`raceWetKeep` + `raceCompound` + `withRaceTrim`) and ideal-gas air density + brake ambient temperature in `simulateLapCore`. Default dry 22 °C laps are unchanged (Riverside GP dry 68.83 s → damp 72.00 s → wet 81.23 s; wet Monza GT3/Z06 slicks 193.51 s → full wets 155.29 s; 5 °C vs 35 °C peak front brakes 273.5 °C vs 307.5 °C).
+- Updated `tests/test74.mjs` and `tests/test75.mjs` for the Track landing page, and added `tests/test262.mjs`.
+
 ### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 435)
 
 - **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`

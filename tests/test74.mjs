@@ -25,7 +25,7 @@ const fails = [];
 const src = await page.evaluate(() => {
   const out = {};
   for (const t of ['design', 'vehicle', 'garage', 'engine', 'dyno', 'guide', 'options']) { setTab(t); const s = soundSource(); out[t] = s === state ? 'live' : s ? 'replay' : 'none'; }
-  setTab('track'); lapReplay.playing = true; out.track = soundSource() ? (soundSource() === state ? 'live' : 'replay') : 'none';
+  setTab('track'); refreshLap(); lapReplay.playing = true; out.track = soundSource() ? (soundSource() === state ? 'live' : 'replay') : 'none';
   lapReplay.playing = false; out.trackPaused = soundSource() ? 'on' : 'none'; lapReplay.playing = true;
   return out;
 });

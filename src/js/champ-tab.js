@@ -198,3 +198,27 @@ function refreshChamp(){
     const S=champActive();if(S)champRenderSeason(S);else champBackHub();
   }else champRenderHub();
 }
+function drawChamp(){
+  const S=champActive();
+  if(champUI.phase==='season'&&S&&S.calendar&&S.calendar.length){
+    const idx=Math.min(S.roundIdx,S.calendar.length-1),rd=S.calendar[idx];
+    const dist=rd.durationMin?rd.durationMin+' '+tr('min'):rd.laps+' '+tr('LAPS');
+    const sub=S.done
+      ?[tr('SEASON COMPLETE')+' • '+(S.standings[0]?S.standings[0].name:'—')]
+      :[tr('ROUND')+' '+(idx+1)+'/'+S.calendar.length+' • '+dist+' • '+tr('Press RUN ROUND to race.')];
+    drawTrackPreview(rd.track,{weather:rd.weather||'dry',title:tr(S.name),sub});
+    return;
+  }
+  const sel=document.getElementById('champSeries');
+  const ser=(sel&&champSeries(sel.value))||(S&&!S.done&&champSeries(S.seriesId))||CHAMP_SERIES[0];
+  if(!ser||!ser.calendar||!ser.calendar.length){
+    drawTrackPreview(trackKey,{weather:'dry',title:tr('CHAMPIONSHIP'),sub:[tr('Pick a series on the right, then START SEASON.')]});
+    return;
+  }
+  const rd0=ser.calendar[0];
+  const cls=CHAMP_CLASSES[ser.classId];
+  const cal=ser.calendar.map((r,i)=>'R'+(i+1)+' '+((TRACKS[r.track]||{}).label||r.track)).join(' · ');
+  const calLine=cal.length>76?cal.slice(0,75)+'…':cal;
+  drawTrackPreview(rd0.track,{weather:rd0.weather||'dry',title:tr(ser.name),
+    sub:[ser.calendar.length+' '+tr('ROUNDS')+(cls?' • '+tr(cls.label):'')+' • '+tr('Pick a series and press START SEASON.'),calLine]});
+}

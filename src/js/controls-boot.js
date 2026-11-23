@@ -114,16 +114,16 @@ function bindControls(){
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
     chalSel.value=activeRunChallenge;
-    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
+    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;chalShowSetup();});
   }
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
-    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalDe=document.getElementById('chalDriftEntry'),chalDm=document.getElementById('chalDriftMethod');
   if(chalDe){chalDe.value=String(chalDriftEntry);
-    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;refreshChallenge();}});}
+    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   if(chalDm){chalDm.value=chalDriftMethod;
-    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;refreshChallenge();}});}
+    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalInfo=document.getElementById('chalInfoBtn');
   if(chalInfo)chalInfo.addEventListener('click',()=>{const n=document.getElementById('chalNote');if(!n)return;
     n.hidden=!n.hidden;chalInfo.setAttribute('aria-expanded',String(!n.hidden));chalInfo.classList.toggle('on',!n.hidden);});
@@ -136,17 +136,29 @@ function bindControls(){
     chalPace.value=String(chalPaceFactor);
     chalPace.addEventListener('change',e=>{
       const f=+e.target.value;
-      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;refreshChallenge();}
+      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}
     });
   }
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  const btnChalBk=document.getElementById('btnChalBack');
+  if(btnChalBk)btnChalBk.addEventListener('click',()=>chalShowSetup());
   if(typeof bindChalRank==='function')bindChalRank();
   bindUserRoad();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
-  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
+  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;renderTrackSetup();});}
+  const trkWx=document.getElementById('trkWeather');
+  if(trkWx)trkWx.addEventListener('change',e=>{trackUI.weather=e.target.value;renderTrackSetup();});
+  const trkAir=document.getElementById('trkAir');
+  if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
+  const trkTy=document.getElementById('trkTyre');
+  if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
+  const btnTrkGo=document.getElementById('btnTrackStart');
+  if(btnTrkGo)btnTrkGo.addEventListener('click',()=>{buildVehicle();refreshLap();lapReplay.t=0;lapReplay.playing=true;const pb=document.getElementById('btnReplay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');pb.setAttribute('aria-pressed','true');}});
+  const btnTrkSet=document.getElementById('btnTrackSetup');
+  if(btnTrkSet)btnTrkSet.addEventListener('click',()=>{if(trackPage.open)closeTrackPage();trackUI.phase='setup';renderTrackSetup();});
   const bImp=document.getElementById('btnImportGpx'),gIn=document.getElementById('gpxInput');
   if(bImp&&gIn){
     bImp.addEventListener('click',()=>gIn.click());
@@ -368,9 +380,10 @@ function loop(now){
   if(appCovered()){requestAnimationFrame(loop);return;}
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
-  else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='track'){if(trackUI.phase==='live')stepReplay(dt);drawTrack();}
   else if(vizMode==='challenges')drawChallenge();
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
+  else if(vizMode==='champ')drawChamp();
   else stepPreviews(dt);
   updateUI();
   requestAnimationFrame(loop);
