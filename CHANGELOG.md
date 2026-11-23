@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### High-CR and boost limits: peak cylinder pressure, pre-ignition, crevice loss, and ECU boost-cut diagnostics (build 441)
+
+- Raised `ENGINE_TYPE.petrol4.crMax` from `14` to `18` (`src/js/fuels-engine-types.js`) and synced `#edCR` and `#edRedline` HTML `min`/`max` bounds to the active engine type in `syncDesignEnable()` (`src/js/engine-build.js`), removing the silent clamp at 14:1 that froze power on high-CR petrol builds like a turbocharged Ferrari 812 (13.6:1 stock).
+- Derived peak cylinder pressure (`pMax`, bar) and compression-only pre-ignition (`Ipre`, Livengood–Wu integral accumulated before spark) directly from the existing closed-cycle end-gas trace (`endGasTraceAt` in `src/js/engine-physics.js`; `wallTrace` in `src/js/gas-dynamics.js`). Modern turbo DI petrols sit under the 140 bar structural ceiling (`PMAX_LIMIT_SI`, Bosch Automotive Handbook / Heywood: Ferrari 812 NA 77.8 bar, 992 Turbo S 114.9 bar, Audi RS3 8V 139.8 bar), while a 15:1 turbocharged Ferrari 812 reaches 148–163+ bar, drops design reliability (`src/js/share-scoring.js`), flags `PEAK CYLINDER PRESSURE`, and takes live `OVER-PRESSURE` wear in `stepWear()` even on knock-proof E85. Pre-ignition (`Ipre >= 1.0`) flags `PRE-IGNITION`, penalises reliability, and triggers rapid `PRE-IGNITION` wear that spark retard cannot cure.
+- Added high-CR top-land crevice trapping (`creviceEta`, Heywood §6.4 / Namazian & Heywood SAE 820088, anchored at `COMB_INEFF_SI = 0.035` at CR 10:1) to `sparkGrossImep()`, rolling SI brake efficiency over at extreme compression alongside Woschni wall heat and ring gas-load friction.
+- Surfaced active ECU knock boost cuts (`knockBoostCutInfo()` / `knockLimTable`), peak cylinder pressure, and pre-ignition in `diagnoseEngine()` (`src/js/dyno-ui.js`) and the Engine Designer limits/warnings (`src/js/engine-designer.js`).
+- Added `tests/test263.mjs` covering CR UI bounds, peak pressure diagnostics/wear on E85, pre-ignition, ECU boost-cut reporting, crevice loss ordering, and zero false positives on stock presets.
+
 ### AWD centre-differential modes, handbrake centre-clutch disconnect, and pre-run TC/ESP toggles (build 440)
 
 - Added real factory AWD centre-diff specs in `CENTRE_DIFF` (`src/js/tyres-brakes-driveline.js`): Subaru Impreza WRX STI DCCD (`35:65` planetary + clutch), Mitsubishi Lancer Evo IX ACD (`50:50` + hydraulic clutch), Toyota GR Yaris GR-FOUR (`40:60` + clutch), and Lamborghini Huracán LP610-4 (`30:70` Haldex V), plus selectable **AWD DIFF** modes (`AUTO`, `SPORT 30:70`, `OPEN 40:60`, `LOCK 50:50`) via `centreCoupling`.

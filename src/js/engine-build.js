@@ -116,6 +116,8 @@ function syncDesignEnable(){
   const maxCyl=tp.maxCyl||12, cylSel=g('edCyl');
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
+  g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
+  g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
@@ -347,6 +349,7 @@ function buildEngineCore(prevStoich,quiet){
   engine.wotRich=wotNeedsEnrichment();   // the ECU's full-load enrichment, where the exhaust needs it (build 202); before peakEgts, which reads it
   if(buildKnockLimit())buildBoostTable(26);   // knock past the furthest retard and richest mixture lowers the boost (build 307)
   {const p=peakEgts();engine.peakEgt=p.probe;engine.peakEgtGas=p.gas;}   // needs the boost table (wotMapAt) and the burn table
+  {const c=peakCylLoads();engine.peakPmax=c.pMax;engine.peakPreIgn=c.preIgn;}   // peak cylinder pressure (bar) and pre-ignition integral
 
   buildRev++;dynoCache=null;
   engine.cost=computeCost();

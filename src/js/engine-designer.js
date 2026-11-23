@@ -162,6 +162,7 @@ function icdCompute(){
     return {hp:s.peakHP,hpRpm:s.peakHPrpm,tq:s.peakTQ,tqRpm:s.peakTQrpm,disp:e.displacement_L,overall:s.overall,grade:s.grade,rel:s.reliability,
       safety:s.safety,knock:100-s.safety,cost:e.cost,redline:e.redline,float:e.floatRpm||0,ports:!!e.ports,rotary:e.type==='rotary',
       piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar,
+      pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -172,6 +173,8 @@ function icdCompute(){
 }
 const icdKnockOver=r=>r.knock>KNOCK_TARGET+0.5;   // past the end-gas limit an AUTO ECU retards to (share-scoring.js)
 const icdFloatShort=r=>r.float>0&&r.float<r.redline;
+const icdPmaxOver=r=>r.pMax>r.pMaxLim;
+const icdPreIgn=r=>r.preIgn>=1.0;
 
 function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
@@ -202,15 +205,21 @@ const ICD=new DesignCards({
     (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1))),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',
   curve:r=>({xMax:r.redline,mark:null,pts:r.pts}),
-  // what holds it back: the valvetrain against the redline, and knock against its limit
+  // what holds it back: the valvetrain against the redline, knock, and peak cylinder pressure
   limits:r=>{
     const groups=[];
     if(r.float>0)groups.push({head:'REVS',rows:[['valve float',r.float],['redline',r.redline]],lit:icdFloatShort(r)?0:1,fmt:v=>dcFmt(v/1000,1)+'k'});
-    groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)?0:1,fmt:v=>dcFmt(v)});
+    groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)||icdPreIgn(r)?0:1,fmt:v=>dcFmt(v)});
+    if(r.pMax>0)groups.push({head:'CYL PRESSURE',rows:[['peak',r.pMax],['limit',r.pMaxLim]],lit:icdPmaxOver(r)?0:1,fmt:v=>dcFmt(v)+' bar'});
     let v;
     if(icdFloatShort(r))v=tr('The valves float at {f} rpm, before the {r} rpm redline: stiffer springs, lighter valves or a lower redline.')
       .replace('{f}',dcFmt(Math.round(r.float/100)*100)).replace('{r}',dcFmt(r.redline));
+    else if(icdPreIgn(r))v=tr('Mixture autoignites before spark (pre-ignition): lower compression or boost, or add octane.');
+    else if(icdPmaxOver(r))v=tr('Peak cylinder pressure reaches {p} bar (limit {l} bar): lower compression or boost.')
+      .replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));
     else if(icdKnockOver(r))v=tr('It knocks past what the ECU can hold off: more octane, less compression or boost, or AUTO ignition timing.');
+    else if(r.knockCut)v=tr('ECU pulled boost down by {c} bar to hold off knock: lower compression, add octane, or fit a larger intercooler.')
+      .replace('{c}',r.knockCut.maxCut.toFixed(2));
     else v=tr('Breathing sets the peak: {hp} hp at {rpm} rpm, with knock under its limit.').replace('{hp}',dcFmt(r.hp)).replace('{rpm}',dcFmt(r.hpRpm))+
       (r.float>0?' '+tr('The valves are safe to {f} rpm.').replace('{f}',dcFmt(Math.round(r.float/100)*100)):'');
     return {groups,verdict:v};
@@ -219,7 +228,10 @@ const ICD=new DesignCards({
   summary:icdSummary,
   warnings:r=>{const w={};
     if(icdFloatShort(r))w.edRedline=tr('The valves float at {f} rpm, under this redline.').replace('{f}',dcFmt(Math.round(r.float/100)*100));
-    if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
+    if(icdPreIgn(r))w.edCR=tr('Pre-ignition: mixture autoignites before spark.');
+    else if(icdPmaxOver(r)){w.edCR=tr('Peak cylinder pressure ({p} bar) exceeds the {l} bar limit.').replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));if(r.boost>0)w.edBoost=w.edCR;}
+    else if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
+    else if(r.knockCut){w.edCR=tr('ECU is cutting boost by {c} bar to stop knock.').replace('{c}',r.knockCut.maxCut.toFixed(2));w.edBoost=w.edCR;}
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
   // low against high: the cylinder for what it shapes, the power curve for all four

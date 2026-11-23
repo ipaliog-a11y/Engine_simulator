@@ -235,5 +235,6 @@
   "test260.mjs": 4000,
   "test261.mjs": 4500,
   "test262.mjs": 22000,
+  "test263.mjs": 36000,
   "test-sprite-stacks.mjs": 500
 }

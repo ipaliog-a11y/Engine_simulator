@@ -99,6 +99,8 @@ function scoreEngine(){
   const boostStress=Math.max(0,engine.maxBoost-0.5)*11+Math.max(0,boostTarget(engine.redline)-0.5)*11;
   const outputStress=Math.max(0,hpPerL-110)*0.30;      // highly-strung specific output
   rel-=Math.max(boostStress,outputStress);
+  {const pLim=cylPmaxLimit();if(engine.peakPmax>pLim)rel-=clamp((engine.peakPmax-pLim)/40,0,1)*35;}   // peak cylinder pressure past structural ceiling
+  if(engine.peakPreIgn>=1.0)rel-=clamp((engine.peakPreIgn-0.9)*35,0,45);                              // pre-ignition (autoignition before spark)
   rel-=engine.antilag?15:0;                            // ALS cooks turbo/exhaust
   // The vane ring is the hottest MOVING part in the exhaust, and this is the real reason VGT is a
   // diesel technology rather than a universal one. The nickel-base alloys the vanes and their
