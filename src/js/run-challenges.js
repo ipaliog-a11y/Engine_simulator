@@ -88,7 +88,7 @@ const RUN_CHALLENGE_SCORES={
   // speed held through both loops. HOLD passes either.
   spiral:R=>({v:R.exitKmh,higher:true,pass:R.outcome==='HOLD',text:R.exitKmh.toFixed(0)+' km/h · '+R.gExit.toFixed(2)+' g'}),
   fig8:R=>({v:R.speedKmh,higher:true,pass:R.outcome==='HOLD',text:R.speedKmh.toFixed(0)+' km/h · '+R.gLap.toFixed(2)+' g'}),
-  drift:R=>({v:R.peakBeta,higher:true,pass:R.outcome==='CLEAR',text:R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
+  drift:R=>({v:R.score||0,higher:true,pass:R.outcome==='CLEAR',text:(R.score||0)+' · '+(R.vCornerKmh||0).toFixed(0)+' km/h · '+R.peakBeta.toFixed(1)+'° · '+tr(R.outcome)})
 };
 function runChallengeScore(ch,R){
   if(!R||!R.ok)return null;

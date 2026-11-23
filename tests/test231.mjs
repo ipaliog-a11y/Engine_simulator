@@ -25,6 +25,7 @@ const r = await page.evaluate(() => {
   load('Mazda MX-5'); out.mx5 = pick(simulateDriftChallenge());
   load('Tesla Model Y'); setTab('challenges');
   const sel = document.getElementById('chalSel'); sel.value = 'drift-s'; sel.dispatchEvent(new Event('change'));
+  const btn = document.getElementById('btnChalSolve'); if (btn) btn.click();
   out.grid = document.getElementById('chalGrid') ? document.getElementById('chalGrid').textContent : document.body.textContent;
   out.scroll = document.documentElement.scrollWidth > window.innerWidth + 1;
   return out;

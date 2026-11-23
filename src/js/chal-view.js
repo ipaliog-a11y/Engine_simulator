@@ -71,9 +71,11 @@ function renderRunChallenge(){
   }
   if(R.kind==='drift'){
     const col=DRIFT_OUT_COL[R.outcome]||'#e0e0e0';
-    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>';
+    head.innerHTML=tr(ch.name)+' · <b>'+R.speedKmh+' km/h</b> · <span style="color:'+col+'">'+tr(R.outcome)+'</span>'+(R.score?' · <b>'+R.score+'</b>':'');
     grid.innerHTML=cell('RESULT','<span style="color:'+col+'">'+tr(R.outcome)+'</span>')+
+      cell('SCORE',R.score?String(R.score):'—')+
       cell('ENTRY',R.speedKmh+' km/h'+(R.entryMode==='best'?' ('+tr('BEST')+')':''))+
+      cell('DRIFT SPEED',(R.vCornerKmh||0).toFixed(1)+' km/h')+
       cell('METHOD',tr(({power:'POWER-OVER',kick:'CLUTCH KICK',flick:'FLICK',handbrake:'HANDBRAKE'})[R.init]||'—')+(R.method==='auto'?' ('+tr('AUTO')+')':''))+
       cell('PEAK β',R.peakBeta.toFixed(1)+'°')+
       cell('CORNER 1 β',R.beta1.toFixed(1)+'°')+
@@ -83,7 +85,7 @@ function renderRunChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped) or FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries them in that order; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST searches 32–43 km/h. The driver holds body slip with throttle and countersteer, then links the second corner. CLEAR needs a sustained slide in both. Failures: NO_SLIDE (never past the rear peak — typical FWD on power-over), FADE (only one corner), STALL (stopped or never reached the exit), OFF (any corner of the body over the edge, swept at its slip angle), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front: a clutch or viscous coupling sends torque forward as the rear slips (DRIVE shows the coupling and its front:rear split). Loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){

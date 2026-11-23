@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Active powerslide driver, corner anticipation, mid-S acceleration, and composite drift scoring (build 439)
+
+- Upgraded `driftDriver` (`src/js/drift-run.js`) to a coupled active drift controller (Hindiyeh 2013; Velenis AVEC 2010): velocity-vector path tracking and proportional countersteer on $(\beta - \beta_{\text{des}})$ with yaw-rate damping using full steering lock, freeing throttle to sustain rear saturation and corner speed instead of cutting out mid-bend.
+- Added pre-corner anticipation (~0.35 s before each bend), corner-exit β tapering, and a live mid-S transition that unwinds corner 1's slip with active countersteer and then accelerates back to entry pace across the 34 m mid-straight (replacing the old 10% throttle cap). Kept the S-course geometry (`R = 20 m`, `DRIFT_MID = 34 m`, `±12 m`).
+- Expanded searched entry speeds to 36–65 km/h (`DRIFT_ENTRY_OPTS` 35–70 km/h) and target angles to 11.5–23°; replaced "first CLEAR wins" with a composite drift score (`mean corner speed × sin(mean sustained β) × 10`, discounted for >48° near-spin spikes) in `driftBest`, `chal-view.js`, and `RANK CARS` (`run-challenges.js`).
+- On the BMW M2 Competition, entry speed rose from 32 to ~47–50 km/h, mean corner speed from ~45 to ~52 km/h, mid-straight throttle from 0.04 to ~0.47, and sustained angles to ~42–46° across both bends.
+- Updated `tests/test219.mjs` and `tests/test231.mjs` (including clicking `#btnChalSolve` for the Challenges setup view), `src/html/guide.html`, and `README.md`.
+
 ### Hybrid live slice-stacked cars, critically damped Follow/Chase cameras, and curb-aligned Mode B tiles (build 438)
 
 - Upgraded `src/js/car-stacks.js` to a hybrid renderer: continuous floating-point live slice stacking at close/mid zoom (`cam.scale >= 5.5`) for 0° angular stepping, pre-dilated single 1px outer silhouette, and continuous Z-interleaved Ackermann front-wheel steering, plus a lazy 64-heading 1-blit atlas at far overview zoom (with a zero-`getImageData` Canvas 2D fallback for `file://`). Kept all 32 existing sprite-stacked cars synced.
