@@ -4,14 +4,9 @@ let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
-function refreshChallenge(){
-  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
-  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
-  const ch=runChallengeById(activeRunChallenge);
-  chalResult=solveRunChallenge(ch.id);
-  chalHover.i=-1;
-  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+const chalUI={phase:'setup'};
+function chalSyncFields(ch){
+  const live=chalUI.phase==='live';
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   if(typeof syncUserRoadUi==='function')syncUserRoadUi();
@@ -20,7 +15,33 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
+  const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
+}
+function chalShowSetup(){
+  chalUI.phase='setup';
+  const ch=runChallengeById(activeRunChallenge);
+  chalSyncFields(ch);
+  chalHover.i=-1;chalHover.map=null;
+  const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
+  if(head){
+    const road=ch.road&&typeof buildRoad==='function'?buildRoad(ch.road):null;
+    head.innerHTML='<b>'+esc(tr(ch.name))+'</b>'+(road?' · '+(road.length/1000).toFixed(1)+' km · '+road.corners+' '+tr('corners'):'');
+  }
+  if(grid)grid.innerHTML='';
+  if(note)note.textContent=tr(ch.desc);
+}
+function refreshChallenge(){
+  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
+  const ch=runChallengeById(activeRunChallenge);
+  chalResult=solveRunChallenge(ch.id);
+  chalUI.phase='live';
+  chalHover.i=-1;
+  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
+  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalSyncFields(ch);
   renderRunChallenge();
 }
 function renderRunChallenge(){
@@ -602,8 +623,83 @@ function drawMooseChallenge(g,R){
   g.strokeStyle='#2a3344';g.beginPath();g.moveTo(0,strip);g.lineTo(vizW,strip);g.stroke();
   if(chalMooseView==='plan')drawMoosePlan(g,R,0,strip,vizW,vizH-strip);else drawMooseFrontal(g,R,0,strip,vizW,vizH-strip);
 }
+function drawChallengePreview(g,ch){
+  const W=vizW,H=vizH,topBar=34,botBar=52;
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,W,H);
+  let stats='';
+  if(ch.road&&typeof buildRoad==='function'){
+    const T=buildRoad(ch.road);
+    if(T&&T.pts&&T.pts.length>1){
+      const p=T.pts,n=p.length,pad=24,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
+      const sc=Math.min((W-2*pad)/dx,(H-topBar-botBar-2*pad)/dy);
+      const ox=(W-dx*sc)/2,oy=topBar+(H-topBar-botBar-dy*sc)/2;
+      const MX=q=>ox+(q.x-T.minX)*sc,MY=q=>oy+(T.maxY-q.y)*sc;
+      g.strokeStyle='#2a3344';g.lineWidth=Math.max(4,T.width*sc);g.lineJoin='round';g.lineCap='round';
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.strokeStyle='#4aa3ff';g.lineWidth=2;
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.fillStyle='#00ff88';g.beginPath();g.arc(MX(p[0]),MY(p[0]),5,0,Math.PI*2);g.fill();
+      g.fillStyle='#ff5555';g.beginPath();g.arc(MX(p[n-1]),MY(p[n-1]),5,0,Math.PI*2);g.fill();
+      let z0=Infinity,z1=-Infinity;for(const q of p){const z=q.z||0;if(z<z0)z0=z;if(z>z1)z1=z;}
+      stats=(T.length/1000).toFixed(1)+' km • '+T.corners+' '+tr('corners')+' • '+Math.round(z1-z0)+'m '+tr('elevation')+
+        (ch.kind==='stage'?' • '+tr('SET TIME')+' '+ch.target+' s':' • '+tr('PACE')+' '+Math.round(chalPaceFactor*100)+'%');
+    }
+  }else{
+    const cx=W/2,cy=topBar+(H-topBar-botBar)/2,rMax=Math.min(W-80,H-topBar-botBar-44)/2;
+    g.lineCap='round';g.lineJoin='round';
+    if(ch.kind==='moose'){
+      const x0=cx-W*0.36,x1=cx+W*0.36,lx=x1-x0,yLo=cy+28,yHi=cy-28;
+      g.strokeStyle='#2a3344';g.lineWidth=34;
+      g.beginPath();g.moveTo(x0,yLo);g.lineTo(x0+lx*0.28,yLo);g.bezierCurveTo(x0+lx*0.38,yLo,x0+lx*0.40,yHi,x0+lx*0.50,yHi);
+      g.lineTo(x0+lx*0.62,yHi);g.bezierCurveTo(x0+lx*0.72,yHi,x0+lx*0.74,yLo,x0+lx*0.84,yLo);g.lineTo(x1,yLo);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#00ff88';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      g.fillStyle='#ff7722';
+      for(const [fx,fy] of [[0.06,yLo-18],[0.16,yLo-18],[0.26,yLo-18],[0.06,yLo+18],[0.16,yLo+18],[0.26,yLo+18],
+        [0.46,yHi-18],[0.56,yHi-18],[0.64,yHi-18],[0.46,yHi+18],[0.56,yHi+18],[0.64,yHi+18],
+        [0.82,yLo-18],[0.92,yLo-18],[0.82,yLo+18],[0.92,yLo+18]])g.fillRect(x0+lx*fx-3,fy-3,6,6);
+      stats='ISO 3888-2 • 61 m • '+tr('DOUBLE LANE CHANGE');
+    }else if(ch.kind==='drift'){
+      const R=rMax*0.58;
+      g.strokeStyle='#2a3344';g.lineWidth=26;
+      g.beginPath();g.moveTo(cx-R*2,cy+R);g.lineTo(cx-R,cy+R);g.arc(cx-R,cy,R,Math.PI/2,-Math.PI/2,true);
+      g.arc(cx+R,cy,R,-Math.PI/2,Math.PI/2,false);g.lineTo(cx+R*2,cy+R);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#ffaa00';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      stats=tr('S-ROUTE')+' • '+tr('2 LINKED CORNERS')+' • '+tr('POWERSLIDE');
+    }else if(ch.kind==='skidpad'){
+      const R=rMax*0.82;
+      g.strokeStyle='#2a3344';g.lineWidth=22;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();g.setLineDash([]);
+      stats='200 ft (61.0 m) '+tr('CIRCLE')+' • '+tr('STEADY LATERAL g');
+    }else if(ch.kind==='spiral'){
+      const drawSp=()=>{g.beginPath();for(let k=0;k<=120;k++){const a=k/120*Math.PI*2,r=rMax*(0.32+0.62*k/120),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;drawSp();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;drawSp();g.setLineDash([]);
+      stats='12 m → 30.5 m '+tr('SPIRAL')+' • '+tr('RISING SPEED');
+    }else if(ch.kind==='fig8'){
+      const A=Math.min(W*0.36,rMax*1.45);
+      const draw8=()=>{g.beginPath();for(let k=0;k<=160;k++){const t=k/160*Math.PI*2,d=1+Math.sin(t)*Math.sin(t),x=cx+A*Math.cos(t)/d,y=cy+A*Math.sin(t)*Math.cos(t)/d;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;draw8();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;draw8();g.setLineDash([]);
+      stats=tr('LEMNISCATE')+' • '+tr('BOTH DIRECTIONS');
+    }
+  }
+  g.fillStyle='rgba(13,13,24,0.86)';g.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  g.fillStyle=C.yellow;g.font='10px "Press Start 2P"';
+  g.fillText(tr('CHALLENGES')+' • '+tr(ch.name),12,19);
+  g.font='7px "Press Start 2P"';g.fillStyle='#99a';
+  g.fillText(stats||tr(ch.desc).slice(0,72),12,H-botBar+16);
+  g.fillStyle=C.green;
+  g.fillText(tr('Select a challenge and press START CHALLENGE.'),12,H-botBar+34);
+}
 function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  if(chalUI.phase!=='live'||!R){
+    if(canvas.style.touchAction!=='')canvas.style.touchAction='';
+    drawChallengePreview(g,runChallengeById(activeRunChallenge));
+    return;
+  }
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
