@@ -49,10 +49,17 @@ const r = await page.evaluate(() => {
   load('MX-5');
   for (const m of ['power', 'kick', 'flick', 'handbrake']) { chalDriftMethod = m; chalDriftEntry = 40; const R = simulateDriftChallenge(); out.methods[m] = { init: R.init, kmh: R.speedKmh, out: R.outcome, hb: R.samples.some(q => q.hb > 0) }; }
   load('Civic Type R (FK8'); chalDriftMethod = 'flick'; chalDriftEntry = 40; out.civicFlick = simulateDriftChallenge().init;
-  chalDriftMethod = 'auto'; chalDriftEntry = 0; load('MX-5');
+  chalDriftMethod = 'auto'; chalDriftEntry = 0;
+  load('M2 Competition');
+  const m2 = simulateDriftChallenge();
+  const m2Mid = (m2.samples || []).filter(q => q.zone === 'mid');
+  out.m2 = { outcome: m2.outcome, entry: m2.speedKmh, vC: m2.vCornerKmh, score: m2.score,
+    midThr: m2Mid.length ? m2Mid.reduce((a, q) => a + q.thr, 0) / m2Mid.length : 0 };
+  load('MX-5');
   setTab('challenges');
   const sel = document.getElementById('chalSel');
   sel.value = 'drift-s'; sel.dispatchEvent(new Event('change'));
+  const btn = document.getElementById('btnChalSolve'); if (btn) btn.click();
   out.head = document.getElementById('chalHead').textContent;
   const nb = document.getElementById('chalNote'), ib = document.getElementById('chalInfoBtn');
   out.info = [nb.hidden, (ib.click(), nb.hidden), nb.textContent.includes('FLICK'), (ib.click(), nb.hidden)];
@@ -70,6 +77,7 @@ await browser.close();
 const OK = new Set(['CLEAR', 'FADE', 'NO_SLIDE', 'STALL', 'OFF', 'SPIN']);
 console.log('MX-5', r.mx5);
 console.log('Mustang', r.mustang);
+console.log('M2 Comp', r.m2);
 console.log('Civic', r.civic);
 console.log('max line gap', r.gap, 'm');
 console.log('UI', r.head, 'rate', r.rateShown);
@@ -77,6 +85,8 @@ console.log('UI', r.head, 'rate', r.rateShown);
 if (!r.has) fails.push('drift-s missing from RUN_CHALLENGES');
 if (!r.mx5 || !OK.has(r.mx5.outcome)) fails.push('MX-5 bad outcome');
 if (r.mx5.outcome !== 'CLEAR' || r.mustang.outcome !== 'CLEAR') fails.push('RWD not both CLEAR (MX-5 ' + r.mx5.outcome + ', Mustang ' + r.mustang.outcome + ')');
+if (!r.m2 || r.m2.outcome !== 'CLEAR' || !(r.m2.entry >= 40) || !(r.m2.vC >= 45) || !(r.m2.score >= 150) || !(r.m2.midThr >= 0.25))
+  fails.push('M2 Comp active drift / scoring check failed: ' + JSON.stringify(r.m2));
 if (!(r.gap < 1)) fails.push('course gap ' + r.gap + ' m');
 for (const k of OK) if (!r.outcomes.includes(k)) fails.push('DRIFT_RANK missing ' + k);
 if (r.civic.drive !== 'fwd') fails.push('Civic not FWD');

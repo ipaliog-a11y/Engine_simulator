@@ -13,18 +13,17 @@
 const DRIFT_RANK={CLEAR:0,FADE:1,NO_SLIDE:2,STALL:3,OFF:4,SPIN:5};
 const DRIFT_HALF_W=12;   // half road width (m): a drift-pad lane, not a single carriageway
 const DRIFT_MID=34;      // short straight between the two corners (m)
-// Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick of 10 or 20 steps, or a flick),
-// corner radius R (m). Mild β first — Velenis's expert data was ~32° on dirt; dry asphalt here holds ~12–30°.
-// Build 382: the handbrake (Velenis et al., CDC 2011, handbrake cornering), RWD and FWD. Its plans are searched last, so a car
-// that CLEARed before still CLEARs on the same plan.
-const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:10},{init:'kick',kick:20},{init:'flick',kick:0},{init:'handbrake',kick:0}];
+// Plans: entry speed v (m/s), target |β| (rad), initiation (power-over, clutch kick, flick, or handbrake), radius R (m).
+// Build 382: handbrake (Velenis et al., CDC 2011) is searched last, only if the dynamic methods do not CLEAR.
+// Active drift controller (Hindiyeh 2013; Velenis AVEC 2010): steering stabilizes β and yaw rate while throttle sustains
+// rear saturation and corner speed, so higher entry speeds (36–65 km/h) and deeper angles (14–25°) are searched on R=20 m.
+const DRIFT_INITS=[{init:'power',kick:0},{init:'kick',kick:15},{init:'flick',kick:0},{init:'handbrake',kick:0}];
 const DRIFT_PLANS=[];
-for(const betaT of[0.20,0.24,0.28])for(const v of[9,10,11,12])for(const I of DRIFT_INITS)for(const R of[18,20,22])
-  DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R,gear:2,pull:2.2,initThr:0.8});
-DRIFT_PLANS.sort((p,q)=>(p.init==='handbrake')-(q.init==='handbrake'));   // stable: the others keep their order
+for(const I of DRIFT_INITS)for(const v of[10,12,14,16,18])for(const betaT of[0.20,0.30,0.40])
+  DRIFT_PLANS.push({v,betaT,kick:I.kick,init:I.init,R:20,gear:2,pull:2.2,initThr:0.92});
 // Driver settings (build 360, Challenges UI): entry speed in km/h (0 = the search's best) and initiation method.
 let chalDriftEntry=0,chalDriftMethod='auto';
-const DRIFT_ENTRY_OPTS=[0,30,35,40,45,50],DRIFT_METHODS=['auto','power','kick','flick','handbrake'];
+const DRIFT_ENTRY_OPTS=[0,35,40,45,50,55,60,65,70],DRIFT_METHODS=['auto','power','kick','flick','handbrake'];
 function driftSCourse(R,halfW,mid){
   const line=[],zones=[],ds=0.5;
   const add=(x,y,z)=>{line.push({x,y,v:10,grade:0,kv:0});zones.push(z);};
@@ -38,68 +37,142 @@ function driftSCourse(R,halfW,mid){
   for(let a=Math.PI;a>=Math.PI/2-1e-9;a-=ds/R)add(2*R+R*Math.cos(a),y2+R*Math.sin(a),'c2');
   const xE=2*R,yE=y2+R;
   for(let x=xE+ds;x<=xE+60;x+=ds)add(x,yE,'exit');
-  return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),i2:zones.indexOf('c2')};
+  return{line,zones,halfW,R,mid,xE,yE,ds,i1:zones.indexOf('c1'),e1:zones.lastIndexOf('c1'),i2:zones.indexOf('c2'),e2:zones.lastIndexOf('c2')};
 }
-// Path from driveDriver; in the corners, throttle holds a target β (Velenis: steering + drive torque). FWD on power-over
-// stays on the grip path: NO_SLIDE is the honest result; a FWD car slides by the flick or the handbrake.
-// AWD (build 379) takes the RWD path: power-over works as far as the centre coupling lets the rear axle turn faster than the
-// front. stepCar models the coupling (centreCoupling, build 320): a clutch closed on the first slip or a viscous coupling
-// sends torque forward as the rear slips, so a car like the 993 Turbo (viscous, rear driven) gets NO_SLIDE honestly.
+// Active drift controller (Hindiyeh 2013; Velenis AVEC 2010):
+//   - Pre-corner anticipation: initiates turn-in and builds throttle/boost ~0.35 s before each bend.
+//   - Corners (RWD/AWD): velocity-vector path tracking + proportional countersteer on (β − β_des) and yaw-rate damping
+//     (full steering lock available via δ = vf − toeF + α_f,cmd), while throttle sustains rear saturation and speed.
+//   - Mid-S transition: active countersteer smoothly unwinds corner 1's slip, then accelerates back to entry pace
+//     before swinging into corner 2.
+//   - FWD: power-over stays on the grip path (NO_SLIDE); flick and handbrake (Velenis CDC 2011) rotate the rear.
+//   - AWD (build 379): takes the RWD path; centre coupling in stepCar decides whether the rear can overspeed the front.
 function driftDriver(car,s,C,d,plan){
   const base=driveDriver(car,s,C.line,d);
-  const z=C.zones[Math.max(0,Math.min(C.zones.length-1,d.i||0))]||'exit';d.zone=z;
+  const idx=Math.max(0,Math.min(C.zones.length-1,d.i||0));
+  const z=C.zones[idx]||'exit';d.zone=z;
   const drifting=z==='c1'||z==='c2';
-  // Flick (pendulum turn, build 360): lift and steer away from the corner, then sharply into it, so the body's
-  // roll rebound loads the outside front and unloads the rear as the car turns in. Each phase lasts half the body's
-  // natural period, π·tauLoad (tauLoad = 1/(2π·ride frequency)), so the rebound comes back in phase with turn-in.
-  // Steer in each phase: the line's own plus the front tyres' peak slip angle (car.pkF).
+  const v=Math.max(1,Math.hypot(s.vx,s.vy));
+  const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
+  const pkF=car.pkF||Math.atan(3*(car.muF||car.mu)/car.cc);
+  const pkR=Math.atan(3*car.mu/car.cc);
+  const wrap=x=>x-2*Math.PI*Math.round(x/(2*Math.PI));
+  // Flick (pendulum turn, build 360): lift and steer away from the corner, then sharply into it, each for half the
+  // body's natural roll period π·tauLoad so the rebound helps turn-in.
   if(plan.init==='flick'&&(z==='approach'||z==='mid')){
     const next=z==='approach'?C.i1:C.i2,dir=z==='approach'?1:-1;
-    const tTo=(next-(d.i||0))*C.ds/Math.max(1,s.vx),tF=Math.PI*(car.tauLoad||0.1);
+    const tTo=(next-idx)*C.ds/Math.max(2,s.vx),tF=Math.PI*(car.tauLoad||0.1);
     if(tTo<2*tF){
-      const away=tTo>tF,pk=(car.pkF||0.1)/car.steerLock;
+      const away=tTo>tF,pk=pkF/car.steerLock;
       base.steer=Math.max(-1,Math.min(1,base.steer+(away?-dir:dir)*pk));
       base.throttle=away||car.drive==='fwd'?0:1;base.brake=0;d.flicked=true;return base;
     }
   }
-  if(!drifting){if(z==='mid')base.throttle=Math.min(base.throttle||0,0.1);return base;}
-  if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);return base;}
-  const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
-  // A FWD car after a flick: power pulls the nose straight, so it is the brake on the slide; lifting keeps it rotating.
-  // Handbrake cornering (Velenis CDC 2011): the lever holds the rears sliding while β is short of the target, steering
-  // in by the front's peak slip until the rear passes its peak, with throttle as the path asks (at least 0.3); past the
-  // target the lever drops and power pulls the nose straight. (At throttle 0.3 alone the Civic stopped in the corner.)
-  if(car.drive==='fwd'){const dirF=z==='c1'?1:-1,absB=Math.abs(beta),over=absB>plan.betaT,pk=z==='c1'?'seen1':'seen2';
-    if(Math.abs((s.alpha[2]+s.alpha[3])/2)>Math.atan(3*car.mu/car.cc))d[pk]=true;
+  // Corner anticipation (non-grip, non-flick): ~0.35 s before c1 or c2, start turning in and building throttle/boost
+  // so the car enters the bend already rotating instead of reacting late.
+  if(!plan.gripOnly&&plan.init!=='flick'&&(z==='approach'||z==='mid')){
+    const next=z==='approach'?C.i1:C.i2,dir=z==='approach'?1:-1;
+    const tTo=(next-idx)*C.ds/Math.max(3,s.vx);
+    if(tTo>0&&tTo<0.35){
+      const stPre=base.steer+0.4*dir*pkF/car.steerLock;
+      const thrPre=car.drive==='fwd'?Math.max(0.4,base.throttle||0):Math.max(base.throttle||0,plan.initThr||0.92);
+      return{steer:Math.max(-1,Math.min(1,stPre)),throttle:Math.min(1,thrPre),brake:0,gear:null};
+    }
+  }
+  if(!drifting){
+    if(z==='mid'){
+      // Mid-S transition: use active countersteer to unwind corner 1's slip cleanly, then accelerate back
+      // to target entry speed so the car carries pace and boost into corner 2 instead of coasting 34 m.
+      const unwinding=Math.abs(beta)>0.10||s.yaw>0.35;
+      if(unwinding&&!plan.gripOnly&&car.drive!=='fwd'){
+        const p0=C.line[idx],p1=C.line[Math.min(C.line.length-1,idx+1)];
+        const hp=Math.atan2(p1.y-p0.y,p1.x-p0.x);
+        const eCG=-(s.x-p0.x)*Math.sin(hp)+(s.y-p0.y)*Math.cos(hp);
+        const psiVDes=hp-Math.atan2(1.35*eCG,Math.max(5,v));
+        const yawDes=1.4*wrap(psiVDes-(s.psi+beta));
+        const vf=Math.atan2(s.vy+car.a*s.yaw,Math.max(1,s.vx));
+        const toeF=s.toe?(s.toe[0]+s.toe[1])/2:0;
+        const alphaCmd=Math.max(-1.25*pkF,Math.min(1.25*pkF,1.85*beta+0.55*(yawDes-s.yaw)));
+        base.steer=Math.max(-1,Math.min(1,(vf-toeF+alphaCmd)/car.steerLock));
+        base.throttle=Math.abs(beta)>0.28?0.2:0.42;base.brake=0;
+      }else if(unwinding){
+        base.throttle=Math.min(base.throttle||0,0.35);base.brake=0;
+      }else{
+        const vDef=plan.v-v;
+        if(vDef>0){base.throttle=Math.max(base.throttle||0,Math.min(1,0.65+0.25*vDef));base.brake=0;}
+        else if(v<plan.v+2){base.throttle=Math.max(0.35,base.throttle||0);base.brake=0;}
+      }
+    }
+    base.gear=null;
+    return base;
+  }
+  if(plan.gripOnly){base.throttle=Math.min(base.throttle||0,0.45);base.gear=null;return base;}
+  // FWD after a flick or on handbrake (Velenis CDC 2011): power pulls the nose straight; handbrake holds rear slip
+  // until β reaches target while part-throttle keeps forward speed up.
+  if(car.drive==='fwd'){
+    const dirF=z==='c1'?1:-1,absB=Math.abs(beta),over=absB>plan.betaT,pk=z==='c1'?'seen1':'seen2';
+    if(Math.abs((s.alpha[2]+s.alpha[3])/2)>pkR)d[pk]=true;
     const pull=plan.init==='handbrake'&&absB<plan.betaT;
-    const stF=base.steer+(pull&&!d[pk]?dirF*(car.pkF||0.1)/car.steerLock:over?-0.12*dirF:0);
-    const uF={steer:Math.max(-1,Math.min(1,stF)),throttle:pull?Math.max(0.3,base.throttle||0):over?0.6:0,brake:0,gear:s.gear};
+    const stF=base.steer+(pull&&!d[pk]?dirF*pkF/car.steerLock:over?-0.16*dirF:0);
+    const thrF=pull?Math.max(0.45,base.throttle||0):over?0.75:0.15;
+    const uF={steer:Math.max(-1,Math.min(1,stF)),throttle:Math.min(1,thrF),brake:0,gear:pull?s.gear:null};
     if(pull)uF.handbrake=1;
-    return uF;}
-  const pkR=Math.atan(3*car.mu/car.cc),aR=(s.alpha[2]+s.alpha[3])/2;
-  // dir: +1 left corner, −1 right (steer is left-positive). A left drift has β<0 (velocity right of the nose).
-  const dir=z==='c1'?1:-1,absB=Math.abs(beta),absT=plan.betaT;
-  let thr;
-  if(absB>absT+0.06)thr=Math.max(0,0.25-3*(absB-absT));
-  else if(absB>absT)thr=0.3;
-  else thr=Math.min(1,0.5+2*(absT-absB));
+    return uF;
+  }
+  const aR=(s.alpha[2]+s.alpha[3])/2;
+  // dir: +1 left corner (c1, β<0), −1 right corner (c2, β>0).
+  const dir=z==='c1'?1:-1,absB=Math.abs(beta);
+  // Corner-exit anticipation: taper target β slightly in the final ~0.28 s of c1 to flow cleanly into the S transition.
+  const tExit=((z==='c1'?C.e1:C.e2)-idx)*C.ds/Math.max(3,s.vx);
+  const absT=(z==='c1'&&tExit<0.28)?plan.betaT*Math.max(0.4,0.4+0.6*tExit/0.28):plan.betaT;
+  const betaDes=-dir*absT;
   const pastKey=z==='c1'?'seen1':'seen2';
   if(Math.abs(aR)>pkR)d[pastKey]=true;
-  if(!d[pastKey]&&absB<0.65*absT)thr=Math.max(thr,plan.initThr||0.85);
-  // Clutch kick (build 359): pedal down, full throttle, the engine revs itself up through stepCar (its own torque
-  // and inertia) for at most plan.kick steps of this corner's budget, then the clutch is dumped (0 = closed).
+  // ---- Active countersteer & velocity-vector path tracking ----
+  const p0=C.line[idx],p1=C.line[Math.min(C.line.length-1,idx+1)];
+  const hp=Math.atan2(p1.y-p0.y,p1.x-p0.x);
+  const eCG=-(s.x-p0.x)*Math.sin(hp)+(s.y-p0.y)*Math.cos(hp);
+  const wide=-dir*eCG;   // > 0 when drifting wide toward the outside edge of the bend
+  const la=Math.max(4,Math.min(20,Math.round(0.32*v/C.ds)));
+  const q0=C.line[Math.min(C.line.length-2,idx+la)],q1=C.line[Math.min(C.line.length-1,idx+la+1)];
+  const hpLa=Math.atan2(q1.y-q0.y,q1.x-q0.x);
+  const psiVDes=hpLa-Math.atan2(1.35*eCG,Math.max(4,v));
+  const ePsiV=wrap(psiVDes-(s.psi+beta));
+  const yawDes=dir*v/C.R+1.65*ePsiV;
+  const vf=Math.atan2(s.vy+car.a*s.yaw,Math.max(1,s.vx));
+  const toeF=s.toe?(s.toe[0]+s.toe[1])/2:0;
+  // Front slip command: turn-in bias + β stabilization + yaw-rate damping; more authority when catching an overshoot.
+  const limF=(absB>absT+0.10?1.35:1.15)*pkF;
+  const alphaCmd=Math.max(-limF,Math.min(limF,dir*0.36*pkF+2.1*(beta-betaDes)+0.68*(yawDes-s.yaw)));
+  const st=Math.max(-1,Math.min(1,(vf-toeF+alphaCmd)/car.steerLock));
+  // ---- Sustained throttle control (β + yaw-rate trend + speed floor + wide-line protection) ----
+  const betaOver=absB-absT;
+  const yawOver=dir*s.yaw-v/C.R;
+  const excess=betaOver+0.18*yawOver;
+  let thr;
+  if(excess<0)thr=Math.min(1,0.86-1.5*excess);
+  else if(absB<absT+0.24)thr=Math.max(0.48,0.86-1.4*excess);
+  else thr=Math.max(0.10,0.48-2.4*(absB-(absT+0.24)));
+  // Keep pushing if speed sags mid-corner while angle and line are under control.
+  if(v<0.92*plan.v&&absB<absT+0.16&&wide<5.5)thr=Math.min(1,thr+0.24*(0.92*plan.v-v));
+  if(!d[pastKey]&&absB<0.65*absT)thr=Math.max(thr,plan.initThr||0.92);
+  // Wide-line protection: predict lateral offset 0.5 s ahead from outward velocity. AWD eases earlier because front
+  // drive torque shares the front tyres' friction circle; well-lined RWD drifts stay hard on power.
+  const wideRate=-dir*v*Math.sin(wrap(s.psi+beta-hp));
+  const widePred=wide+0.5*Math.max(0,wideRate);
+  const wideLim=car.drive==='awd'?3.45:4.8;
+  if(widePred>wideLim)thr*=Math.max(0.08,1-(car.drive==='awd'?0.36:0.28)*(widePred-wideLim));
+  const vGrip=Math.sqrt(car.mu*DRIVE_G*C.R);
+  if(v>1.12*vGrip&&absB<0.65*absT)thr*=Math.max(0.2,1-0.30*(v-1.12*vGrip));
+  // Clutch kick (build 359): pedal down, full throttle, rev up for plan.kick steps, then dump.
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
   if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
-  // Handbrake (RWD, build 382): clutch down and lever up until the rear passes its peak or β nears the target, then the
-  // lever drops and the clutch closes, and power holds the slide as on power-over.
+  // Handbrake (RWD, build 382): clutch down and lever up until rear passes peak or β nears target, then power holds slide.
   let hb=0;
   if(plan.init==='handbrake'&&!d[pastKey]&&absB<0.65*absT){hb=1;thr=0;clutch=1;d.hbing=true;}
   else if(d.hbing){clutch=0;d.hbing=false;}
-  // Countersteer (build 359: the sign had steered into the slide): past the target, steer out of the corner.
-  let st=base.steer;
-  if(absB>absT)st-=0.12*dir;else st+=0.06*dir;
-  const u={steer:Math.max(-1,Math.min(1,st)),throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:s.gear};
+  const u={steer:st,throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:(clutch!=null||hb)?s.gear:null};
   if(clutch!=null)u.clutch=clutch;
   if(hb)u.handbrake=hb;
   return u;
@@ -110,6 +183,13 @@ function driftCornerOk(past,beta,ctr){
 // Lateral reach (m) of the body's farthest corner from its CG, at heading error dh to the path: a box f ahead,
 // r behind, w wide, turned by dh (build 359; the front axle ± half track had ignored the swept tail).
 function driftReach(D,dh){const c=Math.abs(Math.cos(dh)),sn=Math.abs(Math.sin(dh));return D.w/2*c+Math.max(D.f,D.r)*sn;}
+// Composite powerslide score: mean corner speed (km/h) × sin(mean sustained corner β) × 10, discounted for near-spin
+// spikes above ~48° so clean, fast, sustained slides beat slow crawls and sloppy tank-slappers.
+function driftScore(vCornerKmh,bMean1,bMean2,peakBeta){
+  const bMean=Math.min(0.65,0.5*(bMean1+bMean2));
+  const clean=peakBeta>0.84?Math.max(0.45,1-(peakBeta-0.84)):1;
+  return Math.round(vCornerKmh*Math.sin(bMean)*10*clean);
+}
 function driftRun(car,plan,sample,D){
   D=D||{w:(car.tF+car.tR)/2+0.3,f:1.35*car.a,r:1.35*car.b};
   const gripOnly=!!plan.gripOnly||(car.drive==='fwd'&&plan.init!=='flick'&&plan.init!=='handbrake');
@@ -126,8 +206,8 @@ function driftRun(car,plan,sample,D){
   const tMax=3*len/plan.v;let slowT=0;   // three times the course at entry speed, or 2 s near standstill: STALL
   const pkR=Math.atan(3*car.mu/car.cc),pl=Object.assign({},plan,{gripOnly});
   const o={ok:false,past1:0,past2:0,beta1:0,beta2:0,ctr1:0,ctr2:0,peakBeta:0,off:false,spin:false,eMax:0,fin:false,
-    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0,pkR};
-  let nextT=0;const dt=0.01;
+    line:C.line,zones:C.zones,halfW:C.halfW,R:C.R,samples:sample?[]:null,maxI:0,pkR,vCornerKmh:0,score:0};
+  let nextT=0,vSum=0,vCnt=0,bSum1=0,bCnt1=0,bSum2=0,bCnt2=0;const dt=0.01;
   while(s.t<tMax){
     const u=driftDriver(car,s,C,d,pl);
     stepCar(car,s,u,dt);
@@ -141,14 +221,15 @@ function driftRun(car,plan,sample,D){
     let dh=s.psi-hp;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;
     const eCG=-(s.x-p0.x)*Math.sin(hp)+(s.y-p0.y)*Math.cos(hp);
     if(Math.abs(eCG)+driftReach(D,dh)>C.halfW)o.off=true;
-    slowT=(s.speed||Math.hypot(s.vx,s.vy))<1?slowT+dt:0;if(slowT>2)break;
+    const spd=s.speed||Math.hypot(s.vx,s.vy);
+    slowT=spd<1?slowT+dt:0;if(slowT>2)break;
     if(Math.abs(dh)>0.7*Math.PI||Math.abs(beta)>1.35)o.spin=true;
-    if(d.zone==='c1'){o.beta1=Math.max(o.beta1,Math.abs(beta));if(Math.abs(aR)>pkR)o.past1+=dt;
+    if(d.zone==='c1'){vSum+=spd;vCnt++;bSum1+=Math.abs(beta);bCnt1++;o.beta1=Math.max(o.beta1,Math.abs(beta));if(Math.abs(aR)>pkR)o.past1+=dt;
       if(u.steer*s.yaw<0&&Math.abs(beta)>8*Math.PI/180)o.ctr1+=dt;}
-    if(d.zone==='c2'){o.beta2=Math.max(o.beta2,Math.abs(beta));if(Math.abs(aR)>pkR)o.past2+=dt;
+    if(d.zone==='c2'){vSum+=spd;vCnt++;bSum2+=Math.abs(beta);bCnt2++;o.beta2=Math.max(o.beta2,Math.abs(beta));if(Math.abs(aR)>pkR)o.past2+=dt;
       if(u.steer*s.yaw<0&&Math.abs(beta)>8*Math.PI/180)o.ctr2+=dt;}
     if(sample&&s.t>=nextT){
-      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,
+      o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:spd,beta,yaw:s.yaw,delta:s.delta||0,
         thr:u.throttle,steer:u.steer,zone:d.zone,alpha:s.alpha.slice(),
         brk:u.brake||0,hb:u.handbrake||0,gear:s.gear,rpm:(s.we||0)*30/Math.PI,ax:s.ax||0,ay:s.ay||0});   // for the dashboard (build 361)
       nextT=s.t+0.04;
@@ -159,12 +240,12 @@ function driftRun(car,plan,sample,D){
   const s1=driftCornerOk(o.past1,o.beta1,o.ctr1),s2=driftCornerOk(o.past2,o.beta2,o.ctr2);
   o.outcome=o.spin?'SPIN':o.off?'OFF':!o.fin?'STALL':(!s1&&!s2)?'NO_SLIDE':(!s1||!s2)?'FADE':'CLEAR';
   o.ok=o.outcome==='CLEAR';o.plan=pl;o.slide1=s1;o.slide2=s2;
+  o.vCornerKmh=vCnt?vSum/vCnt*3.6:0;
+  o.score=o.ok?driftScore(o.vCornerKmh,bCnt1?bSum1/bCnt1:0,bCnt2?bSum2/bCnt2:0,o.peakBeta):0;
   return o;
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
-// FWD: no kick, and one target β for power and flick (the grip path ignores it; it only sets when a flicked FWD
-// lifts); the handbrake keeps all three. AWD: no handbrake (the lever on a coupled centre brakes the fronts too: a
-// rally car's hydraulic lever opens the centre first, not modelled), so it falls back to power-over.
+// FWD: no kick, and one target β for power and flick; handbrake keeps all three. AWD: no handbrake (falls back to power).
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
   if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
@@ -178,12 +259,13 @@ function driftBest(car,sample,D,entryKmh,method){
   let best=null;
   const plans=driftPlans(car,entryKmh,method);
   for(const pl of plans){
+    // In AUTO mode, handbrake is last-resort: skip it once a dynamic method already CLEARed.
+    if((!method||method==='auto')&&pl.init==='handbrake'&&best&&best.outcome==='CLEAR')break;
     const r=driftRun(car,pl,false,D);
     const better=!best||DRIFT_RANK[r.outcome]<DRIFT_RANK[best.outcome]
-      ||(r.outcome===best.outcome&&r.maxI>best.maxI)
-      ||(r.outcome===best.outcome&&r.maxI===best.maxI&&(r.past1+r.past2)>(best.past1+best.past2));
+      ||(r.outcome===best.outcome&&r.outcome==='CLEAR'&&r.score>best.score)
+      ||(r.outcome===best.outcome&&r.outcome!=='CLEAR'&&(r.maxI>best.maxI||(r.maxI===best.maxI&&(r.past1+r.past2)>(best.past1+best.past2))));
     if(better)best=Object.assign(r,{plan:pl});
-    if(r.outcome==='CLEAR'){best=Object.assign(r,{plan:pl});break;}
     if(car.drive==='fwd'&&pl.init!=='flick'&&r.outcome==='NO_SLIDE'&&r.fin&&(method==='power'||method==='kick')){best=Object.assign(r,{plan:pl});break;}
   }
   if(!best)return null;
@@ -197,7 +279,8 @@ function simulateDriftChallenge(){
   const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR},chalDriftEntry,chalDriftMethod);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
   return{
     ok:true,kind:'drift',outcome:R.outcome,drive:car.drive,
-    speedKmh:Math.round(R.plan.v*3.6),betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,init:R.plan.init,
+    speedKmh:Math.round(R.plan.v*3.6),vCornerKmh:R.vCornerKmh,score:R.score,
+    betaT:R.plan.betaT,kick:R.plan.kick|0,radius:R.plan.R,init:R.plan.init,
     entryMode:chalDriftEntry>0?'fixed':'best',method:chalDriftMethod,
     peakBeta:R.peakBeta*180/Math.PI,beta1:R.beta1*180/Math.PI,beta2:R.beta2*180/Math.PI,
     past1:R.past1,past2:R.past2,ctr1:R.ctr1,ctr2:R.ctr2,eMax:R.eMax,

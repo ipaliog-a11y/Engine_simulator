@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 438
+# PIXEL POWERTRAIN v0.8 build 439
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -326,9 +326,11 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     0.25×, from 25 m before the cones to 20 m past the end of the course. The stock cars clear 55–68
     km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
   - **S-Route Powerslide** — straight, left 90°, short straight, right 90°, straight on a 24 m pad, ESP and TC off.
-    The driver holds body slip with throttle and countersteer. **METHOD** picks how the slide starts: power-over,
-    clutch kick, a **flick** (lift and steer away, then sharply in, each phase half the body's natural period) or the
-    **handbrake** (rear wheels only, outside the ABS; RWD and FWD); AUTO tries them in turn, the handbrake last. **ENTRY** fixes the entry speed (30–50 km/h) or searches the best. A run ends
+    The driver anticipates each bend, holds body slip with active countersteer and throttle, and accelerates across the
+    mid-straight into the second bend. **METHOD** picks how the slide starts: power-over, clutch kick, a **flick** (lift
+    and steer away, then sharply in, each phase half the body's natural period) or the **handbrake** (rear wheels only,
+    outside the ABS; RWD and FWD); AUTO tries the dynamic methods first, the handbrake last. **ENTRY** fixes the entry
+    speed (35–70 km/h) or searches the highest-scoring CLEAR (mean corner speed × sin(mean sustained β)). A run ends
     **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car on
     power-over), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. An AWD car powers over as far
     as its centre coupling lets the rear spin faster than the front (DRIVE shows the coupling and split); a clutch
