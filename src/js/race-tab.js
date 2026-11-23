@@ -276,14 +276,18 @@ function drawRace(){
   const R=raceUI.run;
   ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
   if(!R||raceUI.phase!=='live'){
-    ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
     if(raceUI.phase==='computing'){
+      ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
       ctx.fillText(raceUI.progTxt,12,60);
       ctx.fillStyle='#26263a';ctx.fillRect(12,72,W-24,10);ctx.fillStyle=C.green;ctx.fillRect(12,72,(W-24)*raceUI.prog,10);
     }else{
-      ctx.fillText(tr('Pick two or more cars on the right,'),12,60);
-      ctx.fillText(tr('then START RACE. Nobody drives:'),12,76);
-      ctx.fillText(tr('the cars race on their own physics.'),12,92);
+      const g=id=>document.getElementById(id);
+      const key=(g('raceTrk')&&g('raceTrk').value)||trackKey;
+      const wx=(g('raceWeather')&&g('raceWeather').value)||'dry';
+      const air=+(g('raceAir')&&g('raceAir').value)||RACE.air;
+      const laps=clamp(Math.round(+(g('raceLaps')&&g('raceLaps').value)||5),1,100);
+      drawTrackPreview(key,{weather:wx,air,title:tr('RACE'),
+        sub:[laps+' '+tr('LAPS')+' • '+raceUI.entrants.length+' '+tr('ENTRANTS')+' • '+tr('Pick two or more cars, then START RACE.')]});
     }
     return;
   }

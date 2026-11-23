@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 436</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 438</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4205,7 +4205,19 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="panel" id="trackPanel" style="display:none">
 <h2>Lap Time</h2>
+<div id="trackSetup">
 <div class="field"><label for="trkSel">CIRCUIT</label><select id="trkSel"><option value="tech">ASHDOWN PARK</option><option value="fast">CAPE SPEEDWAY</option><option value="mixed" selected>RIVERSIDE GP</option><option value="nord">NORDSCHLEIFE</option></select></div>
+<div class="race-row">
+<div class="field"><label for="trkWeather">WEATHER</label><select id="trkWeather"><option value="dry">DRY</option><option value="damp">DAMP</option><option value="wet">WET</option></select></div>
+<div class="field"><label for="trkAir">AIR °C</label><select id="trkAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
+</div>
+<div class="field"><label for="trkTyre">TYRES</label><select id="trkTyre"><option value="own">OWN TYRES</option><option value="inter">INTERS</option><option value="wet">FULL WET</option></select></div>
+<div class="perf-head" id="trkPreviewHead">—</div>
+<div class="perf-note" id="trkPreviewNote"></div>
+<div class="build-row"><button id="btnTrackStart">START LAP</button></div>
+<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button></div>
+</div>
+<div id="trackLive" hidden>
 <div class="perf-head" id="lapHead">—</div>
 <div class="design-section">Live timing</div>
 <div class="replay-row" id="trackReplayRow">
@@ -4222,9 +4234,8 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="build-row">
 <button id="btnLapPng" title="Save the hot lap report as an image">LAP REPORT PNG</button>
 <button id="btnLapPdf" title="Save the hot lap report as a PDF">PDF</button>
+<button id="btnTrackSetup">CHANGE TRACK</button>
 </div>
-<div class="build-row">
-<button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button>
 </div>
 <input type="file" id="gpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 </div>
@@ -4273,7 +4284,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
-<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">SOLVE</button><button id="btnImportRoad" title="Load an open road for the economy run from your own GPX file">IMPORT GPX ROAD</button></div>
+<div class="build-row"><button id="btnChalSolve" title="Solve the selected challenge for the current car">START CHALLENGE</button><button id="btnChalBack" hidden>CHANGE CHALLENGE</button><button id="btnImportRoad" title="Load an open road for the economy run from your own GPX file">IMPORT GPX ROAD</button></div>
 <input type="file" id="roadGpxInput" accept=".gpx,application/gpx+xml,text/xml" style="display:none">
 <h3 class="chal-rank-h">RANK CARS</h3>
 <div id="chalRankCars"></div>
@@ -14568,8 +14579,8 @@ function buildVehicle(){
     }else{perf.zt=null;perf.zd=null;}
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
-  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
-  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
+  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof trackUI!=='undefined'&&trackUI.phase==='live'&&typeof refreshLap==='function')refreshLap();
+  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof chalUI!=='undefined'&&chalUI.phase==='live'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop. Returns stopping distance (m) and time (s).
@@ -16573,7 +16584,9 @@ function simulateLapCore(key,opts){
   // camber (latMuEff, build 109), less the diff's scrub.
   const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
-  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const airC=opts&&opts.air!=null?opts.air:null;
+  const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
+  const down=v=>0.5*rho*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
   // The vertical term is capped at ±0.6 g: real suspension runs out of travel and hits the bump
   // stops, so a deep compression stops adding grip long before the maths says it should — and
@@ -16584,7 +16597,7 @@ function simulateLapCore(key,opts){
   const KVCAP=0.6*m*G;
   const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
   const normalLoad=(i,vv)=>loadAt(p[i],vv);
-  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
+  const drag=v=>0.5*rho*vehicle.cdA*v*v;
   const rollF=v=>crrAt(vehicle.crr,v)*m*G;
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
   // Every gear that would over-rev is skipped — INCLUDING the top one. That last part is the rev
@@ -16640,7 +16653,7 @@ function simulateLapCore(key,opts){
       // pass 1: re-solve with that term evaluated and clamped at the speed just found
       const kvTerm=it===0?-m*q.kv*muLat:0;
       const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
-      const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+      const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
@@ -16935,9 +16948,9 @@ function simulateLapCore(key,opts){
     let bites=false;for(let i=0;i<n;i++)if(brakeBound[i]&&ebA[i]>0){bites=true;break;}
     if(bites)passes();   // the engine adds to brakes that were the limit somewhere: solve again with it
   }
-  const th=vehicle.brakeTh;
+  const th=airC!=null?Object.assign({},vehicle.brakeTh,{amb:airC}):vehicle.brakeTh;
   function brakeTemps(){
-    const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
+    const amb0=airC!=null?airC:BRAKE_AMBIENT,st={F:amb0,R:amb0},TF=new Array(n),TR=new Array(n);
     for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
@@ -18386,39 +18399,38 @@ const SOUND_GAS_SRC=`
 const GR=8.31446261815324,AIR_M=0.02897,ATM=101325;
 const gclamp=(v,a,b)=>v<a?a:v>b?b:v;
 class Gas{
-  constructor(P,V,T){this.n=P*V/(GR*T);this.V=V;this.E=T*2.5*this.n*GR;this.px=0;this.py=0;this.hcr=1.4;
+  constructor(P,V,T,fr=1){this.n=P*V/(GR*T);this.V=V;this.E=T*2.5*this.n*GR;this.px=0;this.fr=fr;this.hcr=1.4;
     this.lim=Math.pow(2/2.4,1.4/0.4);this.choke=Math.sqrt(1.4)*Math.pow(2/2.4,2.4/0.8);this.w=1;this.h=1;}
   geo(w,h){this.w=w;this.h=h;}
-  reset(P,T){this.n=P*this.V/(GR*T);this.E=T*2.5*this.n*GR;this.px=this.py=0;}
+  reset(P,T,fr=1){this.n=P*this.V/(GR*T);this.E=T*2.5*this.n*GR;this.px=0;this.fr=fr;}
   P(){return this.E/(2.5*this.V);}
   T(){return this.n?this.E/(2.5*this.n*GR):0;}
   m(){return AIR_M*this.n;}
   epm(){return this.n?this.E/this.n:0;}
   c(){if(!this.n||!this.E)return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
-  bke(){const m=this.m();if(!m)return 0;const vx=this.px/m,vy=this.py/m;return 0.5*m*(vx*vx+vy*vy);}
-  dyn(dx,dy){
+  bke(){const m=this.m();if(!m)return 0;const vx=this.px/m;return 0.5*m*vx*vx;}
+  dyn(dx){
     if(!this.n||!this.E)return 0;
-    const v=(dx*this.px+dy*this.py)/this.m();if(v<=0)return 0;
+    const v=dx*this.px/this.m();if(v<=0)return 0;
     const P=this.P(),x=1+0.2*v*v/(P*1.4/(this.m()/this.V));
     return P*(Math.sqrt(x*x*x*x*x*x*x)-1);
   }
-  setV(V){const dV=V-this.V,L=Math.cbrt(V),sa=L*L;this.E+=(-dV/sa)*this.P()*sa;this.V=V;}
+  setV(V){this.E-=(V-this.V)*this.P();if(this.E<0)this.E=0;this.V=V;}
   lose(dn,e){this.E-=e*dn;this.n-=dn;if(this.n<0)this.n=0;}
-  gain(dn,e){this.E+=dn*e;this.n+=dn;}
+  gain(dn,e,fr=1){const n0=this.n;this.E+=dn*e;this.n+=dn;if(this.n>0)this.fr=(n0*this.fr+dn*fr)/this.n;}
   dissipate(){
-    const m=this.m();if(!m)return;
-    const vx=this.px/m,vy=this.py/m,v2=vx*vx+vy*vy,c=this.c(),c2=c*c;
-    if(c2>=v2||v2===0)return;
-    const k=Math.sqrt(c2/v2);this.px*=k;this.py*=k;this.E+=0.5*m*(v2-c2);if(this.E<0)this.E=0;
+    const m=this.m();if(!m||!this.px)return;
+    const vx=this.px/m,v2=vx*vx,c=this.c(),c2=c*c;
+    if(c2>=v2)return;
+    this.px*=Math.sqrt(c2/v2);this.E+=0.5*m*(v2-c2);if(this.E<0)this.E=0;
   }
   vel(dt,beta){
-    if(!this.n)return;
-    const depth=this.V/(this.w*this.h);
-    const p0=this.dyn(1,0)*this.h*depth,p1=this.dyn(-1,0)*this.h*depth,p2=this.dyn(0,1)*this.w*depth,p3=this.dyn(0,-1)*this.w*depth;
-    const m=this.m(),v0x=this.px/m,v0y=this.py/m;
-    this.px-=(p0-p1)*dt*beta;this.py-=(p2-p3)*dt*beta;
-    const v1x=this.px/m,v1y=this.py/m;
-    this.E-=0.5*m*(v1x*v1x-v0x*v0x)+0.5*m*(v1y*v1y-v0y*v0y);if(this.E<0)this.E=0;
+    if(!this.n||!this.px)return;
+    const area=this.V/this.w,dp=this.px>0?this.dyn(1)*area:-this.dyn(-1)*area;
+    const m=this.m(),v0=this.px/m;
+    this.px-=dp*dt*beta;
+    const v1=this.px/m;
+    this.E-=0.5*m*(v1*v1-v0*v0);if(this.E<0)this.E=0;
   }
   static rate(k,P0,P1,T0,T1,lim,choke){
     if(!k)return 0;
@@ -18431,7 +18443,7 @@ class Gas{
   }
   // moles moved from s0 to s1 through an orifice of flow constant k (direction +x), a0/a1 the cross sections
   static flow(k,dt,a0,a1,s0,s1){
-    const P0=s0.P()+s0.dyn(1,0),P1=s1.P()+s1.dyn(-1,0);
+    const P0=s0.P()+s0.dyn(1),P1=s1.P()+s1.dyn(-1);
     let src,snk,dx,aS,aK,dir,Ps,Pk;
     if(P0>P1){src=s0;snk=s1;dx=1;aS=a0;aK=a1;dir=1;Ps=P0;Pk=P1;}
     else{src=s1;snk=s0;dx=-1;aS=a1;aK=a0;dir=-1;Ps=P1;Pk=P0;}
@@ -18440,15 +18452,15 @@ class Gas{
     const frac=src.n?f/src.n:0,fV=frac*src.V,fM=frac*src.m();
     if(f!==0){
       const b0=src.bke()+snk.bke(),e=src.epm();
-      snk.gain(f,e);src.lose(f,e);
-      const dpx=src.px*frac,dpy=src.py*frac;src.px-=dpx;src.py-=dpy;snk.px+=dpx;snk.py+=dpy;
+      snk.gain(f,e,src.fr);src.lose(f,e);
+      const dpx=src.px*frac;src.px-=dpx;snk.px+=dpx;
       snk.E-=(src.bke()+snk.bke())-b0;
     }
-    const mS=src.m(),mK=snk.m(),cS=src.c(),cK=snk.c(),sx0=src.px,sy0=src.py,kx0=snk.px,ky0=snk.py;
+    const mS=src.m(),mK=snk.m(),cS=src.c(),cK=snk.c(),sx0=src.px,kx0=snk.px;
     if(aK){const v=gclamp((fV/aK)/dt,0,cK);snk.px+=v*dx*fM;}
     if(aS&&mS){const v=gclamp((fV/aS)/dt,0,cS);src.px+=v*dx*fM;}
-    if(mS){const a=sx0/mS,b=sy0/mS,c=src.px/mS,d=src.py/mS;src.E-=0.5*mS*(c*c-a*a)+0.5*mS*(d*d-b*b);}
-    if(mK>0){const a=kx0/mK,b=ky0/mK,c=snk.px/mK,d=snk.py/mK;snk.E-=0.5*mK*(c*c-a*a)+0.5*mK*(d*d-b*b);}
+    if(mS){const a=sx0/mS,c=src.px/mS;src.E-=0.5*mS*(c*c-a*a);}
+    if(mK>0){const a=kx0/mK,c=snk.px/mK;snk.E-=0.5*mK*(c*c-a*a);}
     if(snk.E<0)snk.E=0;if(src.E<0)src.E=0;
     return f*dir;
   }
@@ -18467,108 +18479,118 @@ function bench(tab,thou){if(thou<=0)return 0;const i=Math.min(8,Math.floor(thou/
 // burn, no dissociation and too low a heat capacity for burnt gas, so all of it gave twice a real engine's
 // IMEP. A FIT, to 13 bar flat out on the 1.6 sport four; engine-sim carries the same gap in its fuel model.
 const GAS_HEAT_SHARE=0.50;
-class GasEngine{
-  constructor(e,simHz,fluid){
-    this.e=e;this.simHz=simHz;this.fluid=fluid;
-    const PI=Math.PI,A=PI/4*e.bore*e.bore,Vd=A*e.stroke,T0=298.15;
-    this.A=A;this.Vd=Vd;this.Vc=Vd/(e.cr-1);this.r=e.stroke/2;this.L=3.2*this.r;
-    const exD=0.84*e.ivDia;
-    this.inScale=e.ivCount*e.ivDia*e.ivDia/(2*0.0345*0.0345);this.inLift=0.0345/e.ivDia;
-    this.exScale=e.ivCount*exD*exD/(2*0.029*0.029);this.exLift=0.029/exD;
-    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
-    const colA=PI/4*e.sysD*e.sysD*Math.max(1,(e.sysPipes||1)/e.banks);
-    this.banks=[];
-    for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,T0);c.geo(e.sysL,Math.sqrt(colA));
-      this.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5});}
-    this.atm=new Gas(ATM,1000,T0);this.atm.geo(10,10);
-    this.plenum=new Gas(ATM,1000,T0);this.plenum.geo(10,10);
-    this.cyl=[];
-    for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],cy=new Gas(ATM,this.Vc,T0);cy.geo(Math.sqrt(A),this.Vc/A);
-      const ir=new Gas(ATM,this.inA*e.runnerL,T0);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const exV=this.exA*e.primL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,T0);xr.geo(exV/this.exA,Math.sqrt(this.exA));
-      const len=e.primL+e.sysL;
-      this.cyl.push({cy,ir,xr,bank:ev.bank,phase:ev.at*720,lit:false,q:0,xb:0,kIn:0,kEx:0,
-        kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381),
-        delay:new Float64Array(Math.ceil(len/343*simHz)+2),di:0,att:0.2*1600/e.cylinders/(len*len)});
-    }
-    this.theta=0;this.out=new Float64Array(e.banks);
-  }
-  vol(th){const a=th*Math.PI/180,s=Math.sin(a);return this.Vc+this.A*(this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s));}
-  lift(th,open,dur,L){const d=((th-open)%720+720)%720;if(d>=dur)return 0;const s=Math.sin(Math.PI*d/dur);return L*s*s;}
-  // one step at {rpm, map Pa, fuel 0-1, lambda, spark deg BTDC, burn deg}
-  step(rpm,map,fuel,lambda,spark,burn){
-    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI;
-    this.theta=(this.theta+rpm*6*dt)%720;
-    const evc=360+e.overlap/2,evo=evc-e.camDur,ivo=360-e.overlap/2,sparkAt=720-spark;
-    this.plenum.reset(map,300);
-    for(const c of this.cyl){
-      const th=(this.theta-c.phase+720)%720;
-      c.cy.setV(this.vol(th));
-      c.kIn=K28*bench(IN_CFM,this.lift(th,ivo,e.camDur,e.ivLift)/2.54e-5*this.inLift)*this.inScale;
-      c.kEx=K28*bench(EX_CFM,this.lift(th,evo,e.camDur,e.ivLift)/2.54e-5*this.exLift)*this.exScale;
-      const since=((th-sparkAt)%720+720)%720;
-      if(!c.lit&&since<3&&fuel>0){c.q=c.cy.n*0.92*AIR_M/(14.7*lambda)*43e6*GAS_HEAT_SHARE*fuel;c.lit=true;c.xb=0;}
-      if(c.lit){const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3));c.cy.E+=(x-c.xb)*c.q;c.xb=x;if(since>=burn)c.lit=false;}
-    }
-    for(let k=0;k<this.fluid;k++){
-      for(const b of this.banks){this.atm.reset(ATM,298.15);Gas.flow(b.kOut,df,b.colA,10,this.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
-      for(const c of this.cyl){
-        const h=c.cy.V/this.A,sa=h*PI*e.bore+this.A*2;
-        c.cy.E+=(363.15-c.cy.T())*sa*100*df;if(c.cy.E<0)c.cy.E=0;
-        Gas.flow(c.kRun,df,10,this.inA,this.plenum,c.ir);c.ir.dissipate();
-        Gas.flow(c.kIn,df,this.inA,this.A,c.ir,c.cy);c.ir.dissipate();c.cy.dissipate();
-        Gas.flow(c.kEx,df,this.A,this.exA,c.cy,c.xr);c.cy.dissipate();c.xr.dissipate();
-        const b=this.banks[c.bank];Gas.flow(c.kPrim,df,this.exA,b.colA,c.xr,b.col);
-        c.ir.vel(df,0.25);c.cy.vel(df,0.5);c.xr.vel(df,1);
-      }
-    }
-    this.out.fill(0);
-    for(const c of this.cyl){
-      const s=(c.xr.P()-ATM)+0.1*c.xr.dyn(1,0)+0.1*c.xr.dyn(-1,0);
-      const d=c.delay,v=d[c.di];d[c.di]=s;c.di=(c.di+1)%d.length;
-      this.out[c.bank]+=c.att*v;
-    }
-    return this.out;
-  }
-}
-// What the four-stroke, the two-stroke and the rotary share: each bank's collector venting to atmosphere,
-// the plenum held at the manifold pressure, and the audio pick-off (runner gauge pressure plus a tenth of
-// its dynamic pressure each way, delayed down the pipe, falling off with the square of the run).
+// What the four-stroke, the two-stroke and the rotary share: each bank's collector venting to atmosphere
+// (a turbine restricts the collector exit, raising backpressure and damping pulses), the plenum held at
+// manifold pressure with fresh charge, and the audio pick-off delayed down each cylinder's own primary+system
+// run at the hot exhaust sound speed (exhSigma spreads primary lengths for unequal-length / log manifolds).
 function gasCollectors(self,e){
   const PI=Math.PI,colA=PI/4*e.sysD*e.sysD*Math.max(1,(e.sysPipes||1)/e.banks);
+  const turbMul=e.turbo?0.35:1;
   self.banks=[];
-  for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,298.15);c.geo(e.sysL,Math.sqrt(colA));
-    self.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5});}
-  self.atm=new Gas(ATM,1000,298.15);self.atm.geo(10,10);
-  self.plenum=new Gas(ATM,1000,298.15);self.plenum.geo(10,10);
+  for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,298.15,0);c.geo(e.sysL,Math.sqrt(colA));
+    self.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5*turbMul});}
+  self.atm=new Gas(ATM,1000,298.15,1);self.atm.geo(10,10);
+  self.plenum=new Gas(ATM,1000,298.15,1);self.plenum.geo(10,10);
   self.out=new Float64Array(e.banks);
 }
 function gasVentCollectors(self,df){
-  for(const b of self.banks){self.atm.reset(ATM,298.15);Gas.flow(b.kOut,df,b.colA,10,self.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
+  for(const b of self.banks){self.atm.reset(ATM,298.15,1);Gas.flow(b.kOut,df,b.colA,10,self.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
 }
-function gasRunner(e,exA,Vd,simHz,n){
-  const exV=exA*e.primL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,298.15);xr.geo(exV/exA,Math.sqrt(exA));
-  const len=e.primL+e.sysL;
-  return {xr,delay:new Float64Array(Math.ceil(len/343*simHz)+2),di:0,att:0.2*1600/n/(len*len)};
+function gasRunner(e,exA,Vd,simHz,n,idx=0){
+  const spread=n>1?((idx/(n-1))-0.5)*2:0;
+  const pL=Math.max(0.2,e.primL*(1+gclamp(spread*(e.exhSigma||0),-0.5,0.5)));
+  const exV=exA*pL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,298.15,0);xr.geo(exV/exA,Math.sqrt(exA));
+  const len=pL+e.sysL,cExh=e.exhC||520;
+  return {xr,delay:new Float64Array(Math.max(2,Math.ceil(len/cExh*simHz)+2)),di:0,att:0.2*1600/n/(len*len)};
 }
 function gasPickOff(self,runners){
   self.out.fill(0);
   for(const r of runners){
-    const s=(r.xr.P()-ATM)+0.1*r.xr.dyn(1,0)+0.1*r.xr.dyn(-1,0);
+    const s=(r.xr.P()-ATM)+0.1*r.xr.dyn(1)+0.1*r.xr.dyn(-1);
     const d=r.delay,v=d[r.di];d[r.di]=s;r.di=(r.di+1)%d.length;
     self.out[r.bank]+=r.att*v;
   }
   return self.out;
 }
-// The Wiebe burn, shared: from the spark, release the charge's fuel heat along 1 - exp(-5 x^3).
-function gasBurn(c,since,burn,fuel,lambda){
-  if(!c.lit&&since<3&&fuel>0){c.q=c.cy.n*0.92*AIR_M/(14.7*lambda)*43e6*GAS_HEAT_SHARE*fuel;c.lit=true;c.xb=0;}
-  if(c.lit){const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3));c.cy.E+=(x-c.xb)*c.q;c.xb=x;if(since>=burn)c.lit=false;}
+// The Wiebe burn, shared: from the spark, release the fresh trapped charge's fuel heat along 1 - exp(-5 x^3),
+// consuming fresh air as it burns. Trigger window scales with crank step so high RPM (>5000) never skips a
+// firing. High residual dilution (overlap reversion at idle vacuum) introduces cycle-to-cycle burn scatter
+// (Heywood §9.4: above ~20% residual, flame speed drops and CoV rises), producing natural cam lope.
+function gasBurn(c,since,burn,fuel,lambda,trig,stoich,lhv){
+  if(!c.lit&&since<trig&&fuel>0){
+    const fr=gclamp(c.cy.fr,0,1),res=1-fr;
+    let varMul=1;
+    if(res>0.2){
+      const cov=gclamp((res-0.2)*2.2,0,0.65);
+      varMul=gclamp(1+(Math.random()*2-1)*cov-(res>0.35?(res-0.35)*0.8:0),0.15,1.25);
+    }
+    const airEff=Math.min(1,1/Math.max(0.5,lambda));
+    c.q=c.cy.n*fr*AIR_M/(stoich*Math.max(1,lambda))*lhv*GAS_HEAT_SHARE*fuel*varMul;
+    c.frDrop=fr*airEff*fuel;
+    c.lit=true;c.xb=0;
+  }
+  if(c.lit){
+    const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3)),dx=x-c.xb;
+    c.cy.E+=dx*c.q;
+    c.cy.fr=Math.max(0,c.cy.fr-dx*c.frDrop);
+    c.xb=x;
+    if(since>=burn)c.lit=false;
+  }
 }
 // An orifice's flow constant from its area: engine-sim's k is Cd A / sqrt(molar mass) (its molar flow law
 // leaves the molar mass out), which puts the 2JZ bench's 281 cfm at 13 cm2 of effective area.
 const kArea=(cd,a)=>cd*a/Math.sqrt(AIR_M);
+class GasEngine{
+  constructor(e,simHz,fluid){
+    this.e=e;this.simHz=simHz;this.fluid=fluid;
+    const PI=Math.PI,A=PI/4*e.bore*e.bore,Vd=A*e.stroke,T0=298.15;
+    this.A=A;this.Vd=Vd;this.Vc=Vd/(e.cr-1);this.r=e.stroke/2;this.L=3.2*this.r;
+    const exD=e.evDia||0.84*e.ivDia,evCount=e.evCount||e.ivCount;
+    this.inScale=e.ivCount*e.ivDia*e.ivDia/(2*0.0345*0.0345);this.inLift=0.0345/e.ivDia;
+    this.exScale=evCount*exD*exD/(2*0.029*0.029);this.exLift=0.029/exD;
+    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
+    gasCollectors(this,e);
+    this.cyl=[];
+    for(let i=0;i<e.cylinders;i++){
+      const ev=e.events[i],cy=new Gas(ATM,this.Vc,T0,1);cy.geo(Math.sqrt(A),this.Vc/A);
+      const ir=new Gas(ATM,this.inA*e.runnerL,T0,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
+      this.cyl.push(Object.assign(run,{cy,ir,phase:ev.at*720,lit:false,q:0,xb:0,frDrop:0,kIn:0,kEx:0,
+        kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)}));
+    }
+    this.theta=0;
+  }
+  vol(th){const a=th*Math.PI/180,s=Math.sin(a);return this.Vc+this.A*(this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s));}
+  lift(th,open,dur,L){const d=((th-open)%720+720)%720;if(d>=dur)return 0;const s=Math.sin(Math.PI*d/dur);return L*s*s;}
+  // one step at {rpm, map Pa, fuel 0-1, lambda, spark deg BTDC, burn deg, camAdv deg}
+  step(rpm,map,fuel,lambda,spark,burn,camAdv=0){
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    this.theta=(this.theta+dTh)%720;
+    const evc=360+e.overlap/2-camAdv,evo=evc-e.camDur,ivo=360-e.overlap/2-camAdv,sparkAt=720-spark;
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.plenum.reset(map,300,1);
+    for(const c of this.cyl){
+      const th=(this.theta-c.phase+720)%720;
+      c.cy.setV(this.vol(th));
+      c.kIn=K28*bench(IN_CFM,this.lift(th,ivo,e.camDur,e.ivLift)/2.54e-5*this.inLift)*this.inScale;
+      c.kEx=K28*bench(EX_CFM,this.lift(th,evo,e.camDur,e.ivLift)/2.54e-5*this.exLift)*this.exScale;
+      gasBurn(c,((th-sparkAt)%720+720)%720,burn,fuel,lambda,trig,stoich,lhv);
+    }
+    for(let k=0;k<this.fluid;k++){
+      gasVentCollectors(this,df);
+      for(const c of this.cyl){
+        const h=c.cy.V/this.A,sa=h*PI*e.bore+this.A*2;
+        c.cy.E+=(363.15-c.cy.T())*sa*100*df;if(c.cy.E<0)c.cy.E=0;
+        Gas.flow(c.kRun,df,10,this.inA,this.plenum,c.ir);c.ir.dissipate();
+        if(c.kIn){Gas.flow(c.kIn,df,this.inA,this.A,c.ir,c.cy);c.ir.dissipate();c.cy.dissipate();}
+        if(c.kEx){Gas.flow(c.kEx,df,this.A,this.exA,c.cy,c.xr);c.cy.dissipate();c.xr.dissipate();}
+        const b=this.banks[c.bank];Gas.flow(c.kPrim,df,this.exA,b.colA,c.xr,b.col);
+        c.ir.vel(df,0.25);c.cy.vel(df,0.5);c.xr.vel(df,1);
+      }
+    }
+    return gasPickOff(this,this.cyl);
+  }
+}
 // THE TWO-STROKE. A piston-ported cylinder on a 360 deg cycle, scavenged by its own crankcase: the piston's
 // underside pumps it (crankcase compression 1.35, typical), a reed valve lets charge in from the runner
 // only while the runner is above the crankcase, the transfer ports carry it up into the cylinder, and the
@@ -18587,25 +18609,26 @@ class TwoStrokeGas{
     gasCollectors(this,e);
     this.cyl=[];
     for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],cy=new Gas(ATM,this.Vc,298.15);cy.geo(Math.sqrt(A),this.Vc/A);
-      const cc=new Gas(ATM,this.ccMin+Vd,298.15);cc.geo(Math.sqrt(A),(this.ccMin+Vd)/A);
-      const ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
-      this.cyl.push(Object.assign(run,{cy,cc,ir,phase:ev.at*360,lit:false,q:0,xb:0,
+      const ev=e.events[i],cy=new Gas(ATM,this.Vc,298.15,1);cy.geo(Math.sqrt(A),this.Vc/A);
+      const cc=new Gas(ATM,this.ccMin+Vd,298.15,1);cc.geo(Math.sqrt(A),(this.ccMin+Vd)/A);
+      const ir=new Gas(ATM,this.inA*e.runnerL,298.15,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
+      this.cyl.push(Object.assign(run,{cy,cc,ir,phase:ev.at*360,lit:false,q:0,xb:0,frDrop:0,
         kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)}));
     }
     this.theta=0;
   }
   pos(th){const a=th*Math.PI/180,s=Math.sin(a);return this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s);}
   step(rpm,map,fuel,lambda,spark,burn){
-    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI;
-    this.theta=(this.theta+rpm*6*dt)%360;
-    this.plenum.reset(map,300);
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.theta=(this.theta+dTh)%360;
+    this.plenum.reset(map,300,1);
     for(const c of this.cyl){
       const th=(this.theta-c.phase+360)%360,x=this.pos(th);
       c.cy.setV(this.Vc+this.A*x);c.cc.setV(this.ccMin+this.A*(2*this.r-x));
       c.kEx=kArea(0.65,this.wEx*Math.max(0,x-this.xEx));c.kTr=kArea(0.65,this.wTr*Math.max(0,x-this.xTr));
-      gasBurn(c,((th-(360-spark))%360+360)%360,burn,fuel,lambda);
+      gasBurn(c,((th-(360-spark))%360+360)%360,burn,fuel,lambda,trig,stoich,lhv);
     }
     for(let k=0;k<this.fluid;k++){
       gasVentCollectors(this,df);
@@ -18642,12 +18665,12 @@ class RotaryGas{
     gasCollectors(this,e);
     this.rotors=[];this.cyl=[];
     for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
+      const ev=e.events[i],ir=new Gas(ATM,this.inA*e.runnerL,298.15,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
       const rot=Object.assign(run,{ir,ch:[],kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)});
       for(let j=0;j<3;j++){
-        const cy=new Gas(ATM,this.Vmin,298.15);cy.geo(B,Math.sqrt(3)*R);
-        const c={cy,phase:ev.at*360+j*360,lit:false,q:0,xb:0,kIn:0,kEx:0};
+        const cy=new Gas(ATM,this.Vmin,298.15,1);cy.geo(B,Math.sqrt(3)*R);
+        const c={cy,phase:ev.at*360+j*360,lit:false,q:0,xb:0,frDrop:0,kIn:0,kEx:0};
         rot.ch.push(c);this.cyl.push(c);
       }
       this.rotors.push(rot);
@@ -18661,14 +18684,15 @@ class RotaryGas{
     if(d>=len)return 0;return Math.min(1,d/40,(len-d)/40);
   }
   step(rpm,map,fuel,lambda,spark,burn){
-    const dt=1/this.simHz,df=dt/this.fluid;
-    this.theta=(this.theta+rpm*6*dt)%1080;
-    this.plenum.reset(map,300);
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.theta=(this.theta+dTh)%1080;
+    this.plenum.reset(map,300,1);
     for(const c of this.cyl){
       const ph=(this.theta-c.phase+2160)%1080;
       c.cy.setV(this.vol(ph));
       c.kEx=kArea(0.7,this.aEx*this.port(ph,735,48));c.kIn=kArea(0.7,this.aIn*this.port(ph,32,320));
-      gasBurn(c,((ph-(540-spark))%1080+1080)%1080,burn,fuel,lambda);
+      gasBurn(c,((ph-(540-spark))%1080+1080)%1080,burn,fuel,lambda,trig,stoich,lhv);
     }
     for(let k=0;k<this.fluid;k++){
       gasVentCollectors(this,df);
@@ -18690,24 +18714,28 @@ class RotaryGas{
 function makeGasEngine(e,simHz,fluid){
   return e.kind==='rotary'?new RotaryGas(e,simHz,fluid):e.kind==='two'?new TwoStrokeGas(e,simHz,fluid):new GasEngine(e,simHz,fluid);
 }
-// engine-sim's Synthesizer input stage, per channel: 1.9 kHz 4th-order Butterworth, a jitter of up to 10
-// samples, a 10 Hz DC removal, 1% of the derivative, and the signal times 2 kHz low-passed noise
+// Synthesizer input stage, per channel: 1.9 kHz 4th-order Butterworth, a jitter of up to 10 samples,
+// 10 Hz DC removal, tonal pressure body with modest sample-rate-normalised turbulent air noise, plus a
+// crossover-normalised derivative (tailpipe monopole radiation) for crisp top-end bark without stripping bass.
 function lp2(f,q){const w=2*Math.PI*f/sampleRate,al=Math.sin(w)/(2*q),c=Math.cos(w),a0=1+al;
   return {b0:(1-c)/2/a0,b1:(1-c)/a0,a1:-2*c/a0,a2:(1-al)/a0,x1:0,x2:0,y1:0,y2:0};}
 function lpRun(f,x){const y=f.b0*x+f.b1*f.x1+f.b0*f.x2-f.a1*f.y1-f.a2*f.y2;f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;}
 class GasChannel{
   constructor(){this.aa=[lp2(1900,0.5412),lp2(1900,1.3066)];this.air=[lp2(2000,0.5412),lp2(2000,1.3066)];
     this.jit=[lp2(10000,0.5412),lp2(10000,1.3066)];this.hist=new Float32Array(10);this.hi=0;this.dc=0;this.prev=0;
-    this.dcA=1-Math.exp(-2*Math.PI*10/sampleRate);}
+    this.dcA=1-Math.exp(-2*Math.PI*10/sampleRate);
+    this.derivNorm=sampleRate/(2*Math.PI*400);
+    this.airNorm=Math.sqrt(sampleRate/4000);}
   run(x,jitter){
     const s=lpRun(this.aa[1],lpRun(this.aa[0],x));
     this.hist[this.hi]=s;this.hi=(this.hi+1)%10;
     const j=gclamp(lpRun(this.jit[1],lpRun(this.jit[0],Math.random()*9*jitter)),0,9),j0=Math.floor(j),j1=Math.ceil(j),jf=j-j0;
     const fin=this.hist[(this.hi+j1)%10]*jf+this.hist[(this.hi+j0)%10]*(1-jf);
     this.dc+=this.dcA*(fin-this.dc);
-    const fp=(fin-this.prev)*sampleRate;this.prev=fin;
-    const r=lpRun(this.air[1],lpRun(this.air[0],2*Math.random()-1));
-    return fp*0.01+(fin-this.dc)*r*0.99;
+    const ac=fin-this.dc;
+    const fp=(fin-this.prev)*this.derivNorm;this.prev=fin;
+    const r=lpRun(this.air[1],lpRun(this.air[0],2*Math.random()-1))*this.airNorm;
+    return ac*(1+0.18*r)+0.35*fp;
   }
 }
 class EngineGas extends AudioWorkletProcessor{
@@ -18718,34 +18746,37 @@ class EngineGas extends AudioWorkletProcessor{
     {name:'lambda',defaultValue:1,minValue:0.6,maxValue:6,automationRate:'k-rate'},
     {name:'spark',defaultValue:20,minValue:-20,maxValue:60,automationRate:'k-rate'},
     {name:'burn',defaultValue:60,minValue:20,maxValue:120,automationRate:'k-rate'},
+    {name:'camAdv',defaultValue:0,minValue:-30,maxValue:40,automationRate:'k-rate'},
     {name:'level',defaultValue:0,minValue:0,maxValue:4,automationRate:'k-rate'},
     {name:'floor',defaultValue:1,minValue:1e-9,maxValue:1e12,automationRate:'k-rate'}];}
   constructor(){super();this.eng=null;this.port.onmessage=e=>this.configure(e.data);}
   configure(e){
     this.simHz=10000;this.eng=makeGasEngine(e,this.simHz,4);this.acc=0;
+    this.firePerRev=e.kind==='four'?e.cylinders/2:e.cylinders;
     this.prev=new Float64Array(e.banks);this.cur=new Float64Array(e.banks);
     this.ch=Array.from({length:e.banks},()=>new GasChannel());
     this.pan=e.banks===1?[[0.7071,0.7071]]:[[0.85,0.45],[0.45,0.85]];
-    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));this.rel=1-Math.exp(-1/(0.06*sampleRate));
+    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));
   }
   process(inputs,outputs,params){
     const out=outputs[0],L=out[0],R=out[1]||out[0];
     if(!this.eng){L.fill(0);if(R!==L)R.fill(0);return true;}
-    const rpm=params.rpm[0],map=params.map[0],fuel=params.fuel[0],lam=params.lambda[0],spark=params.spark[0],burn=params.burn[0],level=params.level[0],floor=params.floor[0];
+    const rpm=params.rpm[0],map=params.map[0],fuel=params.fuel[0],lam=params.lambda[0],spark=params.spark[0],burn=params.burn[0],camAdv=params.camAdv[0],level=params.level[0],floor=params.floor[0];
     const inc=this.simHz/sampleRate,nb=this.cur.length;
+    const fireHz=Math.max(1,(rpm/60)*this.firePerRev);
+    const rel=1-Math.exp(-1/(Math.max(0.06,2/fireHz)*sampleRate));
     for(let i=0;i<L.length;i++){
       this.acc+=inc;
-      while(this.acc>=1){this.acc-=1;this.prev.set(this.cur);this.cur.set(this.eng.step(rpm,map,fuel,lam,spark,burn));}
+      while(this.acc>=1){this.acc-=1;this.prev.set(this.cur);this.cur.set(this.eng.step(rpm,map,fuel,lam,spark,burn,camAdv));}
       let l=0,r=0;
       for(let b=0;b<nb;b++){
         const x=this.prev[b]+(this.cur[b]-this.prev[b])*this.acc,y=this.ch[b].run(x,0.23);
         l+=y*this.pan[b][0];r+=y*this.pan[b][1];
       }
-      // levelled, as engine-sim levels its output: the gas model gives the timbre, the main thread the
-      // loudness. Quick to come down on a rising signal (20 ms), and back up in 60 ms (0.3 s left a hole after
-      // every lift: the signal falls at once and the gain took a third of a second to follow), and never
-      // lifting a signal that has fallen under the floor.
-      const pw=(l*l+r*r)/2;this.ms+=(pw>this.ms?this.att:this.rel)*(pw-this.ms);
+      // levelled, as engine-sim levels its output: quick to come down on a rising signal (20 ms), release
+      // at least 2 firing periods (min 60 ms) so low idle does not pump between individual cylinder pulses,
+      // and never lifting a signal that has fallen under the floor.
+      const pw=(l*l+r*r)/2;this.ms+=(pw>this.ms?this.att:rel)*(pw-this.ms);
       const g=level/Math.max(Math.sqrt(this.ms),floor);
       L[i]=l*g;if(R!==L)R[i]=r*g;
     }
@@ -19165,14 +19196,14 @@ function trackSoundState(st){
 // back (and is quiet while the replay is paused), and every other tab is quiet.
 function soundSource(){
   if(vizMode==='dyno')return state;
-  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  if(vizMode==='track'&&trackUI.phase==='live'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
   const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
   if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
   return null;
 }
 function driftSoundSample(){
   const R=typeof chalResult!=='undefined'?chalResult:null;
-  return vizMode==='challenges'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+  return vizMode==='challenges'&&chalUI.phase==='live'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
 }
 // ---- tyre screech on the powerslide replay (build 362) ----
 // A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same
@@ -19333,12 +19364,13 @@ function initMotorChain(){
 }
 // The worklet is inline, so the app stays one file. A blob: URL is refused from a file:// page (its
 // origin is opaque), a data: URL is not, so try the one and fall back to the other.
+let soundWorkletUrl='';
 function loadSoundWorklet(ctx){
-  const blob=URL.createObjectURL(new Blob([SOUND_WORKLET_SRC],{type:'application/javascript'}));
-  return ctx.audioWorklet.addModule(blob)
+  if(!soundWorkletUrl)soundWorkletUrl=URL.createObjectURL(new Blob([SOUND_WORKLET_SRC],{type:'application/javascript'}));
+  return ctx.audioWorklet.addModule(soundWorkletUrl)
     .catch(()=>ctx.audioWorklet.addModule('data:application/javascript;base64,'+btoa(SOUND_WORKLET_SRC)));
 }
-const Sound={ctx:null,node:null,cfgKey:'',cfg:null,model:'synth',gas:null,gasConv:null,gasLp:null,gasGain:null,gasKey:'',gasIR:'',gasRef:0,gasF:0,gasCalKey:'',hot:0,lastT:0,chargeP:0,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
+const Sound={ctx:null,node:null,cfgKey:'',cfg:null,model:'synth',gas:null,gasConv:null,gasLp:null,gasGain:null,gasEng:null,gasChain:null,gasKey:'',gasIR:'',gasRef:0,gasF:0,gasCalKey:'',hot:0,lastT:0,chargeP:0,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
 function initSound(){
   if(Sound.ctx)return;
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -19361,7 +19393,7 @@ function initGasChain(){
   Sound.gasGain=c.createGain();Sound.gasGain.gain.value=1;
   const lim=c.createDynamicsCompressor();lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=12;lim.attack.value=0.003;lim.release.value=0.15;
   Sound.gasLp.connect(Sound.gasGain);Sound.gasGain.connect(lim);lim.connect(c.destination);
-  Sound.gasKey='';Sound.gasIR='';
+  Sound.gasEng=null;Sound.gasChain=null;Sound.gasKey='';Sound.gasIR='';
 }
 // An impulse response as an AudioBuffer at the context's rate (a ConvolverNode needs the two to match).
 function soundIRBuffer(ctx,key){
@@ -19400,9 +19432,14 @@ function soundModelIsGas(){return Sound.model==='gas'&&gasSupported(engine);}
 // The geometry the gas model needs, from the same build the breathing model uses.
 function gasConfig(e){
   const cfg=soundConfig(e);
+  const ivD=e.ivDia_mm||0.45*e.bore_mm,evD=e.evDia_mm||0.84*ivD;
+  const ivC=e.ivCount||2,evC=Math.max(1,(e.valves||4)-ivC);
+  const exhT=exhaustGasT(0.7,0.6*e.redline,0);
   return {cylinders:e.cylinders,bore:e.bore_mm/1000,stroke:e.stroke_mm/1000,cr:e.compression,
-    ivDia:(e.ivDia_mm||0.45*e.bore_mm)/1000,ivCount:e.ivCount||2,ivLift:(e.ivLift_mm||0.25*0.45*e.bore_mm)/1000,
+    ivDia:ivD/1000,evDia:evD/1000,ivCount:ivC,evCount:evC,ivLift:(e.ivLift_mm||0.25*0.45*e.bore_mm)/1000,
     camDur:e.camDur||240,overlap:e.overlap||0,primL:e.primL>0?e.primL:0.55,primD:e.primD||0.4*e.bore_mm/1000,
+    exhSigma:e.exhSigma??0.15,exhC:sonic(0.75*exhT),turbo:e.intake==='turbo',
+    stoich:e.stoichAFR||14.7,lhv:(e.fuelLHV||43)*1e6,
     sysL:e.sysL>0?e.sysL:3,sysD:e.sysD||0.06,sysPipes:e.sysPipes||1,runnerL:e.runnerL||0.4,runnerD:(e.runnerD_mm||0.42*e.bore_mm)/1000,
     events:cfg.events,banks:cfg.banks,kind:gasKind(e),
     // a rotary's geometry: bore_mm holds the generating radius, stroke_mm the rotor width
@@ -19410,10 +19447,11 @@ function gasConfig(e){
     exhDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).exh,trDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).tr};
 }
 // How loud this engine's exhaust signal is, flat out at 60% of the redline: 0.3 s of the same gas model on
-// the main thread, once per build. It sets the leveller's floor (engine-sim sets a volume per engine file by
-// hand, and levels its output).
+// the main thread, once per build (cached by config key). Sets the leveller's floor.
 let gasLib=null;
-function gasReference(cfg){
+const gasRefCache=new Map(),gasCalCache=new Map();
+function gasReference(cfg,key){
+  if(key&&gasRefCache.has(key))return gasRefCache.get(key);
   if(!gasLib)gasLib=new Function('AudioWorkletProcessor','registerProcessor','sampleRate',SOUND_GAS_SRC+';return {GasEngine,GasChannel,makeGasEngine};')(class{},()=>{},48000);
   // measured after the audio chain's input stage (band limit, noise modulation), which treats a V8's slow
   // pulses and an I4's quick ones differently: normalising the raw pressure left them 5x apart
@@ -19424,7 +19462,9 @@ function gasReference(cfg){
     for(;acc<1;acc+=10000/48000){let v=0;for(let b=0;b<cfg.banks;b++)v+=ch[b].run(prev[b]+(o[b]-prev[b])*acc,0.23);if(i>=1500){q+=v*v;k++;}}
     acc-=1;prev.set(o);
   }
-  return Math.sqrt(q/k)||1;
+  const res=Math.sqrt(q/k)||1;
+  if(key){if(gasRefCache.size>64)gasRefCache.clear();gasRefCache.set(key,res);}
+  return res;
 }
 // What the build does to the gas model's sound after the worklet: which impulse response, and the silencer,
 // cat and turbine as a low-pass and a level (as exhaustSound's, with the cut it already works out).
@@ -19433,27 +19473,35 @@ function gasChainFor(e){
   return {ir:sk==='race'?'minimal':'mild',lpHz:(GAS_SILENCER_HZ[sk]||GAS_SILENCER_HZ.stock)*cut,gain:x.gain};
 }
 // How much of the worklet's levelled signal the impulse response lets through for this engine: rendered
-// offline at full load through the convolver alone, at six speeds from 20% to 80% of the redline, once per
-// build. What it passes swings about 2.5x with the firing frequency (the recorded pipe's own resonances
-// meeting the firing harmonics: a drone at one rpm, a hole at another), the same for every engine that fires
-// at that rate, so two speeds could both land in a hole; six average it out. The loudness divides by it, so the luck of how an engine's
-// pulse spectrum meets the recording does not move its level; the silencer, cat and turbine (the low-pass and
-// gain after it) are left out of it on purpose, because their quietening is real. Resolves to the output rms
-// per unit of level.
-async function calibrateGas(rate,cfg,chain){
+// offline at full load through the convolver alone, stepping across six speeds from 20% to 80% of the
+// redline in a single OfflineAudioContext (cached per build). The loudness divides by it, so the luck of how
+// an engine's pulse spectrum meets the recording does not move its level; the silencer, cat and turbine (the
+// low-pass and gain after it) are left out of it on purpose, because their quietening is real.
+async function calibrateGas(rate,cfg,chain,cacheKey){
+  if(cacheKey&&gasCalCache.has(cacheKey))return gasCalCache.get(cacheKey);
+  const shares=[0.2,0.32,0.44,0.56,0.68,0.8],stepS=0.28,settleS=0.14;
+  const c=new OfflineAudioContext(2,Math.round(rate*stepS*shares.length),rate);await loadSoundWorklet(c);
+  const n=new AudioWorkletNode(c,'engine-gas',{outputChannelCount:[2]});n.port.postMessage(cfg);
+  const conv=c.createConvolver();conv.buffer=soundIRBuffer(c,chain.ir);
+  n.connect(conv);conv.connect(c.destination);
+  const P=n.parameters;
+  P.get('map').value=101325;P.get('fuel').value=1;P.get('lambda').value=0.9;P.get('level').value=1;P.get('floor').value=1e-9;
+  shares.forEach((rf,idx)=>{
+    const t0=idx*stepS,tm=gasTiming(engine,rf);
+    P.get('rpm').setValueAtTime(rf*engine.redline,t0);
+    P.get('spark').setValueAtTime(tm.spark,t0);
+    P.get('burn').setValueAtTime(tm.burn,t0);
+  });
+  await new Promise(r=>setTimeout(r,20));                // let the configuration land before rendering
+  const b=await c.startRendering(),L=b.getChannelData(0),R=b.getChannelData(1);
   let q=0,k=0;
-  for(const share of [0.2,0.32,0.44,0.56,0.68,0.8]){
-    const c=new OfflineAudioContext(2,Math.round(rate*0.35),rate);await loadSoundWorklet(c);
-    const n=new AudioWorkletNode(c,'engine-gas',{outputChannelCount:[2]});n.port.postMessage(cfg);
-    const conv=c.createConvolver();conv.buffer=soundIRBuffer(c,chain.ir);
-    n.connect(conv);conv.connect(c.destination);
-    const P=n.parameters,rf=share;P.get('rpm').value=share*engine.redline;P.get('map').value=101325;P.get('fuel').value=1;
-    const tm=gasTiming(engine,rf);P.get('lambda').value=0.9;P.get('spark').value=tm.spark;P.get('burn').value=tm.burn;P.get('level').value=1;P.get('floor').value=1e-9;
-    await new Promise(r=>setTimeout(r,20));              // let the configuration land before rendering
-    const b=await c.startRendering(),L=b.getChannelData(0),R=b.getChannelData(1);
-    for(let i=Math.round(rate*0.15);i<L.length;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
+  for(let idx=0;idx<shares.length;idx++){
+    const i0=Math.round((idx*stepS+settleS)*rate),i1=Math.min(L.length,Math.round((idx+1)*stepS*rate));
+    for(let i=i0;i<i1;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
   }
-  return Math.sqrt(q/k)||1;
+  const res=Math.sqrt(q/k)||1;
+  if(cacheKey){if(gasCalCache.size>64)gasCalCache.clear();gasCalCache.set(cacheKey,res);}
+  return res;
 }
 function setSoundModel(m){
   Sound.model=m==='gas'?'gas':'synth';
@@ -19532,21 +19580,29 @@ function engineSound(src){
   Sound.lfoGain.gain.setTargetAtTime(depth,t,0.08);
 }
 // The gas model's operating point, from the same state soundDrive reads: the trapped charge (a diesel's is
-// atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, and a spark advance that
-// grows with revs (a diesel's injection near TDC).
+// atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, VVT cam advance, and a
+// spark advance that grows with revs (a diesel's injection near TDC).
 function updateGasSound(live,s,t,size,strength){
   const e=engine,g=Sound.gas.parameters;
   if(live){
-    const key=gasConfig(e),k=JSON.stringify(key),chain=gasChainFor(e),ck=k+JSON.stringify(chain);
-    if(k!==Sound.gasKey){Sound.gasKey=k;Sound.gasRef=gasReference(key);Sound.gas.port.postMessage(key);}
-    if(ck!==Sound.gasCalKey){
-      Sound.gasCalKey=ck;Sound.gasF=0;                    // muted until this build's chain is measured
-      calibrateGas(Sound.ctx.sampleRate,key,chain).then(f=>{if(Sound.gasCalKey===ck)Sound.gasF=f;}).catch(()=>{if(Sound.gasCalKey===ck)Sound.gasF=1;});
+    if(e!==Sound.gasEng){
+      Sound.gasEng=e;
+      const key=gasConfig(e),k=JSON.stringify(key),chain=gasChainFor(e),ck=Sound.ctx.sampleRate+'|'+k+'|'+chain.ir;
+      Sound.gasChain=chain;
+      if(k!==Sound.gasKey){Sound.gasKey=k;Sound.gasRef=gasReference(key,k);Sound.gas.port.postMessage(key);}
+      if(ck!==Sound.gasCalKey){
+        Sound.gasCalKey=ck;
+        if(gasCalCache.has(ck)){Sound.gasF=gasCalCache.get(ck);}
+        else{
+          if(!Sound.gasF)Sound.gasF=0.25;                // keep playing with a safe estimate while calibrating
+          calibrateGas(Sound.ctx.sampleRate,key,chain,ck).then(f=>{if(Sound.gasCalKey===ck)Sound.gasF=f;}).catch(()=>{if(Sound.gasCalKey===ck)Sound.gasF=1;});
+        }
+      }
+      setGasIR(chain.ir);
+      // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
+      Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
+      Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
     }
-    setGasIR(chain.ir);
-    // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
-    Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
-    Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
     const rf=clamp(s.rpm/Math.max(1,e.redline),0,1);
     g.get('rpm').setTargetAtTime(s.rpm,t,0.05);
     g.get('map').setTargetAtTime(101325*(e.ci?1+Math.max(0,s.boostActual||0):Math.max(0.1,s.map)),t,0.03);
@@ -19555,6 +19611,7 @@ function updateGasSound(live,s,t,size,strength){
     const tm=gasTiming(e,rf);
     g.get('spark').setTargetAtTime(tm.spark,t,0.1);
     g.get('burn').setTargetAtTime(tm.burn,t,0.1);
+    g.get('camAdv').setTargetAtTime(typeof camAdvAt==='function'?camAdvAt(s.rpm):0,t,0.08);
   }
   // The worklet levels the gas model's own swings away (it is ~300x quieter at idle than flat out, and not
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's
@@ -27822,7 +27879,7 @@ function bindTrackZoom(){
     // the screen and its y from right to left
     if(trackPage.open&&trackPage.rot)return {x:(e.clientY-r.top)*vizW/r.height,y:(r.right-e.clientX)*vizH/r.width};
     return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
-  const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
+  const active=()=>(vizMode==='track'&&trackUI.phase==='live'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
     e.preventDefault();
@@ -28066,21 +28123,86 @@ function wrapItems(items,x,y,maxW,lh,gap){
   }
   return y;
 }
+const trackUI={phase:'setup',weather:'dry',air:22,tyre:'own'};
+function trackWetness(wx){
+  if(wx==='wet')return RACE.wetFull;
+  if(wx==='damp'||wx==='drying')return 0.4*RACE.wetFull;
+  return 0;
+}
+function trackWeatherLabel(wx){
+  const m={dry:'DRY',damp:'DAMP',wet:'WET',rain:'RAIN LATER',drying:'DRYING'};
+  return tr(m[wx]||'DRY');
+}
+function syncTrackPanel(){
+  const s=document.getElementById('trackSetup'),l=document.getElementById('trackLive');
+  const live=trackUI.phase==='live'&&!!lapResult;
+  if(s)s.hidden=live;
+  if(l)l.hidden=!live;
+}
+function renderTrackSetup(){
+  syncTrackPanel();
+  const head=document.getElementById('trkPreviewHead'),note=document.getElementById('trkPreviewNote');
+  const T=TRACKS[trackKey]?buildTrack(trackKey):null;
+  if(!T){if(head)head.textContent='—';if(note)note.textContent='';return;}
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  if(head)head.innerHTML='<b>'+esc(T.label)+'</b> • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('corners')+' • '+elev+' m '+tr('elevation');
+  if(note)note.textContent=tr(T.blurb||'');
+}
+// Shared circuit map preview for the Drive landing pages (TRACK, RACE, CHAMP).
+function drawTrackPreview(key,opts){
+  const W=vizW,H=vizH,o=opts||{};
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const T=TRACKS[key]?buildTrack(key):null;
+  if(!T){
+    drawPixelRect(0,0,W,28,'#12121c');
+    ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText(o.title||tr('TEST TRACK'),12,19);
+    return;
+  }
+  const wx=o.weather||'dry',w=o.wet!=null?o.wet:trackWetness(wx);
+  const topBar=34,botLines=(o.sub&&o.sub.length)?o.sub.length:1,botBar=26+botLines*13;
+  sceneBind(T);
+  sceneWeather(wx==='rain'?'dry':wx==='drying'?'damp':wx,w);
+  const cam=sceneOverview(W,H,{t:topBar,b:botBar,l:12,r:12});
+  scenePaint(ctx,cam,{cars:[]});
+  ctx.fillStyle='rgba(13,13,24,0.82)';ctx.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  ctx.fillText((o.title||tr('TEST TRACK'))+' • '+T.label,12,19);
+  if(o.air!=null||o.weather){
+    ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=w>0?'#66ccff':'#88aacc';
+    const tag=trackWeatherLabel(wx)+(o.air!=null?'  '+o.air+'°C':'');
+    ctx.fillText(tag,W-12,19);ctx.textAlign='left';
+  }
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  ctx.font='7px "Press Start 2P"';
+  wrapItems([(T.length/1000).toFixed(2)+' km',T.wLabel+' '+tr('wide'),T.corners+' '+tr('corners'),elev+'m '+tr('elevation')]
+    .map((t,k)=>({fg:'#99a',txt:(k?'• ':'')+t})),12,H-botBar+14,W-24,12,7);
+  if(o.sub&&o.sub.length){
+    ctx.font='7px "Press Start 2P"';
+    o.sub.forEach((line,i)=>{ctx.fillStyle=i===0?C.green:'#889';ctx.fillText(line,12,H-botBar+30+i*13);});
+  }
+}
 function drawTrack(){
   trackGrid();
   const W=vizW,H=vizH,narrow=W<560;
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  drawPixelRect(0,0,W,28,'#12121c');
-  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   const L=lapResult;
-  ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
-  if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
+  if(trackUI.phase!=='live'||!L){
+    drawTrackPreview(trackKey,{weather:trackUI.weather,air:trackUI.air,title:tr('TEST TRACK'),
+      sub:[!powertrain().ready()||!vehicle.mass?tr('BUILD AN ENGINE FIRST'):tr('Select a circuit and conditions, then press START LAP.')]});
+    return;
+  }
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   const live=L.replay?replayAt(L,lapReplay.t):null;
   const T=L.track,topBar=narrow?74:62,botBar=narrow?58:52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   const z=trackView.z||1;
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
   sceneBind(T);
-  sceneWeather('dry',0);
+  sceneWeather(cond.weather,cond.wet);
   let car=null;
   if(live){
     car=Object.assign(scenePose(T.line,live.i+live.f),{name:vehicle.chLabel,col:carLivery(vehicle),brk:live.brk||0,steer:(live.steer||0)*Math.PI/180,pos:1});   // a smooth place and heading
@@ -28100,6 +28222,8 @@ function drawTrack(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
+  ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=cond.wet>0?'#66ccff':'#88aacc';
+  ctx.fillText(trackWeatherLabel(cond.weather)+'  '+cond.air+'°C',W-12,19);ctx.textAlign='left';
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
   let lx0=narrow?12:14+ctx.measureText(fmtLap(L.lap)).width*2;
@@ -28131,7 +28255,9 @@ function renderLap(){
   if(!head||!grid)return;
   const L=lapResult;
   if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
-  head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
+  const tyreTag=cond.tyre==='inter'?' • '+tr('INTERS'):cond.tyre==='wet'?' • '+tr('FULL WET'):'';
+  head.innerHTML='<b>'+L.track.label+'</b> • '+trackWeatherLabel(cond.weather)+' '+cond.air+'°C'+tyreTag+' • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=
     cell(tr('LAP TIME'),fmtLap(L.lap),'','hero wide')+
@@ -28428,14 +28554,18 @@ function drawRace(){
   const R=raceUI.run;
   ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
   if(!R||raceUI.phase!=='live'){
-    ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
     if(raceUI.phase==='computing'){
+      ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
       ctx.fillText(raceUI.progTxt,12,60);
       ctx.fillStyle='#26263a';ctx.fillRect(12,72,W-24,10);ctx.fillStyle=C.green;ctx.fillRect(12,72,(W-24)*raceUI.prog,10);
     }else{
-      ctx.fillText(tr('Pick two or more cars on the right,'),12,60);
-      ctx.fillText(tr('then START RACE. Nobody drives:'),12,76);
-      ctx.fillText(tr('the cars race on their own physics.'),12,92);
+      const g=id=>document.getElementById(id);
+      const key=(g('raceTrk')&&g('raceTrk').value)||trackKey;
+      const wx=(g('raceWeather')&&g('raceWeather').value)||'dry';
+      const air=+(g('raceAir')&&g('raceAir').value)||RACE.air;
+      const laps=clamp(Math.round(+(g('raceLaps')&&g('raceLaps').value)||5),1,100);
+      drawTrackPreview(key,{weather:wx,air,title:tr('RACE'),
+        sub:[laps+' '+tr('LAPS')+' • '+raceUI.entrants.length+' '+tr('ENTRANTS')+' • '+tr('Pick two or more cars, then START RACE.')]});
     }
     return;
   }
@@ -29131,6 +29261,30 @@ function refreshChamp(){
     const S=champActive();if(S)champRenderSeason(S);else champBackHub();
   }else champRenderHub();
 }
+function drawChamp(){
+  const S=champActive();
+  if(champUI.phase==='season'&&S&&S.calendar&&S.calendar.length){
+    const idx=Math.min(S.roundIdx,S.calendar.length-1),rd=S.calendar[idx];
+    const dist=rd.durationMin?rd.durationMin+' '+tr('min'):rd.laps+' '+tr('LAPS');
+    const sub=S.done
+      ?[tr('SEASON COMPLETE')+' • '+(S.standings[0]?S.standings[0].name:'—')]
+      :[tr('ROUND')+' '+(idx+1)+'/'+S.calendar.length+' • '+dist+' • '+tr('Press RUN ROUND to race.')];
+    drawTrackPreview(rd.track,{weather:rd.weather||'dry',title:tr(S.name),sub});
+    return;
+  }
+  const sel=document.getElementById('champSeries');
+  const ser=(sel&&champSeries(sel.value))||(S&&!S.done&&champSeries(S.seriesId))||CHAMP_SERIES[0];
+  if(!ser||!ser.calendar||!ser.calendar.length){
+    drawTrackPreview(trackKey,{weather:'dry',title:tr('CHAMPIONSHIP'),sub:[tr('Pick a series on the right, then START SEASON.')]});
+    return;
+  }
+  const rd0=ser.calendar[0];
+  const cls=CHAMP_CLASSES[ser.classId];
+  const cal=ser.calendar.map((r,i)=>'R'+(i+1)+' '+((TRACKS[r.track]||{}).label||r.track)).join(' · ');
+  const calLine=cal.length>76?cal.slice(0,75)+'…':cal;
+  drawTrackPreview(rd0.track,{weather:rd0.weather||'dry',title:tr(ser.name),
+    sub:[ser.calendar.length+' '+tr('ROUNDS')+(cls?' • '+tr(cls.label):'')+' • '+tr('Pick a series and press START SEASON.'),calLine]});
+}
 // ---- the full-screen track view (build 143): the lap, its live instruments and the replay controls ----
 // For a phone. ⛶ in the live-timing row moves the map canvas and the replay controls into a page that fills
 // the screen (the same elements, so the replay, zoom and pan keep working), asks for real full screen and a
@@ -29222,15 +29376,42 @@ function loadGpxTrack(text,fallbackName){
   const key='gpx_'+Date.now().toString(36);
   TRACKS[key]=def;delete trackCache[key];
   trackKey=key;refreshTrackList();saveImportedTracks();
-  buildVehicle();refreshLap();
   const T=buildTrack(key);
   flash(trIn('msg','IMPORTED')+' '+def.label+' • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('CORNERS'));
   setTab('track');
+  refreshLap();
 }
 function refreshLap(){
-  if(!powertrain().ready()||!vehicle.mass){lapResult=null;}
-  else lapResult=simulateLap(trackKey);
+  if(!powertrain().ready()||!vehicle.mass){lapResult=null;renderLap();syncTrackPanel();return;}
+  const wx=trackUI.weather||'dry',air=trackUI.air!=null?trackUI.air:22,tyreKey=trackUI.tyre||'own';
+  const w=trackWetness(wx);
+  if(w===0&&tyreKey==='own'&&air===22){
+    lapResult=simulateLap(trackKey);
+    if(lapResult)lapResult.cond={weather:wx,wet:0,air,tyre:tyreKey,grip:1};
+  }else{
+    const ty=raceCompound(tyreKey==='own'?(vehicle.tireType||'sport'):tyreKey);
+    const ownMu=(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).mu||vehicle.mu||1;
+    let grip=tyreKey==='own'?1:Math.min(1,ty.mu/ownMu);
+    if(w>0){
+      // Same wet-grip fixed point as raceWetLap (Wong Table 1.3 + Horne NASA TN D-2056 hydroplaning).
+      const T=buildTrack(trackKey),line=lineFor(T,trackKey),base=simulateLap(trackKey,{air,line,quick:true});
+      const coldKPa=vehicle.tyreColdKPa||0;
+      let gWet=1;
+      if(base&&base.v&&line.length){
+        for(let it=0;it<4;it++){
+          const s=Math.sqrt(gWet);let tw=0,gw=0;
+          for(let i=0;i<line.length;i++){const v=Math.max(2,base.v[i]*s),dt=line[i].ds3/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,T.width||12,coldKPa);}
+          gWet=tw>0?gw/tw:1;
+        }
+      }
+      grip*=gWet;
+    }
+    lapResult=withRaceTrim(grip,0,()=>simulateLap(trackKey,{air}));
+    if(lapResult)lapResult.cond={weather:wx,wet:w,air,tyre:tyreKey,grip};
+  }
+  if(lapResult)trackUI.phase='live';
   renderLap();
+  syncTrackPanel();
 }
 // ---- the dyno result as a static sheet ----
 // The DYNO canvas draws the pull with small tags, and the figures under it are the scorecard's — two
@@ -29699,8 +29880,8 @@ function setTab(mode){
   // the engine's live readout belongs to the running engine: the LIVE and DYNO tabs only
   document.getElementById('livePanel').style.display=(mode==='engine'||mode==='dyno')?'':'none';
   if(mode==='vehicle'){buildVehicle();updateVehicleSummary();}
-  if(mode==='track'){buildVehicle();refreshLap();}
-  if(mode==='challenges'){buildVehicle();refreshChallenge();raceFillAdd('chalRankAddSel');}
+  if(mode==='track'){buildVehicle();trackUI.phase='setup';renderTrackSetup();}
+  if(mode==='challenges'){buildVehicle();chalShowSetup();raceFillAdd('chalRankAddSel');}
   if(mode==='champ'){refreshChamp();}
   if(mode==='race'){const ts=document.getElementById('raceTrk');fillTrackSelect(ts,ts.value||trackKey);raceFillAdd();openRacePage(prevMode);renderRaceSetup();renderRacePanel(true);}
   if(typeof ecuSync==='function')ecuSync();
@@ -35651,14 +35832,9 @@ let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
-function refreshChallenge(){
-  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
-  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
-  const ch=runChallengeById(activeRunChallenge);
-  chalResult=solveRunChallenge(ch.id);
-  chalHover.i=-1;
-  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+const chalUI={phase:'setup'};
+function chalSyncFields(ch){
+  const live=chalUI.phase==='live';
   const pace=document.getElementById('chalPace');
   if(pace){const row=pace.closest('.field');if(row)row.style.display=ch.kind==='economy'?'':'none';}
   if(typeof syncUserRoadUi==='function')syncUserRoadUi();
@@ -35667,7 +35843,33 @@ function refreshChallenge(){
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8')?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
+  const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
+}
+function chalShowSetup(){
+  chalUI.phase='setup';
+  const ch=runChallengeById(activeRunChallenge);
+  chalSyncFields(ch);
+  chalHover.i=-1;chalHover.map=null;
+  const head=document.getElementById('chalHead'),grid=document.getElementById('chalGrid'),note=document.getElementById('chalNote');
+  if(head){
+    const road=ch.road&&typeof buildRoad==='function'?buildRoad(ch.road):null;
+    head.innerHTML='<b>'+esc(tr(ch.name))+'</b>'+(road?' · '+(road.length/1000).toFixed(1)+' km · '+road.corners+' '+tr('corners'):'');
+  }
+  if(grid)grid.innerHTML='';
+  if(note)note.textContent=tr(ch.desc);
+}
+function refreshChallenge(){
+  // Do not call buildVehicle here: it hooks back into refreshChallenge (same pattern as refreshLap).
+  if(typeof chalRank!=='undefined'&&chalRank.busy)return;   // a ranking is swapping cars in (chal-rank.js)
+  const ch=runChallengeById(activeRunChallenge);
+  chalResult=solveRunChallenge(ch.id);
+  chalUI.phase='live';
+  chalHover.i=-1;
+  const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
+  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalSyncFields(ch);
   renderRunChallenge();
 }
 function renderRunChallenge(){
@@ -36249,8 +36451,83 @@ function drawMooseChallenge(g,R){
   g.strokeStyle='#2a3344';g.beginPath();g.moveTo(0,strip);g.lineTo(vizW,strip);g.stroke();
   if(chalMooseView==='plan')drawMoosePlan(g,R,0,strip,vizW,vizH-strip);else drawMooseFrontal(g,R,0,strip,vizW,vizH-strip);
 }
+function drawChallengePreview(g,ch){
+  const W=vizW,H=vizH,topBar=34,botBar=52;
+  chalHover.map=null;
+  g.fillStyle='#0a0e14';g.fillRect(0,0,W,H);
+  let stats='';
+  if(ch.road&&typeof buildRoad==='function'){
+    const T=buildRoad(ch.road);
+    if(T&&T.pts&&T.pts.length>1){
+      const p=T.pts,n=p.length,pad=24,dx=T.maxX-T.minX||1,dy=T.maxY-T.minY||1;
+      const sc=Math.min((W-2*pad)/dx,(H-topBar-botBar-2*pad)/dy);
+      const ox=(W-dx*sc)/2,oy=topBar+(H-topBar-botBar-dy*sc)/2;
+      const MX=q=>ox+(q.x-T.minX)*sc,MY=q=>oy+(T.maxY-q.y)*sc;
+      g.strokeStyle='#2a3344';g.lineWidth=Math.max(4,T.width*sc);g.lineJoin='round';g.lineCap='round';
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.strokeStyle='#4aa3ff';g.lineWidth=2;
+      g.beginPath();for(let i=0;i<n;i++){if(i)g.lineTo(MX(p[i]),MY(p[i]));else g.moveTo(MX(p[i]),MY(p[i]));}g.stroke();
+      g.fillStyle='#00ff88';g.beginPath();g.arc(MX(p[0]),MY(p[0]),5,0,Math.PI*2);g.fill();
+      g.fillStyle='#ff5555';g.beginPath();g.arc(MX(p[n-1]),MY(p[n-1]),5,0,Math.PI*2);g.fill();
+      let z0=Infinity,z1=-Infinity;for(const q of p){const z=q.z||0;if(z<z0)z0=z;if(z>z1)z1=z;}
+      stats=(T.length/1000).toFixed(1)+' km • '+T.corners+' '+tr('corners')+' • '+Math.round(z1-z0)+'m '+tr('elevation')+
+        (ch.kind==='stage'?' • '+tr('SET TIME')+' '+ch.target+' s':' • '+tr('PACE')+' '+Math.round(chalPaceFactor*100)+'%');
+    }
+  }else{
+    const cx=W/2,cy=topBar+(H-topBar-botBar)/2,rMax=Math.min(W-80,H-topBar-botBar-44)/2;
+    g.lineCap='round';g.lineJoin='round';
+    if(ch.kind==='moose'){
+      const x0=cx-W*0.36,x1=cx+W*0.36,lx=x1-x0,yLo=cy+28,yHi=cy-28;
+      g.strokeStyle='#2a3344';g.lineWidth=34;
+      g.beginPath();g.moveTo(x0,yLo);g.lineTo(x0+lx*0.28,yLo);g.bezierCurveTo(x0+lx*0.38,yLo,x0+lx*0.40,yHi,x0+lx*0.50,yHi);
+      g.lineTo(x0+lx*0.62,yHi);g.bezierCurveTo(x0+lx*0.72,yHi,x0+lx*0.74,yLo,x0+lx*0.84,yLo);g.lineTo(x1,yLo);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#00ff88';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      g.fillStyle='#ff7722';
+      for(const [fx,fy] of [[0.06,yLo-18],[0.16,yLo-18],[0.26,yLo-18],[0.06,yLo+18],[0.16,yLo+18],[0.26,yLo+18],
+        [0.46,yHi-18],[0.56,yHi-18],[0.64,yHi-18],[0.46,yHi+18],[0.56,yHi+18],[0.64,yHi+18],
+        [0.82,yLo-18],[0.92,yLo-18],[0.82,yLo+18],[0.92,yLo+18]])g.fillRect(x0+lx*fx-3,fy-3,6,6);
+      stats='ISO 3888-2 • 61 m • '+tr('DOUBLE LANE CHANGE');
+    }else if(ch.kind==='drift'){
+      const R=rMax*0.58;
+      g.strokeStyle='#2a3344';g.lineWidth=26;
+      g.beginPath();g.moveTo(cx-R*2,cy+R);g.lineTo(cx-R,cy+R);g.arc(cx-R,cy,R,Math.PI/2,-Math.PI/2,true);
+      g.arc(cx+R,cy,R,-Math.PI/2,Math.PI/2,false);g.lineTo(cx+R*2,cy+R);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#ffaa00';g.lineWidth=2;g.stroke();g.setLineDash([]);
+      stats=tr('S-ROUTE')+' • '+tr('2 LINKED CORNERS')+' • '+tr('POWERSLIDE');
+    }else if(ch.kind==='skidpad'){
+      const R=rMax*0.82;
+      g.strokeStyle='#2a3344';g.lineWidth=22;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();g.setLineDash([]);
+      stats='200 ft (61.0 m) '+tr('CIRCLE')+' • '+tr('STEADY LATERAL g');
+    }else if(ch.kind==='spiral'){
+      const drawSp=()=>{g.beginPath();for(let k=0;k<=120;k++){const a=k/120*Math.PI*2,r=rMax*(0.32+0.62*k/120),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;drawSp();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;drawSp();g.setLineDash([]);
+      stats='12 m → 30.5 m '+tr('SPIRAL')+' • '+tr('RISING SPEED');
+    }else if(ch.kind==='fig8'){
+      const A=Math.min(W*0.36,rMax*1.45);
+      const draw8=()=>{g.beginPath();for(let k=0;k<=160;k++){const t=k/160*Math.PI*2,d=1+Math.sin(t)*Math.sin(t),x=cx+A*Math.cos(t)/d,y=cy+A*Math.sin(t)*Math.cos(t)/d;if(k)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();};
+      g.strokeStyle='#2a3344';g.lineWidth=18;draw8();
+      g.setLineDash([6,5]);g.strokeStyle='#4aa3ff';g.lineWidth=2;draw8();g.setLineDash([]);
+      stats=tr('LEMNISCATE')+' • '+tr('BOTH DIRECTIONS');
+    }
+  }
+  g.fillStyle='rgba(13,13,24,0.86)';g.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  g.fillStyle=C.yellow;g.font='10px "Press Start 2P"';
+  g.fillText(tr('CHALLENGES')+' • '+tr(ch.name),12,19);
+  g.font='7px "Press Start 2P"';g.fillStyle='#99a';
+  g.fillText(stats||tr(ch.desc).slice(0,72),12,H-botBar+16);
+  g.fillStyle=C.green;
+  g.fillText(tr('Select a challenge and press START CHALLENGE.'),12,H-botBar+34);
+}
 function drawChallenge(){
   const R=chalResult,g=ctx;g.fillStyle='#0a0e14';g.fillRect(0,0,vizW,vizH);
+  if(chalUI.phase!=='live'||!R){
+    if(canvas.style.touchAction!=='')canvas.style.touchAction='';
+    drawChallengePreview(g,runChallengeById(activeRunChallenge));
+    return;
+  }
   const ta=R&&R.road?'none':'';if(canvas.style.touchAction!==ta)canvas.style.touchAction=ta;   // a touch drag pans the route map
   if(R&&R.kind==='moose'&&R.ok){drawMooseChallenge(g,R);return;}
   if(R&&R.kind==='drift'&&R.ok){drawDriftChallenge(g,R);return;}
@@ -38629,7 +38906,7 @@ function gfRender(){
 const ECU_N=600;
 const ecu={screen:'scope',map:'fuel',freeze:false,buf:[]};
 function ecuNarrow(){return matchMedia('(max-width: 900px), (max-height: 520px)').matches;}
-function ecuWants(){return ['engine','dyno','track','challenges'].includes(vizMode);}
+function ecuWants(){return vizMode==='engine'||vizMode==='dyno';}
 function ecuMapsOn(){const el=document.getElementById('ecuComputer');return !!(el&&!el.hidden&&ecu.screen==='maps');}
 function ecuSync(){
   const el=document.getElementById('ecuComputer'),btn=document.getElementById('btnEcu');
@@ -38987,16 +39264,16 @@ function bindControls(){
       let gp=groups[c.kind];if(!gp){gp=groups[c.kind]=document.createElement('optgroup');gp.label=tr(KIND[c.kind]||c.kind);chalSel.appendChild(gp);}
       const o=document.createElement('option');o.value=c.id;o.textContent=tr(c.name);gp.appendChild(o);});
     chalSel.value=activeRunChallenge;
-    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;refreshChallenge();});
+    chalSel.addEventListener('change',e=>{activeRunChallenge=e.target.value;chalShowSetup();});
   }
   const chalMs=document.getElementById('chalMooseSpeed');
   if(chalMs){chalMs.value=String(chalMooseSpeed);
-    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;refreshChallenge();}});}
+    chalMs.addEventListener('change',e=>{const f=+e.target.value;if(MOOSE_SPEEDS.includes(f)){chalMooseSpeed=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalDe=document.getElementById('chalDriftEntry'),chalDm=document.getElementById('chalDriftMethod');
   if(chalDe){chalDe.value=String(chalDriftEntry);
-    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;refreshChallenge();}});}
+    chalDe.addEventListener('change',e=>{const f=+e.target.value;if(DRIFT_ENTRY_OPTS.includes(f)){chalDriftEntry=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   if(chalDm){chalDm.value=chalDriftMethod;
-    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;refreshChallenge();}});}
+    chalDm.addEventListener('change',e=>{if(DRIFT_METHODS.includes(e.target.value)){chalDriftMethod=e.target.value;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}});}
   const chalInfo=document.getElementById('chalInfoBtn');
   if(chalInfo)chalInfo.addEventListener('click',()=>{const n=document.getElementById('chalNote');if(!n)return;
     n.hidden=!n.hidden;chalInfo.setAttribute('aria-expanded',String(!n.hidden));chalInfo.classList.toggle('on',!n.hidden);});
@@ -39009,17 +39286,29 @@ function bindControls(){
     chalPace.value=String(chalPaceFactor);
     chalPace.addEventListener('change',e=>{
       const f=+e.target.value;
-      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;refreshChallenge();}
+      if(CHAL_PACE_OPTS.includes(f)){chalPaceFactor=f;if(chalUI.phase==='live')refreshChallenge();else chalShowSetup();}
     });
   }
   if(typeof bindChallengeHover==='function')bindChallengeHover();
   const btnChal=document.getElementById('btnChalSolve');
   if(btnChal)btnChal.addEventListener('click',()=>refreshChallenge());
+  const btnChalBk=document.getElementById('btnChalBack');
+  if(btnChalBk)btnChalBk.addEventListener('click',()=>chalShowSetup());
   if(typeof bindChalRank==='function')bindChalRank();
   bindUserRoad();
   loadImportedTracks();
   const trkSel=document.getElementById('trkSel');
-  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;refreshLap();});}
+  if(trkSel){refreshTrackList();trkSel.addEventListener('change',e=>{trackKey=e.target.value;renderTrackSetup();});}
+  const trkWx=document.getElementById('trkWeather');
+  if(trkWx)trkWx.addEventListener('change',e=>{trackUI.weather=e.target.value;renderTrackSetup();});
+  const trkAir=document.getElementById('trkAir');
+  if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
+  const trkTy=document.getElementById('trkTyre');
+  if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
+  const btnTrkGo=document.getElementById('btnTrackStart');
+  if(btnTrkGo)btnTrkGo.addEventListener('click',()=>{buildVehicle();refreshLap();lapReplay.t=0;lapReplay.playing=true;const pb=document.getElementById('btnReplay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');pb.setAttribute('aria-pressed','true');}});
+  const btnTrkSet=document.getElementById('btnTrackSetup');
+  if(btnTrkSet)btnTrkSet.addEventListener('click',()=>{if(trackPage.open)closeTrackPage();trackUI.phase='setup';renderTrackSetup();});
   const bImp=document.getElementById('btnImportGpx'),gIn=document.getElementById('gpxInput');
   if(bImp&&gIn){
     bImp.addEventListener('click',()=>gIn.click());
@@ -39243,9 +39532,10 @@ function loop(now){
   if(appCovered()){requestAnimationFrame(loop);return;}
   if(vizMode==='engine')drawEngine(dt);
   else if(vizMode==='dyno'){drawDyno();renderDynoResult(false);}
-  else if(vizMode==='track'){stepReplay(dt);drawTrack();}
+  else if(vizMode==='track'){if(trackUI.phase==='live')stepReplay(dt);drawTrack();}
   else if(vizMode==='challenges')drawChallenge();
   else if(vizMode==='race'){stepRaceView(dt);drawRace();}
+  else if(vizMode==='champ')drawChamp();
   else stepPreviews(dt);
   updateUI();
   requestAnimationFrame(loop);

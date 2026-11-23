@@ -214,8 +214,8 @@ function buildVehicle(){
     }else{perf.zt=null;perf.zd=null;}
   }
   // The lap solver is heavier than the straight-line runs, so only re-run it while it's on screen.
-  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof refreshLap==='function')refreshLap();
-  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof refreshChallenge==='function')refreshChallenge();
+  if(typeof vizMode!=='undefined'&&vizMode==='track'&&typeof trackUI!=='undefined'&&trackUI.phase==='live'&&typeof refreshLap==='function')refreshLap();
+  if(typeof vizMode!=='undefined'&&vizMode==='challenges'&&typeof chalUI!=='undefined'&&chalUI.phase==='live'&&typeof refreshChallenge==='function')refreshChallenge();
   if(typeof updateBuildStrip==='function')updateBuildStrip();
 }
 // Braking run from v0 (m/s) to a stop. Returns stopping distance (m) and time (s).

@@ -18,12 +18,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Hybrid live slice-stacked cars, critically damped Follow/Chase cameras, and curb-aligned Mode B tiles (build 436)
+### Hybrid live slice-stacked cars, critically damped Follow/Chase cameras, and curb-aligned Mode B tiles (build 438)
 
 - Upgraded `src/js/car-stacks.js` to a hybrid renderer: continuous floating-point live slice stacking at close/mid zoom (`cam.scale >= 5.5`) for 0° angular stepping, pre-dilated single 1px outer silhouette, and continuous Z-interleaved Ackermann front-wheel steering, plus a lazy 64-heading 1-blit atlas at far overview zoom (with a zero-`getImageData` Canvas 2D fallback for `file://`). Kept all 32 existing sprite-stacked cars synced.
 - Upgraded `src/js/track-scene-v2.js` with critically damped springs for both Chase (`sceneChaseV2`, delegated from `sceneChase`) and locked north-up Follow (`sceneFollow`) cameras.
 - Exposed `CHASE` / `FOLLOW` / `OVERVIEW` camera mode selectors (`#trackCamMode`, `#raceCamMode`) in Test Track and Race, synced with the `MAP` button.
 - Aligned Mode B world tiles with variable-width track ribbons and physics kerb zones (`KERB_W = 0.8 m` outside the asphalt edge, forwarded via `sceneBind`).
+
+### Gas engine sound fixes, physics detail and faster calibration (build 437)
+
+- **Fixed high-RPM misfires in the GAS sound model** (`src/js/sound.js`): the 3° spark trigger window was smaller than a crank step above 5,000 rpm at `simHz = 10 kHz`, dropping ~50% of firings at 10,000 rpm. Scaling the window with `rpm * 6 * dt` restores 100/100 firings at 12,000 rpm across four-strokes, two-strokes and rotaries.
+- **Rebalanced `GasChannel` and low-RPM levelling**: replaced the zero-mean ring-modulated noise + unnormalised `sampleRate` derivative with a sample-rate-invariant mix of tonal exhaust pressure (`ac`), modest turbulent noise (`18%`), and a 400 Hz-normalised derivative (`35%`), preserving low-end rumble (44.1/48 kHz RMS ratio `0.989`). Scaled the AGC release to at least two firing periods (min 60 ms) to stop intra-cycle pumping at idle.
+- **Added real build geometry, fresh-charge reversion and hot exhaust delays**: `Gas` now tracks fresh-charge fraction for natural cam-overlap reversion and idle lope (Heywood §9.4), uses real exhaust valve diameter/count, fuel `stoich`/`LHV`, VVT `camAdv`, turbine collector restriction, hot exhaust sound speed (~528 m/s vs 343 m/s), and `exhSigma` unequal-length primary spread.
+- **Cut calibration mute and CPU overhead**: `calibrateGas` now steps all six speeds in a single `OfflineAudioContext` with caching (0.1 ms on hit), caches the worklet Blob URL, keeps playing during recalibration, checks build identity instead of per-frame `JSON.stringify`, and strips dead `Math.cbrt` and 2D `py` math from the 40 kHz fluid loop.
+- **Updated `tests/test84.mjs`** to cover high-RPM ignition, overlap fresh-charge reversion, hot exhaust speed / UEL primary spread, `GasChannel` sample-rate invariance and calibration caching.
+
+### Drive landing pages, Track conditions, and ECU removal from Drive (build 436)
+
+- **Removed the ECU laptop from Drive tabs.** `ecuWants()` now restricts `#ecuComputer` and `#btnEcu` to `LIVE` and `DYNO` (`src/js/ecu-computer.js`), removing the non-functional ECU panel from `TRACK`, `RACE`, `CHAMP`, and `CHALLENGES`.
+- **Added landing pages with live previews to all four Drive sub-tabs:**
+  - **TRACK** opens on `#trackSetup` with an overview map preview (showing live weather), circuit/condition selectors, and `START LAP` instead of immediately running the car; `CHANGE TRACK` returns to setup.
+  - **RACE** draws a live overview map preview of the selected circuit and weather during setup instead of blank text.
+  - **CHAMP** renders `drawChamp()` in the main loop, previewing the selected series' opening circuit and calendar (or the active season's next round).
+  - **CHALLENGES** opens in setup with a route map preview for road challenges (`buildRoad`) and a top-down course layout preview for closed-course tests (moose, powerslide, skid pad, spiral, figure 8); `START CHALLENGE` solves and `CHANGE CHALLENGE` returns to setup.
+- **Added Track conditions to TRACK** (`WEATHER`: Dry / Damp / Wet, `AIR °C`: 5–35 °C, `TYRES`: Own / Inters / Full Wet), reusing Race's wet-grip and hydroplaning physics (`raceWetKeep` + `raceCompound` + `withRaceTrim`) and ideal-gas air density + brake ambient temperature in `simulateLapCore`. Default dry 22 °C laps are unchanged (Riverside GP dry 68.83 s → damp 72.00 s → wet 81.23 s; wet Monza GT3/Z06 slicks 193.51 s → full wets 155.29 s; 5 °C vs 35 °C peak front brakes 273.5 °C vs 307.5 °C).
+- Updated `tests/test74.mjs` and `tests/test75.mjs` for the Track landing page, and added `tests/test262.mjs`.
 
 ### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 435)
 
