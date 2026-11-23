@@ -51,6 +51,7 @@ function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
   if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // driveMech: the axle the gearbox turns (279);   // a hybrid's front axle motor drives the front wheels (build 195)
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?carLabel(body):ch.label;

@@ -820,18 +820,30 @@ const CENTRE_DIFF={
   // Clutches with a published limit (build 404): f 0 or 1 names the primary axle; the clutch passes the other at most
   // L x the drive torque.
   // ATTESA E-TS: 0:100 in normal driving, "adjusted up to 50:50": Nissan Europe newsroom, 2017 GT-R
-  'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5},
+  'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5,dc:true},
   // ATTESA E-TS Pro: the same 0:100 to 50:50 (Nissan; the ATTESA literature, PROBABLE for this car)
-  'Nissan Skyline GT-R V-spec (R34, 1999)':{type:'lock',f:0,L:0.5},
+  'Nissan Skyline GT-R V-spec (R34, 1999)':{type:'lock',f:0,L:0.5,dc:true},
   // front driven, "a maximum of 70% of drive torque to the rear axle": Ford of Europe, Focus RS AWD technical sheet
-  'Ford Focus RS (Mk3, 2016)':{type:'lock',f:1,L:0.7}
+  'Ford Focus RS (Mk3, 2016)':{type:'lock',f:1,L:0.7,dc:true},
+  // DCCD (2004 GD STI): planetary 35:65 torque split + electromagnetic clutch, releases on handbrake: Subaru 2004 STI spec
+  'Subaru Impreza WRX STI (GD, 2004)':{type:'fric',f:0.35,L:0.35,dc:true},
+  // ACD (Evo IX): 50:50 bevel centre diff + hydraulic multi-plate clutch (Tarmac mode), releases on handbrake: Mitsubishi Evo IX manual
+  'Mitsubishi Lancer Evolution IX (2006)':{type:'fric',f:0.50,L:0.30,dc:true},
+  // GR-FOUR: multi-plate clutch (Normal 60:40, Sport 30:70, Track 50:50), disconnects on handbrake: Toyota GR Yaris press kit
+  'Toyota GR Yaris (2020)':{type:'fric',f:0.40,L:0.35,dc:true},
+  // Electro-hydraulic Haldex V AWD, 30:70 nominal rear bias: Lamborghini Huracán LP610-4 press kit
+  'Lamborghini Huracán LP610-4 (2014)':{type:'fric',f:0.30,L:0.35,dc:true}
   // Left open: the 992 Turbo S's PTM, "up to 500 Nm to the front wheels" (Porsche press kit), as 500 N m on the
   // propshaft cuts its stepped 0-100 from 2.87 to 3.24 s (Porsche: 2.7); where the 500 is measured is not published.
-  // the rest ('lock', no limit published): Haldex (RS3, Huracán), xDrive (X5 M), PTM (Cayenne, 992), ACD (Evo IX),
-  // DCCD in its automatic mode (Impreza STI), GR-FOUR (GR Yaris: a mode's split, not a limit), Quadra-Trac (Grand Cherokee SRT),
+  // the rest ('lock', no limit published): Haldex (RS3), xDrive (X5 M), PTM (Cayenne, 992), Quadra-Trac (Grand Cherokee SRT),
   // the Raptor's 4A: all electronically controlled clutches (PROBABLE).
 };
+const AWD_DIFF_MODES=['auto','sport','open','lock'];
 function centreCoupling(v){
+  const m=v&&v.awdMode;
+  if(m==='sport')return {type:'fric',f:0.30,L:0.20,dc:true};
+  if(m==='open')return {type:'open',f:0.40};
+  if(m==='lock')return {type:'lock',f:0.5};
   const e=CENTRE_DIFF[v&&v.body&&v.body.name];
   if(!e)return {type:'lock',f:0.5};
   const o=Object.assign({},e);if(o.vcu){o.c=diffVcuRate(DIFF_VCU)*Math.pow(v.finalDrive||1,2);delete o.vcu;}

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 439
+# PIXEL POWERTRAIN v0.8 build 440
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -325,11 +325,14 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
     shows the cone lanes as road and the band the car's full width sweeps through them. REPLAY plays it at 1×, 0.5× or
     0.25×, from 25 m before the cones to 20 m past the end of the course. The stock cars clear 55–68
     km/h, about 10 km/h below the magazines' typical 68–84, so at 72 and 77 they all fail by a cone (a known gap).
-  - **S-Route Powerslide** — straight, left 90°, short straight, right 90°, straight on a 24 m pad, ESP and TC off.
-    The driver anticipates each bend, holds body slip with active countersteer and throttle, and accelerates across the
-    mid-straight into the second bend. **METHOD** picks how the slide starts: power-over, clutch kick, a **flick** (lift
-    and steer away, then sharply in, each phase half the body's natural period) or the **handbrake** (rear wheels only,
-    outside the ABS; RWD and FWD); AUTO tries the dynamic methods first, the handbrake last. **ENTRY** fixes the entry
+  - **S-Route Powerslide** — straight, left 90°, short straight, right 90°, straight on a 24 m pad (TC and ESP default
+    off, and are toggleable before every Track, Race and Challenge run). The driver anticipates each bend, holds body
+    slip with active countersteer and throttle, and accelerates across the mid-straight into the second bend. **METHOD**
+    picks how the slide starts: power-over, clutch kick, a **flick** (lift and steer away, then sharply in, each phase
+    half the body's natural period) or the **handbrake** (rear wheels only, outside the ABS; RWD, FWD and electronic-clutch
+    AWD cars whose centre clutch opens on handbrake); AUTO tries the dynamic methods first, the handbrake last. **AWD DIFF**
+    (on AWD cars) switches between AUTO (factory coupling: STI DCCD 35:65, Evo IX ACD 50:50, GR-FOUR 40:60, Huracán 30:70,
+    GT-R ATTESA, Focus RS, etc.), SPORT (30:70 rear bias), OPEN (40:60) and LOCK (50:50). **ENTRY** fixes the entry
     speed (35–70 km/h) or searches the highest-scoring CLEAR (mean corner speed × sin(mean sustained β)). A run ends
     **CLEAR** (a sustained slide in both corners), **FADE** (one), **NO_SLIDE** (neither: a FWD car on
     power-over), **STALL**, **OFF** (a corner of the body over the edge) or **SPIN**. An AWD car powers over as far
