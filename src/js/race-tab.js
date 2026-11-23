@@ -308,11 +308,12 @@ function drawRace(){
     if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
   }
   // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
-  const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
-  trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
-  let cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneOverview(W,H);
-  if(!focus)cam.scale*=Math.max(1,z);
-  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0}),trackZoomOut(z));
+  const z=trackView.z||1,pack=raceUI.follow<0,isFollow=trackView.camMode==='follow'&&typeof sceneFollow==='function',isOv=trackView.camMode==='overview',frac=isFollow?0.52:(pack?0.56:0.68);
+  trackView.mcx=W/2;trackView.mcy=focus&&!isOv?H*frac:H/2;
+  const ovOpts={t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0};
+  let cam=(focus&&!isOv)?(isFollow?sceneFollow(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac)):sceneOverview(W,H,ovOpts);
+  if(!focus||isOv)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,ovOpts),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
@@ -362,6 +363,8 @@ function bindRace(){
   });
   g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
   g('raceMap').addEventListener('click',trackMapToggle);
+  const raceCamSel=g('raceCamMode');
+  if(raceCamSel)raceCamSel.addEventListener('change',e=>setTrackCamMode(e.target.value));
   g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
   g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
   g('raceRptPng').addEventListener('click',exportRacePNG);

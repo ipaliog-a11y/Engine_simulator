@@ -201,6 +201,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
+.replay-row #trackCamMode,.replay-row #raceCamMode{flex:0 0 98px}
 .replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
 /* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
 .track-page{position:fixed;inset:0;z-index:50;background:#0a0a12;overflow:hidden}
@@ -215,7 +216,7 @@ body.track-open{overflow:hidden}
 .tp-bar .replay-row{margin:0;flex:0 1 640px;min-width:0}
 .tp-bar .replay-row button{padding:8px 6px}
 .tp-bar .replay-row .tp-full{font-size:12px;padding:4px 6px}
-.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges{flex:0 0 auto}
+.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges,.tp-bar .replay-row #trackCamMode,.tp-bar .replay-row #raceCamMode{flex:0 0 auto}
 /* RACE (build 137) */
 .race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}

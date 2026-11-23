@@ -213,6 +213,7 @@ input[type=range]:disabled::-moz-range-thumb{background:#666}
 .replay-row button{flex:1;padding:6px 4px}
 .replay-row select{flex:0 0 64px;min-width:0}
 .replay-row #replayGauges{flex:0 0 86px}
+.replay-row #trackCamMode,.replay-row #raceCamMode{flex:0 0 98px}
 .replay-row .tp-full{flex:0 0 40px;color:#00ccff;border-color:#00ccff}
 /* the full-screen track view (build 143): the lap, its instruments and the replay controls, in landscape */
 .track-page{position:fixed;inset:0;z-index:50;background:#0a0a12;overflow:hidden}
@@ -227,7 +228,7 @@ body.track-open{overflow:hidden}
 .tp-bar .replay-row{margin:0;flex:0 1 640px;min-width:0}
 .tp-bar .replay-row button{padding:8px 6px}
 .tp-bar .replay-row .tp-full{font-size:12px;padding:4px 6px}
-.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges{flex:0 0 auto}
+.tp-bar .replay-row select,.tp-bar .replay-row #replayGauges,.tp-bar .replay-row #trackCamMode,.tp-bar .replay-row #raceCamMode{flex:0 0 auto}
 /* RACE (build 137) */
 .race-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .race-seed{display:flex;gap:4px}.race-seed input{flex:1;min-width:0}.race-seed button{padding:4px 6px;box-shadow:none}
@@ -895,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 435</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 436</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4212,6 +4213,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="btnReplay" class="toggle on" aria-pressed="true">PAUSE</button>
 <button id="btnReplayRestart">RESTART</button>
 <button id="btnTrackMap" title="The whole circuit from above, and back behind the car">MAP</button>
+<select id="trackCamMode" class="opt-select" aria-label="Camera mode" title="Camera mode: Chase, Follow (north-up), or Overview"><option value="chase">CHASE</option><option value="follow">FOLLOW</option><option value="overview">OVERVIEW</option></select>
 <select id="replaySpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
 <select id="replayGauges" class="opt-select" aria-label="Gauges"><option value="digital">DIGITAL</option><option value="analog">ANALOG</option></select>
 </div>
@@ -4309,6 +4311,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <button id="racePlay" class="toggle on" aria-pressed="true">PAUSE</button>
 <select id="raceSpeed" class="opt-select" aria-label="Replay speed"><option value="1">1×</option><option value="2">2×</option><option value="5" selected>5×</option><option value="10">10×</option><option value="30">30×</option><option value="100">100×</option></select>
 <button id="raceMap" title="The whole circuit from above, and back behind the cars">MAP</button>
+<select id="raceCamMode" class="opt-select" aria-label="Camera mode" title="Camera mode: Chase, Follow (north-up), or Overview"><option value="chase">CHASE</option><option value="follow">FOLLOW</option><option value="overview">OVERVIEW</option></select>
 <button id="raceSkip">FINISH</button>
 <button id="raceNew">NEW RACE</button>
 </div>
@@ -21228,7 +21231,8 @@ function copyCarFrom(p){
 const CAR_STACKS_DIR = 'assets/cars/stacks/';
 const CAR_STACK_HEADINGS = 64;
 const CAR_STACK_SQUASH = 0.78;
-const CAR_STACK_STEER_RAD = 0.48; // ~27.5 deg front-wheel lock
+const CAR_STACK_STEER_RAD = 0.48; // ~27.5 deg front-wheel lock (overview atlas)
+const CAR_STACK_LIVE_SCALE_MIN = 5.5; // Use continuous 0-deg-step live slice stacking at close/mid zoom
 const CAR_STACK_MAX_BAKED = 24;   // LRU cap in RAM (~24-36 MB peak on mobile)
 
 // Auto-updated by tools/slice-cars.mjs or Batch Pipeline export.
@@ -21713,33 +21717,174 @@ function _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle) {
   };
 }
 
-/** Bake 64-heading + 3-steer-pose atlas canvases from a loaded PNG slice strip. */
-function _bakeCarAtlasFromStrip(img, meta) {
+/** Build instant (~1-2ms, ~25 KB) live-stacking helper canvases from a loaded PNG slice strip (file://-safe). */
+function _buildLiveStackFromStrip(img, meta) {
   const count = meta.slices;
   if (!img.naturalWidth || img.naturalWidth % count !== 0) {
     throw new Error('Invalid slice strip width for ' + meta.slug + ': ' + img.naturalWidth + ' % ' + count);
   }
   const w = img.naturalWidth / count;
   const h = img.naturalHeight;
+  const ow = w + 2;
+  const oh = h + 2;
   const spacing = meta.spacing || (0.42 * (h / meta.len) * (meta.h / count));
   const frontAxle = meta.frontAxle || 0.78;
+  const wheelMaxZ = Math.max(2, Math.floor(count * 0.28));
+  const archDepthX = Math.max(2, Math.round(w * 0.16));
+  const axleY = frontAxle * (h - 1);
+  const wheelRadiusY = Math.max(3, h * 0.105);
+  const footLayers = Math.min(2, count);
+
+  const stripCanvas = document.createElement('canvas');
+  stripCanvas.width = img.naturalWidth;
+  stripCanvas.height = h;
+  const tCtx = stripCanvas.getContext('2d', { willReadFrequently: true });
+  tCtx.drawImage(img, 0, 0);
 
   let slices = null;
   try {
-    const tmp = document.createElement('canvas');
-    tmp.width = img.naturalWidth;
-    tmp.height = h;
-    const tCtx = tmp.getContext('2d', { willReadFrequently: true });
-    tCtx.drawImage(img, 0, 0);
     slices = [];
     for (let z = 0; z < count; z++) {
       slices.push(tCtx.getImageData(z * w, 0, w, h).data);
     }
   } catch (err) {
-    // file:// origins taint the 2D canvas; fall back seamlessly to pure drawImage baker
-    return _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle);
+    slices = null;
   }
 
+  const outlineStrip = document.createElement('canvas');
+  outlineStrip.width = ow * count;
+  outlineStrip.height = oh;
+  const oCtx = outlineStrip.getContext('2d');
+
+  const cleanStrip = document.createElement('canvas');
+  cleanStrip.width = w * count;
+  cleanStrip.height = h;
+  const cCtx = cleanStrip.getContext('2d');
+
+  const shadowCanvas = document.createElement('canvas');
+  shadowCanvas.width = w;
+  shadowCanvas.height = h;
+  const sCtx = shadowCanvas.getContext('2d');
+
+  if (slices) {
+    const oImg = oCtx.createImageData(ow * count, oh);
+    const od = oImg.data;
+    const cImg = cCtx.createImageData(w * count, h);
+    const cd = cImg.data;
+
+    for (let z = 0; z < count; z++) {
+      const sData = slices[z];
+      const oBaseX = z * ow;
+      const cBaseX = z * w;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const sp = (y * w + x) * 4;
+          if (sData[sp + 3] === 0) continue;
+          const ox = oBaseX + x + 1;
+          const oy = y + 1;
+          const nb = [[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+          for (let k = 0; k < 5; k++) {
+            const dp = ((oy + nb[k][1]) * (ow * count) + (ox + nb[k][0])) * 4;
+            od[dp] = 14; od[dp + 1] = 16; od[dp + 2] = 24; od[dp + 3] = 255;
+          }
+          let skipWheel = false;
+          if (z <= wheelMaxZ && (x < archDepthX || x >= w - archDepthX)) {
+            const dyNorm = (y - axleY) / wheelRadiusY;
+            const zNorm = z / Math.max(1, wheelMaxZ);
+            if (dyNorm * dyNorm + zNorm * zNorm * 0.85 <= 1.0) {
+              const lum = 0.299 * sData[sp] + 0.587 * sData[sp + 1] + 0.114 * sData[sp + 2];
+              const sat = Math.max(sData[sp], sData[sp + 1], sData[sp + 2]) - Math.min(sData[sp], sData[sp + 1], sData[sp + 2]);
+              if (lum < 115 && sat < 45) skipWheel = true;
+            }
+          }
+          if (!skipWheel) {
+            const cp = (y * (w * count) + (cBaseX + x)) * 4;
+            cd[cp] = sData[sp]; cd[cp + 1] = sData[sp + 1]; cd[cp + 2] = sData[sp + 2]; cd[cp + 3] = 255;
+          }
+        }
+      }
+    }
+    oCtx.putImageData(oImg, 0, 0);
+    cCtx.putImageData(cImg, 0, 0);
+
+    const sImg = sCtx.createImageData(w, h);
+    const sd = sImg.data;
+    for (let z = 0; z < footLayers; z++) {
+      const src = slices[z];
+      for (let i = 0; i < w * h; i++) {
+        if (src[i * 4 + 3] > 0) {
+          const p = i * 4;
+          sd[p] = 8; sd[p + 1] = 10; sd[p + 2] = 16; sd[p + 3] = 122;
+        }
+      }
+    }
+    sCtx.putImageData(sImg, 0, 0);
+  } else {
+    // file:// origins taint 2D canvas; build identical helper strips using pure Canvas 2D compositing
+    const sil = document.createElement('canvas');
+    sil.width = ow; sil.height = oh;
+    const slCtx = sil.getContext('2d');
+    oCtx.imageSmoothingEnabled = false;
+    const nb = [[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+    for (let z = 0; z < count; z++) {
+      slCtx.clearRect(0, 0, ow, oh);
+      slCtx.globalCompositeOperation = 'source-over';
+      slCtx.imageSmoothingEnabled = false;
+      slCtx.drawImage(img, z * w, 0, w, h, 1, 1, w, h);
+      slCtx.globalCompositeOperation = 'source-atop';
+      slCtx.fillStyle = '#0e1018';
+      slCtx.fillRect(0, 0, ow, oh);
+      slCtx.globalCompositeOperation = 'source-over';
+      const oBaseX = z * ow;
+      for (let k = 0; k < 5; k++) {
+        oCtx.drawImage(sil, oBaseX + nb[k][0], nb[k][1]);
+      }
+    }
+
+    cCtx.imageSmoothingEnabled = false;
+    cCtx.drawImage(img, 0, 0);
+    cCtx.globalCompositeOperation = 'destination-out';
+    for (let z = 0; z <= wheelMaxZ; z++) {
+      const zNorm = z / Math.max(1, wheelMaxZ);
+      const ry = wheelRadiusY * Math.sqrt(Math.max(0.1, 1 - zNorm * zNorm * 0.85));
+      const cBaseX = z * w;
+      cCtx.fillRect(cBaseX, axleY - ry, archDepthX, ry * 2);
+      cCtx.fillRect(cBaseX + w - archDepthX, axleY - ry, archDepthX, ry * 2);
+    }
+    cCtx.globalCompositeOperation = 'source-over';
+
+    sCtx.imageSmoothingEnabled = false;
+    for (let z = 0; z < footLayers; z++) {
+      sCtx.drawImage(img, z * w, 0, w, h, 0, 0, w, h);
+    }
+    sCtx.globalCompositeOperation = 'source-atop';
+    sCtx.fillStyle = 'rgba(8, 10, 16, 0.48)';
+    sCtx.fillRect(0, 0, w, h);
+    sCtx.globalCompositeOperation = 'source-over';
+  }
+
+  return {
+    img,
+    stripCanvas,
+    outlineStrip,
+    cleanStrip,
+    shadowCanvas,
+    slicesData: slices,
+    sliceW: w,
+    sliceL: h,
+    slices: count,
+    spacing,
+    frontAxle,
+    meta,
+  };
+}
+
+/** Bake 64-heading overview atlas on demand for far zoomed-out multi-car grids. */
+function _bakeOverviewAtlas(live) {
+  const { slicesData: slices, img, sliceW: w, sliceL: h, slices: count, spacing, frontAxle, meta } = live;
+  if (!slices) {
+    return _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle);
+  }
   const sample = _renderStackFrame(slices, w, h, 0, spacing, frontAxle, 0);
   const fw = sample.w;
   const fh = sample.h;
@@ -21784,22 +21929,22 @@ function _bakeCarAtlasFromStrip(img, meta) {
   };
 }
 
-/** Kick off lazy image load & bake for a factory car name (file://-safe). */
+/** Kick off lazy image load & instant live-stack prep for a factory car name (file://-safe). */
 function preloadCarStack(name) {
   const meta = _stackMeta(name);
   if (!meta) return null;
   let rec = _stackCache.get(meta.slug);
   if (rec) {
     rec.lastUsed = performance.now();
-    return rec.status === 'ready' ? rec.atlas : null;
+    return rec.status === 'ready' ? rec : null;
   }
-  rec = { status: 'loading', atlas: null, lastUsed: performance.now() };
+  rec = { status: 'loading', live: null, atlas: null, lastUsed: performance.now() };
   _stackCache.set(meta.slug, rec);
 
   const img = new Image();
   img.onload = function () {
     try {
-      rec.atlas = _bakeCarAtlasFromStrip(img, meta);
+      rec.live = _buildLiveStackFromStrip(img, meta);
       rec.status = 'ready';
       rec.lastUsed = performance.now();
       _evictOldestBakedStack();
@@ -21849,10 +21994,11 @@ function _carBasis(cam, car) {
  * red tarmac brake/taillight wash. Returns true if handled by stacked car system.
  */
 function drawStackedCarLights(ctx, cam, car) {
-  const atlas = preloadCarStack(car.name);
-  if (!atlas) return false;
+  const rec = preloadCarStack(car.name);
+  if (!rec || !rec.live) return false;
+  const live = rec.live;
   const lights = _buildStackLightSprites();
-  const meta = atlas.meta;
+  const meta = live.meta;
   const tod = _stackTod();
   const wet = _stackWet();
   const showHead = tod === 'night' || tod === 'sunset';
@@ -21863,9 +22009,9 @@ function drawStackedCarLights(ctx, cam, car) {
   const { o, ux, uy, vx, vy } = _carBasis(cam, car);
   const visualBoost = cam.scale < 4 ? 2.4 : 1.15;
   const effLen = meta.len * visualBoost;
-  const effW = (atlas.sliceW / atlas.sliceL) * effLen;
-  const drawScale = (effLen * cam.scale) / atlas.sliceL;
-  const stackHeightPx = (atlas.slices - 1) * atlas.spacing * drawScale;
+  const effW = (live.sliceW / live.sliceL) * effLen;
+  const drawScale = (effLen * cam.scale) / live.sliceL;
+  const stackHeightPx = (live.slices - 1) * live.spacing * drawScale;
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -21925,43 +22071,127 @@ function drawStackedCarLights(ctx, cam, car) {
 }
 
 /**
- * Draw a sprite-stacked car from its lazily baked 64-heading atlas + twin brake/headlamp
- * lens blooms. Returns true if drawn, or false to fall back to legacy drawCar().
+ * Draw a sprite-stacked car using continuous floating-point live slice stacking at
+ * close/mid zoom (0-degree angular stepping + continuous Ackermann front wheel steering)
+ * and a fast 1-blit 64-heading atlas at far overview zoom. Returns false to fall back to drawCar().
  */
 function drawStackedCar(ctx, cam, car) {
-  const atlas = preloadCarStack(car.name);
-  if (!atlas) return false;
-  const meta = atlas.meta;
+  const rec = preloadCarStack(car.name);
+  if (!rec || !rec.live) return false;
+  const live = rec.live;
+  const meta = live.meta;
   const { o, ux, uy, vx, vy } = _carBasis(cam, car);
 
-  const screenAngle = Math.atan2(uy / CAR_STACK_SQUASH, ux);
+  const squash = cam.pitch || CAR_STACK_SQUASH;
+  const screenAngle = Math.atan2(uy / squash, ux);
   const atlasAngle = screenAngle - Math.PI * 0.5;
-  const norm = ((atlasAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  const bin = Math.round((norm / (Math.PI * 2)) * atlas.headings) % atlas.headings;
 
   const visualBoost = cam.scale < 4 ? 2.4 : 1.15;
   const effLen = meta.len * visualBoost;
-  const effW = (atlas.sliceW / atlas.sliceL) * effLen;
-  const drawScale = (effLen * cam.scale) / atlas.sliceL;
-  const stackHeightPx = (atlas.slices - 1) * atlas.spacing * drawScale;
-  const dw = Math.max(8, Math.round(atlas.frameW * drawScale));
-  const dh = Math.max(8, Math.round(atlas.frameH * drawScale));
-  const dx = Math.round(o.sx - atlas.anchorX * drawScale);
-  const dy = Math.round(o.sy - atlas.anchorY * drawScale);
-
+  const effW = (live.sliceW / live.sliceL) * effLen;
+  const drawScale = (effLen * cam.scale) / live.sliceL;
+  const stackHeightPx = (live.slices - 1) * live.spacing * drawScale;
   const steer = car.steer != null ? car.steer : Math.max(-0.5, Math.min(0.5, (car.curv || 0) * 14));
-  const bodyCanvas =
-    steer < -0.14 ? atlas.steerLeftCanvas : steer > 0.14 ? atlas.steerRightCanvas : atlas.canvas;
-
   const prevSmooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(bodyCanvas, bin * atlas.frameW, 0, atlas.frameW, atlas.frameH, dx, dy, dw, dh);
+
+  let topY = Math.round(o.sy - stackHeightPx - effLen * cam.scale * 0.38);
+
+  if (cam.scale >= CAR_STACK_LIVE_SCALE_MIN) {
+    // Live continuous floating-point slice stack (silky smooth turning, zero angle snapping)
+    const w = live.sliceW;
+    const h = live.sliceL;
+    const n = live.slices;
+    const dw = w * drawScale;
+    const dh = h * drawScale;
+    const halfW = dw * 0.5;
+    const halfH = dh * 0.5;
+    const ow = w + 2;
+    const oh = h + 2;
+    const odw = ow * drawScale;
+    const odh = oh * drawScale;
+    const oHalfW = odw * 0.5;
+    const oHalfH = odh * 0.5;
+    const useSteer = Math.abs(steer) > 0.015;
+    const bodyStrip = useSteer ? live.cleanStrip : live.stripCanvas;
+    const wheelMaxZ = Math.max(2, Math.floor(n * 0.28));
+    const halfTrackX = (w - 1) * 0.5 * 0.92 * drawScale;
+    const axleOffY = (live.frontAxle * (h - 1) - (h - 1) * 0.5) * drawScale;
+    const wheelLen = Math.max(5, Math.round(h * 0.165)) * drawScale;
+    const wheelThick = Math.max(2, Math.round(w * 0.145)) * drawScale;
+
+    // Ground shadow
+    ctx.save();
+    ctx.translate(o.sx + 2.2 * drawScale, o.sy + 1.6 * drawScale);
+    ctx.scale(1, squash);
+    ctx.rotate(atlasAngle);
+    ctx.drawImage(live.shadowCanvas, -halfW, -halfH, dw, dh);
+    ctx.restore();
+
+    // Exact 1px outer silhouette pass
+    for (let z = 0; z < n; z++) {
+      const liftY = z * live.spacing * drawScale;
+      ctx.save();
+      ctx.translate(o.sx, o.sy - liftY);
+      ctx.scale(1, squash);
+      ctx.rotate(atlasAngle);
+      ctx.drawImage(live.outlineStrip, z * ow, 0, ow, oh, -oHalfW, -oHalfH, odw, odh);
+      ctx.restore();
+    }
+
+    // Colored slices + Z-interleaved continuous Ackermann steered front wheels
+    for (let z = 0; z < n; z++) {
+      const liftY = z * live.spacing * drawScale;
+      ctx.save();
+      ctx.translate(o.sx, o.sy - liftY);
+      ctx.scale(1, squash);
+      ctx.rotate(atlasAngle);
+      ctx.drawImage(bodyStrip, z * w, 0, w, h, -halfW, -halfH, dw, dh);
+      if (useSteer && z <= wheelMaxZ) {
+        const zNorm = (z - wheelMaxZ * 0.5) / Math.max(1, wheelMaxZ * 0.5);
+        const curLen = wheelLen * Math.sqrt(Math.max(0.22, 1 - zNorm * zNorm * 0.72));
+        const rimZone = Math.abs(zNorm) < 0.58;
+        const shadeT = z === 0 ? 22 : z === wheelMaxZ ? 46 : 34;
+        const tireCol = 'rgb(' + shadeT + ',' + (shadeT + 2) + ',' + (shadeT + 6) + ')';
+        for (let sIdx = 0; sIdx < 2; sIdx++) {
+          const side = sIdx === 0 ? -1 : 1;
+          const ack = side * steer < 0 ? 1.08 : 0.93;
+          ctx.save();
+          ctx.translate(side * halfTrackX, axleOffY);
+          ctx.rotate(steer * ack);
+          ctx.fillStyle = tireCol;
+          ctx.fillRect(-wheelThick * 0.5, -curLen * 0.5, wheelThick, curLen);
+          if (rimZone) {
+            ctx.fillStyle = '#b2bac6';
+            const rimW = Math.max(0.9, wheelThick * 0.3);
+            ctx.fillRect(side > 0 ? wheelThick * 0.5 - rimW : -wheelThick * 0.5, -curLen * 0.28, rimW, curLen * 0.56);
+          }
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+  } else {
+    // Far overview zoom: lazily bake 1-blit 64-heading atlas once
+    if (!rec.atlas) rec.atlas = _bakeOverviewAtlas(live);
+    const atlas = rec.atlas;
+    const norm = ((atlasAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const bin = Math.round((norm / (Math.PI * 2)) * atlas.headings) % atlas.headings;
+    const dw = Math.max(8, Math.round(atlas.frameW * drawScale));
+    const dh = Math.max(8, Math.round(atlas.frameH * drawScale));
+    const dx = Math.round(o.sx - atlas.anchorX * drawScale);
+    const dy = Math.round(o.sy - atlas.anchorY * drawScale);
+    topY = dy;
+    const bodyCanvas =
+      steer < -0.14 ? atlas.steerLeftCanvas : steer > 0.14 ? atlas.steerRightCanvas : atlas.canvas;
+    ctx.drawImage(bodyCanvas, bin * atlas.frameW, 0, atlas.frameW, atlas.frameH, dx, dy, dw, dh);
+  }
   ctx.imageSmoothingEnabled = prevSmooth;
 
   // Slot marker pip (keeps authentic car paint while distinguishing race cars)
   if (car.col) {
     ctx.fillStyle = car.col;
-    ctx.fillRect(Math.round(o.sx) - 2, dy - 4, 4, 2);
+    ctx.fillRect(Math.round(o.sx) - 2, topY - 4, 4, 2);
   }
 
   // Twin Headlamp Lens Flares + Twin Rear Brake / Taillights (zero daytime headlight leak)
@@ -25197,7 +25427,7 @@ let STILL = null, STILL_KEY = "", STILL_OK = false, TEX_VER = 0;
 const FINE_SCALE = 3;
 
 function sceneBind(src) {
-  if (src._look) { T = src._look; return T; }
+  if (src._look) { T = src._look; if (!T.kerbs && src.kerbs) T.kerbs = src.kerbs; return T; }
   const pts = src.pts.map(p => ({
     x: p.x, y: p.y, s: p.s || 0, ds: p.ds || 1,
     nx: p.nx || 0, ny: p.ny || 1, w: p.w || src.width || 10
@@ -25259,7 +25489,11 @@ function sceneWeather(kind, wet) {
 }
 
 function sceneChase(car, W, H, scale, carFrac) {
-  return chaseCam(car, W, H, scale, carFrac);
+  const raw = chaseCam(car, W, H, scale, carFrac);
+  if (typeof window !== "undefined" && typeof window.sceneChaseV2 === "function" && window._useSceneV2 !== false) {
+    return window.sceneChaseV2(raw);
+  }
+  return raw;
 }
 // Slide the picture by (tx, ty) screen units: the camera moves the other way, along its own axes.
 function scenePan(cam, tx, ty) {
@@ -26640,15 +26874,59 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
     };
   }
 
-  // ---- Locked North-Up Follow Camera (does not rotate behind car) ----
+  // ---- Critically Damped Spring State for Silky Follow & Chase Cameras ----
+  const _camSpring = {
+    mode: '',
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    hd: 0,
+    hdVel: 0,
+    lastTs: 0,
+  };
+
+  function _stepCamSpring(mode, tx, ty, tHd) {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const rawDt = _camSpring.lastTs ? (now - _camSpring.lastTs) / 1000 : 1;
+    _camSpring.lastTs = now;
+    const jumped = Math.hypot(tx - _camSpring.x, ty - _camSpring.y) > 40;
+    if (_camSpring.mode !== mode || rawDt > 0.25 || rawDt <= 0 || jumped) {
+      _camSpring.mode = mode;
+      _camSpring.x = tx;
+      _camSpring.y = ty;
+      _camSpring.vx = 0;
+      _camSpring.vy = 0;
+      _camSpring.hd = tHd;
+      _camSpring.hdVel = 0;
+      return _camSpring;
+    }
+    const dt = Math.min(0.05, rawDt);
+    const wPos = mode === 'chase' ? 10.5 : 9.5;
+    _camSpring.vx += ((tx - _camSpring.x) * (wPos * wPos) - 2 * wPos * _camSpring.vx) * dt;
+    _camSpring.vy += ((ty - _camSpring.y) * (wPos * wPos) - 2 * wPos * _camSpring.vy) * dt;
+    _camSpring.x += _camSpring.vx * dt;
+    _camSpring.y += _camSpring.vy * dt;
+
+    let dHd = tHd - _camSpring.hd;
+    while (dHd > Math.PI) dHd -= Math.PI * 2;
+    while (dHd < -Math.PI) dHd += Math.PI * 2;
+    const wRot = 6.2;
+    _camSpring.hdVel += (dHd * (wRot * wRot) - 2 * wRot * _camSpring.hdVel) * dt;
+    _camSpring.hd += _camSpring.hdVel * dt;
+    return _camSpring;
+  }
+
+  // ---- Locked North-Up Follow Camera (critically damped, does not rotate behind car) ----
   function sceneFollow(car, W, H, scale, carFrac) {
     const hd = car.camHd == null ? car.hd : car.camHd;
     const look = Math.max(2.2, 34 / Math.max(2, scale));
-    const ox = car.x + Math.cos(hd) * look;
-    const oy = car.y + Math.sin(hd) * look;
+    const tx = car.x + Math.cos(hd) * look;
+    const ty = car.y + Math.sin(hd) * look;
+    const sp = _stepCamSpring('follow', tx, ty, 0);
     return {
-      ox,
-      oy,
+      ox: sp.x,
+      oy: sp.y,
       fx: 0,
       fy: 1,
       lx: 1,
@@ -26662,6 +26940,23 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       W,
       H,
     };
+  }
+
+  // ---- Smooth Critically Damped Chase Camera Wrapper ----
+  function sceneChaseV2(raw) {
+    if (!raw) return raw;
+    const targetHd = Math.atan2(raw.fy, raw.fx);
+    const sp = _stepCamSpring('chase', raw.ox, raw.oy, targetHd);
+    const fx = Math.cos(sp.hd);
+    const fy = Math.sin(sp.hd);
+    return Object.assign({}, raw, {
+      ox: sp.x,
+      oy: sp.y,
+      fx,
+      fy,
+      lx: -fy,
+      ly: fx,
+    });
   }
 
   // ---- Procedural 3D Sprite-Stacked Prop Atlas Baker (~240 KB total RAM) ----
@@ -27058,6 +27353,27 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
 
     if (touchesTile) {
       const avgW = pts[0].w || 12;
+      const fillRibbon = (halfFn, style) => {
+        ctx.save();
+        ctx.fillStyle = style;
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const p = pts[i % n];
+          const hw = halfFn(p);
+          const x = toX(p.x + p.nx * hw);
+          const y = toY(p.y + p.ny * hw);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        for (let i = n; i >= 0; i--) {
+          const p = pts[i % n];
+          const hw = halfFn(p);
+          ctx.lineTo(toX(p.x - p.nx * hw), toY(p.y - p.ny * hw));
+        }
+        ctx.closePath();
+        ctx.fill('evenodd');
+        ctx.restore();
+      };
       const strokeCenterline = (widthM, style, dash) => {
         ctx.save();
         ctx.lineCap = 'round';
@@ -27076,39 +27392,41 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
         ctx.restore();
       };
 
-      // 2. Gravel runoff & dark asphalt shoulder
-      strokeCenterline(avgW + 6.0, isWet ? '#4c463b' : '#726a58');
-      strokeCenterline(avgW + 1.1, '#141720');
+      // 2. Variable-width gravel runoff & dark asphalt shoulder (matches track-scene.js)
+      fillRibbon((p) => (p.w || avgW) * 0.5 + 3.1, isWet ? '#4c463b' : '#726a58');
+      fillRibbon((p) => (p.w || avgW) * 0.5 + 0.55, '#141720');
 
-      // 3. Alternating red/white apex & exit curbs
+      // 3. Main variable-width asphalt ribbon (with subtle crest highlight & wet darkening)
+      fillRibbon((p) => (p.w || avgW) * 0.5, isWet ? '#1e2430' : '#2d323e');
+      fillRibbon((p) => Math.max(1, (p.w || avgW) * 0.5 - 0.4), isWet ? '#232a38' : '#323846');
+
+      // 4. Rubbered-in racing groove
+      strokeCenterline(avgW * 0.34, isWet ? 'rgba(12,18,28,0.45)' : 'rgba(18,20,28,0.28)');
+
+      // 5. Alternating red/white apex & exit curbs outside track edge (KERB_W = 0.8 m, racing-line-lap.js)
+      const kerbs = trk && trk.kerbs ? trk.kerbs : null;
       ctx.lineCap = 'butt';
       for (let sideIdx = 0; sideIdx < 2; sideIdx++) {
         const side = sideIdx === 0 ? -1 : 1;
+        const kArr = kerbs ? (side > 0 ? kerbs.P : kerbs.N) : null;
         for (let i = 0; i < n; i++) {
           const a = pts[i];
-          if (Math.abs(a.curv) < 0.028) continue;
+          if (kArr ? !kArr[i] : Math.abs(a.curv) < 0.028) continue;
           const b = pts[(i + 1) % n];
           if (
             a.x < ox - padM || a.x > ox + WORLD_TILE_M + padM ||
             a.y < oy - padM || a.y > oy + WORLD_TILE_M + padM
           ) continue;
-          const offA = side * ((a.w || avgW) * 0.5 + 0.18);
-          const offB = side * ((b.w || avgW) * 0.5 + 0.18);
+          const offA = side * ((a.w || avgW) * 0.5 + 0.42);
+          const offB = side * ((b.w || avgW) * 0.5 + 0.42);
           ctx.beginPath();
           ctx.moveTo(toX(a.x + a.nx * offA), toY(a.y + a.ny * offA));
           ctx.lineTo(toX(b.x + b.nx * offB), toY(b.y + b.ny * offB));
           ctx.strokeStyle = Math.floor(a.s / 3.2) % 2 === 0 ? '#dc2626' : '#f1f5f9';
-          ctx.lineWidth = 1.6 * WORLD_PX_PER_M;
+          ctx.lineWidth = 0.85 * WORLD_PX_PER_M;
           ctx.stroke();
         }
       }
-
-      // 4. Main asphalt ribbon (with subtle elevation crest highlight & wet darkening)
-      strokeCenterline(avgW, isWet ? '#1e2430' : '#2d323e');
-      strokeCenterline(avgW - 0.8, isWet ? '#232a38' : '#323846');
-
-      // 5. Rubbered-in racing groove
-      strokeCenterline(avgW * 0.34, isWet ? 'rgba(12,18,28,0.45)' : 'rgba(18,20,28,0.28)');
 
       // 6. Crisp white track-limit lines
       ctx.strokeStyle = isWet ? 'rgba(226,232,240,0.65)' : 'rgba(241,245,249,0.88)';
@@ -27438,6 +27756,7 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
 
   // Expose public hooks + diagnostics for automated tests (test-sprite-stacks.mjs)
   window.sceneFollow = sceneFollow;
+  window.sceneChaseV2 = sceneChaseV2;
   window.scenePaintV2 = scenePaintV2;
   window.sceneV2Stats = function () {
     return {
@@ -27463,12 +27782,25 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
 const LIMC={corner:'#ffcc00',brake:'#ff5555',power:'#55dd66',traction:'#4aa3ff'};
 const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'TRACTION (diff/tyres)'};
 // Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
-const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
+const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210,camMode:'chase',lastCarCam:'chase'};
 const TRACK_ZMAX=16;
 // Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 280).
 const TRACK_ZMIN=0.4;
 function trackZoomOut(z){return clamp((1-z)/(1-TRACK_ZMIN),0,1);}
-function trackMapToggle(){const out=trackView.z<1;trackViewReset();if(!out)trackView.z=TRACK_ZMIN;}
+function syncTrackCamUI(){
+  const m=trackView.camMode==='overview'||trackView.z<=TRACK_ZMIN+0.02?'overview':trackView.camMode;
+  ['trackCamMode','raceCamMode'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value!==m)el.value=m;});
+}
+function setTrackCamMode(mode){
+  if(mode==='overview'){trackView.camMode='overview';trackView.z=TRACK_ZMIN;trackView.x=0;trackView.y=0;}
+  else{trackView.camMode=mode==='follow'?'follow':'chase';trackView.lastCarCam=trackView.camMode;if(trackView.z<1){trackView.z=1;trackView.x=0;trackView.y=0;}}
+  syncTrackCamUI();
+}
+function trackMapToggle(){
+  const out=trackView.camMode==='overview'||trackView.z<1;
+  if(out){trackView.camMode=trackView.lastCarCam||'chase';trackViewReset();}
+  else{trackView.camMode='overview';trackView.z=TRACK_ZMIN;trackView.x=0;trackView.y=0;syncTrackCamUI();}
+}
 // Zoom by factor f about the canvas point (vx,vy), keeping the map point under it fixed.
 function trackZoomAt(vx,vy,f){
   const z0=trackView.z, z1=clamp(z0*f,TRACK_ZMIN,TRACK_ZMAX);
@@ -27479,8 +27811,10 @@ function trackZoomAt(vx,vy,f){
   trackView.x=vx-trackView.mcx-(bx-trackView.mcx)*z1;
   trackView.y=vy-trackView.mcy-(by-trackView.mcy)*z1;
   if(z1<=1.0001){trackView.x=0;trackView.y=0;}
+  if(trackView.camMode==='overview'&&z1>TRACK_ZMIN+0.02)trackView.camMode=trackView.lastCarCam||'chase';
+  syncTrackCamUI();
 }
-function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
+function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;if(trackView.camMode==='overview')trackView.camMode=trackView.lastCarCam||'chase';syncTrackCamUI();}
 function bindTrackZoom(){
   // canvas CSS pixels -> the 640x420 drawing space
   const toViz=e=>{const r=canvas.getBoundingClientRect();
@@ -27753,11 +28087,13 @@ function drawTrack(){
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
-  const frac=0.70;
-  trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
-  let cam=car?sceneChase(car,W,H,14*Math.max(1,z),frac):sceneOverview(W,H);
-  if(!car)cam.scale*=Math.max(1,z);
-  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14}),trackZoomOut(z));
+  const isFollow=trackView.camMode==='follow'&&typeof sceneFollow==='function',isOv=trackView.camMode==='overview';
+  const frac=isFollow?0.52:0.70;
+  trackView.mcx=W/2;trackView.mcy=car&&!isOv?H*frac:H/2;
+  const ovOpts={t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14};
+  let cam=(car&&!isOv)?(isFollow?sceneFollow(car,W,H,14*Math.max(1,z),frac):sceneChase(car,W,H,14*Math.max(1,z),frac)):sceneOverview(W,H,ovOpts);
+  if(!car||isOv)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,ovOpts),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-32);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
@@ -28124,11 +28460,12 @@ function drawRace(){
     if(raceUI.follow===x.c.id||(raceUI.follow<0&&!focus))focus=car;
   }
   // the same zoom and pan as the TRACK view: about the car the camera sits behind, in screen units
-  const z=trackView.z||1,pack=raceUI.follow<0,frac=pack?0.56:0.68;
-  trackView.mcx=W/2;trackView.mcy=focus?H*frac:H/2;
-  let cam=focus?sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneOverview(W,H);
-  if(!focus)cam.scale*=Math.max(1,z);
-  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0}),trackZoomOut(z));
+  const z=trackView.z||1,pack=raceUI.follow<0,isFollow=trackView.camMode==='follow'&&typeof sceneFollow==='function',isOv=trackView.camMode==='overview',frac=isFollow?0.52:(pack?0.56:0.68);
+  trackView.mcx=W/2;trackView.mcy=focus&&!isOv?H*frac:H/2;
+  const ovOpts={t:topBar,b:botBar,l:!racePage.open||innerWidth<=800?160:0};
+  let cam=(focus&&!isOv)?(isFollow?sceneFollow(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac):sceneChase(focus,W,H,(pack?9.2:14)*Math.max(1,z),frac)):sceneOverview(W,H,ovOpts);
+  if(!focus||isOv)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,ovOpts),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-28+2);
@@ -28178,6 +28515,8 @@ function bindRace(){
   });
   g('raceSpeed').addEventListener('change',e=>{raceUI.speed=+e.target.value||1;});
   g('raceMap').addEventListener('click',trackMapToggle);
+  const raceCamSel=g('raceCamMode');
+  if(raceCamSel)raceCamSel.addEventListener('change',e=>setTrackCamMode(e.target.value));
   g('raceSkip').addEventListener('click',()=>{if(raceUI.run){raceUI.t=raceUI.run.t;renderRacePanel(true);}});
   g('raceNew').addEventListener('click',()=>{raceUI.phase='setup';raceUI.run=null;raceUI.follow=-1;renderRaceSetup();});
   g('raceRptPng').addEventListener('click',exportRacePNG);
@@ -38729,6 +39068,8 @@ function bindControls(){
     rb.setAttribute('aria-pressed',String(lapReplay.playing));rb.textContent=tr(lapReplay.playing?'PAUSE':'PLAY');});
   document.getElementById('btnReplayRestart').addEventListener('click',()=>{lapReplay.t=0;lapReplay.laps=0;});
   document.getElementById('btnTrackMap').addEventListener('click',trackMapToggle);
+  const trackCamSel=document.getElementById('trackCamMode');
+  if(trackCamSel)trackCamSel.addEventListener('change',e=>setTrackCamMode(e.target.value));
   document.getElementById('replaySpeed').addEventListener('change',e=>{lapReplay.speed=+e.target.value||1;});
   const gs=document.getElementById('replayGauges');gs.value=lapReplay.gauges;
   gs.addEventListener('change',e=>{lapReplay.gauges=e.target.value==='analog'?'analog':'digital';

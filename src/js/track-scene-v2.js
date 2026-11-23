@@ -73,15 +73,59 @@
     };
   }
 
-  // ---- Locked North-Up Follow Camera (does not rotate behind car) ----
+  // ---- Critically Damped Spring State for Silky Follow & Chase Cameras ----
+  const _camSpring = {
+    mode: '',
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    hd: 0,
+    hdVel: 0,
+    lastTs: 0,
+  };
+
+  function _stepCamSpring(mode, tx, ty, tHd) {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const rawDt = _camSpring.lastTs ? (now - _camSpring.lastTs) / 1000 : 1;
+    _camSpring.lastTs = now;
+    const jumped = Math.hypot(tx - _camSpring.x, ty - _camSpring.y) > 40;
+    if (_camSpring.mode !== mode || rawDt > 0.25 || rawDt <= 0 || jumped) {
+      _camSpring.mode = mode;
+      _camSpring.x = tx;
+      _camSpring.y = ty;
+      _camSpring.vx = 0;
+      _camSpring.vy = 0;
+      _camSpring.hd = tHd;
+      _camSpring.hdVel = 0;
+      return _camSpring;
+    }
+    const dt = Math.min(0.05, rawDt);
+    const wPos = mode === 'chase' ? 10.5 : 9.5;
+    _camSpring.vx += ((tx - _camSpring.x) * (wPos * wPos) - 2 * wPos * _camSpring.vx) * dt;
+    _camSpring.vy += ((ty - _camSpring.y) * (wPos * wPos) - 2 * wPos * _camSpring.vy) * dt;
+    _camSpring.x += _camSpring.vx * dt;
+    _camSpring.y += _camSpring.vy * dt;
+
+    let dHd = tHd - _camSpring.hd;
+    while (dHd > Math.PI) dHd -= Math.PI * 2;
+    while (dHd < -Math.PI) dHd += Math.PI * 2;
+    const wRot = 6.2;
+    _camSpring.hdVel += (dHd * (wRot * wRot) - 2 * wRot * _camSpring.hdVel) * dt;
+    _camSpring.hd += _camSpring.hdVel * dt;
+    return _camSpring;
+  }
+
+  // ---- Locked North-Up Follow Camera (critically damped, does not rotate behind car) ----
   function sceneFollow(car, W, H, scale, carFrac) {
     const hd = car.camHd == null ? car.hd : car.camHd;
     const look = Math.max(2.2, 34 / Math.max(2, scale));
-    const ox = car.x + Math.cos(hd) * look;
-    const oy = car.y + Math.sin(hd) * look;
+    const tx = car.x + Math.cos(hd) * look;
+    const ty = car.y + Math.sin(hd) * look;
+    const sp = _stepCamSpring('follow', tx, ty, 0);
     return {
-      ox,
-      oy,
+      ox: sp.x,
+      oy: sp.y,
       fx: 0,
       fy: 1,
       lx: 1,
@@ -95,6 +139,23 @@
       W,
       H,
     };
+  }
+
+  // ---- Smooth Critically Damped Chase Camera Wrapper ----
+  function sceneChaseV2(raw) {
+    if (!raw) return raw;
+    const targetHd = Math.atan2(raw.fy, raw.fx);
+    const sp = _stepCamSpring('chase', raw.ox, raw.oy, targetHd);
+    const fx = Math.cos(sp.hd);
+    const fy = Math.sin(sp.hd);
+    return Object.assign({}, raw, {
+      ox: sp.x,
+      oy: sp.y,
+      fx,
+      fy,
+      lx: -fy,
+      ly: fx,
+    });
   }
 
   // ---- Procedural 3D Sprite-Stacked Prop Atlas Baker (~240 KB total RAM) ----
@@ -491,6 +552,27 @@
 
     if (touchesTile) {
       const avgW = pts[0].w || 12;
+      const fillRibbon = (halfFn, style) => {
+        ctx.save();
+        ctx.fillStyle = style;
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const p = pts[i % n];
+          const hw = halfFn(p);
+          const x = toX(p.x + p.nx * hw);
+          const y = toY(p.y + p.ny * hw);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        for (let i = n; i >= 0; i--) {
+          const p = pts[i % n];
+          const hw = halfFn(p);
+          ctx.lineTo(toX(p.x - p.nx * hw), toY(p.y - p.ny * hw));
+        }
+        ctx.closePath();
+        ctx.fill('evenodd');
+        ctx.restore();
+      };
       const strokeCenterline = (widthM, style, dash) => {
         ctx.save();
         ctx.lineCap = 'round';
@@ -509,39 +591,41 @@
         ctx.restore();
       };
 
-      // 2. Gravel runoff & dark asphalt shoulder
-      strokeCenterline(avgW + 6.0, isWet ? '#4c463b' : '#726a58');
-      strokeCenterline(avgW + 1.1, '#141720');
+      // 2. Variable-width gravel runoff & dark asphalt shoulder (matches track-scene.js)
+      fillRibbon((p) => (p.w || avgW) * 0.5 + 3.1, isWet ? '#4c463b' : '#726a58');
+      fillRibbon((p) => (p.w || avgW) * 0.5 + 0.55, '#141720');
 
-      // 3. Alternating red/white apex & exit curbs
+      // 3. Main variable-width asphalt ribbon (with subtle crest highlight & wet darkening)
+      fillRibbon((p) => (p.w || avgW) * 0.5, isWet ? '#1e2430' : '#2d323e');
+      fillRibbon((p) => Math.max(1, (p.w || avgW) * 0.5 - 0.4), isWet ? '#232a38' : '#323846');
+
+      // 4. Rubbered-in racing groove
+      strokeCenterline(avgW * 0.34, isWet ? 'rgba(12,18,28,0.45)' : 'rgba(18,20,28,0.28)');
+
+      // 5. Alternating red/white apex & exit curbs outside track edge (KERB_W = 0.8 m, racing-line-lap.js)
+      const kerbs = trk && trk.kerbs ? trk.kerbs : null;
       ctx.lineCap = 'butt';
       for (let sideIdx = 0; sideIdx < 2; sideIdx++) {
         const side = sideIdx === 0 ? -1 : 1;
+        const kArr = kerbs ? (side > 0 ? kerbs.P : kerbs.N) : null;
         for (let i = 0; i < n; i++) {
           const a = pts[i];
-          if (Math.abs(a.curv) < 0.028) continue;
+          if (kArr ? !kArr[i] : Math.abs(a.curv) < 0.028) continue;
           const b = pts[(i + 1) % n];
           if (
             a.x < ox - padM || a.x > ox + WORLD_TILE_M + padM ||
             a.y < oy - padM || a.y > oy + WORLD_TILE_M + padM
           ) continue;
-          const offA = side * ((a.w || avgW) * 0.5 + 0.18);
-          const offB = side * ((b.w || avgW) * 0.5 + 0.18);
+          const offA = side * ((a.w || avgW) * 0.5 + 0.42);
+          const offB = side * ((b.w || avgW) * 0.5 + 0.42);
           ctx.beginPath();
           ctx.moveTo(toX(a.x + a.nx * offA), toY(a.y + a.ny * offA));
           ctx.lineTo(toX(b.x + b.nx * offB), toY(b.y + b.ny * offB));
           ctx.strokeStyle = Math.floor(a.s / 3.2) % 2 === 0 ? '#dc2626' : '#f1f5f9';
-          ctx.lineWidth = 1.6 * WORLD_PX_PER_M;
+          ctx.lineWidth = 0.85 * WORLD_PX_PER_M;
           ctx.stroke();
         }
       }
-
-      // 4. Main asphalt ribbon (with subtle elevation crest highlight & wet darkening)
-      strokeCenterline(avgW, isWet ? '#1e2430' : '#2d323e');
-      strokeCenterline(avgW - 0.8, isWet ? '#232a38' : '#323846');
-
-      // 5. Rubbered-in racing groove
-      strokeCenterline(avgW * 0.34, isWet ? 'rgba(12,18,28,0.45)' : 'rgba(18,20,28,0.28)');
 
       // 6. Crisp white track-limit lines
       ctx.strokeStyle = isWet ? 'rgba(226,232,240,0.65)' : 'rgba(241,245,249,0.88)';
@@ -871,6 +955,7 @@
 
   // Expose public hooks + diagnostics for automated tests (test-sprite-stacks.mjs)
   window.sceneFollow = sceneFollow;
+  window.sceneChaseV2 = sceneChaseV2;
   window.scenePaintV2 = scenePaintV2;
   window.sceneV2Stats = function () {
     return {

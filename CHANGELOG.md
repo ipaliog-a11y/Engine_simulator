@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Hybrid live slice-stacked cars, critically damped Follow/Chase cameras, and curb-aligned Mode B tiles (build 436)
+
+- Upgraded `src/js/car-stacks.js` to a hybrid renderer: continuous floating-point live slice stacking at close/mid zoom (`cam.scale >= 5.5`) for 0° angular stepping, pre-dilated single 1px outer silhouette, and continuous Z-interleaved Ackermann front-wheel steering, plus a lazy 64-heading 1-blit atlas at far overview zoom (with a zero-`getImageData` Canvas 2D fallback for `file://`). Kept all 32 existing sprite-stacked cars synced.
+- Upgraded `src/js/track-scene-v2.js` with critically damped springs for both Chase (`sceneChaseV2`, delegated from `sceneChase`) and locked north-up Follow (`sceneFollow`) cameras.
+- Exposed `CHASE` / `FOLLOW` / `OVERVIEW` camera mode selectors (`#trackCamMode`, `#raceCamMode`) in Test Track and Race, synced with the `MAP` button.
+- Aligned Mode B world tiles with variable-width track ribbons and physics kerb zones (`KERB_W = 0.8 m` outside the asphalt edge, forwarded via `sceneBind`).
+
 ### Fourteen more sprite-stacked cars (Batches 2 & 3 complete + Huracan, build 435)
 
 - **Added 14 verified sprite-stacked car strips** (`assets/cars/stacks/*.png` + `*.check.png`, synced to `CAR_STACKS`

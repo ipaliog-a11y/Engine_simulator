@@ -20,7 +20,7 @@ let STILL = null, STILL_KEY = "", STILL_OK = false, TEX_VER = 0;
 const FINE_SCALE = 3;
 
 function sceneBind(src) {
-  if (src._look) { T = src._look; return T; }
+  if (src._look) { T = src._look; if (!T.kerbs && src.kerbs) T.kerbs = src.kerbs; return T; }
   const pts = src.pts.map(p => ({
     x: p.x, y: p.y, s: p.s || 0, ds: p.ds || 1,
     nx: p.nx || 0, ny: p.ny || 1, w: p.w || src.width || 10
@@ -82,7 +82,11 @@ function sceneWeather(kind, wet) {
 }
 
 function sceneChase(car, W, H, scale, carFrac) {
-  return chaseCam(car, W, H, scale, carFrac);
+  const raw = chaseCam(car, W, H, scale, carFrac);
+  if (typeof window !== "undefined" && typeof window.sceneChaseV2 === "function" && window._useSceneV2 !== false) {
+    return window.sceneChaseV2(raw);
+  }
+  return raw;
 }
 // Slide the picture by (tx, ty) screen units: the camera moves the other way, along its own axes.
 function scenePan(cam, tx, ty) {

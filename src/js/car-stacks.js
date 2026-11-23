@@ -12,7 +12,8 @@
 const CAR_STACKS_DIR = 'assets/cars/stacks/';
 const CAR_STACK_HEADINGS = 64;
 const CAR_STACK_SQUASH = 0.78;
-const CAR_STACK_STEER_RAD = 0.48; // ~27.5 deg front-wheel lock
+const CAR_STACK_STEER_RAD = 0.48; // ~27.5 deg front-wheel lock (overview atlas)
+const CAR_STACK_LIVE_SCALE_MIN = 5.5; // Use continuous 0-deg-step live slice stacking at close/mid zoom
 const CAR_STACK_MAX_BAKED = 24;   // LRU cap in RAM (~24-36 MB peak on mobile)
 
 // Auto-updated by tools/slice-cars.mjs or Batch Pipeline export.
@@ -497,33 +498,174 @@ function _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle) {
   };
 }
 
-/** Bake 64-heading + 3-steer-pose atlas canvases from a loaded PNG slice strip. */
-function _bakeCarAtlasFromStrip(img, meta) {
+/** Build instant (~1-2ms, ~25 KB) live-stacking helper canvases from a loaded PNG slice strip (file://-safe). */
+function _buildLiveStackFromStrip(img, meta) {
   const count = meta.slices;
   if (!img.naturalWidth || img.naturalWidth % count !== 0) {
     throw new Error('Invalid slice strip width for ' + meta.slug + ': ' + img.naturalWidth + ' % ' + count);
   }
   const w = img.naturalWidth / count;
   const h = img.naturalHeight;
+  const ow = w + 2;
+  const oh = h + 2;
   const spacing = meta.spacing || (0.42 * (h / meta.len) * (meta.h / count));
   const frontAxle = meta.frontAxle || 0.78;
+  const wheelMaxZ = Math.max(2, Math.floor(count * 0.28));
+  const archDepthX = Math.max(2, Math.round(w * 0.16));
+  const axleY = frontAxle * (h - 1);
+  const wheelRadiusY = Math.max(3, h * 0.105);
+  const footLayers = Math.min(2, count);
+
+  const stripCanvas = document.createElement('canvas');
+  stripCanvas.width = img.naturalWidth;
+  stripCanvas.height = h;
+  const tCtx = stripCanvas.getContext('2d', { willReadFrequently: true });
+  tCtx.drawImage(img, 0, 0);
 
   let slices = null;
   try {
-    const tmp = document.createElement('canvas');
-    tmp.width = img.naturalWidth;
-    tmp.height = h;
-    const tCtx = tmp.getContext('2d', { willReadFrequently: true });
-    tCtx.drawImage(img, 0, 0);
     slices = [];
     for (let z = 0; z < count; z++) {
       slices.push(tCtx.getImageData(z * w, 0, w, h).data);
     }
   } catch (err) {
-    // file:// origins taint the 2D canvas; fall back seamlessly to pure drawImage baker
-    return _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle);
+    slices = null;
   }
 
+  const outlineStrip = document.createElement('canvas');
+  outlineStrip.width = ow * count;
+  outlineStrip.height = oh;
+  const oCtx = outlineStrip.getContext('2d');
+
+  const cleanStrip = document.createElement('canvas');
+  cleanStrip.width = w * count;
+  cleanStrip.height = h;
+  const cCtx = cleanStrip.getContext('2d');
+
+  const shadowCanvas = document.createElement('canvas');
+  shadowCanvas.width = w;
+  shadowCanvas.height = h;
+  const sCtx = shadowCanvas.getContext('2d');
+
+  if (slices) {
+    const oImg = oCtx.createImageData(ow * count, oh);
+    const od = oImg.data;
+    const cImg = cCtx.createImageData(w * count, h);
+    const cd = cImg.data;
+
+    for (let z = 0; z < count; z++) {
+      const sData = slices[z];
+      const oBaseX = z * ow;
+      const cBaseX = z * w;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const sp = (y * w + x) * 4;
+          if (sData[sp + 3] === 0) continue;
+          const ox = oBaseX + x + 1;
+          const oy = y + 1;
+          const nb = [[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+          for (let k = 0; k < 5; k++) {
+            const dp = ((oy + nb[k][1]) * (ow * count) + (ox + nb[k][0])) * 4;
+            od[dp] = 14; od[dp + 1] = 16; od[dp + 2] = 24; od[dp + 3] = 255;
+          }
+          let skipWheel = false;
+          if (z <= wheelMaxZ && (x < archDepthX || x >= w - archDepthX)) {
+            const dyNorm = (y - axleY) / wheelRadiusY;
+            const zNorm = z / Math.max(1, wheelMaxZ);
+            if (dyNorm * dyNorm + zNorm * zNorm * 0.85 <= 1.0) {
+              const lum = 0.299 * sData[sp] + 0.587 * sData[sp + 1] + 0.114 * sData[sp + 2];
+              const sat = Math.max(sData[sp], sData[sp + 1], sData[sp + 2]) - Math.min(sData[sp], sData[sp + 1], sData[sp + 2]);
+              if (lum < 115 && sat < 45) skipWheel = true;
+            }
+          }
+          if (!skipWheel) {
+            const cp = (y * (w * count) + (cBaseX + x)) * 4;
+            cd[cp] = sData[sp]; cd[cp + 1] = sData[sp + 1]; cd[cp + 2] = sData[sp + 2]; cd[cp + 3] = 255;
+          }
+        }
+      }
+    }
+    oCtx.putImageData(oImg, 0, 0);
+    cCtx.putImageData(cImg, 0, 0);
+
+    const sImg = sCtx.createImageData(w, h);
+    const sd = sImg.data;
+    for (let z = 0; z < footLayers; z++) {
+      const src = slices[z];
+      for (let i = 0; i < w * h; i++) {
+        if (src[i * 4 + 3] > 0) {
+          const p = i * 4;
+          sd[p] = 8; sd[p + 1] = 10; sd[p + 2] = 16; sd[p + 3] = 122;
+        }
+      }
+    }
+    sCtx.putImageData(sImg, 0, 0);
+  } else {
+    // file:// origins taint 2D canvas; build identical helper strips using pure Canvas 2D compositing
+    const sil = document.createElement('canvas');
+    sil.width = ow; sil.height = oh;
+    const slCtx = sil.getContext('2d');
+    oCtx.imageSmoothingEnabled = false;
+    const nb = [[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+    for (let z = 0; z < count; z++) {
+      slCtx.clearRect(0, 0, ow, oh);
+      slCtx.globalCompositeOperation = 'source-over';
+      slCtx.imageSmoothingEnabled = false;
+      slCtx.drawImage(img, z * w, 0, w, h, 1, 1, w, h);
+      slCtx.globalCompositeOperation = 'source-atop';
+      slCtx.fillStyle = '#0e1018';
+      slCtx.fillRect(0, 0, ow, oh);
+      slCtx.globalCompositeOperation = 'source-over';
+      const oBaseX = z * ow;
+      for (let k = 0; k < 5; k++) {
+        oCtx.drawImage(sil, oBaseX + nb[k][0], nb[k][1]);
+      }
+    }
+
+    cCtx.imageSmoothingEnabled = false;
+    cCtx.drawImage(img, 0, 0);
+    cCtx.globalCompositeOperation = 'destination-out';
+    for (let z = 0; z <= wheelMaxZ; z++) {
+      const zNorm = z / Math.max(1, wheelMaxZ);
+      const ry = wheelRadiusY * Math.sqrt(Math.max(0.1, 1 - zNorm * zNorm * 0.85));
+      const cBaseX = z * w;
+      cCtx.fillRect(cBaseX, axleY - ry, archDepthX, ry * 2);
+      cCtx.fillRect(cBaseX + w - archDepthX, axleY - ry, archDepthX, ry * 2);
+    }
+    cCtx.globalCompositeOperation = 'source-over';
+
+    sCtx.imageSmoothingEnabled = false;
+    for (let z = 0; z < footLayers; z++) {
+      sCtx.drawImage(img, z * w, 0, w, h, 0, 0, w, h);
+    }
+    sCtx.globalCompositeOperation = 'source-atop';
+    sCtx.fillStyle = 'rgba(8, 10, 16, 0.48)';
+    sCtx.fillRect(0, 0, w, h);
+    sCtx.globalCompositeOperation = 'source-over';
+  }
+
+  return {
+    img,
+    stripCanvas,
+    outlineStrip,
+    cleanStrip,
+    shadowCanvas,
+    slicesData: slices,
+    sliceW: w,
+    sliceL: h,
+    slices: count,
+    spacing,
+    frontAxle,
+    meta,
+  };
+}
+
+/** Bake 64-heading overview atlas on demand for far zoomed-out multi-car grids. */
+function _bakeOverviewAtlas(live) {
+  const { slicesData: slices, img, sliceW: w, sliceL: h, slices: count, spacing, frontAxle, meta } = live;
+  if (!slices) {
+    return _bakeCarAtlasCanvas2D(img, meta, w, h, count, spacing, frontAxle);
+  }
   const sample = _renderStackFrame(slices, w, h, 0, spacing, frontAxle, 0);
   const fw = sample.w;
   const fh = sample.h;
@@ -568,22 +710,22 @@ function _bakeCarAtlasFromStrip(img, meta) {
   };
 }
 
-/** Kick off lazy image load & bake for a factory car name (file://-safe). */
+/** Kick off lazy image load & instant live-stack prep for a factory car name (file://-safe). */
 function preloadCarStack(name) {
   const meta = _stackMeta(name);
   if (!meta) return null;
   let rec = _stackCache.get(meta.slug);
   if (rec) {
     rec.lastUsed = performance.now();
-    return rec.status === 'ready' ? rec.atlas : null;
+    return rec.status === 'ready' ? rec : null;
   }
-  rec = { status: 'loading', atlas: null, lastUsed: performance.now() };
+  rec = { status: 'loading', live: null, atlas: null, lastUsed: performance.now() };
   _stackCache.set(meta.slug, rec);
 
   const img = new Image();
   img.onload = function () {
     try {
-      rec.atlas = _bakeCarAtlasFromStrip(img, meta);
+      rec.live = _buildLiveStackFromStrip(img, meta);
       rec.status = 'ready';
       rec.lastUsed = performance.now();
       _evictOldestBakedStack();
@@ -633,10 +775,11 @@ function _carBasis(cam, car) {
  * red tarmac brake/taillight wash. Returns true if handled by stacked car system.
  */
 function drawStackedCarLights(ctx, cam, car) {
-  const atlas = preloadCarStack(car.name);
-  if (!atlas) return false;
+  const rec = preloadCarStack(car.name);
+  if (!rec || !rec.live) return false;
+  const live = rec.live;
   const lights = _buildStackLightSprites();
-  const meta = atlas.meta;
+  const meta = live.meta;
   const tod = _stackTod();
   const wet = _stackWet();
   const showHead = tod === 'night' || tod === 'sunset';
@@ -647,9 +790,9 @@ function drawStackedCarLights(ctx, cam, car) {
   const { o, ux, uy, vx, vy } = _carBasis(cam, car);
   const visualBoost = cam.scale < 4 ? 2.4 : 1.15;
   const effLen = meta.len * visualBoost;
-  const effW = (atlas.sliceW / atlas.sliceL) * effLen;
-  const drawScale = (effLen * cam.scale) / atlas.sliceL;
-  const stackHeightPx = (atlas.slices - 1) * atlas.spacing * drawScale;
+  const effW = (live.sliceW / live.sliceL) * effLen;
+  const drawScale = (effLen * cam.scale) / live.sliceL;
+  const stackHeightPx = (live.slices - 1) * live.spacing * drawScale;
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -709,43 +852,127 @@ function drawStackedCarLights(ctx, cam, car) {
 }
 
 /**
- * Draw a sprite-stacked car from its lazily baked 64-heading atlas + twin brake/headlamp
- * lens blooms. Returns true if drawn, or false to fall back to legacy drawCar().
+ * Draw a sprite-stacked car using continuous floating-point live slice stacking at
+ * close/mid zoom (0-degree angular stepping + continuous Ackermann front wheel steering)
+ * and a fast 1-blit 64-heading atlas at far overview zoom. Returns false to fall back to drawCar().
  */
 function drawStackedCar(ctx, cam, car) {
-  const atlas = preloadCarStack(car.name);
-  if (!atlas) return false;
-  const meta = atlas.meta;
+  const rec = preloadCarStack(car.name);
+  if (!rec || !rec.live) return false;
+  const live = rec.live;
+  const meta = live.meta;
   const { o, ux, uy, vx, vy } = _carBasis(cam, car);
 
-  const screenAngle = Math.atan2(uy / CAR_STACK_SQUASH, ux);
+  const squash = cam.pitch || CAR_STACK_SQUASH;
+  const screenAngle = Math.atan2(uy / squash, ux);
   const atlasAngle = screenAngle - Math.PI * 0.5;
-  const norm = ((atlasAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  const bin = Math.round((norm / (Math.PI * 2)) * atlas.headings) % atlas.headings;
 
   const visualBoost = cam.scale < 4 ? 2.4 : 1.15;
   const effLen = meta.len * visualBoost;
-  const effW = (atlas.sliceW / atlas.sliceL) * effLen;
-  const drawScale = (effLen * cam.scale) / atlas.sliceL;
-  const stackHeightPx = (atlas.slices - 1) * atlas.spacing * drawScale;
-  const dw = Math.max(8, Math.round(atlas.frameW * drawScale));
-  const dh = Math.max(8, Math.round(atlas.frameH * drawScale));
-  const dx = Math.round(o.sx - atlas.anchorX * drawScale);
-  const dy = Math.round(o.sy - atlas.anchorY * drawScale);
-
+  const effW = (live.sliceW / live.sliceL) * effLen;
+  const drawScale = (effLen * cam.scale) / live.sliceL;
+  const stackHeightPx = (live.slices - 1) * live.spacing * drawScale;
   const steer = car.steer != null ? car.steer : Math.max(-0.5, Math.min(0.5, (car.curv || 0) * 14));
-  const bodyCanvas =
-    steer < -0.14 ? atlas.steerLeftCanvas : steer > 0.14 ? atlas.steerRightCanvas : atlas.canvas;
-
   const prevSmooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(bodyCanvas, bin * atlas.frameW, 0, atlas.frameW, atlas.frameH, dx, dy, dw, dh);
+
+  let topY = Math.round(o.sy - stackHeightPx - effLen * cam.scale * 0.38);
+
+  if (cam.scale >= CAR_STACK_LIVE_SCALE_MIN) {
+    // Live continuous floating-point slice stack (silky smooth turning, zero angle snapping)
+    const w = live.sliceW;
+    const h = live.sliceL;
+    const n = live.slices;
+    const dw = w * drawScale;
+    const dh = h * drawScale;
+    const halfW = dw * 0.5;
+    const halfH = dh * 0.5;
+    const ow = w + 2;
+    const oh = h + 2;
+    const odw = ow * drawScale;
+    const odh = oh * drawScale;
+    const oHalfW = odw * 0.5;
+    const oHalfH = odh * 0.5;
+    const useSteer = Math.abs(steer) > 0.015;
+    const bodyStrip = useSteer ? live.cleanStrip : live.stripCanvas;
+    const wheelMaxZ = Math.max(2, Math.floor(n * 0.28));
+    const halfTrackX = (w - 1) * 0.5 * 0.92 * drawScale;
+    const axleOffY = (live.frontAxle * (h - 1) - (h - 1) * 0.5) * drawScale;
+    const wheelLen = Math.max(5, Math.round(h * 0.165)) * drawScale;
+    const wheelThick = Math.max(2, Math.round(w * 0.145)) * drawScale;
+
+    // Ground shadow
+    ctx.save();
+    ctx.translate(o.sx + 2.2 * drawScale, o.sy + 1.6 * drawScale);
+    ctx.scale(1, squash);
+    ctx.rotate(atlasAngle);
+    ctx.drawImage(live.shadowCanvas, -halfW, -halfH, dw, dh);
+    ctx.restore();
+
+    // Exact 1px outer silhouette pass
+    for (let z = 0; z < n; z++) {
+      const liftY = z * live.spacing * drawScale;
+      ctx.save();
+      ctx.translate(o.sx, o.sy - liftY);
+      ctx.scale(1, squash);
+      ctx.rotate(atlasAngle);
+      ctx.drawImage(live.outlineStrip, z * ow, 0, ow, oh, -oHalfW, -oHalfH, odw, odh);
+      ctx.restore();
+    }
+
+    // Colored slices + Z-interleaved continuous Ackermann steered front wheels
+    for (let z = 0; z < n; z++) {
+      const liftY = z * live.spacing * drawScale;
+      ctx.save();
+      ctx.translate(o.sx, o.sy - liftY);
+      ctx.scale(1, squash);
+      ctx.rotate(atlasAngle);
+      ctx.drawImage(bodyStrip, z * w, 0, w, h, -halfW, -halfH, dw, dh);
+      if (useSteer && z <= wheelMaxZ) {
+        const zNorm = (z - wheelMaxZ * 0.5) / Math.max(1, wheelMaxZ * 0.5);
+        const curLen = wheelLen * Math.sqrt(Math.max(0.22, 1 - zNorm * zNorm * 0.72));
+        const rimZone = Math.abs(zNorm) < 0.58;
+        const shadeT = z === 0 ? 22 : z === wheelMaxZ ? 46 : 34;
+        const tireCol = 'rgb(' + shadeT + ',' + (shadeT + 2) + ',' + (shadeT + 6) + ')';
+        for (let sIdx = 0; sIdx < 2; sIdx++) {
+          const side = sIdx === 0 ? -1 : 1;
+          const ack = side * steer < 0 ? 1.08 : 0.93;
+          ctx.save();
+          ctx.translate(side * halfTrackX, axleOffY);
+          ctx.rotate(steer * ack);
+          ctx.fillStyle = tireCol;
+          ctx.fillRect(-wheelThick * 0.5, -curLen * 0.5, wheelThick, curLen);
+          if (rimZone) {
+            ctx.fillStyle = '#b2bac6';
+            const rimW = Math.max(0.9, wheelThick * 0.3);
+            ctx.fillRect(side > 0 ? wheelThick * 0.5 - rimW : -wheelThick * 0.5, -curLen * 0.28, rimW, curLen * 0.56);
+          }
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+  } else {
+    // Far overview zoom: lazily bake 1-blit 64-heading atlas once
+    if (!rec.atlas) rec.atlas = _bakeOverviewAtlas(live);
+    const atlas = rec.atlas;
+    const norm = ((atlasAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const bin = Math.round((norm / (Math.PI * 2)) * atlas.headings) % atlas.headings;
+    const dw = Math.max(8, Math.round(atlas.frameW * drawScale));
+    const dh = Math.max(8, Math.round(atlas.frameH * drawScale));
+    const dx = Math.round(o.sx - atlas.anchorX * drawScale);
+    const dy = Math.round(o.sy - atlas.anchorY * drawScale);
+    topY = dy;
+    const bodyCanvas =
+      steer < -0.14 ? atlas.steerLeftCanvas : steer > 0.14 ? atlas.steerRightCanvas : atlas.canvas;
+    ctx.drawImage(bodyCanvas, bin * atlas.frameW, 0, atlas.frameW, atlas.frameH, dx, dy, dw, dh);
+  }
   ctx.imageSmoothingEnabled = prevSmooth;
 
   // Slot marker pip (keeps authentic car paint while distinguishing race cars)
   if (car.col) {
     ctx.fillStyle = car.col;
-    ctx.fillRect(Math.round(o.sx) - 2, dy - 4, 4, 2);
+    ctx.fillRect(Math.round(o.sx) - 2, topY - 4, 4, 2);
   }
 
   // Twin Headlamp Lens Flares + Twin Rear Brake / Taillights (zero daytime headlight leak)

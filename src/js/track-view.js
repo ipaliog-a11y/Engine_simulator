@@ -3,12 +3,25 @@
 const LIMC={corner:'#ffcc00',brake:'#ff5555',power:'#55dd66',traction:'#4aa3ff'};
 const LIMLBL={corner:'CORNERING (grip)',brake:'BRAKING',power:'POWER',traction:'TRACTION (diff/tyres)'};
 // Track map view: zoom (1 = fitted) and pan (canvas units), reset whenever the circuit changes.
-const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210};
+const trackView={key:'',z:1,x:0,y:0,mcx:320,mcy:210,camMode:'chase',lastCarCam:'chase'};
 const TRACK_ZMAX=16;
 // Below 1 the camera lifts off the car: at TRACK_ZMIN it shows the whole circuit, north up (build 280).
 const TRACK_ZMIN=0.4;
 function trackZoomOut(z){return clamp((1-z)/(1-TRACK_ZMIN),0,1);}
-function trackMapToggle(){const out=trackView.z<1;trackViewReset();if(!out)trackView.z=TRACK_ZMIN;}
+function syncTrackCamUI(){
+  const m=trackView.camMode==='overview'||trackView.z<=TRACK_ZMIN+0.02?'overview':trackView.camMode;
+  ['trackCamMode','raceCamMode'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value!==m)el.value=m;});
+}
+function setTrackCamMode(mode){
+  if(mode==='overview'){trackView.camMode='overview';trackView.z=TRACK_ZMIN;trackView.x=0;trackView.y=0;}
+  else{trackView.camMode=mode==='follow'?'follow':'chase';trackView.lastCarCam=trackView.camMode;if(trackView.z<1){trackView.z=1;trackView.x=0;trackView.y=0;}}
+  syncTrackCamUI();
+}
+function trackMapToggle(){
+  const out=trackView.camMode==='overview'||trackView.z<1;
+  if(out){trackView.camMode=trackView.lastCarCam||'chase';trackViewReset();}
+  else{trackView.camMode='overview';trackView.z=TRACK_ZMIN;trackView.x=0;trackView.y=0;syncTrackCamUI();}
+}
 // Zoom by factor f about the canvas point (vx,vy), keeping the map point under it fixed.
 function trackZoomAt(vx,vy,f){
   const z0=trackView.z, z1=clamp(z0*f,TRACK_ZMIN,TRACK_ZMAX);
@@ -19,8 +32,10 @@ function trackZoomAt(vx,vy,f){
   trackView.x=vx-trackView.mcx-(bx-trackView.mcx)*z1;
   trackView.y=vy-trackView.mcy-(by-trackView.mcy)*z1;
   if(z1<=1.0001){trackView.x=0;trackView.y=0;}
+  if(trackView.camMode==='overview'&&z1>TRACK_ZMIN+0.02)trackView.camMode=trackView.lastCarCam||'chase';
+  syncTrackCamUI();
 }
-function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;}
+function trackViewReset(){trackView.z=1;trackView.x=0;trackView.y=0;if(trackView.camMode==='overview')trackView.camMode=trackView.lastCarCam||'chase';syncTrackCamUI();}
 function bindTrackZoom(){
   // canvas CSS pixels -> the 640x420 drawing space
   const toViz=e=>{const r=canvas.getBoundingClientRect();
@@ -293,11 +308,13 @@ function drawTrack(){
   }
   // The zoom scales the picture about the car and the pan slides it, both in screen units, so the point
   // under the cursor stays put (trackZoomAt). With no car to sit behind, the whole circuit is shown.
-  const frac=0.70;
-  trackView.mcx=W/2;trackView.mcy=car?H*frac:H/2;
-  let cam=car?sceneChase(car,W,H,14*Math.max(1,z),frac):sceneOverview(W,H);
-  if(!car)cam.scale*=Math.max(1,z);
-  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,{t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14}),trackZoomOut(z));
+  const isFollow=trackView.camMode==='follow'&&typeof sceneFollow==='function',isOv=trackView.camMode==='overview';
+  const frac=isFollow?0.52:0.70;
+  trackView.mcx=W/2;trackView.mcy=car&&!isOv?H*frac:H/2;
+  const ovOpts={t:topBar,b:botBar+6,r:narrow?0:REPLAY_HUD_W+14};
+  let cam=(car&&!isOv)?(isFollow?sceneFollow(car,W,H,14*Math.max(1,z),frac):sceneChase(car,W,H,14*Math.max(1,z),frac)):sceneOverview(W,H,ovOpts);
+  if(!car||isOv)cam.scale*=Math.max(1,z);
+  else if(z<1)cam=sceneBlend(cam,sceneOverview(W,H,ovOpts),trackZoomOut(z));
   scenePan(cam,trackView.x||0,trackView.y||0);
   scenePaint(ctx,cam,{cars:car?[car]:[],lap:L});
   ctx.fillStyle='rgba(13,13,24,0.72)';ctx.fillRect(0,28,W,topBar-32);ctx.fillRect(0,H-botBar-6,W,botBar+6);   // the text keeps a dark ground
