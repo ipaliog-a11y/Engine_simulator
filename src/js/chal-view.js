@@ -5,6 +5,23 @@ let chalMooseT0=0;
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 const chalUI={phase:'setup'};
+function syncDriveAidsUI(){
+  const tcOn=vehicle.tc!==false;
+  const espOn=vehicle.aids&&vehicle.aids.esp!=null?!!vehicle.aids.esp:tcOn;
+  const isAwd=vehicle.drive==='awd';
+  const awdM=vehicle.awdMode||'auto';
+  const ch=typeof activeRunChallenge!=='undefined'&&typeof runChallengeById==='function'?runChallengeById(activeRunChallenge):null;
+  const isDrift=!!(ch&&ch.kind==='drift');
+  for(const id of['trkTc','raceTc']){const el=document.getElementById(id);if(el)el.value=tcOn?'on':'off';}
+  for(const id of['trkEsp','raceEsp']){const el=document.getElementById(id);if(el)el.value=espOn?'on':'off';}
+  const cTc=document.getElementById('chalTc'),cEsp=document.getElementById('chalEsp');
+  if(cTc)cTc.value=(isDrift?(chalDriftTc===true):tcOn)?'on':'off';
+  if(cEsp)cEsp.value=(isDrift?(chalDriftEsp===true):espOn)?'on':'off';
+  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+    const el=document.getElementById(id);
+    if(el){el.value=awdM;const row=el.closest('.field');if(row)row.style.display=isAwd?'':'none';}
+  }
+}
 function chalSyncFields(ch){
   const live=chalUI.phase==='live';
   const pace=document.getElementById('chalPace');
@@ -18,6 +35,7 @@ function chalSyncFields(ch){
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
   const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
   const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
+  syncDriveAidsUI();
 }
 function chalShowSetup(){
   chalUI.phase='setup';

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 439</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 440</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3415,7 +3415,7 @@ The <b>CHALLENGES</b> tab (DRIVE) runs the car on its own. Pick a challenge and 
 <b>Economy</b>: the target time is the PACE (125, 150 or 200%) times the car's own fastest time on that road. The score is litres and L/100 km, or kWh and Wh/km for an EV, with the regen it recovered. The grid also shows the peak acceleration and braking, the mean engine speed on power, the top gear used, and ECO BLEND or ECO DRIVER DP (below).<br>
 <b>Fixed-time stage</b>: one set time per road for every car. The car's fastest run from a standing start is shown against it; slower is a <b>DNF</b>.<br>
 <b>Moose avoidance</b>: ENTRY picks BEST CLEAR (the speed is raised until a cone falls, as ISO 3888-2 does; the grid also says how it fails one step up) or a magazine's fixed speed, 72 km/h (Teknikens Värld's pass mark) or 77 km/h (km77's). The result is CLEAR, CONE, SPIN or ROLLOVER, with a warning for a two-wheel lift, its time and the largest tip. REPLAY slows the replay to 0.5× or 0.25×; it starts 25 m before the cones and runs on 20 m past the judged end (nothing after that changes the score). The lower view is the front axle seen from behind, with each force labelled in kN on one scale: <b>W</b> the axle's weight, <b>m·ay(front)</b> its sideways inertial force, <b>Fz</b> each tyre's load and <b>Fy</b> each tyre's side force. Roll and camber are drawn at their true angles. Tap that view to see the car <b>from above</b>, nose up, to true scale: the yaw axis <b>z</b> through the CG with the yaw rate <b>r</b> round it, the <b>pivot</b> (the point on the centre line with no sideways velocity, −vy/r), each tyre's direction of travel and side force, and the path the car takes beside the one the same steer gives at neutral steer (δ/L). The balance is read from the slip angles: <b>UNDERSTEER</b> when the front tyres slip more than the rear (αF &gt; αR), <b>OVERSTEER</b> when less, <b>TRANSITION</b> while front and rear slip opposite ways as the car is swung from one lane to the next.<br>
-<b>S-Route Powerslide</b>: ESP and TC off; the highest-scoring plan (entry speed, target body slip β, initiation). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD and FWD only); AUTO tries the dynamic methods first and falls back to HANDBRAKE. <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The score is mean corner speed × sin(mean sustained β) × 10 (discounted for near-spin spikes); the grid also gives corner drift speed, each corner's peak β and slide time.<br>
+<b>S-Route Powerslide</b>: TC and ESP default off (toggleable before any Track, Race or Challenge run); the highest-scoring plan (entry speed, target body slip β, initiation). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. <b>METHOD</b> picks the initiation: POWER-OVER, CLUTCH KICK, FLICK (lift and steer away, then sharply in, each for half the body's natural period so its rebound helps turn-in) or HANDBRAKE (the lever locks the rear wheels, outside the ABS; RWD, FWD and electronic-clutch AWD cars whose centre clutch releases on handbrake, such as STI DCCD, Evo ACD, GR-FOUR and Focus RS); AUTO tries the dynamic methods first and falls back to HANDBRAKE. <b>AWD DIFF</b> (on AWD cars) selects AUTO (factory coupling), SPORT (30:70 rear bias), OPEN (40:60) or LOCK (50:50). <b>ENTRY</b> fixes the speed or picks BEST. The <b>i</b> button beside CHALLENGES explains the selected challenge. The result is <b>CLEAR</b> (a slide in both corners: the rear past its peak for 0.25 s, β over 8°, and countersteer or a long slide), <b>FADE</b> (one corner), <b>NO_SLIDE</b> (neither; a FWD car on power-over, or an AWD car whose centre coupling sends the torque forward as the rear slips), <b>STALL</b> (stopped or never reached the exit), <b>OFF</b> (any corner of the body, swept at its slip angle, over the edge) or <b>SPIN</b>. The score is mean corner speed × sin(mean sustained β) × 10 (discounted for near-spin spikes); the grid also gives corner drift speed, each corner's peak β and slide time.<br>
 <b>Skid Pad</b>: a 200 ft (61 m) circle, as Motor Trend and Road &amp; Track use. The speed is raised until the car can no longer stay within 1 m of the line; the score is the magazines' figure, <i>v²/(g·R)</i> from the fastest held lap's time, with the body's own mean lateral acceleration beside it and how it fails 1 km/h faster: <b>WIDE</b> (understeer), <b>TIGHT</b> (the tail steps out) or <b>SPIN</b>.<br>
 <b>Spiral Skid Pad</b>: one turn from 12 m out to that same radius. The target speed is sqrt(lateral g times the local radius of curvature), so it climbs as the bend opens; the score is the exit speed. <b>TIGHT</b> is toward the centre, <b>WIDE</b> the outside.<br>
 <b>Figure 8</b>: a lemniscate, one loop each way, tightest bend half the skid pad's radius, the crossing straight. The score is the highest speed held for the whole figure. <b>BEND g</b> is that speed as <i>v²/(g·ρ)</i> at the tight bend; <b>MEAN ay</b> is lower, because the crossing asks nothing sideways. <b>TIGHT</b> is left of the line, <b>WIDE</b> is right.<br>
@@ -4212,6 +4212,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="trkAir">AIR °C</label><select id="trkAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
 </div>
 <div class="field"><label for="trkTyre">TYRES</label><select id="trkTyre"><option value="own">OWN TYRES</option><option value="inter">INTERS</option><option value="wet">FULL WET</option></select></div>
+<div class="race-row">
+<div class="field"><label for="trkTc">TC</label><select id="trkTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="trkEsp">ESP</label><select id="trkEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field" style="display:none"><label for="trkAwdMode">AWD DIFF</label><select id="trkAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
+</div>
 <div class="perf-head" id="trkPreviewHead">—</div>
 <div class="perf-note" id="trkPreviewNote"></div>
 <div class="build-row"><button id="btnTrackStart">START LAP</button></div>
@@ -4284,6 +4289,9 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <option value="0.25">0.25×</option>
 </select></div>
 <div class="field" style="display:none"><label for="chalRoadLimit">LIMIT km/h</label><input type="number" id="chalRoadLimit" min="30" max="130" step="5" value="90" title="Speed limit on your road (GPX carries none; 90 km/h assumed)"></div>
+<div class="field"><label for="chalTc">TC</label><select id="chalTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="chalEsp">ESP</label><select id="chalEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field" style="display:none"><label for="chalAwdMode">AWD DIFF</label><select id="chalAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
@@ -4311,6 +4319,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="race-row">
 <div class="field"><label for="raceSeed">SEED</label><div class="race-seed"><input type="number" id="raceSeed" min="1" max="99999" step="1" value="1"><button id="raceReroll" title="New seed" aria-label="New seed">🎲</button></div></div>
 <label class="race-check"><input type="checkbox" id="raceWarmers"> <span>TYRE WARMERS</span></label>
+</div>
+<div class="race-row">
+<div class="field"><label for="raceTc">TC</label><select id="raceTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field"><label for="raceEsp">ESP</label><select id="raceEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
+<div class="field" style="display:none"><label for="raceAwdMode">AWD DIFF</label><select id="raceAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
 </div>
 <div class="design-section">Entrants</div>
 <div id="raceEntrants"></div>
@@ -9969,18 +9982,30 @@ const CENTRE_DIFF={
   // Clutches with a published limit (build 404): f 0 or 1 names the primary axle; the clutch passes the other at most
   // L x the drive torque.
   // ATTESA E-TS: 0:100 in normal driving, "adjusted up to 50:50": Nissan Europe newsroom, 2017 GT-R
-  'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5},
+  'Nissan GT-R (R35, 2017)':{type:'lock',f:0,L:0.5,dc:true},
   // ATTESA E-TS Pro: the same 0:100 to 50:50 (Nissan; the ATTESA literature, PROBABLE for this car)
-  'Nissan Skyline GT-R V-spec (R34, 1999)':{type:'lock',f:0,L:0.5},
+  'Nissan Skyline GT-R V-spec (R34, 1999)':{type:'lock',f:0,L:0.5,dc:true},
   // front driven, "a maximum of 70% of drive torque to the rear axle": Ford of Europe, Focus RS AWD technical sheet
-  'Ford Focus RS (Mk3, 2016)':{type:'lock',f:1,L:0.7}
+  'Ford Focus RS (Mk3, 2016)':{type:'lock',f:1,L:0.7,dc:true},
+  // DCCD (2004 GD STI): planetary 35:65 torque split + electromagnetic clutch, releases on handbrake: Subaru 2004 STI spec
+  'Subaru Impreza WRX STI (GD, 2004)':{type:'fric',f:0.35,L:0.35,dc:true},
+  // ACD (Evo IX): 50:50 bevel centre diff + hydraulic multi-plate clutch (Tarmac mode), releases on handbrake: Mitsubishi Evo IX manual
+  'Mitsubishi Lancer Evolution IX (2006)':{type:'fric',f:0.50,L:0.30,dc:true},
+  // GR-FOUR: multi-plate clutch (Normal 60:40, Sport 30:70, Track 50:50), disconnects on handbrake: Toyota GR Yaris press kit
+  'Toyota GR Yaris (2020)':{type:'fric',f:0.40,L:0.35,dc:true},
+  // Electro-hydraulic Haldex V AWD, 30:70 nominal rear bias: Lamborghini Huracán LP610-4 press kit
+  'Lamborghini Huracán LP610-4 (2014)':{type:'fric',f:0.30,L:0.35,dc:true}
   // Left open: the 992 Turbo S's PTM, "up to 500 Nm to the front wheels" (Porsche press kit), as 500 N m on the
   // propshaft cuts its stepped 0-100 from 2.87 to 3.24 s (Porsche: 2.7); where the 500 is measured is not published.
-  // the rest ('lock', no limit published): Haldex (RS3, Huracán), xDrive (X5 M), PTM (Cayenne, 992), ACD (Evo IX),
-  // DCCD in its automatic mode (Impreza STI), GR-FOUR (GR Yaris: a mode's split, not a limit), Quadra-Trac (Grand Cherokee SRT),
+  // the rest ('lock', no limit published): Haldex (RS3), xDrive (X5 M), PTM (Cayenne, 992), Quadra-Trac (Grand Cherokee SRT),
   // the Raptor's 4A: all electronically controlled clutches (PROBABLE).
 };
+const AWD_DIFF_MODES=['auto','sport','open','lock'];
 function centreCoupling(v){
+  const m=v&&v.awdMode;
+  if(m==='sport')return {type:'fric',f:0.30,L:0.20,dc:true};
+  if(m==='open')return {type:'open',f:0.40};
+  if(m==='lock')return {type:'lock',f:0.5};
   const e=CENTRE_DIFF[v&&v.body&&v.body.name];
   if(!e)return {type:'lock',f:0.5};
   const o=Object.assign({},e);if(o.vcu){o.c=diffVcuRate(DIFF_VCU)*Math.pow(v.finalDrive||1,2);delete o.vcu;}
@@ -13656,6 +13681,7 @@ function readVehicleFromForm(){
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
     aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,DRIVE_AIDS.absSlip[0]),1,3),clamp(numOr(g('vhAbsR').value,DRIVE_AIDS.absSlip[1]),1,3)],
       tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
+    awdMode:g('trkAwdMode')&&AWD_DIFF_MODES.includes(g('trkAwdMode').value)?g('trkAwdMode').value:'auto',
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
     spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet,
@@ -13721,6 +13747,9 @@ function applyVehicleToForm(v){
    if(D){g('vhWb').value=D.wb;g('vhTrackF').value=D.trackF;g('vhTrackR').value=D.trackR;g('vhCg').value=D.cg;g('vhFwt').value=+(D.fWt*100).toFixed(4);}
    g('vhBallast').value=v.ballastKg||0;g('vhBallastPos').value=v.ballastPos!=null?+(v.ballastPos*100).toFixed(2):50;g('vhBallastH').value=v.ballastH||0.15;}
   updateGearingLabel();
+  {const am=g('trkAwdMode');if(am)am.value=v.awdMode||'auto';}
+  if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode=v.awdMode||'auto';
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
 }
 // Fit a chassis with its factory-spec parts, so picking a chassis gives a coherent car instead of
 // a hypercar on kei-car tyres. Everything stays editable afterwards — this only sets the baseline.
@@ -13746,6 +13775,9 @@ function applyChassisFit(key,body){
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
   g('vhDims').value='factory';g('vhBallast').value=0;   // the factory's chassis numbers, without ballast (build 250)
   updateGearingLabel();
+  {const am=g('trkAwdMode');if(am)am.value='auto';}
+  if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode='auto';
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
   return ch;
 }
 // The GEARING slider is a final-drive ratio: 0 = shortest (4.90:1 — quick acceleration, low top
@@ -14419,6 +14451,7 @@ function buildVehicle(){
   vehRev++;
   vehicle=readVehicleFromForm();
   if(isHybrid()&&engine.hy.front){const dr=document.getElementById('vhDrive');vehicle.driveMech=dr&&dr.disabled&&dr.dataset.prev||vehicle.drive;vehicle.drive='awd';}   // driveMech: the axle the gearbox turns (279);   // a hybrid's front axle motor drives the front wheels (build 195)
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
   const ch=CHASSIS[vehicle.chassis]||CHASSIS.coupe, tt=TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport, wr=WEIGHT_RED[vehicle.weightRed]||WEIGHT_RED.none;
   const body=vehicle.body;
   vehicle.chLabel=body?carLabel(body):ch.label;
@@ -15807,7 +15840,8 @@ function stepCar(car,s,u,dt){
     // passes nothing between the axles beyond its split; a Torsen holds them up to lock x the input torque; a viscous
     // coupling passes c x the difference of the axles' mean speeds. Each as the axle's differential above: Karnopp's
     // stick torque, the one that leaves the two axles' mean speeds equal after this step, taken from the faster.
-    if(car.centre&&nd===4&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
+    const openOnHb=hb>0&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');
+    if(car.centre&&nd===4&&!openOnHb&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
       let Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
       const C=car.centre;if(!CD&&C.L>0){   // the limit: the secondary axle (front if f is 0) takes between nothing and it
         const b=C.L*Tw,lo=Math.min(0,b),hi=Math.max(0,b);
@@ -35329,10 +35363,13 @@ function driftDriver(car,s,C,d,plan){
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
   if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
-  // Handbrake (RWD, build 382): clutch down and lever up until rear passes peak or β nears target, then power holds slide.
-  let hb=0;
-  if(plan.init==='handbrake'&&!d[pastKey]&&absB<0.65*absT){hb=1;thr=0;clutch=1;d.hbing=true;}
-  else if(d.hbing){clutch=0;d.hbing=false;}
+  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down and lever up until β reaches 72% of target
+  // (once per corner, while speed > 5 m/s), then drop lever, close clutch, and hold the slide on power.
+  let hb=0;const hbKey=z==='c1'?'hb1':'hb2';
+  if(plan.init==='handbrake'&&!d[hbKey]){
+    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){clutch=0;d.hbing=false;}}
+    else{hb=1;thr=0;clutch=1;d.hbing=true;}
+  }else if(d.hbing){clutch=0;d.hbing=false;}
   const u={steer:st,throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:(clutch!=null||hb)?s.gear:null};
   if(clutch!=null)u.clutch=clutch;
   if(hb)u.handbrake=hb;
@@ -35407,10 +35444,11 @@ function driftRun(car,plan,sample,D){
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
 // FWD: no kick, and one target β for power and flick; handbrake keeps all three. AWD: no handbrake (falls back to power).
+function driftCanAwdHb(car){return car.drive==='awd'&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');}
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
   if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
-  if(car.drive==='awd'){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
+  if(car.drive==='awd'&&!driftCanAwdHb(car)){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
   if(car.drive==='fwd')P=P.filter(p=>p.init==='handbrake'||(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
@@ -35432,10 +35470,13 @@ function driftBest(car,sample,D,entryKmh,method){
   if(!best)return null;
   return sample?Object.assign(driftRun(car,best.plan,true,D),{plan:best.plan}):best;
 }
+// Optional TC/ESP override from the Challenges setup panel: null = default (both off for powerslide).
+let chalDriftTc=null,chalDriftEsp=null;
 function simulateDriftChallenge(){
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const car=driveCar();
-  car.esp=false;car.tc=false;if(car.aids){car.aids.esp=false;car.aids.tc=false;}
+  const tcOn=chalDriftTc===true,espOn=chalDriftEsp===true;
+  car.esp=espOn;car.tc=tcOn;if(car.aids){car.aids.esp=espOn;car.aids.tc=tcOn;}
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
   const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR},chalDriftEntry,chalDriftMethod);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
   return{
@@ -35919,6 +35960,23 @@ let chalMooseT0=0;
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
 function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
 const chalUI={phase:'setup'};
+function syncDriveAidsUI(){
+  const tcOn=vehicle.tc!==false;
+  const espOn=vehicle.aids&&vehicle.aids.esp!=null?!!vehicle.aids.esp:tcOn;
+  const isAwd=vehicle.drive==='awd';
+  const awdM=vehicle.awdMode||'auto';
+  const ch=typeof activeRunChallenge!=='undefined'&&typeof runChallengeById==='function'?runChallengeById(activeRunChallenge):null;
+  const isDrift=!!(ch&&ch.kind==='drift');
+  for(const id of['trkTc','raceTc']){const el=document.getElementById(id);if(el)el.value=tcOn?'on':'off';}
+  for(const id of['trkEsp','raceEsp']){const el=document.getElementById(id);if(el)el.value=espOn?'on':'off';}
+  const cTc=document.getElementById('chalTc'),cEsp=document.getElementById('chalEsp');
+  if(cTc)cTc.value=(isDrift?(chalDriftTc===true):tcOn)?'on':'off';
+  if(cEsp)cEsp.value=(isDrift?(chalDriftEsp===true):espOn)?'on':'off';
+  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+    const el=document.getElementById(id);
+    if(el){el.value=awdM;const row=el.closest('.field');if(row)row.style.display=isAwd?'':'none';}
+  }
+}
 function chalSyncFields(ch){
   const live=chalUI.phase==='live';
   const pace=document.getElementById('chalPace');
@@ -35932,6 +35990,7 @@ function chalSyncFields(ch){
   if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
   const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
   const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
+  syncDriveAidsUI();
 }
 function chalShowSetup(){
   chalUI.phase='setup';
@@ -39393,6 +39452,35 @@ function bindControls(){
   if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
   const trkTy=document.getElementById('trkTyre');
   if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
+  // Pre-run TC / ESP / AWD DIFF selectors synced across Track, Race, Challenges, and Vehicle Designer (build 440).
+  const setAid=(kind,val,fromChal)=>{
+    const on=val==='on';
+    if(fromChal&&runChallengeById(activeRunChallenge).kind==='drift'){
+      if(kind==='tc')chalDriftTc=on;else chalDriftEsp=on;
+      if(chalUI.phase==='live')refreshChallenge();
+      return;
+    }
+    const vhEl=document.getElementById(kind==='tc'?'vhTC':'vhEsp');
+    if(vhEl)vhEl.value=val;
+    if(kind==='tc')vehicle.tc=on;
+    if(!vehicle.aids)vehicle.aids={};
+    vehicle.aids[kind]=on;
+    syncDriveAidsUI();
+    if(fromChal&&chalUI.phase==='live')refreshChallenge();
+  };
+  for(const[id,k,c]of[['trkTc','tc',false],['trkEsp','esp',false],['raceTc','tc',false],['raceEsp','esp',false],['chalTc','tc',true],['chalEsp','esp',true]]){
+    const el=document.getElementById(id);if(el)el.addEventListener('change',e=>setAid(k,e.target.value,c));
+  }
+  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('change',e=>{
+      if(AWD_DIFF_MODES.includes(e.target.value)){
+        vehicle.awdMode=e.target.value;syncDriveAidsUI();
+        if(id==='chalAwdMode'&&chalUI.phase==='live')refreshChallenge();
+      }
+    });
+  }
+  syncDriveAidsUI();
   const btnTrkGo=document.getElementById('btnTrackStart');
   if(btnTrkGo)btnTrkGo.addEventListener('click',()=>{buildVehicle();refreshLap();lapReplay.t=0;lapReplay.playing=true;const pb=document.getElementById('btnReplay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');pb.setAttribute('aria-pressed','true');}});
   const btnTrkSet=document.getElementById('btnTrackSetup');

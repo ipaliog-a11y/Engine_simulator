@@ -168,10 +168,13 @@ function driftDriver(car,s,C,d,plan){
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
   if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
-  // Handbrake (RWD, build 382): clutch down and lever up until rear passes peak or β nears target, then power holds slide.
-  let hb=0;
-  if(plan.init==='handbrake'&&!d[pastKey]&&absB<0.65*absT){hb=1;thr=0;clutch=1;d.hbing=true;}
-  else if(d.hbing){clutch=0;d.hbing=false;}
+  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down and lever up until β reaches 72% of target
+  // (once per corner, while speed > 5 m/s), then drop lever, close clutch, and hold the slide on power.
+  let hb=0;const hbKey=z==='c1'?'hb1':'hb2';
+  if(plan.init==='handbrake'&&!d[hbKey]){
+    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){clutch=0;d.hbing=false;}}
+    else{hb=1;thr=0;clutch=1;d.hbing=true;}
+  }else if(d.hbing){clutch=0;d.hbing=false;}
   const u={steer:st,throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:(clutch!=null||hb)?s.gear:null};
   if(clutch!=null)u.clutch=clutch;
   if(hb)u.handbrake=hb;
@@ -246,10 +249,11 @@ function driftRun(car,plan,sample,D){
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
 // FWD: no kick, and one target β for power and flick; handbrake keeps all three. AWD: no handbrake (falls back to power).
+function driftCanAwdHb(car){return car.drive==='awd'&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');}
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
   if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
-  if(car.drive==='awd'){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
+  if(car.drive==='awd'&&!driftCanAwdHb(car)){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
   if(car.drive==='fwd')P=P.filter(p=>p.init==='handbrake'||(p.init==='flick'||p.init==='power')&&p.betaT===DRIFT_PLANS[0].betaT);
@@ -271,10 +275,13 @@ function driftBest(car,sample,D,entryKmh,method){
   if(!best)return null;
   return sample?Object.assign(driftRun(car,best.plan,true,D),{plan:best.plan}):best;
 }
+// Optional TC/ESP override from the Challenges setup panel: null = default (both off for powerslide).
+let chalDriftTc=null,chalDriftEsp=null;
 function simulateDriftChallenge(){
   const pt=powertrain();if(!pt.ready()||!vehicle.mass)return null;
   const car=driveCar();
-  car.esp=false;car.tc=false;if(car.aids){car.aids.esp=false;car.aids.tc=false;}
+  const tcOn=chalDriftTc===true,espOn=chalDriftEsp===true;
+  car.esp=espOn;car.tc=tcOn;if(car.aids){car.aids.esp=espOn;car.aids.tc=tcOn;}
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
   const R=driftBest(car,true,{w:D.w,f:car.a+D.ovF,r:car.b+D.ovR},chalDriftEntry,chalDriftMethod);if(!R)return{ok:false,reason:'no-run',kind:'drift'};
   return{

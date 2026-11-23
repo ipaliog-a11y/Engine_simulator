@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### AWD centre-differential modes, handbrake centre-clutch disconnect, and pre-run TC/ESP toggles (build 440)
+
+- Added real factory AWD centre-diff specs in `CENTRE_DIFF` (`src/js/tyres-brakes-driveline.js`): Subaru Impreza WRX STI DCCD (`35:65` planetary + clutch), Mitsubishi Lancer Evo IX ACD (`50:50` + hydraulic clutch), Toyota GR Yaris GR-FOUR (`40:60` + clutch), and Lamborghini Huracán LP610-4 (`30:70` Haldex V), plus selectable **AWD DIFF** modes (`AUTO`, `SPORT 30:70`, `OPEN 40:60`, `LOCK 50:50`) via `centreCoupling`.
+- Opened electronic AWD centre clutches on `u.handbrake` in `stepCar` (`src/js/drive-model.js`), matching real-world STI DCCD / Evo ACD / GR-FOUR / Focus RS behaviour, and held RWD/AWD handbrake initiation in `driftDriver` until body slip reaches 72% of target once per corner. Subaru Impreza WRX STI, Mitsubishi Evo IX, GR Yaris, Focus RS, Nissan GT-R (R35), and Lamborghini Huracán all now `CLEAR` the S-route powerslide while viscous AWD (993 Turbo) remains `NO_SLIDE`.
+- Added synced pre-run **TC**, **ESP**, and **AWD DIFF** selectors to all three Drive setup panels (`Track`, `Race`, `Challenges`) in `src/shell.html`, `src/js/controls-boot.js`, `src/js/chal-view.js`, and `src/js/vehicle-spec.js`. Powerslide defaults TC/ESP to `OFF` and respects explicit `ON` overrides.
+- Updated `tests/test231.mjs`, `src/html/guide.html`, and `README.md`.
+
 ### Active powerslide driver, corner anticipation, mid-S acceleration, and composite drift scoring (build 439)
 
 - Upgraded `driftDriver` (`src/js/drift-run.js`) to a coupled active drift controller (Hindiyeh 2013; Velenis AVEC 2010): velocity-vector path tracking and proportional countersteer on $(\beta - \beta_{\text{des}})$ with yaw-rate damping using full steering lock, freeing throttle to sustain rear saturation and corner speed instead of cutting out mid-bend.

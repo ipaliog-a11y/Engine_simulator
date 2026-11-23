@@ -846,7 +846,8 @@ function stepCar(car,s,u,dt){
     // passes nothing between the axles beyond its split; a Torsen holds them up to lock x the input torque; a viscous
     // coupling passes c x the difference of the axles' mean speeds. Each as the axle's differential above: Karnopp's
     // stick torque, the one that leaves the two axles' mean speeds equal after this step, taken from the faster.
-    if(car.centre&&nd===4&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
+    const openOnHb=hb>0&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');
+    if(car.centre&&nd===4&&!openOnHb&&(CD||brake===0)&&(!CD||CD.type!=='open')){let inv=0;for(let q=0;q<4;q++)inv+=1/(car.Iw+h*car.r*dF[q]);
       let Tc=2*((s.w[0]+s.w[1])-(s.w[2]+s.w[3]))/(h*inv);
       const C=car.centre;if(!CD&&C.L>0){   // the limit: the secondary axle (front if f is 0) takes between nothing and it
         const b=C.L*Tw,lo=Math.min(0,b),hi=Math.max(0,b);

@@ -155,6 +155,35 @@ function bindControls(){
   if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
   const trkTy=document.getElementById('trkTyre');
   if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
+  // Pre-run TC / ESP / AWD DIFF selectors synced across Track, Race, Challenges, and Vehicle Designer (build 440).
+  const setAid=(kind,val,fromChal)=>{
+    const on=val==='on';
+    if(fromChal&&runChallengeById(activeRunChallenge).kind==='drift'){
+      if(kind==='tc')chalDriftTc=on;else chalDriftEsp=on;
+      if(chalUI.phase==='live')refreshChallenge();
+      return;
+    }
+    const vhEl=document.getElementById(kind==='tc'?'vhTC':'vhEsp');
+    if(vhEl)vhEl.value=val;
+    if(kind==='tc')vehicle.tc=on;
+    if(!vehicle.aids)vehicle.aids={};
+    vehicle.aids[kind]=on;
+    syncDriveAidsUI();
+    if(fromChal&&chalUI.phase==='live')refreshChallenge();
+  };
+  for(const[id,k,c]of[['trkTc','tc',false],['trkEsp','esp',false],['raceTc','tc',false],['raceEsp','esp',false],['chalTc','tc',true],['chalEsp','esp',true]]){
+    const el=document.getElementById(id);if(el)el.addEventListener('change',e=>setAid(k,e.target.value,c));
+  }
+  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('change',e=>{
+      if(AWD_DIFF_MODES.includes(e.target.value)){
+        vehicle.awdMode=e.target.value;syncDriveAidsUI();
+        if(id==='chalAwdMode'&&chalUI.phase==='live')refreshChallenge();
+      }
+    });
+  }
+  syncDriveAidsUI();
   const btnTrkGo=document.getElementById('btnTrackStart');
   if(btnTrkGo)btnTrkGo.addEventListener('click',()=>{buildVehicle();refreshLap();lapReplay.t=0;lapReplay.playing=true;const pb=document.getElementById('btnReplay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');pb.setAttribute('aria-pressed','true');}});
   const btnTrkSet=document.getElementById('btnTrackSetup');

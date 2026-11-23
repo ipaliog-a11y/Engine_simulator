@@ -124,6 +124,7 @@ function readVehicleFromForm(){
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
     aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,DRIVE_AIDS.absSlip[0]),1,3),clamp(numOr(g('vhAbsR').value,DRIVE_AIDS.absSlip[1]),1,3)],
       tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
+    awdMode:g('trkAwdMode')&&AWD_DIFF_MODES.includes(g('trkAwdMode').value)?g('trkAwdMode').value:'auto',
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
     spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet,
@@ -189,6 +190,9 @@ function applyVehicleToForm(v){
    if(D){g('vhWb').value=D.wb;g('vhTrackF').value=D.trackF;g('vhTrackR').value=D.trackR;g('vhCg').value=D.cg;g('vhFwt').value=+(D.fWt*100).toFixed(4);}
    g('vhBallast').value=v.ballastKg||0;g('vhBallastPos').value=v.ballastPos!=null?+(v.ballastPos*100).toFixed(2):50;g('vhBallastH').value=v.ballastH||0.15;}
   updateGearingLabel();
+  {const am=g('trkAwdMode');if(am)am.value=v.awdMode||'auto';}
+  if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode=v.awdMode||'auto';
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
 }
 // Fit a chassis with its factory-spec parts, so picking a chassis gives a coherent car instead of
 // a hypercar on kei-car tyres. Everything stays editable afterwards — this only sets the baseline.
@@ -214,6 +218,9 @@ function applyChassisFit(key,body){
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
   g('vhDims').value='factory';g('vhBallast').value=0;   // the factory's chassis numbers, without ballast (build 250)
   updateGearingLabel();
+  {const am=g('trkAwdMode');if(am)am.value='auto';}
+  if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode='auto';
+  if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
   return ch;
 }
 // The GEARING slider is a final-drive ratio: 0 = shortest (4.90:1 — quick acceleration, low top
