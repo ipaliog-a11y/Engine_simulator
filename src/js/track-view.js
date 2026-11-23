@@ -28,7 +28,7 @@ function bindTrackZoom(){
     // the screen and its y from right to left
     if(trackPage.open&&trackPage.rot)return {x:(e.clientY-r.top)*vizW/r.height,y:(r.right-e.clientX)*vizH/r.width};
     return {x:(e.clientX-r.left)*vizW/r.width,y:(e.clientY-r.top)*vizH/r.height};};
-  const active=()=>(vizMode==='track'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
+  const active=()=>(vizMode==='track'&&trackUI.phase==='live'&&!!lapResult)||(vizMode==='race'&&!!raceUI.run&&raceUI.phase==='live');
   canvas.addEventListener('wheel',e=>{
     if(!active())return;
     e.preventDefault();
@@ -272,21 +272,86 @@ function wrapItems(items,x,y,maxW,lh,gap){
   }
   return y;
 }
+const trackUI={phase:'setup',weather:'dry',air:22,tyre:'own'};
+function trackWetness(wx){
+  if(wx==='wet')return RACE.wetFull;
+  if(wx==='damp'||wx==='drying')return 0.4*RACE.wetFull;
+  return 0;
+}
+function trackWeatherLabel(wx){
+  const m={dry:'DRY',damp:'DAMP',wet:'WET',rain:'RAIN LATER',drying:'DRYING'};
+  return tr(m[wx]||'DRY');
+}
+function syncTrackPanel(){
+  const s=document.getElementById('trackSetup'),l=document.getElementById('trackLive');
+  const live=trackUI.phase==='live'&&!!lapResult;
+  if(s)s.hidden=live;
+  if(l)l.hidden=!live;
+}
+function renderTrackSetup(){
+  syncTrackPanel();
+  const head=document.getElementById('trkPreviewHead'),note=document.getElementById('trkPreviewNote');
+  const T=TRACKS[trackKey]?buildTrack(trackKey):null;
+  if(!T){if(head)head.textContent='—';if(note)note.textContent='';return;}
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  if(head)head.innerHTML='<b>'+esc(T.label)+'</b> • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('corners')+' • '+elev+' m '+tr('elevation');
+  if(note)note.textContent=tr(T.blurb||'');
+}
+// Shared circuit map preview for the Drive landing pages (TRACK, RACE, CHAMP).
+function drawTrackPreview(key,opts){
+  const W=vizW,H=vizH,o=opts||{};
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const T=TRACKS[key]?buildTrack(key):null;
+  if(!T){
+    drawPixelRect(0,0,W,28,'#12121c');
+    ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';ctx.fillText(o.title||tr('TEST TRACK'),12,19);
+    return;
+  }
+  const wx=o.weather||'dry',w=o.wet!=null?o.wet:trackWetness(wx);
+  const topBar=34,botLines=(o.sub&&o.sub.length)?o.sub.length:1,botBar=26+botLines*13;
+  sceneBind(T);
+  sceneWeather(wx==='rain'?'dry':wx==='drying'?'damp':wx,w);
+  const cam=sceneOverview(W,H,{t:topBar,b:botBar,l:12,r:12});
+  scenePaint(ctx,cam,{cars:[]});
+  ctx.fillStyle='rgba(13,13,24,0.82)';ctx.fillRect(0,H-botBar,W,botBar);
+  drawPixelRect(0,0,W,28,'#12121c');
+  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
+  ctx.fillText((o.title||tr('TEST TRACK'))+' • '+T.label,12,19);
+  if(o.air!=null||o.weather){
+    ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=w>0?'#66ccff':'#88aacc';
+    const tag=trackWeatherLabel(wx)+(o.air!=null?'  '+o.air+'°C':'');
+    ctx.fillText(tag,W-12,19);ctx.textAlign='left';
+  }
+  let zMin=Infinity,zMax=-Infinity;
+  for(const q of T.line||T.pts||[]){const z=q.z||0;if(z<zMin)zMin=z;if(z>zMax)zMax=z;}
+  const elev=isFinite(zMin)?Math.round(zMax-zMin):0;
+  ctx.font='7px "Press Start 2P"';
+  wrapItems([(T.length/1000).toFixed(2)+' km',T.wLabel+' '+tr('wide'),T.corners+' '+tr('corners'),elev+'m '+tr('elevation')]
+    .map((t,k)=>({fg:'#99a',txt:(k?'• ':'')+t})),12,H-botBar+14,W-24,12,7);
+  if(o.sub&&o.sub.length){
+    ctx.font='7px "Press Start 2P"';
+    o.sub.forEach((line,i)=>{ctx.fillStyle=i===0?C.green:'#889';ctx.fillText(line,12,H-botBar+30+i*13);});
+  }
+}
 function drawTrack(){
   trackGrid();
   const W=vizW,H=vizH,narrow=W<560;
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  drawPixelRect(0,0,W,28,'#12121c');
-  ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   const L=lapResult;
-  ctx.fillText(tr('TEST TRACK')+' • '+(L?L.track.label:''),12,19);
-  if(!L){ctx.fillStyle='#778';ctx.font='8px "Press Start 2P"';ctx.fillText(tr('BUILD AN ENGINE FIRST'),12,60);return;}
+  if(trackUI.phase!=='live'||!L){
+    drawTrackPreview(trackKey,{weather:trackUI.weather,air:trackUI.air,title:tr('TEST TRACK'),
+      sub:[!powertrain().ready()||!vehicle.mass?tr('BUILD AN ENGINE FIRST'):tr('Select a circuit and conditions, then press START LAP.')]});
+    return;
+  }
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   const live=L.replay?replayAt(L,lapReplay.t):null;
   const T=L.track,topBar=narrow?74:62,botBar=narrow?58:52;
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   const z=trackView.z||1;
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
   sceneBind(T);
-  sceneWeather('dry',0);
+  sceneWeather(cond.weather,cond.wet);
   let car=null;
   if(live){
     car=Object.assign(scenePose(T.line,live.i+live.f),{name:vehicle.chLabel,col:carLivery(vehicle),brk:live.brk||0,steer:(live.steer||0)*Math.PI/180,pos:1});   // a smooth place and heading
@@ -304,6 +369,8 @@ function drawTrack(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.fillText(tr('TEST TRACK')+' • '+L.track.label,12,19);
+  ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle=cond.wet>0?'#66ccff':'#88aacc';
+  ctx.fillText(trackWeatherLabel(cond.weather)+'  '+cond.air+'°C',W-12,19);ctx.textAlign='left';
   ctx.fillStyle=C.green;ctx.font='14px "Press Start 2P"';ctx.fillText(fmtLap(live?lapReplay.t:L.lap),12,50);
   ctx.font='7px "Press Start 2P"';ctx.fillStyle='#778';
   let lx0=narrow?12:14+ctx.measureText(fmtLap(L.lap)).width*2;
@@ -335,7 +402,9 @@ function renderLap(){
   if(!head||!grid)return;
   const L=lapResult;
   if(!L){head.textContent='—';grid.innerHTML='';if(note)note.textContent='';return;}
-  head.innerHTML='<b>'+L.track.label+'</b> • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
+  const cond=L.cond||{weather:'dry',wet:0,air:22,tyre:'own'};
+  const tyreTag=cond.tyre==='inter'?' • '+tr('INTERS'):cond.tyre==='wet'?' • '+tr('FULL WET'):'';
+  head.innerHTML='<b>'+L.track.label+'</b> • '+trackWeatherLabel(cond.weather)+' '+cond.air+'°C'+tyreTag+' • '+(L.length/1000).toFixed(2)+' km • '+L.corners+' '+tr('corners')+' • '+Math.round(L.zMax-L.zMin)+' m '+tr('elevation');
   const cell=(k,v,u,cls)=>'<div class="perf-cell '+(cls||'')+'"><span class="k">'+k+'</span><div class="v">'+v+'</div><span class="u">'+(u||'')+'</span></div>';
   grid.innerHTML=
     cell(tr('LAP TIME'),fmtLap(L.lap),'','hero wide')+

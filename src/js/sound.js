@@ -829,14 +829,14 @@ function trackSoundState(st){
 // back (and is quiet while the replay is paused), and every other tab is quiet.
 function soundSource(){
   if(vizMode==='dyno')return state;
-  if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  if(vizMode==='track'&&trackUI.phase==='live'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
   const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
   if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
   return null;
 }
 function driftSoundSample(){
   const R=typeof chalResult!=='undefined'?chalResult:null;
-  return vizMode==='challenges'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+  return vizMode==='challenges'&&chalUI.phase==='live'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
 }
 // ---- tyre screech on the powerslide replay (build 362) ----
 // A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same

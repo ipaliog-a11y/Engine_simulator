@@ -89,13 +89,40 @@ function loadGpxTrack(text,fallbackName){
   const key='gpx_'+Date.now().toString(36);
   TRACKS[key]=def;delete trackCache[key];
   trackKey=key;refreshTrackList();saveImportedTracks();
-  buildVehicle();refreshLap();
   const T=buildTrack(key);
   flash(trIn('msg','IMPORTED')+' '+def.label+' • '+(T.length/1000).toFixed(2)+' km • '+T.corners+' '+tr('CORNERS'));
   setTab('track');
+  refreshLap();
 }
 function refreshLap(){
-  if(!powertrain().ready()||!vehicle.mass){lapResult=null;}
-  else lapResult=simulateLap(trackKey);
+  if(!powertrain().ready()||!vehicle.mass){lapResult=null;renderLap();syncTrackPanel();return;}
+  const wx=trackUI.weather||'dry',air=trackUI.air!=null?trackUI.air:22,tyreKey=trackUI.tyre||'own';
+  const w=trackWetness(wx);
+  if(w===0&&tyreKey==='own'&&air===22){
+    lapResult=simulateLap(trackKey);
+    if(lapResult)lapResult.cond={weather:wx,wet:0,air,tyre:tyreKey,grip:1};
+  }else{
+    const ty=raceCompound(tyreKey==='own'?(vehicle.tireType||'sport'):tyreKey);
+    const ownMu=(TIRE_TYPE[vehicle.tireType]||TIRE_TYPE.sport).mu||vehicle.mu||1;
+    let grip=tyreKey==='own'?1:Math.min(1,ty.mu/ownMu);
+    if(w>0){
+      // Same wet-grip fixed point as raceWetLap (Wong Table 1.3 + Horne NASA TN D-2056 hydroplaning).
+      const T=buildTrack(trackKey),line=lineFor(T,trackKey),base=simulateLap(trackKey,{air,line,quick:true});
+      const coldKPa=vehicle.tyreColdKPa||0;
+      let gWet=1;
+      if(base&&base.v&&line.length){
+        for(let it=0;it<4;it++){
+          const s=Math.sqrt(gWet);let tw=0,gw=0;
+          for(let i=0;i<line.length;i++){const v=Math.max(2,base.v[i]*s),dt=line[i].ds3/v;tw+=dt;gw+=dt*raceWetKeep(ty,w,v,T.width||12,coldKPa);}
+          gWet=tw>0?gw/tw:1;
+        }
+      }
+      grip*=gWet;
+    }
+    lapResult=withRaceTrim(grip,0,()=>simulateLap(trackKey,{air}));
+    if(lapResult)lapResult.cond={weather:wx,wet:w,air,tyre:tyreKey,grip};
+  }
+  if(lapResult)trackUI.phase='live';
   renderLap();
+  syncTrackPanel();
 }

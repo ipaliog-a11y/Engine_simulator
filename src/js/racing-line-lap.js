@@ -339,7 +339,9 @@ function simulateLapCore(key,opts){
   // camber (latMuEff, build 109), less the diff's scrub.
   const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
-  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const airC=opts&&opts.air!=null?opts.air:null;
+  const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
+  const down=v=>0.5*rho*vehicle.clA*v*v;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
   // The vertical term is capped at ±0.6 g: real suspension runs out of travel and hits the bump
   // stops, so a deep compression stops adding grip long before the maths says it should — and
@@ -350,7 +352,7 @@ function simulateLapCore(key,opts){
   const KVCAP=0.6*m*G;
   const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
   const normalLoad=(i,vv)=>loadAt(p[i],vv);
-  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
+  const drag=v=>0.5*rho*vehicle.cdA*v*v;
   const rollF=v=>crrAt(vehicle.crr,v)*m*G;
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
   // Every gear that would over-rev is skipped — INCLUDING the top one. That last part is the rev
@@ -406,7 +408,7 @@ function simulateLapCore(key,opts){
       // pass 1: re-solve with that term evaluated and clamped at the speed just found
       const kvTerm=it===0?-m*q.kv*muLat:0;
       const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
-      const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+      const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*q.cosT+extra;
       vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
     }
@@ -701,9 +703,9 @@ function simulateLapCore(key,opts){
     let bites=false;for(let i=0;i<n;i++)if(brakeBound[i]&&ebA[i]>0){bites=true;break;}
     if(bites)passes();   // the engine adds to brakes that were the limit somewhere: solve again with it
   }
-  const th=vehicle.brakeTh;
+  const th=airC!=null?Object.assign({},vehicle.brakeTh,{amb:airC}):vehicle.brakeTh;
   function brakeTemps(){
-    const st={F:BRAKE_AMBIENT,R:BRAKE_AMBIENT},TF=new Array(n),TR=new Array(n);
+    const amb0=airC!=null?airC:BRAKE_AMBIENT,st={F:amb0,R:amb0},TF=new Array(n),TR=new Array(n);
     for(let lap=0;lap<1+BRAKE_PREP_LAPS;lap++){   // the preparation lap, then the hot lap kept in TF/TR
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
