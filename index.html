@@ -895,7 +895,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 435</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 436</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -18383,39 +18383,38 @@ const SOUND_GAS_SRC=`
 const GR=8.31446261815324,AIR_M=0.02897,ATM=101325;
 const gclamp=(v,a,b)=>v<a?a:v>b?b:v;
 class Gas{
-  constructor(P,V,T){this.n=P*V/(GR*T);this.V=V;this.E=T*2.5*this.n*GR;this.px=0;this.py=0;this.hcr=1.4;
+  constructor(P,V,T,fr=1){this.n=P*V/(GR*T);this.V=V;this.E=T*2.5*this.n*GR;this.px=0;this.fr=fr;this.hcr=1.4;
     this.lim=Math.pow(2/2.4,1.4/0.4);this.choke=Math.sqrt(1.4)*Math.pow(2/2.4,2.4/0.8);this.w=1;this.h=1;}
   geo(w,h){this.w=w;this.h=h;}
-  reset(P,T){this.n=P*this.V/(GR*T);this.E=T*2.5*this.n*GR;this.px=this.py=0;}
+  reset(P,T,fr=1){this.n=P*this.V/(GR*T);this.E=T*2.5*this.n*GR;this.px=0;this.fr=fr;}
   P(){return this.E/(2.5*this.V);}
   T(){return this.n?this.E/(2.5*this.n*GR):0;}
   m(){return AIR_M*this.n;}
   epm(){return this.n?this.E/this.n:0;}
   c(){if(!this.n||!this.E)return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
-  bke(){const m=this.m();if(!m)return 0;const vx=this.px/m,vy=this.py/m;return 0.5*m*(vx*vx+vy*vy);}
-  dyn(dx,dy){
+  bke(){const m=this.m();if(!m)return 0;const vx=this.px/m;return 0.5*m*vx*vx;}
+  dyn(dx){
     if(!this.n||!this.E)return 0;
-    const v=(dx*this.px+dy*this.py)/this.m();if(v<=0)return 0;
+    const v=dx*this.px/this.m();if(v<=0)return 0;
     const P=this.P(),x=1+0.2*v*v/(P*1.4/(this.m()/this.V));
     return P*(Math.sqrt(x*x*x*x*x*x*x)-1);
   }
-  setV(V){const dV=V-this.V,L=Math.cbrt(V),sa=L*L;this.E+=(-dV/sa)*this.P()*sa;this.V=V;}
+  setV(V){this.E-=(V-this.V)*this.P();if(this.E<0)this.E=0;this.V=V;}
   lose(dn,e){this.E-=e*dn;this.n-=dn;if(this.n<0)this.n=0;}
-  gain(dn,e){this.E+=dn*e;this.n+=dn;}
+  gain(dn,e,fr=1){const n0=this.n;this.E+=dn*e;this.n+=dn;if(this.n>0)this.fr=(n0*this.fr+dn*fr)/this.n;}
   dissipate(){
-    const m=this.m();if(!m)return;
-    const vx=this.px/m,vy=this.py/m,v2=vx*vx+vy*vy,c=this.c(),c2=c*c;
-    if(c2>=v2||v2===0)return;
-    const k=Math.sqrt(c2/v2);this.px*=k;this.py*=k;this.E+=0.5*m*(v2-c2);if(this.E<0)this.E=0;
+    const m=this.m();if(!m||!this.px)return;
+    const vx=this.px/m,v2=vx*vx,c=this.c(),c2=c*c;
+    if(c2>=v2)return;
+    this.px*=Math.sqrt(c2/v2);this.E+=0.5*m*(v2-c2);if(this.E<0)this.E=0;
   }
   vel(dt,beta){
-    if(!this.n)return;
-    const depth=this.V/(this.w*this.h);
-    const p0=this.dyn(1,0)*this.h*depth,p1=this.dyn(-1,0)*this.h*depth,p2=this.dyn(0,1)*this.w*depth,p3=this.dyn(0,-1)*this.w*depth;
-    const m=this.m(),v0x=this.px/m,v0y=this.py/m;
-    this.px-=(p0-p1)*dt*beta;this.py-=(p2-p3)*dt*beta;
-    const v1x=this.px/m,v1y=this.py/m;
-    this.E-=0.5*m*(v1x*v1x-v0x*v0x)+0.5*m*(v1y*v1y-v0y*v0y);if(this.E<0)this.E=0;
+    if(!this.n||!this.px)return;
+    const area=this.V/this.w,dp=this.px>0?this.dyn(1)*area:-this.dyn(-1)*area;
+    const m=this.m(),v0=this.px/m;
+    this.px-=dp*dt*beta;
+    const v1=this.px/m;
+    this.E-=0.5*m*(v1*v1-v0*v0);if(this.E<0)this.E=0;
   }
   static rate(k,P0,P1,T0,T1,lim,choke){
     if(!k)return 0;
@@ -18428,7 +18427,7 @@ class Gas{
   }
   // moles moved from s0 to s1 through an orifice of flow constant k (direction +x), a0/a1 the cross sections
   static flow(k,dt,a0,a1,s0,s1){
-    const P0=s0.P()+s0.dyn(1,0),P1=s1.P()+s1.dyn(-1,0);
+    const P0=s0.P()+s0.dyn(1),P1=s1.P()+s1.dyn(-1);
     let src,snk,dx,aS,aK,dir,Ps,Pk;
     if(P0>P1){src=s0;snk=s1;dx=1;aS=a0;aK=a1;dir=1;Ps=P0;Pk=P1;}
     else{src=s1;snk=s0;dx=-1;aS=a1;aK=a0;dir=-1;Ps=P1;Pk=P0;}
@@ -18437,15 +18436,15 @@ class Gas{
     const frac=src.n?f/src.n:0,fV=frac*src.V,fM=frac*src.m();
     if(f!==0){
       const b0=src.bke()+snk.bke(),e=src.epm();
-      snk.gain(f,e);src.lose(f,e);
-      const dpx=src.px*frac,dpy=src.py*frac;src.px-=dpx;src.py-=dpy;snk.px+=dpx;snk.py+=dpy;
+      snk.gain(f,e,src.fr);src.lose(f,e);
+      const dpx=src.px*frac;src.px-=dpx;snk.px+=dpx;
       snk.E-=(src.bke()+snk.bke())-b0;
     }
-    const mS=src.m(),mK=snk.m(),cS=src.c(),cK=snk.c(),sx0=src.px,sy0=src.py,kx0=snk.px,ky0=snk.py;
+    const mS=src.m(),mK=snk.m(),cS=src.c(),cK=snk.c(),sx0=src.px,kx0=snk.px;
     if(aK){const v=gclamp((fV/aK)/dt,0,cK);snk.px+=v*dx*fM;}
     if(aS&&mS){const v=gclamp((fV/aS)/dt,0,cS);src.px+=v*dx*fM;}
-    if(mS){const a=sx0/mS,b=sy0/mS,c=src.px/mS,d=src.py/mS;src.E-=0.5*mS*(c*c-a*a)+0.5*mS*(d*d-b*b);}
-    if(mK>0){const a=kx0/mK,b=ky0/mK,c=snk.px/mK,d=snk.py/mK;snk.E-=0.5*mK*(c*c-a*a)+0.5*mK*(d*d-b*b);}
+    if(mS){const a=sx0/mS,c=src.px/mS;src.E-=0.5*mS*(c*c-a*a);}
+    if(mK>0){const a=kx0/mK,c=snk.px/mK;snk.E-=0.5*mK*(c*c-a*a);}
     if(snk.E<0)snk.E=0;if(src.E<0)src.E=0;
     return f*dir;
   }
@@ -18464,108 +18463,118 @@ function bench(tab,thou){if(thou<=0)return 0;const i=Math.min(8,Math.floor(thou/
 // burn, no dissociation and too low a heat capacity for burnt gas, so all of it gave twice a real engine's
 // IMEP. A FIT, to 13 bar flat out on the 1.6 sport four; engine-sim carries the same gap in its fuel model.
 const GAS_HEAT_SHARE=0.50;
-class GasEngine{
-  constructor(e,simHz,fluid){
-    this.e=e;this.simHz=simHz;this.fluid=fluid;
-    const PI=Math.PI,A=PI/4*e.bore*e.bore,Vd=A*e.stroke,T0=298.15;
-    this.A=A;this.Vd=Vd;this.Vc=Vd/(e.cr-1);this.r=e.stroke/2;this.L=3.2*this.r;
-    const exD=0.84*e.ivDia;
-    this.inScale=e.ivCount*e.ivDia*e.ivDia/(2*0.0345*0.0345);this.inLift=0.0345/e.ivDia;
-    this.exScale=e.ivCount*exD*exD/(2*0.029*0.029);this.exLift=0.029/exD;
-    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
-    const colA=PI/4*e.sysD*e.sysD*Math.max(1,(e.sysPipes||1)/e.banks);
-    this.banks=[];
-    for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,T0);c.geo(e.sysL,Math.sqrt(colA));
-      this.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5});}
-    this.atm=new Gas(ATM,1000,T0);this.atm.geo(10,10);
-    this.plenum=new Gas(ATM,1000,T0);this.plenum.geo(10,10);
-    this.cyl=[];
-    for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],cy=new Gas(ATM,this.Vc,T0);cy.geo(Math.sqrt(A),this.Vc/A);
-      const ir=new Gas(ATM,this.inA*e.runnerL,T0);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const exV=this.exA*e.primL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,T0);xr.geo(exV/this.exA,Math.sqrt(this.exA));
-      const len=e.primL+e.sysL;
-      this.cyl.push({cy,ir,xr,bank:ev.bank,phase:ev.at*720,lit:false,q:0,xb:0,kIn:0,kEx:0,
-        kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381),
-        delay:new Float64Array(Math.ceil(len/343*simHz)+2),di:0,att:0.2*1600/e.cylinders/(len*len)});
-    }
-    this.theta=0;this.out=new Float64Array(e.banks);
-  }
-  vol(th){const a=th*Math.PI/180,s=Math.sin(a);return this.Vc+this.A*(this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s));}
-  lift(th,open,dur,L){const d=((th-open)%720+720)%720;if(d>=dur)return 0;const s=Math.sin(Math.PI*d/dur);return L*s*s;}
-  // one step at {rpm, map Pa, fuel 0-1, lambda, spark deg BTDC, burn deg}
-  step(rpm,map,fuel,lambda,spark,burn){
-    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI;
-    this.theta=(this.theta+rpm*6*dt)%720;
-    const evc=360+e.overlap/2,evo=evc-e.camDur,ivo=360-e.overlap/2,sparkAt=720-spark;
-    this.plenum.reset(map,300);
-    for(const c of this.cyl){
-      const th=(this.theta-c.phase+720)%720;
-      c.cy.setV(this.vol(th));
-      c.kIn=K28*bench(IN_CFM,this.lift(th,ivo,e.camDur,e.ivLift)/2.54e-5*this.inLift)*this.inScale;
-      c.kEx=K28*bench(EX_CFM,this.lift(th,evo,e.camDur,e.ivLift)/2.54e-5*this.exLift)*this.exScale;
-      const since=((th-sparkAt)%720+720)%720;
-      if(!c.lit&&since<3&&fuel>0){c.q=c.cy.n*0.92*AIR_M/(14.7*lambda)*43e6*GAS_HEAT_SHARE*fuel;c.lit=true;c.xb=0;}
-      if(c.lit){const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3));c.cy.E+=(x-c.xb)*c.q;c.xb=x;if(since>=burn)c.lit=false;}
-    }
-    for(let k=0;k<this.fluid;k++){
-      for(const b of this.banks){this.atm.reset(ATM,298.15);Gas.flow(b.kOut,df,b.colA,10,this.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
-      for(const c of this.cyl){
-        const h=c.cy.V/this.A,sa=h*PI*e.bore+this.A*2;
-        c.cy.E+=(363.15-c.cy.T())*sa*100*df;if(c.cy.E<0)c.cy.E=0;
-        Gas.flow(c.kRun,df,10,this.inA,this.plenum,c.ir);c.ir.dissipate();
-        Gas.flow(c.kIn,df,this.inA,this.A,c.ir,c.cy);c.ir.dissipate();c.cy.dissipate();
-        Gas.flow(c.kEx,df,this.A,this.exA,c.cy,c.xr);c.cy.dissipate();c.xr.dissipate();
-        const b=this.banks[c.bank];Gas.flow(c.kPrim,df,this.exA,b.colA,c.xr,b.col);
-        c.ir.vel(df,0.25);c.cy.vel(df,0.5);c.xr.vel(df,1);
-      }
-    }
-    this.out.fill(0);
-    for(const c of this.cyl){
-      const s=(c.xr.P()-ATM)+0.1*c.xr.dyn(1,0)+0.1*c.xr.dyn(-1,0);
-      const d=c.delay,v=d[c.di];d[c.di]=s;c.di=(c.di+1)%d.length;
-      this.out[c.bank]+=c.att*v;
-    }
-    return this.out;
-  }
-}
-// What the four-stroke, the two-stroke and the rotary share: each bank's collector venting to atmosphere,
-// the plenum held at the manifold pressure, and the audio pick-off (runner gauge pressure plus a tenth of
-// its dynamic pressure each way, delayed down the pipe, falling off with the square of the run).
+// What the four-stroke, the two-stroke and the rotary share: each bank's collector venting to atmosphere
+// (a turbine restricts the collector exit, raising backpressure and damping pulses), the plenum held at
+// manifold pressure with fresh charge, and the audio pick-off delayed down each cylinder's own primary+system
+// run at the hot exhaust sound speed (exhSigma spreads primary lengths for unequal-length / log manifolds).
 function gasCollectors(self,e){
   const PI=Math.PI,colA=PI/4*e.sysD*e.sysD*Math.max(1,(e.sysPipes||1)/e.banks);
+  const turbMul=e.turbo?0.35:1;
   self.banks=[];
-  for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,298.15);c.geo(e.sysL,Math.sqrt(colA));
-    self.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5});}
-  self.atm=new Gas(ATM,1000,298.15);self.atm.geo(10,10);
-  self.plenum=new Gas(ATM,1000,298.15);self.plenum.geo(10,10);
+  for(let b=0;b<e.banks;b++){const c=new Gas(ATM,colA*e.sysL,298.15,0);c.geo(e.sysL,Math.sqrt(colA));
+    self.banks.push({col:c,colA,kOut:KCARB*1000*colA/(PI/4*0.0508*0.0508)*0.5*turbMul});}
+  self.atm=new Gas(ATM,1000,298.15,1);self.atm.geo(10,10);
+  self.plenum=new Gas(ATM,1000,298.15,1);self.plenum.geo(10,10);
   self.out=new Float64Array(e.banks);
 }
 function gasVentCollectors(self,df){
-  for(const b of self.banks){self.atm.reset(ATM,298.15);Gas.flow(b.kOut,df,b.colA,10,self.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
+  for(const b of self.banks){self.atm.reset(ATM,298.15,1);Gas.flow(b.kOut,df,b.colA,10,self.atm,b.col);b.col.dissipate();b.col.vel(df,1);}
 }
-function gasRunner(e,exA,Vd,simHz,n){
-  const exV=exA*e.primL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,298.15);xr.geo(exV/exA,Math.sqrt(exA));
-  const len=e.primL+e.sysL;
-  return {xr,delay:new Float64Array(Math.ceil(len/343*simHz)+2),di:0,att:0.2*1600/n/(len*len)};
+function gasRunner(e,exA,Vd,simHz,n,idx=0){
+  const spread=n>1?((idx/(n-1))-0.5)*2:0;
+  const pL=Math.max(0.2,e.primL*(1+gclamp(spread*(e.exhSigma||0),-0.5,0.5)));
+  const exV=exA*pL+50e-6*Vd/0.5e-3,xr=new Gas(ATM,exV,298.15,0);xr.geo(exV/exA,Math.sqrt(exA));
+  const len=pL+e.sysL,cExh=e.exhC||520;
+  return {xr,delay:new Float64Array(Math.max(2,Math.ceil(len/cExh*simHz)+2)),di:0,att:0.2*1600/n/(len*len)};
 }
 function gasPickOff(self,runners){
   self.out.fill(0);
   for(const r of runners){
-    const s=(r.xr.P()-ATM)+0.1*r.xr.dyn(1,0)+0.1*r.xr.dyn(-1,0);
+    const s=(r.xr.P()-ATM)+0.1*r.xr.dyn(1)+0.1*r.xr.dyn(-1);
     const d=r.delay,v=d[r.di];d[r.di]=s;r.di=(r.di+1)%d.length;
     self.out[r.bank]+=r.att*v;
   }
   return self.out;
 }
-// The Wiebe burn, shared: from the spark, release the charge's fuel heat along 1 - exp(-5 x^3).
-function gasBurn(c,since,burn,fuel,lambda){
-  if(!c.lit&&since<3&&fuel>0){c.q=c.cy.n*0.92*AIR_M/(14.7*lambda)*43e6*GAS_HEAT_SHARE*fuel;c.lit=true;c.xb=0;}
-  if(c.lit){const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3));c.cy.E+=(x-c.xb)*c.q;c.xb=x;if(since>=burn)c.lit=false;}
+// The Wiebe burn, shared: from the spark, release the fresh trapped charge's fuel heat along 1 - exp(-5 x^3),
+// consuming fresh air as it burns. Trigger window scales with crank step so high RPM (>5000) never skips a
+// firing. High residual dilution (overlap reversion at idle vacuum) introduces cycle-to-cycle burn scatter
+// (Heywood §9.4: above ~20% residual, flame speed drops and CoV rises), producing natural cam lope.
+function gasBurn(c,since,burn,fuel,lambda,trig,stoich,lhv){
+  if(!c.lit&&since<trig&&fuel>0){
+    const fr=gclamp(c.cy.fr,0,1),res=1-fr;
+    let varMul=1;
+    if(res>0.2){
+      const cov=gclamp((res-0.2)*2.2,0,0.65);
+      varMul=gclamp(1+(Math.random()*2-1)*cov-(res>0.35?(res-0.35)*0.8:0),0.15,1.25);
+    }
+    const airEff=Math.min(1,1/Math.max(0.5,lambda));
+    c.q=c.cy.n*fr*AIR_M/(stoich*Math.max(1,lambda))*lhv*GAS_HEAT_SHARE*fuel*varMul;
+    c.frDrop=fr*airEff*fuel;
+    c.lit=true;c.xb=0;
+  }
+  if(c.lit){
+    const x=1-Math.exp(-5*Math.pow(Math.min(1,since/burn),3)),dx=x-c.xb;
+    c.cy.E+=dx*c.q;
+    c.cy.fr=Math.max(0,c.cy.fr-dx*c.frDrop);
+    c.xb=x;
+    if(since>=burn)c.lit=false;
+  }
 }
 // An orifice's flow constant from its area: engine-sim's k is Cd A / sqrt(molar mass) (its molar flow law
 // leaves the molar mass out), which puts the 2JZ bench's 281 cfm at 13 cm2 of effective area.
 const kArea=(cd,a)=>cd*a/Math.sqrt(AIR_M);
+class GasEngine{
+  constructor(e,simHz,fluid){
+    this.e=e;this.simHz=simHz;this.fluid=fluid;
+    const PI=Math.PI,A=PI/4*e.bore*e.bore,Vd=A*e.stroke,T0=298.15;
+    this.A=A;this.Vd=Vd;this.Vc=Vd/(e.cr-1);this.r=e.stroke/2;this.L=3.2*this.r;
+    const exD=e.evDia||0.84*e.ivDia,evCount=e.evCount||e.ivCount;
+    this.inScale=e.ivCount*e.ivDia*e.ivDia/(2*0.0345*0.0345);this.inLift=0.0345/e.ivDia;
+    this.exScale=evCount*exD*exD/(2*0.029*0.029);this.exLift=0.029/exD;
+    this.exA=PI/4*e.primD*e.primD;this.inA=PI/4*e.runnerD*e.runnerD;
+    gasCollectors(this,e);
+    this.cyl=[];
+    for(let i=0;i<e.cylinders;i++){
+      const ev=e.events[i],cy=new Gas(ATM,this.Vc,T0,1);cy.geo(Math.sqrt(A),this.Vc/A);
+      const ir=new Gas(ATM,this.inA*e.runnerL,T0,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
+      this.cyl.push(Object.assign(run,{cy,ir,phase:ev.at*720,lit:false,q:0,xb:0,frDrop:0,kIn:0,kEx:0,
+        kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)}));
+    }
+    this.theta=0;
+  }
+  vol(th){const a=th*Math.PI/180,s=Math.sin(a);return this.Vc+this.A*(this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s));}
+  lift(th,open,dur,L){const d=((th-open)%720+720)%720;if(d>=dur)return 0;const s=Math.sin(Math.PI*d/dur);return L*s*s;}
+  // one step at {rpm, map Pa, fuel 0-1, lambda, spark deg BTDC, burn deg, camAdv deg}
+  step(rpm,map,fuel,lambda,spark,burn,camAdv=0){
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    this.theta=(this.theta+dTh)%720;
+    const evc=360+e.overlap/2-camAdv,evo=evc-e.camDur,ivo=360-e.overlap/2-camAdv,sparkAt=720-spark;
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.plenum.reset(map,300,1);
+    for(const c of this.cyl){
+      const th=(this.theta-c.phase+720)%720;
+      c.cy.setV(this.vol(th));
+      c.kIn=K28*bench(IN_CFM,this.lift(th,ivo,e.camDur,e.ivLift)/2.54e-5*this.inLift)*this.inScale;
+      c.kEx=K28*bench(EX_CFM,this.lift(th,evo,e.camDur,e.ivLift)/2.54e-5*this.exLift)*this.exScale;
+      gasBurn(c,((th-sparkAt)%720+720)%720,burn,fuel,lambda,trig,stoich,lhv);
+    }
+    for(let k=0;k<this.fluid;k++){
+      gasVentCollectors(this,df);
+      for(const c of this.cyl){
+        const h=c.cy.V/this.A,sa=h*PI*e.bore+this.A*2;
+        c.cy.E+=(363.15-c.cy.T())*sa*100*df;if(c.cy.E<0)c.cy.E=0;
+        Gas.flow(c.kRun,df,10,this.inA,this.plenum,c.ir);c.ir.dissipate();
+        if(c.kIn){Gas.flow(c.kIn,df,this.inA,this.A,c.ir,c.cy);c.ir.dissipate();c.cy.dissipate();}
+        if(c.kEx){Gas.flow(c.kEx,df,this.A,this.exA,c.cy,c.xr);c.cy.dissipate();c.xr.dissipate();}
+        const b=this.banks[c.bank];Gas.flow(c.kPrim,df,this.exA,b.colA,c.xr,b.col);
+        c.ir.vel(df,0.25);c.cy.vel(df,0.5);c.xr.vel(df,1);
+      }
+    }
+    return gasPickOff(this,this.cyl);
+  }
+}
 // THE TWO-STROKE. A piston-ported cylinder on a 360 deg cycle, scavenged by its own crankcase: the piston's
 // underside pumps it (crankcase compression 1.35, typical), a reed valve lets charge in from the runner
 // only while the runner is above the crankcase, the transfer ports carry it up into the cylinder, and the
@@ -18584,25 +18593,26 @@ class TwoStrokeGas{
     gasCollectors(this,e);
     this.cyl=[];
     for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],cy=new Gas(ATM,this.Vc,298.15);cy.geo(Math.sqrt(A),this.Vc/A);
-      const cc=new Gas(ATM,this.ccMin+Vd,298.15);cc.geo(Math.sqrt(A),(this.ccMin+Vd)/A);
-      const ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
-      this.cyl.push(Object.assign(run,{cy,cc,ir,phase:ev.at*360,lit:false,q:0,xb:0,
+      const ev=e.events[i],cy=new Gas(ATM,this.Vc,298.15,1);cy.geo(Math.sqrt(A),this.Vc/A);
+      const cc=new Gas(ATM,this.ccMin+Vd,298.15,1);cc.geo(Math.sqrt(A),(this.ccMin+Vd)/A);
+      const ir=new Gas(ATM,this.inA*e.runnerL,298.15,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
+      this.cyl.push(Object.assign(run,{cy,cc,ir,phase:ev.at*360,lit:false,q:0,xb:0,frDrop:0,
         kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)}));
     }
     this.theta=0;
   }
   pos(th){const a=th*Math.PI/180,s=Math.sin(a);return this.r*(1-Math.cos(a))+this.L-Math.sqrt(this.L*this.L-this.r*this.r*s*s);}
   step(rpm,map,fuel,lambda,spark,burn){
-    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI;
-    this.theta=(this.theta+rpm*6*dt)%360;
-    this.plenum.reset(map,300);
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,PI=Math.PI,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.theta=(this.theta+dTh)%360;
+    this.plenum.reset(map,300,1);
     for(const c of this.cyl){
       const th=(this.theta-c.phase+360)%360,x=this.pos(th);
       c.cy.setV(this.Vc+this.A*x);c.cc.setV(this.ccMin+this.A*(2*this.r-x));
       c.kEx=kArea(0.65,this.wEx*Math.max(0,x-this.xEx));c.kTr=kArea(0.65,this.wTr*Math.max(0,x-this.xTr));
-      gasBurn(c,((th-(360-spark))%360+360)%360,burn,fuel,lambda);
+      gasBurn(c,((th-(360-spark))%360+360)%360,burn,fuel,lambda,trig,stoich,lhv);
     }
     for(let k=0;k<this.fluid;k++){
       gasVentCollectors(this,df);
@@ -18639,12 +18649,12 @@ class RotaryGas{
     gasCollectors(this,e);
     this.rotors=[];this.cyl=[];
     for(let i=0;i<e.cylinders;i++){
-      const ev=e.events[i],ir=new Gas(ATM,this.inA*e.runnerL,298.15);ir.geo(e.runnerL,Math.sqrt(this.inA));
-      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders);run.bank=ev.bank;
+      const ev=e.events[i],ir=new Gas(ATM,this.inA*e.runnerL,298.15,1);ir.geo(e.runnerL,Math.sqrt(this.inA));
+      const run=gasRunner(e,this.exA,Vd,simHz,e.cylinders,i);run.bank=ev.bank;
       const rot=Object.assign(run,{ir,ch:[],kRun:KCARB*200*Vd/0.5e-3,kPrim:KCARB*400*this.exA/(PI/4*0.0381*0.0381)});
       for(let j=0;j<3;j++){
-        const cy=new Gas(ATM,this.Vmin,298.15);cy.geo(B,Math.sqrt(3)*R);
-        const c={cy,phase:ev.at*360+j*360,lit:false,q:0,xb:0,kIn:0,kEx:0};
+        const cy=new Gas(ATM,this.Vmin,298.15,1);cy.geo(B,Math.sqrt(3)*R);
+        const c={cy,phase:ev.at*360+j*360,lit:false,q:0,xb:0,frDrop:0,kIn:0,kEx:0};
         rot.ch.push(c);this.cyl.push(c);
       }
       this.rotors.push(rot);
@@ -18658,14 +18668,15 @@ class RotaryGas{
     if(d>=len)return 0;return Math.min(1,d/40,(len-d)/40);
   }
   step(rpm,map,fuel,lambda,spark,burn){
-    const dt=1/this.simHz,df=dt/this.fluid;
-    this.theta=(this.theta+rpm*6*dt)%1080;
-    this.plenum.reset(map,300);
+    const e=this.e,dt=1/this.simHz,df=dt/this.fluid,dTh=rpm*6*dt,trig=Math.max(3,dTh+0.5);
+    const stoich=e.stoich||14.7,lhv=e.lhv||43e6;
+    this.theta=(this.theta+dTh)%1080;
+    this.plenum.reset(map,300,1);
     for(const c of this.cyl){
       const ph=(this.theta-c.phase+2160)%1080;
       c.cy.setV(this.vol(ph));
       c.kEx=kArea(0.7,this.aEx*this.port(ph,735,48));c.kIn=kArea(0.7,this.aIn*this.port(ph,32,320));
-      gasBurn(c,((ph-(540-spark))%1080+1080)%1080,burn,fuel,lambda);
+      gasBurn(c,((ph-(540-spark))%1080+1080)%1080,burn,fuel,lambda,trig,stoich,lhv);
     }
     for(let k=0;k<this.fluid;k++){
       gasVentCollectors(this,df);
@@ -18687,24 +18698,28 @@ class RotaryGas{
 function makeGasEngine(e,simHz,fluid){
   return e.kind==='rotary'?new RotaryGas(e,simHz,fluid):e.kind==='two'?new TwoStrokeGas(e,simHz,fluid):new GasEngine(e,simHz,fluid);
 }
-// engine-sim's Synthesizer input stage, per channel: 1.9 kHz 4th-order Butterworth, a jitter of up to 10
-// samples, a 10 Hz DC removal, 1% of the derivative, and the signal times 2 kHz low-passed noise
+// Synthesizer input stage, per channel: 1.9 kHz 4th-order Butterworth, a jitter of up to 10 samples,
+// 10 Hz DC removal, tonal pressure body with modest sample-rate-normalised turbulent air noise, plus a
+// crossover-normalised derivative (tailpipe monopole radiation) for crisp top-end bark without stripping bass.
 function lp2(f,q){const w=2*Math.PI*f/sampleRate,al=Math.sin(w)/(2*q),c=Math.cos(w),a0=1+al;
   return {b0:(1-c)/2/a0,b1:(1-c)/a0,a1:-2*c/a0,a2:(1-al)/a0,x1:0,x2:0,y1:0,y2:0};}
 function lpRun(f,x){const y=f.b0*x+f.b1*f.x1+f.b0*f.x2-f.a1*f.y1-f.a2*f.y2;f.x2=f.x1;f.x1=x;f.y2=f.y1;f.y1=y;return y;}
 class GasChannel{
   constructor(){this.aa=[lp2(1900,0.5412),lp2(1900,1.3066)];this.air=[lp2(2000,0.5412),lp2(2000,1.3066)];
     this.jit=[lp2(10000,0.5412),lp2(10000,1.3066)];this.hist=new Float32Array(10);this.hi=0;this.dc=0;this.prev=0;
-    this.dcA=1-Math.exp(-2*Math.PI*10/sampleRate);}
+    this.dcA=1-Math.exp(-2*Math.PI*10/sampleRate);
+    this.derivNorm=sampleRate/(2*Math.PI*400);
+    this.airNorm=Math.sqrt(sampleRate/4000);}
   run(x,jitter){
     const s=lpRun(this.aa[1],lpRun(this.aa[0],x));
     this.hist[this.hi]=s;this.hi=(this.hi+1)%10;
     const j=gclamp(lpRun(this.jit[1],lpRun(this.jit[0],Math.random()*9*jitter)),0,9),j0=Math.floor(j),j1=Math.ceil(j),jf=j-j0;
     const fin=this.hist[(this.hi+j1)%10]*jf+this.hist[(this.hi+j0)%10]*(1-jf);
     this.dc+=this.dcA*(fin-this.dc);
-    const fp=(fin-this.prev)*sampleRate;this.prev=fin;
-    const r=lpRun(this.air[1],lpRun(this.air[0],2*Math.random()-1));
-    return fp*0.01+(fin-this.dc)*r*0.99;
+    const ac=fin-this.dc;
+    const fp=(fin-this.prev)*this.derivNorm;this.prev=fin;
+    const r=lpRun(this.air[1],lpRun(this.air[0],2*Math.random()-1))*this.airNorm;
+    return ac*(1+0.18*r)+0.35*fp;
   }
 }
 class EngineGas extends AudioWorkletProcessor{
@@ -18715,34 +18730,37 @@ class EngineGas extends AudioWorkletProcessor{
     {name:'lambda',defaultValue:1,minValue:0.6,maxValue:6,automationRate:'k-rate'},
     {name:'spark',defaultValue:20,minValue:-20,maxValue:60,automationRate:'k-rate'},
     {name:'burn',defaultValue:60,minValue:20,maxValue:120,automationRate:'k-rate'},
+    {name:'camAdv',defaultValue:0,minValue:-30,maxValue:40,automationRate:'k-rate'},
     {name:'level',defaultValue:0,minValue:0,maxValue:4,automationRate:'k-rate'},
     {name:'floor',defaultValue:1,minValue:1e-9,maxValue:1e12,automationRate:'k-rate'}];}
   constructor(){super();this.eng=null;this.port.onmessage=e=>this.configure(e.data);}
   configure(e){
     this.simHz=10000;this.eng=makeGasEngine(e,this.simHz,4);this.acc=0;
+    this.firePerRev=e.kind==='four'?e.cylinders/2:e.cylinders;
     this.prev=new Float64Array(e.banks);this.cur=new Float64Array(e.banks);
     this.ch=Array.from({length:e.banks},()=>new GasChannel());
     this.pan=e.banks===1?[[0.7071,0.7071]]:[[0.85,0.45],[0.45,0.85]];
-    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));this.rel=1-Math.exp(-1/(0.06*sampleRate));
+    this.ms=0;this.att=1-Math.exp(-1/(0.02*sampleRate));
   }
   process(inputs,outputs,params){
     const out=outputs[0],L=out[0],R=out[1]||out[0];
     if(!this.eng){L.fill(0);if(R!==L)R.fill(0);return true;}
-    const rpm=params.rpm[0],map=params.map[0],fuel=params.fuel[0],lam=params.lambda[0],spark=params.spark[0],burn=params.burn[0],level=params.level[0],floor=params.floor[0];
+    const rpm=params.rpm[0],map=params.map[0],fuel=params.fuel[0],lam=params.lambda[0],spark=params.spark[0],burn=params.burn[0],camAdv=params.camAdv[0],level=params.level[0],floor=params.floor[0];
     const inc=this.simHz/sampleRate,nb=this.cur.length;
+    const fireHz=Math.max(1,(rpm/60)*this.firePerRev);
+    const rel=1-Math.exp(-1/(Math.max(0.06,2/fireHz)*sampleRate));
     for(let i=0;i<L.length;i++){
       this.acc+=inc;
-      while(this.acc>=1){this.acc-=1;this.prev.set(this.cur);this.cur.set(this.eng.step(rpm,map,fuel,lam,spark,burn));}
+      while(this.acc>=1){this.acc-=1;this.prev.set(this.cur);this.cur.set(this.eng.step(rpm,map,fuel,lam,spark,burn,camAdv));}
       let l=0,r=0;
       for(let b=0;b<nb;b++){
         const x=this.prev[b]+(this.cur[b]-this.prev[b])*this.acc,y=this.ch[b].run(x,0.23);
         l+=y*this.pan[b][0];r+=y*this.pan[b][1];
       }
-      // levelled, as engine-sim levels its output: the gas model gives the timbre, the main thread the
-      // loudness. Quick to come down on a rising signal (20 ms), and back up in 60 ms (0.3 s left a hole after
-      // every lift: the signal falls at once and the gain took a third of a second to follow), and never
-      // lifting a signal that has fallen under the floor.
-      const pw=(l*l+r*r)/2;this.ms+=(pw>this.ms?this.att:this.rel)*(pw-this.ms);
+      // levelled, as engine-sim levels its output: quick to come down on a rising signal (20 ms), release
+      // at least 2 firing periods (min 60 ms) so low idle does not pump between individual cylinder pulses,
+      // and never lifting a signal that has fallen under the floor.
+      const pw=(l*l+r*r)/2;this.ms+=(pw>this.ms?this.att:rel)*(pw-this.ms);
       const g=level/Math.max(Math.sqrt(this.ms),floor);
       L[i]=l*g;if(R!==L)R[i]=r*g;
     }
@@ -19330,12 +19348,13 @@ function initMotorChain(){
 }
 // The worklet is inline, so the app stays one file. A blob: URL is refused from a file:// page (its
 // origin is opaque), a data: URL is not, so try the one and fall back to the other.
+let soundWorkletUrl='';
 function loadSoundWorklet(ctx){
-  const blob=URL.createObjectURL(new Blob([SOUND_WORKLET_SRC],{type:'application/javascript'}));
-  return ctx.audioWorklet.addModule(blob)
+  if(!soundWorkletUrl)soundWorkletUrl=URL.createObjectURL(new Blob([SOUND_WORKLET_SRC],{type:'application/javascript'}));
+  return ctx.audioWorklet.addModule(soundWorkletUrl)
     .catch(()=>ctx.audioWorklet.addModule('data:application/javascript;base64,'+btoa(SOUND_WORKLET_SRC)));
 }
-const Sound={ctx:null,node:null,cfgKey:'',cfg:null,model:'synth',gas:null,gasConv:null,gasLp:null,gasGain:null,gasKey:'',gasIR:'',gasRef:0,gasF:0,gasCalKey:'',hot:0,lastT:0,chargeP:0,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
+const Sound={ctx:null,node:null,cfgKey:'',cfg:null,model:'synth',gas:null,gasConv:null,gasLp:null,gasGain:null,gasEng:null,gasChain:null,gasKey:'',gasIR:'',gasRef:0,gasF:0,gasCalKey:'',hot:0,lastT:0,chargeP:0,osc:null,sub:null,filter:null,gain:null,lfo:null,lfoGain:null,on:false};
 function initSound(){
   if(Sound.ctx)return;
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -19358,7 +19377,7 @@ function initGasChain(){
   Sound.gasGain=c.createGain();Sound.gasGain.gain.value=1;
   const lim=c.createDynamicsCompressor();lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=12;lim.attack.value=0.003;lim.release.value=0.15;
   Sound.gasLp.connect(Sound.gasGain);Sound.gasGain.connect(lim);lim.connect(c.destination);
-  Sound.gasKey='';Sound.gasIR='';
+  Sound.gasEng=null;Sound.gasChain=null;Sound.gasKey='';Sound.gasIR='';
 }
 // An impulse response as an AudioBuffer at the context's rate (a ConvolverNode needs the two to match).
 function soundIRBuffer(ctx,key){
@@ -19397,9 +19416,14 @@ function soundModelIsGas(){return Sound.model==='gas'&&gasSupported(engine);}
 // The geometry the gas model needs, from the same build the breathing model uses.
 function gasConfig(e){
   const cfg=soundConfig(e);
+  const ivD=e.ivDia_mm||0.45*e.bore_mm,evD=e.evDia_mm||0.84*ivD;
+  const ivC=e.ivCount||2,evC=Math.max(1,(e.valves||4)-ivC);
+  const exhT=exhaustGasT(0.7,0.6*e.redline,0);
   return {cylinders:e.cylinders,bore:e.bore_mm/1000,stroke:e.stroke_mm/1000,cr:e.compression,
-    ivDia:(e.ivDia_mm||0.45*e.bore_mm)/1000,ivCount:e.ivCount||2,ivLift:(e.ivLift_mm||0.25*0.45*e.bore_mm)/1000,
+    ivDia:ivD/1000,evDia:evD/1000,ivCount:ivC,evCount:evC,ivLift:(e.ivLift_mm||0.25*0.45*e.bore_mm)/1000,
     camDur:e.camDur||240,overlap:e.overlap||0,primL:e.primL>0?e.primL:0.55,primD:e.primD||0.4*e.bore_mm/1000,
+    exhSigma:e.exhSigma??0.15,exhC:sonic(0.75*exhT),turbo:e.intake==='turbo',
+    stoich:e.stoichAFR||14.7,lhv:(e.fuelLHV||43)*1e6,
     sysL:e.sysL>0?e.sysL:3,sysD:e.sysD||0.06,sysPipes:e.sysPipes||1,runnerL:e.runnerL||0.4,runnerD:(e.runnerD_mm||0.42*e.bore_mm)/1000,
     events:cfg.events,banks:cfg.banks,kind:gasKind(e),
     // a rotary's geometry: bore_mm holds the generating radius, stroke_mm the rotor width
@@ -19407,10 +19431,11 @@ function gasConfig(e){
     exhDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).exh,trDur:(TWO_STROKE_PORTS[e.cam]||TWO_STROKE_PORTS.stock).tr};
 }
 // How loud this engine's exhaust signal is, flat out at 60% of the redline: 0.3 s of the same gas model on
-// the main thread, once per build. It sets the leveller's floor (engine-sim sets a volume per engine file by
-// hand, and levels its output).
+// the main thread, once per build (cached by config key). Sets the leveller's floor.
 let gasLib=null;
-function gasReference(cfg){
+const gasRefCache=new Map(),gasCalCache=new Map();
+function gasReference(cfg,key){
+  if(key&&gasRefCache.has(key))return gasRefCache.get(key);
   if(!gasLib)gasLib=new Function('AudioWorkletProcessor','registerProcessor','sampleRate',SOUND_GAS_SRC+';return {GasEngine,GasChannel,makeGasEngine};')(class{},()=>{},48000);
   // measured after the audio chain's input stage (band limit, noise modulation), which treats a V8's slow
   // pulses and an I4's quick ones differently: normalising the raw pressure left them 5x apart
@@ -19421,7 +19446,9 @@ function gasReference(cfg){
     for(;acc<1;acc+=10000/48000){let v=0;for(let b=0;b<cfg.banks;b++)v+=ch[b].run(prev[b]+(o[b]-prev[b])*acc,0.23);if(i>=1500){q+=v*v;k++;}}
     acc-=1;prev.set(o);
   }
-  return Math.sqrt(q/k)||1;
+  const res=Math.sqrt(q/k)||1;
+  if(key){if(gasRefCache.size>64)gasRefCache.clear();gasRefCache.set(key,res);}
+  return res;
 }
 // What the build does to the gas model's sound after the worklet: which impulse response, and the silencer,
 // cat and turbine as a low-pass and a level (as exhaustSound's, with the cut it already works out).
@@ -19430,27 +19457,35 @@ function gasChainFor(e){
   return {ir:sk==='race'?'minimal':'mild',lpHz:(GAS_SILENCER_HZ[sk]||GAS_SILENCER_HZ.stock)*cut,gain:x.gain};
 }
 // How much of the worklet's levelled signal the impulse response lets through for this engine: rendered
-// offline at full load through the convolver alone, at six speeds from 20% to 80% of the redline, once per
-// build. What it passes swings about 2.5x with the firing frequency (the recorded pipe's own resonances
-// meeting the firing harmonics: a drone at one rpm, a hole at another), the same for every engine that fires
-// at that rate, so two speeds could both land in a hole; six average it out. The loudness divides by it, so the luck of how an engine's
-// pulse spectrum meets the recording does not move its level; the silencer, cat and turbine (the low-pass and
-// gain after it) are left out of it on purpose, because their quietening is real. Resolves to the output rms
-// per unit of level.
-async function calibrateGas(rate,cfg,chain){
+// offline at full load through the convolver alone, stepping across six speeds from 20% to 80% of the
+// redline in a single OfflineAudioContext (cached per build). The loudness divides by it, so the luck of how
+// an engine's pulse spectrum meets the recording does not move its level; the silencer, cat and turbine (the
+// low-pass and gain after it) are left out of it on purpose, because their quietening is real.
+async function calibrateGas(rate,cfg,chain,cacheKey){
+  if(cacheKey&&gasCalCache.has(cacheKey))return gasCalCache.get(cacheKey);
+  const shares=[0.2,0.32,0.44,0.56,0.68,0.8],stepS=0.28,settleS=0.14;
+  const c=new OfflineAudioContext(2,Math.round(rate*stepS*shares.length),rate);await loadSoundWorklet(c);
+  const n=new AudioWorkletNode(c,'engine-gas',{outputChannelCount:[2]});n.port.postMessage(cfg);
+  const conv=c.createConvolver();conv.buffer=soundIRBuffer(c,chain.ir);
+  n.connect(conv);conv.connect(c.destination);
+  const P=n.parameters;
+  P.get('map').value=101325;P.get('fuel').value=1;P.get('lambda').value=0.9;P.get('level').value=1;P.get('floor').value=1e-9;
+  shares.forEach((rf,idx)=>{
+    const t0=idx*stepS,tm=gasTiming(engine,rf);
+    P.get('rpm').setValueAtTime(rf*engine.redline,t0);
+    P.get('spark').setValueAtTime(tm.spark,t0);
+    P.get('burn').setValueAtTime(tm.burn,t0);
+  });
+  await new Promise(r=>setTimeout(r,20));                // let the configuration land before rendering
+  const b=await c.startRendering(),L=b.getChannelData(0),R=b.getChannelData(1);
   let q=0,k=0;
-  for(const share of [0.2,0.32,0.44,0.56,0.68,0.8]){
-    const c=new OfflineAudioContext(2,Math.round(rate*0.35),rate);await loadSoundWorklet(c);
-    const n=new AudioWorkletNode(c,'engine-gas',{outputChannelCount:[2]});n.port.postMessage(cfg);
-    const conv=c.createConvolver();conv.buffer=soundIRBuffer(c,chain.ir);
-    n.connect(conv);conv.connect(c.destination);
-    const P=n.parameters,rf=share;P.get('rpm').value=share*engine.redline;P.get('map').value=101325;P.get('fuel').value=1;
-    const tm=gasTiming(engine,rf);P.get('lambda').value=0.9;P.get('spark').value=tm.spark;P.get('burn').value=tm.burn;P.get('level').value=1;P.get('floor').value=1e-9;
-    await new Promise(r=>setTimeout(r,20));              // let the configuration land before rendering
-    const b=await c.startRendering(),L=b.getChannelData(0),R=b.getChannelData(1);
-    for(let i=Math.round(rate*0.15);i<L.length;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
+  for(let idx=0;idx<shares.length;idx++){
+    const i0=Math.round((idx*stepS+settleS)*rate),i1=Math.min(L.length,Math.round((idx+1)*stepS*rate));
+    for(let i=i0;i<i1;i++){q+=(L[i]*L[i]+R[i]*R[i])/2;k++;}
   }
-  return Math.sqrt(q/k)||1;
+  const res=Math.sqrt(q/k)||1;
+  if(cacheKey){if(gasCalCache.size>64)gasCalCache.clear();gasCalCache.set(cacheKey,res);}
+  return res;
 }
 function setSoundModel(m){
   Sound.model=m==='gas'?'gas':'synth';
@@ -19529,21 +19564,29 @@ function engineSound(src){
   Sound.lfoGain.gain.setTargetAtTime(depth,t,0.08);
 }
 // The gas model's operating point, from the same state soundDrive reads: the trapped charge (a diesel's is
-// atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, and a spark advance that
-// grows with revs (a diesel's injection near TDC).
+// atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, VVT cam advance, and a
+// spark advance that grows with revs (a diesel's injection near TDC).
 function updateGasSound(live,s,t,size,strength){
   const e=engine,g=Sound.gas.parameters;
   if(live){
-    const key=gasConfig(e),k=JSON.stringify(key),chain=gasChainFor(e),ck=k+JSON.stringify(chain);
-    if(k!==Sound.gasKey){Sound.gasKey=k;Sound.gasRef=gasReference(key);Sound.gas.port.postMessage(key);}
-    if(ck!==Sound.gasCalKey){
-      Sound.gasCalKey=ck;Sound.gasF=0;                    // muted until this build's chain is measured
-      calibrateGas(Sound.ctx.sampleRate,key,chain).then(f=>{if(Sound.gasCalKey===ck)Sound.gasF=f;}).catch(()=>{if(Sound.gasCalKey===ck)Sound.gasF=1;});
+    if(e!==Sound.gasEng){
+      Sound.gasEng=e;
+      const key=gasConfig(e),k=JSON.stringify(key),chain=gasChainFor(e),ck=Sound.ctx.sampleRate+'|'+k+'|'+chain.ir;
+      Sound.gasChain=chain;
+      if(k!==Sound.gasKey){Sound.gasKey=k;Sound.gasRef=gasReference(key,k);Sound.gas.port.postMessage(key);}
+      if(ck!==Sound.gasCalKey){
+        Sound.gasCalKey=ck;
+        if(gasCalCache.has(ck)){Sound.gasF=gasCalCache.get(ck);}
+        else{
+          if(!Sound.gasF)Sound.gasF=0.25;                // keep playing with a safe estimate while calibrating
+          calibrateGas(Sound.ctx.sampleRate,key,chain,ck).then(f=>{if(Sound.gasCalKey===ck)Sound.gasF=f;}).catch(()=>{if(Sound.gasCalKey===ck)Sound.gasF=1;});
+        }
+      }
+      setGasIR(chain.ir);
+      // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
+      Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
+      Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
     }
-    setGasIR(chain.ir);
-    // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
-    Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
-    Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
     const rf=clamp(s.rpm/Math.max(1,e.redline),0,1);
     g.get('rpm').setTargetAtTime(s.rpm,t,0.05);
     g.get('map').setTargetAtTime(101325*(e.ci?1+Math.max(0,s.boostActual||0):Math.max(0.1,s.map)),t,0.03);
@@ -19552,6 +19595,7 @@ function updateGasSound(live,s,t,size,strength){
     const tm=gasTiming(e,rf);
     g.get('spark').setTargetAtTime(tm.spark,t,0.1);
     g.get('burn').setTargetAtTime(tm.burn,t,0.1);
+    g.get('camAdv').setTargetAtTime(typeof camAdvAt==='function'?camAdvAt(s.rpm):0,t,0.08);
   }
   // The worklet levels the gas model's own swings away (it is ~300x quieter at idle than flat out, and not
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's

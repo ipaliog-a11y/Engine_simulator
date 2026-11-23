@@ -14,7 +14,10 @@
 //      strength at 0.014 and both models fell 31-35 dB within a few tenths of a second, though the
 //      cylinders still pump air down the pipe. Rendered through the real chains, the overrun stays within
 //      25 dB of the pull and fades as the revs fall.
-//   4. through the real chain, flat out is louder than idle, and neither is silent or clipping.
+//   4. through the real chain, flat out is louder than idle, and neither is silent or clipping;
+//   7. high-RPM ignition (>5000 rpm) never skips firings, wild overlap lowers idle fresh-charge fraction,
+//      unequal-length headers spread primary delays at hot exhaust sound speed, GasChannel is sample-rate
+//      invariant, and calibration results are cached.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -189,6 +192,52 @@ for (const [m, r] of [['synth', lift.synth], ['gas', lift.gas]]) {
   if (!(r.early > -25)) fails.push(`${m}: the sound cuts out on a lift (${r.early.toFixed(0)} dB against the pull)`);
   if (!(r.late < r.early + 3)) fails.push(`${m}: the overrun does not fade as the revs fall`);
 }
+
+// ---- 7. high-RPM ignition, fresh-charge reversion, UEL/hot-c delays, DSP rate invariance & caching ----
+const imp = await page.evaluate(async () => {
+  const mkLib = sr => new Function('AudioWorkletProcessor', 'registerProcessor', 'sampleRate', SOUND_GAS_SRC + ';return {GasEngine,GasChannel,makeGasEngine};')(class {}, () => {}, sr);
+  const lib48 = mkLib(48000), lib44 = mkLib(44100);
+  // a) high-RPM ignition (>5000 rpm): 12000 rpm I4 must fire every single cycle (200 cycles in 1.0 s -> 50 per cyl)
+  applyEngineToForm(Object.assign({}, DEFAULT_ENGINE)); buildEngine();
+  const cfg = gasConfig(engine), simHi = new lib48.GasEngine(cfg, 10000, 4);
+  let fires = 0, wasLit = false;
+  for (let i = 0; i < 10000; i++) {
+    simHi.step(12000, 101325, 1, 0.9, 28, 65, 0);
+    const lit = simHi.cyl[0].lit; if (lit && !wasLit) fires++; wasLit = lit;
+  }
+  // b) fresh-charge reversion: wild overlap at idle vacuum lowers fresh fraction vs WOT
+  const wild = Object.assign({}, cfg, { overlap: 65, camDur: 280 });
+  const simW = new lib48.GasEngine(wild, 10000, 4);
+  for (let i = 0; i < 6000; i++) simW.step(900, 32000, 1, 1.0, 15, 55, 0);
+  const frIdle = simW.cyl.reduce((a, c) => a + c.cy.fr, 0) / simW.cyl.length;
+  for (let i = 0; i < 6000; i++) simW.step(4000, 101325, 1, 0.9, 25, 60, 0);
+  const frWot = simW.cyl.reduce((a, c) => a + c.cy.fr, 0) / simW.cyl.length;
+  // c) UEL primary spread (exhSigma) and hot exhaust speed of sound
+  const uel = Object.assign({}, cfg, { exhSigma: 0.35 }), simU = new lib48.GasEngine(uel, 10000, 4);
+  const delays = simU.cyl.map(c => c.delay.length);
+  // d) GasChannel sample-rate invariance (44.1 vs 48 kHz on a 120 Hz tone)
+  const toneRms = (lib, sr) => {
+    const ch = new lib.GasChannel(); let q = 0, n = 0;
+    for (let i = 0; i < sr * 0.4; i++) {
+      const y = ch.run(Math.sin(2 * Math.PI * 120 * i / sr), 0.23);
+      if (i >= sr * 0.2) { q += y * y; n++; }
+    }
+    return Math.sqrt(q / n);
+  };
+  const r48 = toneRms(lib48, 48000), r44 = toneRms(lib44, 44100);
+  // e) calibrateGas cache hit is fast (<5 ms)
+  const ch = gasChainFor(engine), ck = '48000|' + JSON.stringify(cfg) + '|' + ch.ir;
+  const f1 = await calibrateGas(48000, cfg, ch, ck);
+  const t0 = performance.now(), f2 = await calibrateGas(48000, cfg, ch, ck), dtCache = performance.now() - t0;
+  return { fires, frIdle, frWot, exhC: cfg.exhC, minDelay: Math.min(...delays), maxDelay: Math.max(...delays), r48, r44, f1, f2, dtCache };
+});
+console.log(`== improvements: 12000 rpm fires ${imp.fires}/100 · fresh frac idle ${imp.frIdle.toFixed(2)} vs WOT ${imp.frWot.toFixed(2)} · exhC ${imp.exhC.toFixed(0)} m/s, UEL delays ${imp.minDelay}-${imp.maxDelay} · DSP 44.1/48k ratio ${(imp.r44 / imp.r48).toFixed(3)} · cal cache ${imp.dtCache.toFixed(1)} ms ==`);
+if (!(imp.fires >= 98 && imp.fires <= 102)) fails.push(`12000 rpm skipped ignitions (${imp.fires} fires in 1 s, expected ~100)`);
+if (!(imp.frIdle < imp.frWot - 0.1)) fails.push(`wild cam idle fresh fraction (${imp.frIdle.toFixed(2)}) is not noticeably below WOT (${imp.frWot.toFixed(2)})`);
+if (!(imp.exhC > 450 && imp.exhC < 750)) fails.push(`exhaust sound speed ${imp.exhC.toFixed(0)} m/s is not hot exhaust gas`);
+if (!(imp.maxDelay > imp.minDelay)) fails.push(`UEL exhSigma did not spread primary delays (${imp.minDelay}-${imp.maxDelay})`);
+if (!(Math.abs(imp.r44 / imp.r48 - 1) < 0.08)) fails.push(`GasChannel is sample-rate dependent (44.1/48k ratio ${(imp.r44 / imp.r48).toFixed(3)})`);
+if (!(imp.f1 === imp.f2 && imp.dtCache < 10)) fails.push(`calibrateGas cache miss or slow (${imp.dtCache.toFixed(1)} ms)`);
 
 await page.evaluate(() => { try { localStorage.removeItem('pes.soundModel'); } catch (e) {} });
 await browser.close();
