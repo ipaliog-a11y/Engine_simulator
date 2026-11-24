@@ -628,9 +628,9 @@ function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicl
 // sg: the tyres' load swing on the road (N, build 216): each tyre keeps roadGrip of its force, the lightly loaded inside one
 // the least of it.
 function axleLatCap(Nax,d,FzRef,sg){
-  const F=Nax/2,o=Math.max(0,F+d),inr=Math.max(0,F-d);
-  if(!(sg>0))return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
-  return tyreMu(o,FzRef)*o*roadGrip(sg/Math.max(1,o))+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
+  const N=Math.max(0,Nax),F=N/2,o=clamp(F+d,0,N),inr=clamp(F-d,0,N);
+  if(!(sg>0))return (o>0?tyreMu(o,FzRef)*o:0)+(inr>0?tyreMu(inr,FzRef)*inr:0);
+  return (o>0?tyreMu(o,FzRef)*o*roadGrip(sg/o):0)+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
 }
 // v: the speed, for the road's bumps (build 216); none on a smooth test surface. q: the line point, for the kerbs under the
 // wheels (build 217): the car's warp q.kw (rad) and its rate along the line q.kws (rad/m) twist it through the springs,

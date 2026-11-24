@@ -395,6 +395,10 @@ function simulateLapCore(key,opts){
   const VMAX=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   // Each step of the solver is a function of one point of the line (q), so the racing-line optimiser
   // can re-solve a stretch of a candidate line with exactly this physics (build 115).
+  // Physical vertical-load ceiling from the four tyres' ETRTO load rating (tyreRatedKg, build 445+): once aero downforce
+  // saturates tyre load capacity, lateral force is bounded by muLat * Nmax so extreme-aero cars do not jump to VMAX in corners.
+  const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
+  const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
   function ceilAt(q){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
@@ -410,9 +414,10 @@ function simulateLapCore(key,opts){
       const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
       const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*q.cosT+extra;
-      vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
+      const vCap=Math.min(VMAX,Math.sqrt(Math.max(0,muLat*Nmax*q.r/m)));
+      vv=denom>1e-6?Math.min(vCap,Math.sqrt(Math.max(0,num/denom))):vCap;
     }
-    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv,q);
+    muLat=muLatAt(Math.min(Nmax,loadAt(q,vv)),vv*vv/q.r,vv,q);
     }
     return vv;
   }

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 445</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 446</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -9796,9 +9796,9 @@ function latCamberF(ay,camber,recov){return 1-CAMBER_LOSS*Math.abs(camber+vehicl
 // sg: the tyres' load swing on the road (N, build 216): each tyre keeps roadGrip of its force, the lightly loaded inside one
 // the least of it.
 function axleLatCap(Nax,d,FzRef,sg){
-  const F=Nax/2,o=Math.max(0,F+d),inr=Math.max(0,F-d);
-  if(!(sg>0))return tyreMu(o,FzRef)*o+(inr>0?tyreMu(inr,FzRef)*inr:0);
-  return tyreMu(o,FzRef)*o*roadGrip(sg/Math.max(1,o))+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
+  const N=Math.max(0,Nax),F=N/2,o=clamp(F+d,0,N),inr=clamp(F-d,0,N);
+  if(!(sg>0))return (o>0?tyreMu(o,FzRef)*o:0)+(inr>0?tyreMu(inr,FzRef)*inr:0);
+  return (o>0?tyreMu(o,FzRef)*o*roadGrip(sg/o):0)+(inr>0?tyreMu(inr,FzRef)*inr*roadGrip(sg/inr):0);
 }
 // v: the speed, for the road's bumps (build 216); none on a smooth test surface. q: the line point, for the kerbs under the
 // wheels (build 217): the car's warp q.kw (rad) and its rate along the line q.kws (rad/m) twist it through the springs,
@@ -14596,8 +14596,7 @@ function buildVehicle(){
    if(!SUSP_GEO[vehicle.suspRear])vehicle.suspRear=fg.r;
    const gF=SUSP_GEO[vehicle.suspFront],gR=SUSP_GEO[vehicle.suspRear];
    vehicle.camRecF=geoRecovery(gF,vehicle.trackF);vehicle.camRecR=geoRecovery(gR,vehicle.trackR);
-   vehicle.camberF=vehicle.suspFront==='solid'?0:susp.camber;vehicle.camberR=vehicle.suspRear==='solid'?0:susp.camber;
-   vehicle.rcF=gF.rc!=null?gF.rc:vehicle.rTire;vehicle.rcR=gR.rc!=null?gR.rc:vehicle.rTire;}
+   vehicle.camberF=vehicle.suspFront==='solid'?0:susp.camber;vehicle.camberR=vehicle.suspRear==='solid'?0:susp.camber;}
   // The headline mu (summary, g-meter): the tyre's, at the car's own weight shared over four tyres.
   vehicle.mu=tyreMu(vehicle.mass*G/4);
   // The weight split moves with an engine swap, by the difference in engine mass at the engine's
@@ -14647,7 +14646,12 @@ function buildVehicle(){
   // move it back (oversteer). With both roll centres on the ground this is build 157's split.
   // The body rolls about the roll axis by its roll moment m ay (h - z_axis) over the two axles' stiffness together
   // (build 174; until then each kit rolled a fixed deg/g whatever the car): a tall car on a narrow track rolls more.
-  {const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx),K=rollStiffness(vehicle);
+  // Solid-axle roll centre sits at the lateral locating link (Panhard rod / Watts linkage): axle-centre height (rTire)
+  // on stock-height chassis, or under-slung below the axle/CG on low-CG builds (Milliken & Milliken, RCVD ch. 17) so
+  // the roll moment arm (cg - zAx) stays positive and roll gradient remains non-zero.
+  {const gF=SUSP_GEO[vehicle.suspFront],gR=SUSP_GEO[vehicle.suspRear],solidRc=Math.min(vehicle.rTire,vehicle.cg*0.75);
+   vehicle.rcF=gF.rc!=null?gF.rc:solidRc;vehicle.rcR=gR.rc!=null?gR.rc:solidRc;
+   const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx),K=rollStiffness(vehicle);
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
    vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
@@ -14735,8 +14739,8 @@ function simulateBraking(v0,T0){
   const aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,abs=!(vehicle.aids&&vehicle.aids.abs===false);
   const valve=abs?null:brakeValveRear(fWt,hL);
   // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
-  const grip=(a,dn)=>{const Nf=m*G*fWt+dn*aeroF+m*a*hL,Nr=m*G+dn-Nf;
-    return [tyreMuX(Math.max(1,Nf)/2,vehicle.FzRefF)*Math.max(0,Nf),tyreMuX(Math.max(1,Nr)/2)*Math.max(0,Nr)];};
+  const grip=(a,dn)=>{const W=m*G+dn,Nf=clamp(m*G*fWt+dn*aeroF+m*a*hL,0,W),Nr=W-Nf;
+    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*Nf:0,Nr>0?tyreMuX(Nr/2)*Nr:0];};
   while(v>0.15&&t<25){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
@@ -14994,8 +14998,8 @@ function simulateAccelRun(){
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
     let drivenN;
     if(vehicle.drive==='awd')drivenN=Wtot;
-    else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer);
-    else drivenN=m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer);
+    else if(vehicle.drive==='rwd')drivenN=clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot);
+    else drivenN=clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
     if(shiftT>0)shiftT-=dt;
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
@@ -16804,6 +16808,10 @@ function simulateLapCore(key,opts){
   const VMAX=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   // Each step of the solver is a function of one point of the line (q), so the racing-line optimiser
   // can re-solve a stretch of a candidate line with exactly this physics (build 115).
+  // Physical vertical-load ceiling from the four tyres' ETRTO load rating (tyreRatedKg, build 445+): once aero downforce
+  // saturates tyre load capacity, lateral force is bounded by muLat * Nmax so extreme-aero cars do not jump to VMAX in corners.
+  const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
+  const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
   function ceilAt(q){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
@@ -16819,9 +16827,10 @@ function simulateLapCore(key,opts){
       const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
       const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
       const num=muLat*m*G*q.cosT+extra;
-      vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
+      const vCap=Math.min(VMAX,Math.sqrt(Math.max(0,muLat*Nmax*q.r/m)));
+      vv=denom>1e-6?Math.min(vCap,Math.sqrt(Math.max(0,num/denom))):vCap;
     }
-    muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv,q);
+    muLat=muLatAt(Math.min(Nmax,loadAt(q,vv)),vv*vv/q.r,vv,q);
     }
     return vv;
   }
@@ -34830,6 +34839,8 @@ function ecoMinTime(line,speedCap,eco){
     }
     return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
   }
+  const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
+  const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
   function ceilAt(q){
     let vv=0,muLat=vehicle.mu*dCorner;
     for(let outer=0;outer<3;outer++){
@@ -34838,9 +34849,10 @@ function ecoMinTime(line,speedCap,eco){
         const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
         const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
         const num=muLat*m*G*q.cosT+extra;
-        vv=denom>1e-6?Math.min(VMAX,Math.sqrt(Math.max(0,num/denom))):VMAX;
+        const vCap=Math.min(VMAX,Math.sqrt(Math.max(0,muLat*Nmax*q.r/m)));
+        vv=denom>1e-6?Math.min(vCap,Math.sqrt(Math.max(0,num/denom))):vCap;
       }
-      muLat=muLatAt(loadAt(q,vv),vv*vv/q.r,vv,q);
+      muLat=muLatAt(Math.min(Nmax,loadAt(q,vv)),vv*vv/q.r,vv,q);
     }
     return vv;
   }
@@ -34852,7 +34864,7 @@ function ecoMinTime(line,speedCap,eco){
       const N=loadAt(q,vi),ay=vi*vi/q.r;
       const B=latBalance(N,ay,down(vi),0,vi,q);
       const u=clamp(ay/Math.max(0.1,B.mu*dCorner*N/m),0,1);
-      const aTyre=B.mu*dCorner*Math.sqrt(Math.max(0,1-u*u))*G*q.cosT;
+      const aTyre=B.mu*TYRE_MU_X*Math.sqrt(Math.max(0,1-u*u))*N/m;
       const aBrake=Math.min(vehicle.brakeDecelCap||12,aTyre)+(drag(vi)+corneringDrag(m,ay,N))/m+G*q.sinT;
       const cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
       const nv=Math.min(vi0,cap);if(Math.abs(nv-vi)<1e-4)break;vi=nv;
@@ -34970,21 +34982,25 @@ function ecoFuelRule(){
     if(rpm>e.redline)continue;
     if(rpm<rpmMin&&g>0)continue;
     const rpmE=Math.max(rpm,rpmMin);out.push({g,tot,rpm,rpmE,w:rpmE*Math.PI/30,Tm:Tmax(rpmE)});}return out;};
-  // {gs (g/s), rpm, g (1-based)} at mean speed vm (m/s) and wheel force F (N); gs is null if no gear can turn at vm.
-  const at=(vm,F,gears)=>{
+  // {gs (g/s), rpm, g (1-based), F} at mean speed vm (m/s) and wheel force F (N); when a and Ie are given,
+  // each candidate gear adds its own reflected rotational inertia Ie*(tot/r)^2*a (as fuel-cycle.js).
+  const at=(vm,F,gears,a,Ie)=>{
     gears=gears||gearsAt(vm);
-    let gs=null,rpm=0,g=0;
+    let gs=null,rpm=0,g=0,Fb=F;
     for(const q of gears){
+      const Fq=a?F+Ie*(q.tot/r)**2*a:F;
       let x;
-      if(F<=0)x=q.rpmE>C.cutRpm&&ovAt(q.rpm)*q.tot/r<=-F?0:M.idleGs;
-      else{const T=F*vm/eff/q.w+C.auxW/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
-      if(gs==null||x<gs){gs=x;rpm=q.rpmE;g=q.g+1;}
+      if(Fq<=0)x=q.rpmE>C.cutRpm&&ovAt(q.rpm)*q.tot/r<=-Fq?0:M.idleGs;
+      else{const T=Fq*vm/eff/q.w+C.auxW/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
+      if(gs==null||x<gs){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
-    if(gs==null&&F>0)for(const q of gears){
-      const T=F*vm/eff/q.w+C.auxW/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
-      if(isFinite(x)&&(gs==null||x<gs)){gs=x;rpm=q.rpmE;g=q.g+1;}
+    if(gs==null)for(const q of gears){
+      const Fq=a?F+Ie*(q.tot/r)**2*a:F;
+      if(!(Fq>0))continue;
+      const T=Fq*vm/eff/q.w+C.auxW/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
+      if(isFinite(x)&&(gs==null||x<gs)){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
-    return{gs,rpm,g};
+    return{gs,rpm,g,F:Fb};
   };
   return{at,gearsAt,ovF:q=>ovAt(q.rpm)*q.tot/r,M,C};
 }
@@ -34992,16 +35008,16 @@ function ecoFuelRule(){
 // stats (build 352), if given, gets the time-weighted mean engine speed while driving (rpm) and the top gear used.
 function ecoFuelKg(line,v,stats){
   if(isElectric())return null;
-  const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,e=engine;
-  const X=ecoFuelRule(),meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(vehicle.ratios[0]*fd/r)**2;
+  const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,e=engine;
+  const X=ecoFuelRule(),mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15;
   let fuel=0,rpmT=0,tDrive=0,topG=0;
   for(let i=0;i<n-1;i++){
     const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
-    const F=meff*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*p[i].cosT+m*G*p[i].sinT;
-    const q=X.at(vm,F),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    const F0=mBase*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*p[i].cosT+m*G*p[i].sinT;
+    const q=X.at(vm,F0,null,a,Ie),gs=q.gs!=null?q.gs:X.M.idleGs*3;
     fuel+=gs*dt;
-    if(F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
+    if(q.F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
   }
   if(stats){stats.rpm=tDrive>0?rpmT/tDrive:0;stats.topGear=topG;}
   return fuel/1000;
@@ -35067,7 +35083,7 @@ function ecoCostTable(nS,dv){
   const e=engine;
   if(isElectric()){   // pack power (W) as ecoEnergyJ: motor, regen up to its table, pack heat, 250 W aux
     const C=EV_CYCLE,m=vehicle.mass+C.massAdd,V=motorRatedV(e),temp=Object.assign({},C.temp),regen=evRegenTable(e,e.redline);
-    const meff=m+(vehicle.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2;
+    const meff=new Float64Array(nJ).fill(m+(vehicle.wheelI||0)/(r*r)+e.motor.J*(fd/r)**2);
     for(let j=1;j<nJ;j++){
       const vm=j*hv,rpm=vm/r*fd*60/(2*Math.PI),w=rpm*Math.PI/30;
       const Treg=rpm>=500?regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]:0;
@@ -35082,9 +35098,12 @@ function ecoCostTable(nS,dv){
     return{tab,Fmax,Fmin,glide,idle,nF,m,meff,ev:true};
   }
   const X=ecoFuelRule(),C=X.C,m=vehicle.mass+C.massAdd;
-  const meff=m+(vehicle.wheelI||0)/(r*r)+(e.inertia||0.15)*(ratios[0]*fd/r)**2;
+  const mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15,meff=new Float64Array(nJ);
+  meff[0]=mBase+Ie*(ratios[0]*fd/r)**2;
   for(let j=1;j<nJ;j++){
     const vm=j*hv,gears=X.gearsAt(vm);let fx=-1;
+    const tot=gears.length?gears[gears.length-1].tot:ratios[ratios.length-1]*fd;
+    meff[j]=mBase+Ie*(tot/r)**2;
     for(const q of gears)fx=Math.max(fx,(q.Tm*q.w-C.auxW)*eff/vm);   // full load (the reserve is priced, not a wall)
     Fmax[j]=gears.length?fx:-1;
     for(let q=0;q<nF;q++){const z=X.at(vm,Math.max(0,fx)*q/(nF-1),gears);tab[j*nF+q]=z.gs!=null?z.gs:X.M.idleGs*3;}
@@ -35124,7 +35143,7 @@ function ecoDP(line,env,target){
         const ci=cost[i];if(ci===Infinity)continue;
         const vi=i*dv,kLo=Math.ceil(Math.sqrt(Math.max(0,vi*vi-2*aB*l))/dv-1e-9);
         for(let k=Math.max(kLo,i===0?1:0);k<=c1;k++){
-          const j=i+k,vm=j*dv/2,vk=k*dv,F=meff*(vk*vk-vi*vi)/(2*l)+aero[j]+roll[j]*cA+g;
+          const j=i+k,vm=j*dv/2,vk=k*dv,F=meff[j]*(vk*vk-vi*vi)/(2*l)+aero[j]+roll[j]*cA+g;
           if(F>T.Fmax[j])break;
           const c=ci+(rate(j,F)+lam)*l/vm;
           if(c<nc[k]){nc[k]=c;pred[po+k]=i;}

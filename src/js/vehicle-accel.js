@@ -95,8 +95,7 @@ function buildVehicle(){
    if(!SUSP_GEO[vehicle.suspRear])vehicle.suspRear=fg.r;
    const gF=SUSP_GEO[vehicle.suspFront],gR=SUSP_GEO[vehicle.suspRear];
    vehicle.camRecF=geoRecovery(gF,vehicle.trackF);vehicle.camRecR=geoRecovery(gR,vehicle.trackR);
-   vehicle.camberF=vehicle.suspFront==='solid'?0:susp.camber;vehicle.camberR=vehicle.suspRear==='solid'?0:susp.camber;
-   vehicle.rcF=gF.rc!=null?gF.rc:vehicle.rTire;vehicle.rcR=gR.rc!=null?gR.rc:vehicle.rTire;}
+   vehicle.camberF=vehicle.suspFront==='solid'?0:susp.camber;vehicle.camberR=vehicle.suspRear==='solid'?0:susp.camber;}
   // The headline mu (summary, g-meter): the tyre's, at the car's own weight shared over four tyres.
   vehicle.mu=tyreMu(vehicle.mass*G/4);
   // The weight split moves with an engine swap, by the difference in engine mass at the engine's
@@ -146,7 +145,12 @@ function buildVehicle(){
   // move it back (oversteer). With both roll centres on the ground this is build 157's split.
   // The body rolls about the roll axis by its roll moment m ay (h - z_axis) over the two axles' stiffness together
   // (build 174; until then each kit rolled a fixed deg/g whatever the car): a tall car on a narrow track rolls more.
-  {const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx),K=rollStiffness(vehicle);
+  // Solid-axle roll centre sits at the lateral locating link (Panhard rod / Watts linkage): axle-centre height (rTire)
+  // on stock-height chassis, or under-slung below the axle/CG on low-CG builds (Milliken & Milliken, RCVD ch. 17) so
+  // the roll moment arm (cg - zAx) stays positive and roll gradient remains non-zero.
+  {const gF=SUSP_GEO[vehicle.suspFront],gR=SUSP_GEO[vehicle.suspRear],solidRc=Math.min(vehicle.rTire,vehicle.cg*0.75);
+   vehicle.rcF=gF.rc!=null?gF.rc:solidRc;vehicle.rcR=gR.rc!=null?gR.rc:solidRc;
+   const fw=vehicle.fWt,zAx=fw*vehicle.rcF+(1-fw)*vehicle.rcR,arm=Math.max(0,vehicle.cg-zAx),K=rollStiffness(vehicle);
    vehicle.rollKF=K.F/(K.F+K.R);vehicle.rollK=K.F+K.R;
    vehicle.rollGrad=vehicle.mass*G*arm/vehicle.rollK*180/Math.PI;   // deg per g
    vehicle.lltdF=clamp((arm*vehicle.rollKF+fw*vehicle.rcF)/Math.max(0.05,arm+zAx),0.15,0.85);}
@@ -234,8 +238,8 @@ function simulateBraking(v0,T0){
   const aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,abs=!(vehicle.aids&&vehicle.aids.abs===false);
   const valve=abs?null:brakeValveRear(fWt,hL);
   // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
-  const grip=(a,dn)=>{const Nf=m*G*fWt+dn*aeroF+m*a*hL,Nr=m*G+dn-Nf;
-    return [tyreMuX(Math.max(1,Nf)/2,vehicle.FzRefF)*Math.max(0,Nf),tyreMuX(Math.max(1,Nr)/2)*Math.max(0,Nr)];};
+  const grip=(a,dn)=>{const W=m*G+dn,Nf=clamp(m*G*fWt+dn*aeroF+m*a*hL,0,W),Nr=W-Nf;
+    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*Nf:0,Nr>0?tyreMuX(Nr/2)*Nr:0];};
   while(v>0.15&&t<25){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
@@ -493,8 +497,8 @@ function simulateAccelRun(){
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
     let drivenN;
     if(vehicle.drive==='awd')drivenN=Wtot;
-    else if(vehicle.drive==='rwd')drivenN=m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer);
-    else drivenN=m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer);
+    else if(vehicle.drive==='rwd')drivenN=clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot);
+    else drivenN=clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
     if(shiftT>0)shiftT-=dt;
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
