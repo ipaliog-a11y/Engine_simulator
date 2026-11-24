@@ -51,8 +51,8 @@ function evRaceModel(key,line,grips){
     const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
       const rpm=Math.max(1,O.rpm[i]),T=O.tq[i],P=T*rpm*Math.PI/30+motorLosses(e.motor,Math.abs(T),rpm,V,cool).total;
-      const d=packDraw(e.pack,0.5,P);
-      fh[i]=(d?d.heat:0)/3600;fr[i]=P/3600+fh[i];
+      const d=packDrawClamped(e.pack,0.5,P);
+      fh[i]=d.heat/3600;fr[i]=P/3600+fh[i];
     }
     return {v:Float32Array.from(L.v),fr,fh,tq:Float32Array.from(O.tq),lap:L.lap};
   };
@@ -102,7 +102,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
+  const X=M.ev,want=evRaceCap(c.evFF),bms=X.pRef>0?evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef:0;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
@@ -124,7 +124,7 @@ function evRaceHeatStep(M,c,r,dt,save){
   // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
   // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 373)
   const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
+  const d=packDrawClamped(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d.heat;
   packHeatStep(X.pack,t,heat,dt);
   const dE=(heat-h0)*dt/3.6e6;c.fuelKg-=dE;c.fuelUsed+=dE;
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;

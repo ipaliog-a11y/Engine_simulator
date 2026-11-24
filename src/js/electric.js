@@ -157,8 +157,9 @@ function magnetCircuit(g){
   const r=SLOT_OPEN/gap,kc=ts/(ts-r*r/(5+r)*gap),gp=kc*gap;
   const alpha=Math.min(1,magW),Am=magW*tau*MAG_AX*L,Ag=alpha*tau*L,leak=FE_JS*BRIDGE_W*Lfe;
   const yokeF=(By,tauY)=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
-  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=Bg*ts/(0.95*st.wt),By=Bg*Ag/(2*st.hy*Lfe);
-    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*st.wt)-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
+  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=st.wt>0?Bg*ts/(0.95*st.wt):0,By=st.hy>0?Bg*Ag/(2*st.hy*Lfe):0;
+    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*Math.max(1e-6,st.wt))-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
+  if(Am*Br<=leak){const x=at(0);return {Bflat:0,B1:0,Bt:0,By:0,kc,st:x.st};}
   let lo=0,hi=Br*Am/Ag;
   for(let k=0;k<40;k++){const Bg=(lo+hi)/2,Hm=-at(Bg).F/magT;
     if((Am*(Br+MU0*mur*Hm)-leak)/Ag>Bg)lo=Bg;else hi=Bg;}
@@ -186,26 +187,27 @@ const toothH=(Ba,k)=>steelH(toothB(Ba,k));
 // torque T = 3/2 p (psi_d i_q - psi_q i_d), and the peak flux densities in the teeth, the yoke and the gap.
 const DQ_SLICES=36, DQ_N=13, DQ_KBR=0.8;
 function dqSetup(m){
-  const st=m.circ.st,ts=Math.PI*m.Ds/m.slots,kT=ts/(0.95*st.wt),gp=m.circ.kc*GAP,NB=150,BM=3.2,FB=new Float64Array(NB+1);
+  const st=m.circ.st,ts=Math.PI*m.Ds/m.slots,wt=Math.max(1e-4,st.wt),hy=Math.max(1e-4,st.hy),kT=ts/(0.95*wt),gp=m.circ.kc*GAP,NB=150,BM=3.2,FB=new Float64Array(NB+1);
   for(let i=0;i<=NB;i++){const B=i*BM/NB;FB[i]=B*gp/MU0+toothH(B*kT,kT-1)*st.hSlot;}
   const n=DQ_SLICES,tau=Math.PI*m.D/m.poles,cos=[],sin=[],face=[],dep=[],half=Math.min(1,m.magW)*tau/2;
   for(let i=0;i<n;i++){const th=-Math.PI/2+(i+0.5)*Math.PI/n,x=th/Math.PI*tau;cos.push(Math.cos(th));sin.push(Math.sin(th));
     face.push(Math.abs(x)<half);dep.push(POLE_EDGE+Math.max(0,half-Math.abs(x))*Math.tan(V_PHI));}
   const Am=Math.min(1,m.magW)*tau*MAG_AX*m.L;
   // Pyrhonen 2014, 4.2: a slot's leakage inductance, (4m/Q) mu0 l N^2 lambda, lambda = h/(3b) for a slot full of copper
-  const slotW=Math.PI*(m.Ds+st.hSlot)/m.slots-st.wt,q=m.slots/(3*m.poles),lw=m.mlt/2-m.L;
+  const slotW=Math.PI*(m.Ds+st.hSlot)/m.slots-wt,q=m.slots/(3*m.poles),lw=m.mlt/2-m.L;
   const Ls=12/m.slots*MU0*m.N*m.N*(m.L*st.hSlot/(3*Math.max(1e-4,slotW))+q*lw*LAMBDA_W);
-  return {FB,NB,BM,kT,gp,hSlot:st.hSlot,cos,sin,face,wL:m.L*tau/n,dy:Math.PI*(m.OD-st.hy)/m.poles/n,hy:st.hy,Lfe:m.Lfe,
-    Am,leak:FE_JS*BRIDGE_W*m.Lfe,magT:m.magT,mur:m.mag.mur,Br:m.mag.Br,fPerA:3*Math.SQRT2*KW_WIND*m.N/(Math.PI*m.p),
+  return {FB,NB,BM,kT,gp,hSlot:st.hSlot,cos,sin,face,wL:m.L*tau/n,dy:Math.PI*(m.OD-hy)/m.poles/n,hy,Lfe:m.Lfe,
+    zeroFlux:!(m.circ.B1>0),Am,leak:FE_JS*BRIDGE_W*m.Lfe,magT:m.magT,mur:m.mag.mur,Br:m.mag.Br,fPerA:3*Math.SQRT2*KW_WIND*m.N/(Math.PI*m.p),
     psiPerB:KW_WIND*m.N*2/Math.PI*tau*m.Lfe,Ls,dep,dx:tau/n,B:new Float64Array(n),Uy:new Float64Array(n),Hy:new Float64Array(n)};
 }
 function dqBinv(c,F){   // a slice's gap field (T) for the MMF across its gap and tooth (A)
   const a=Math.abs(F),FB=c.FB;let B;
-  if(a>=FB[c.NB])B=c.BM+(a-FB[c.NB])*(c.BM/c.NB)/(FB[c.NB]-FB[c.NB-1]);
-  else{let lo=0,hi=c.NB;while(hi-lo>1){const k=(lo+hi)>>1;if(FB[k]<=a)lo=k;else hi=k;}B=(lo+(a-FB[lo])/(FB[hi]-FB[lo]))*c.BM/c.NB;}
+  if(a>=FB[c.NB]){const dF=FB[c.NB]-FB[c.NB-1];B=dF>0?c.BM+(a-FB[c.NB])*(c.BM/c.NB)/dF:c.BM;}
+  else{let lo=0,hi=c.NB;while(hi-lo>1){const k=(lo+hi)>>1;if(FB[k]<=a)lo=k;else hi=k;}const dF=FB[hi]-FB[lo];B=(lo+(dF>0?(a-FB[lo])/dF:0))*c.BM/c.NB;}
   return F<0?-B:B;
 }
 function dqSolve(c,Fd,Fq,kBr){
+  if(c.zeroFlux||!(c.hy>0&&c.Lfe>0))return {b1d:0,b1q:0,Bt:0,By:0,Bg2:0};
   const n=DQ_SLICES,B=c.B,Uy=c.Uy,Hy=c.Hy,Br=kBr*c.Br,Um=Br*c.magT/(MU0*c.mur),X=Um+Math.abs(Fd)+Math.abs(Fq);
   Uy.fill(0);let Ur=0,dU=0,ByMax=0;
   // the pole piece as two halves, each one potential: the trailing half dU/2 above the pole's, the leading half below
@@ -344,7 +346,7 @@ function dqVolt(m,q,Id,Iq,we,R){
 // The tooth and yoke for a peak gap field Bpk (T) and a pole's flux phi (Wb), at the design densities; neither may take
 // more than 80% of the slot pitch or of the radial band, so an over-fluxed design saturates rather than losing its slots.
 function statorFrom(Bpk,phi,ts,h,Lfe,bT,bY){
-  const wt=Math.min(0.8*ts,Bpk*ts/(0.95*bT)), hy=Math.min(0.8*h,phi/(2*Lfe*bY));
+  const wt=Math.min(0.8*ts,Math.max(1e-4,Bpk*ts/(0.95*bT))), hy=Math.min(0.8*h,Math.max(1e-4,phi/(2*Lfe*bY)));
   return {wt,hy,hSlot:h-hy};
 }
 // How the rotor holds its magnets in, which sets the surface speed it survives (m/s): steel bridges in the lamination
@@ -528,7 +530,7 @@ function copperAC(m,rpm,tW){
   return M+((layers*layers-1)/3)*D;
 }
 // The torque at a current (A rms), at the best angle (MTPA), with the magnets where psi = motorPsi(m, t) puts them.
-const tMagOf=(m,psi)=>m.mag.alpha?20+(psi/m.psi20-1)/m.mag.alpha:60;
+const tMagOf=(m,psi)=>m.mag.alpha&&m.psi20?20+(psi/m.psi20-1)/m.mag.alpha:60;
 function motorTorqueAtI(m,I,psi){
   if(m.im)return imTorque(m,I);
   return dqMtpa(m,Math.min(I,m.Imax),tMagOf(m,psi)).T;
@@ -536,10 +538,11 @@ function motorTorqueAtI(m,I,psi){
 // The knee (mechanical rad/s). A magnet motor: where the MTPA point at full current meets the inverter's voltage, solved
 // on v_d and v_q (a quadratic in the speed). An induction motor: its back-EMF with the drop at full current.
 function motorBaseW(m,Vdc,psi){
-  if(m.im)return Vdc/Math.sqrt(6)*Math.SQRT2/(m.vDrop*m.p*psi);
+  if(m.im)return m.vDrop*m.p*psi>0?Vdc/Math.sqrt(6)*Math.SQRT2/(m.vDrop*m.p*psi):0;
   const tMag=tMagOf(m,psi),o=dqMtpa(m,m.Imax,tMag),Id=-m.Imax*Math.sin(o.g),Iq=m.Imax*Math.cos(o.g),q=dqAt(m,Id,Iq,tMag);
   const R=motorR(m,tMag),id=Math.SQRT2*Id,iq=Math.SQRT2*Iq,pd=q.pd+m.dqc.Ls*id,pq=q.pq+m.dqc.Ls*iq,V=Vdc/Math.sqrt(3);
   const A=pd*pd+pq*pq,B=2*(R*iq*pd-R*id*pq),C=R*R*(id*id+iq*iq)-V*V;
+  if(!(A>0))return 0;
   return Math.max(0,(-B+Math.sqrt(Math.max(0,B*B-4*A*C)))/(2*A))/m.p;
 }
 // The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature. A magnet motor: the MTPA
@@ -588,8 +591,8 @@ function motorTopRpm(m,Vdc){
 // Torque per amp falls as the electric loading (A/m of bore) rises: the leakage paths saturate. A magnet motor's is
 // solved (dqSolve, build 302); an induction motor's is still the one point the Model 3 gave before then (8.5% at
 // 145.7 kA/m, scaled with the loading's square), in its own register entry (MOTOR.imCage).
-const IM_SAT_K=0.085, IM_SAT_A=145.7e3;
-const imSat=(m,I)=>1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2;
+const IM_SAT_K=0.085, IM_SAT_A=145.7e3, IM_SAT_MIN=0.15;
+const imSat=(m,I)=>Math.max(IM_SAT_MIN,1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2);
 function imTorque(m,I){
   const Iq=Math.sqrt(Math.max(0,I*I-m.ImR*m.ImR));
   return 1.5*m.p*m.psi20*Math.SQRT2*Iq*imSat(m,I);
@@ -598,7 +601,7 @@ function imTorque(m,I){
 // the knee the field is weakened as wb/w; below the rated torque current the controller lowers the field until Im = Iq.
 function imCurrents(m,T,rpm,Vdc){
   const wb=motorBaseW(m,Vdc,m.psi20),w=rpm*Math.PI/30,k=1.5*m.p*Math.SQRT2;
-  if(!(Math.abs(T)>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
+  if(!(Math.abs(T)>0)||!(m.psi20>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
   let fl=w>wb?wb/w:1,Im=m.ImR*fl,Iq=Math.abs(T)/(k*m.psi20*fl);
   if(Iq<Im){Im=Iq=Math.sqrt(Math.abs(T)*m.ImR/(k*m.psi20));fl=Im/m.ImR;}
   for(let j=0;j<3;j++)Iq=Math.abs(T)/(k*m.psi20*fl*imSat(m,Math.hypot(Im,Iq)));
@@ -825,12 +828,13 @@ const chemAvailable=(c,year)=>(CHEM[c]||CHEM.nca).from<=(year||2020);
 // The pack a design describes. s: {chem, series (cells in series), kWh, year}.
 function packBuild(s){
   const c=CHEM[s.chem]||CHEM.nca, year=s.year||2020;
-  const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=s.series*vCell;
-  const Ah=s.kWh*1000/Vnom, R=s.series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
+  const series=Math.max(1,s.series||1), kWh=Math.max(0.1,s.kWh||0.1);
+  const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=series*vCell;
+  const Ah=kWh*1000/Vnom, R=series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
   const ctp=s.chem==='lfp'&&year>=2020;
-  const mass=s.kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
-  const cost=Math.round(s.kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
+  const mass=kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
+  const cost=Math.round(kWh*atYear(c.cost,year));
+  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,iMax:c.cMax*Ah};
 }
 // Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
 // A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
@@ -871,6 +875,14 @@ function packDraw(b,soc,P,tC){
   const I=(V0-Math.sqrt(disc))/(2*R),V=V0-I*R;
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
   return {V,I,heat:I*I*R};
+}
+// Like packDraw, but clamps discharge overload to the pack's max-power current so thermal/energy callers never drop heat to 0.
+function packDrawClamped(b,soc,P,tC){
+  const d=packDraw(b,soc,P,tC);
+  if(d||!(P>0))return d||{V:packOcv(b,soc),I:0,heat:0};
+  const R=packR(b,tC),V0=packOcv(b,soc);
+  const I=Math.max(0,Math.min(b.iMax,(V0-b.vMin)/R,V0/(2*R)));
+  return {V:V0-I*R,I,heat:I*I*R};
 }
 // The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
 // liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows

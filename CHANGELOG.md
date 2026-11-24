@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### EV and hybrid NaN guards and race pack-overload fix (build 442)
+
+- Guarded PM motors whose rotor bridge leakage exceeds magnet flux (`Am * Br <= leak`, e.g. small rotor with 12-pole Ferrite) in `magnetCircuit`, `statorFrom`, `dqSetup`, `dqBinv`, `dqSolve`, `tMagOf`, and `motorBaseW` (`src/js/electric.js`), keeping zero-flux builds finite (zero torque, finite geometry and losses) without moving healthy presets.
+- Floored induction-motor saturation `imSat` at `0.15` (`src/js/electric.js`) so extreme electric loading cannot invert torque or divide by zero in `imCurrents`, and guarded zero-power motors (`Imax <= ImR` or zero-flux PM) in `scoreMotor`, `motorContinuousKW`, `motorOperatingPoint` (`src/js/electric-ui.js`), and `evRaceFFNow` (`src/js/electric-race.js`).
+- Added `packDrawClamped` (`src/js/electric.js`) and wired it into `evRaceModel`, `evRaceHeatStep` (`src/js/electric-race.js`), `evLapHeat` (`src/js/electric-car.js`), `evCycle` (`src/js/electric-cycle.js`), and `stepElectric` (`src/js/electric-ui.js`) so pack-power overload clamps to the max-power current instead of falling back to `heat = 0` (fixing EV race pack cooling and free-energy recharge on overload).
+- Guarded `packBuild` (`kWh <= 0` or `series <= 0`), `hybMachineFrom` (`T2 <= 0` and capped `stack`/`amps` iterations in `src/js/power-split.js`), `hybridBuild` (`Pr + Pf <= 0` in `src/js/hybrid.js`), and the hybrid BSFC map (`best.b === Infinity` and dynamic torque Y-axis step in `src/js/hybrid-views.js`); merged the duplicate `unsure` key in the Porsche 918 Spyder preset (`src/js/electric-presets.js`).
+- Added `tests/test264.mjs` covering all guards, pack-overload race/lap/cycle heat accounting, and healthy EV/hybrid presets.
+
 ### High-CR and boost limits: peak cylinder pressure, pre-ignition, crevice loss, and ECU boost-cut diagnostics (build 441)
 
 - Raised `ENGINE_TYPE.petrol4.crMax` from `14` to `18` (`src/js/fuels-engine-types.js`) and synced `#edCR` and `#edRedline` HTML `min`/`max` bounds to the active engine type in `syncDesignEnable()` (`src/js/engine-build.js`), removing the silent clamp at 14:1 that froze power on high-CR petrol builds like a turbocharged Ferrari 812 (13.6:1 stock).
