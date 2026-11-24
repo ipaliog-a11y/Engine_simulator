@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 450)
+
+- Added battery pack cooling options (`PACK_COOLING` in `src/js/electric.js`: `liquid` 2.0 W/K/kWh default, `air_forced` 0.8, `air_passive` 0.35; Pesaran NREL/CP-540-31018) and ambient/starting pack temperature (`evAmbT`, `-10..45 °C`, default `25 °C`), and extended `evPackGain` (`src/js/electric-car.js`) down to `-15 °C` so cold-weather Arrhenius impedance rise genuinely derates cold packs.
+- Added an inverter thermal node (`temp.inv` stepped from `L.inv` in `motorHeatStep`, derating Si IGBT above 105 °C and SiC MOSFET above 125 °C; Infineon HybridPACK Drive / Wolfspeed XM3) and live MG1 thermal node tracking (`psMg1Step`, `H.mg1T`) in `src/js/power-split.js` and `src/js/hybrid-bench.js`.
+- Added optional 2-speed EV gearbox (`EV_REDUCTION_2SPD`, `[1.93, 1.0]`, Porsche Taycan ratio), exposed `evFrontFd` for multi-motor pure EVs (`parts[1].k` per-axle ratio), exposed `evMaker` regen calibration selector in `src/shell.html`, and added independent dual-rear EV torque-vectoring yaw assist (`evRearTorqueVector`, `v.dualRearTV`).
+- Made power-split geometry (`psRho`, `psK2`, `psBusV`) configurable per build (defaulting to Prius `30/78`, `65/17`, `600 V`), added 48V MHEV (P0/P1, no pure-EV drive), P3 (post-gearbox), and P4 (electric-axle AWD) hybrid topologies in `src/js/hybrid.js`, and modelled P2 K0 clutch engagement slip heat (`k0SlipW`, `k0SlipJ`, `k0Temp`) during ICE crank-to-sync in `src/js/hybrid-bench.js`.
+- Added `tests/test273.mjs` covering cold pack derating, passive-air vs liquid heating, inverter & MG1 thermal nodes, 2-speed EV shift, `evMaker`/`evFrontFd`/dual-rear TV, configurable power-split, MHEV/P3/P4 builds, P2 K0 slip heat, and stock EV/hybrid preset health.
+
 ### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 449)
 
 - Clamped per-wheel and per-axle normal loads to `[0, N]` on wheel lift in `axleLatCap` (`src/js/tyres-brakes-driveline.js`), `simulateBraking`, and `simulateAccelRun` (`src/js/vehicle-accel.js`) so stoppies, wheelies, and inside-wheel lift conserve total vertical load instead of creating phantom normal force above `Wtot`.

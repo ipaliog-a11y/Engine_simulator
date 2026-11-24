@@ -29,10 +29,11 @@ let hybBench=null;   // the bench's hybrid state; rebuilt when the engine's hybr
 function hybBenchState(){
   const hy=engine.hy;
   if(hybBench&&hybBench.hy===hy)return hybBench;
-  const prev=hybBench,tc=hy.motor.cool.tCool;
+  const prev=hybBench,tc=hy.motor.cool.tCool,direct=isDirectMode(hy.mode);
   hybBench={hy,view:prev?prev.view:'flow',trail:[],mode:prev?prev.mode:'auto',soc:prev?prev.soc:HYB_SOC,hold:prev?prev.hold:HYB_SOC,cmd:prev?prev.cmd:0,neSet:prev?prev.neSet:0,
-    n:hy.mode!=='p2'?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
-    Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc},tB:{b:PACK_COOLANT},lowFlash:0};
+    n:direct?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
+    Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc,inv:tc},mg1T:hy.mg1?psMg1TempInit(hy):null,tB:{b:packStartT(hy.pack)},
+    k0Temp:40,k0SlipW:0,k0SlipJ:0,k0Locked:true,lowFlash:0};
   state.rpm=engine.idleRpmEff;
   return hybBench;
 }
@@ -67,8 +68,8 @@ function hybBrakeAt(n,nMax,nMin,ref){
 // The controller: from the pedal, the mode and the charge, whether the engine runs, what it is asked for, and the motor's
 // torque (P2) or MG2's (power-split) before the pack's limits.
 function hybControl(H,dt){
-  const e=engine,hy=e.hy,B=HYB_BENCH,ps=hy.mode!=='p2',p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;   // ps: the traction motor's shaft (a power-split, or a series hybrid, build 193)
-  const pack=hy.pack,tB=H.tB?H.tB.b:PACK_COOLANT,pDer=packDerate(tB),mDer=motorDerate({motor:hy.motor},H.mT),tR=H.mT?H.mT.r:60;
+  const e=engine,hy=e.hy,B=HYB_BENCH,ps=isDirectMode(hy.mode),p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;   // ps: the traction motor's shaft (a power-split, or a series hybrid, build 193)
+  const pack=hy.pack,tB=H.tB?H.tB.b:packStartT(pack),pDer=packDerate(tB),mDer=motorDerate({motor:hy.motor},H.mT),tR=H.mT?H.mT.r:60;
   const Pmax=packMaxPower(pack,clamp(H.soc,0.05,1),tB)*pDer,Pchg=packChargePower(pack,clamp(H.soc,0,1),tB)*pDer;
   // the HYBRID TUNE (build 192): its charge window, electric-driving power, regeneration and load-point shifting
   const tu=hybTune(e),lo=tu.socLo/100,hi=tu.socHi/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
@@ -77,7 +78,7 @@ function hybControl(H,dt){
   if(ps){const c=hybCurves(),R=c.eng,i=Math.min(R.length-1,Math.max(0,Math.round(n/Math.max(1,R[1].rpm-R[0].rpm))));
     TmMax=motorMaxTorque(hy.motor,Math.max(n,1),hybBusV(hy),tR)*mDer;full=R[i].tq+c.mot[i]*Math.min(mDer,pDer);}
   else{TmMax=Math.max(0,hybMotorFor(hy,n,Pmax,H.mT));full=hybEngTq(Math.max(n,e.idleRpmEff))+TmMax;}
-  const D=(mode==='ev'?TmMax:full)*p,Pd=D*w;
+  const D=(mode==='ev'&&!hy.noEv?TmMax:full)*p,Pd=D*w;
   // the charge the mode wants, and the engine
   if(mode==='hold'&&H.lastMode!=='hold')H.hold=H.soc;
   H.lastMode=mode;
@@ -89,7 +90,8 @@ function hybControl(H,dt){
   let on=H.engOn;
   // the car switched off (POWER OFF, build 306): no engine, no motor, no charging
   if(state.ignOn===false){H.engOn=false;H.dwell=0;H.thrE=0;H.TeWant=null;H.TmWant=0;return {Pmax,Pchg};}
-  if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
+  if(hy.noEv){on=true;}   // 48V MHEV (P0/P1): belt/crank starter-generator permanently coupled to ICE, no pure-EV drive
+  else if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
     // a hysteresis band: the engine starts past the motor's share and stops only well below it (a depleting plug-in's band
@@ -107,7 +109,7 @@ function hybControl(H,dt){
   if(deplete)Pc=-B.chargeShare*Pchg;   // no load-point shifting: the engine charges only a low pack
   const pedalThr=mode==='sport'||mode==='engine'||mode==='manual';
   if(ps){
-    const nr=n/PS.k2,R=psEngineRange(hy,nr),O=psOol();
+    const nr=n/psParams(hy).k2,R=psEngineRange(hy,nr),O=psOol();
     if(on){
       let ne;
       if(mode==='manual')ne=H.neSet||e.idleRpmEff;
@@ -138,7 +140,7 @@ function hybControl(H,dt){
 }
 // One bench step for a hybrid, in place of stepEngine.
 function stepHybridBench(dt){
-  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
+  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=isDirectMode(hy.mode),m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
   // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 349)
   if(!H.engOn)H.fired=false;else if(!H.fired&&state.rpm>=hybFireRpm(H)-1)H.fired=true;
@@ -150,7 +152,7 @@ function stepHybridBench(dt){
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
   }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
-  // MG1 (power-split): the engine's speed and its reaction
+  // MG1 (power-split / series): the engine's speed, reaction, and tracked MG1 thermal node
   let P1=0;
   if(ps){
     if(run){state.rpm+=(H.neT-state.rpm)*(1-Math.exp(-dt/B.neTau));state.rpm=clamp(state.rpm,e.idleRpmEff,e.redline);H.Tspin=0;}
@@ -159,7 +161,10 @@ function stepHybridBench(dt){
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
     // at the step's mean speed: the pack pays for the start and takes the stop back (build 401)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
-    P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
+    if(!H.mg1T)H.mg1T=psMg1TempInit(hy);
+    const nsEval=run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns;
+    const mg1Res=psMg1Step(hy,Ts!==0&&(H.engOn||H.Tspin)?Ts:0,nsEval,H.mg1T,dt);
+    P1=Ts!==0&&(H.engOn||H.Tspin)?mg1Res.P1:0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
   // takes, with the 12 V load and MG1's power on the same bus (through the DC-DC boost converter on a power-split)
@@ -189,25 +194,49 @@ function stepHybridBench(dt){
   H.soc=clamp(H.soc-d.I*dt/(pack.Ah*3600),0,1);
   motorHeatStep(m,temp,L,dt);packHeatStep(pack,H.tB,d.heat,dt);
   H.Tm=Tm;H.Pm=Tm*w0/1000;H.P1=P1/1000;H.Pb=d.V*d.I/1000;
-  // the shaft
+  // the shaft (K0 clutch thermal model: C_k0 = 900 J/K ~2 kg steel plates, G_k0 = 15 W/K to 40 C housing/oil)
   const drag=H.n>1?L.mech/w0:0;
+  let k0SlipW=0;
   if(ps){
     const Tring=run?H.Te*hybGear(hy,H.ne,H.n).kr:-Tcancel,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
     const hMax=0.5*J*Math.PI/(30*ref/(220*m.nMax/e.redline)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tring+Tm-drag-hybBrakeAt(H.n,m.nMax,0,ref))/J*h;H.n=clamp(om*30/Math.PI,0,m.nMax);}
-    H.Tshaft=Tring+Tm;
+    H.Tshaft=Tring+Tm;H.k0Locked=true;
   }else if(run){
-    // the clutch closed: the engine and the motor turn the shaft together, never below the engine's idle
-    if(H.n<e.idleRpmEff)H.n=e.idleRpmEff;
-    const J=e.inertia+m.J,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
-    for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(H.Te+Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,e.idleRpmEff,e.redline);}
-    state.rpm=H.n;H.ne=H.n;H.Tshaft=H.Te+Tm;
+    const dRpm=H.n-state.rpm;
+    if(!hy.noEv&&(!H.k0Locked||Math.abs(dRpm)>15)){
+      // P2 K0 clutch synchronizing slip: transfer torque smoothly until ICE and motor shafts match within 15 rpm
+      H.k0Locked=false;
+      const tCap=Math.max(80,e.loadRefTq*0.8),TcSync=clamp(dRpm*0.4,-tCap,tCap);
+      const Jm=m.J+0.05,Je=Math.max(0.05,e.inertia),ref=e.loadRefTq;
+      const hMax=0.5*Math.min(Jm,Je)*Math.PI/(30*Math.max(1,e.brakeGain)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
+      for(let k=0;k<ns;k++){
+        const dW=(H.n-state.rpm)*Math.PI/30,tcS=clamp(dW*30/Math.PI*0.4,-tCap,tCap);
+        const omM=H.n*Math.PI/30+(Tm-tcS-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/Jm*h;
+        const omE=state.rpm*Math.PI/30+(H.Te+tcS)/Je*h;
+        H.n=clamp(omM*30/Math.PI,0,e.redline);state.rpm=clamp(omE*30/Math.PI,e.idleRpmEff,e.redline);
+        k0SlipW=Math.abs(tcS)*Math.abs(H.n-state.rpm)*Math.PI/30;
+      }
+      if(Math.abs(H.n-state.rpm)<=15){H.k0Locked=true;state.rpm=clamp(H.n,e.idleRpmEff,e.redline);H.n=state.rpm;}
+      H.ne=state.rpm;H.Tshaft=Tm+TcSync;
+    }else{
+      // K0 clutch closed (or MHEV permanently coupled): engine and motor turn the shaft together
+      H.k0Locked=true;
+      if(H.n<e.idleRpmEff)H.n=e.idleRpmEff;
+      const J=e.inertia+m.J,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
+      for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(H.Te+Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,e.idleRpmEff,e.redline);}
+      state.rpm=H.n;H.ne=H.n;H.Tshaft=H.Te+Tm;
+    }
   }else{
-    // the clutch open: the motor alone; the engine runs down to a stop
+    // the clutch open (or slipping during P2 ICE cranking): motor drives shaft, ICE cranks or runs down
+    H.k0Locked=false;
     const J=m.J+0.05,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,0,Math.min(e.redline,m.nMax));}
     hybSpin(H,dt);H.ne=state.rpm;H.Tshaft=Tm;
+    if(H.engOn&&H.Tc2>0)k0SlipW=H.Tc2*Math.abs(H.n-state.rpm)*Math.PI/30;
   }
+  H.k0SlipW=k0SlipW;H.k0SlipJ=(H.k0SlipJ||0)+k0SlipW*dt;
+  H.k0Temp=(H.k0Temp!=null?H.k0Temp:40)+(k0SlipW-15*((H.k0Temp!=null?H.k0Temp:40)-40))/900*dt;
   H.Pe=run?H.Te*Math.max(H.ne,1)*Math.PI/30/1000:0;
   H.Psys=H.Tshaft*Math.max(H.n,0)*Math.PI/30/1000;
   state.systemVoltage=14.0;   // the 12 V side runs off the pack through a DC-DC converter
@@ -231,14 +260,14 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
 // closes there). Build 401: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
-const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
+const hybFireRpm=H=>!isDirectMode(engine.hy.mode)?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
-  const e=engine,hy=e.hy,V=hybBusV(hy),tR=H.mT?H.mT.r:60;
+  const e=engine,hy=e.hy,V=hybBusV(hy),tR=H.mT?H.mT.r:60,direct=isDirectMode(hy.mode);
   let J=e.inertia,Tc=0;
-  if(hy.mode!=='p2'){const G=hybGear(hy,state.rpm,H.n);J+=hy.mg1.J/(G.ks*G.ks);
+  if(direct){const G=hybGear(hy,state.rpm,H.n);J+=hy.mg1.J/(G.ks*G.ks);
     Tc=motorMaxTorque(hy.mg1,Math.max(Math.abs(G.ns),1),V,60)/G.ks*(H.engOn?1:state.rpm>0?-1:0);}
   else if(H.engOn)Tc=H.Tc2!=null?H.Tc2:Math.max(0,motorMaxTorque(hy.motor,Math.max(H.n,1),V,tR)-Math.abs(H.Tm||0));
-  H.Tspin=hy.mode!=='p2'&&(state.rpm>0||H.engOn)?Tc:0;
+  H.Tspin=direct&&(state.rpm>0||H.engOn)?Tc:0;
   const Tf=Math.min(0,brakeTorqueRaw(Math.max(state.rpm,1),state.map,true));
   const w0=state.rpm*Math.PI/30,wu=w0+(Tc+(state.rpm>0?Tf:0))/J*dt,w=Math.max(0,wu);
   H.neSpin0=state.rpm;state.rpm=H.engOn?Math.min(w*30/Math.PI,hybFireRpm(H)):w*30/Math.PI;
@@ -254,8 +283,8 @@ function hybSpin(H,dt){
 function hybStartStop(){
   const e=engine,hy=e.hy;
   if(hy._ss&&hy._ss.score===e.score)return hy._ss;
-  const ps=hy.mode==='ps',V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
-  const ks=ps?PS.rho/(1+PS.rho):1,kr=ps?1/(1+PS.rho)/PS.k2:0,J=e.inertia+hy.mg1.J/(ks*ks),h=0.002,k30=30/Math.PI;
+  const ps=hy.mode==='ps',V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60},pp=psParams(hy);
+  const ks=ps?pp.rho/(1+pp.rho):1,kr=ps?1/(1+pp.rho)/pp.k2:0,J=e.inertia+hy.mg1.J/(ks*ks),h=0.002,k30=30/Math.PI;
   const c0=state.coolant,o0=state.oil;state.coolant=90;state.oil=100;
   try{
     const mg=(rpm,dir)=>{const ns=Math.max(rpm/ks,1),T1=motorMaxTorque(hy.mg1,ns,V,60),Tc=dir*T1/ks;
@@ -365,9 +394,10 @@ function drawHybridFlow(H){
     flow([[222,96],[222,63]],H.Pm,motCol);
     flow([[148,17],[164,17],[164,109],[196,109]],H.P1,H.P1>=0?C.charge:C.bat);
     flow([[148,125],[164,125],[164,111]],-H.Pb,batCol);
-    c.fillStyle='#ffcc00';c.fillRect(161*S,106*S,6*S,6*S);c.font=F(4.5);c.textAlign='left';c.textBaseline='top';c.fillStyle='#888';c.fillText(PS.busV+' V',168*S,126*S);
+    const pp=psParams(hy);
+    c.fillStyle='#ffcc00';c.fillRect(161*S,106*S,6*S,6*S);c.font=F(4.5);c.textAlign='left';c.textBaseline='top';c.fillStyle='#888';c.fillText(Math.round(pp.busV)+' V',168*S,126*S);
     box(4,46,58,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
-    box(98,46,52,34,'PSD','ρ '+PS.rho.toFixed(3),H.engOn);
+    box(98,46,52,34,'PSD','ρ '+pp.rho.toFixed(3),H.engOn);
     box(98,4,52,26,'MG1',Math.round(H.ns)+' rpm',Math.abs(H.P1)>0.2);
     box(238,46,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(196,96,52,26,'MG2',(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);

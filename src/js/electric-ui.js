@@ -9,7 +9,8 @@
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evMaker:''};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evGearbox:'1spd',evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,
+  evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evPackCool:'liquid',evAmbT:25,evMaker:'',psRho:0,psK2:0,psBusV:0};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -32,14 +33,20 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 // ---- the design form ----
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
+  const numZ=(id,lo,hi,d)=>{const el=g(id);if(!el||el.value==='')return d;const v=+el.value;return isFinite(v)?clamp(v,lo,hi):d;};
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStatorOD:num('evStatorOD',100,400),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evMagT:num('evMagT',2,15),evMagW:Math.round(num('evMagW',40,100)),evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evWire:g('evWire').value==='hairpin'?'hairpin':'round',evConductor:g('evConductor').value==='aluminium'?'aluminium':'copper',
     evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
+    evGearbox:g('evGearbox')&&g('evGearbox').value==='2spd'?'2spd':'1spd',
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontOD:num('evFrontOD',100,400),evFrontStack:num('evFrontStack',40,250),
-    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:''};
+    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',12,400)),
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),
+    evPackCool:g('evPackCool')&&PACK_COOLING[g('evPackCool').value]?g('evPackCool').value:'liquid',
+    evAmbT:Math.round(numZ('evAmbT',-10,45,25)),
+    evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:'',
+    psRho:numZ('psRho',0,0.8,0),psK2:numZ('psK2',0,6,0),psBusV:Math.round(numZ('psBusV',0,900,0))};
 }
 function applyElectricToForm(e){
   // a design saved before build 314 names no stator: fill it as motorBuild does, from its own rotor
@@ -64,7 +71,8 @@ function syncElectricSections(){
   panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
   if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy||hs.value==='ps'||hs.value==='series';   // a power-split deploys all it has (build 189)
     const r=document.getElementById('edHyRpm');if(r&&d)r.disabled=d.disabled||!/^(above|below)$/.test(d.value);
-    const pl=document.getElementById('edHyPlug');if(pl)pl.disabled=!hy;}
+    const pl=document.getElementById('edHyPlug');if(pl)pl.disabled=!hy||hs.value==='mhev';
+    ['psRho','psK2','psBusV'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!hy||hs.value!=='ps';});}
   if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
@@ -75,10 +83,12 @@ function syncElectricSections(){
     ['evMagnet','evMagT','evMagW','evRetention'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=im;});
   }
   if(ev||hy){
-    // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
+    // a front motor (build 183; a hybrid's front axle motor, build 195) or P4 hybrid e-axle: its fields, and AWD lock
     const front=document.getElementById('evFront').value!=='none';
-    ['evFrontD','evFrontOD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
-    evDriveLock(front);
+    const roadHy=hy&&hs&&(hs.value==='p3'||hs.value==='p4');
+    ['evFrontD','evFrontOD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
+    const ffd=document.getElementById('evFrontFd');if(ffd)ffd.disabled=!(front||roadHy);
+    evDriveLock(front||(hy&&hs&&hs.value==='p4'));
   }else evDriveLock(false);
   if(typeof evdSync==='function')evdSync(ev,hy);   // the drive's cards follow the form (build 238)
   return ev;
@@ -109,7 +119,7 @@ function buildElectric(){
   engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
   const e=engine;
   e.motor=evMotorOf(e);
-  e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
+  e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
   e.redline=Math.floor(e.motor.nMax/50)*50;e.idleRpmEff=0;e.inertia=e.motor.J;
   e.intake='na';e.maxBoost=0;e.mapMax=1;e.afrMode='fixed';e.stoichAFR=14.7;e.ci=false;e.displacement_L=0;
@@ -118,7 +128,7 @@ function buildElectric(){
   e.cost=e.motor.cost+e.pack.cost;
   // a fresh drive on a charged pack
   const tc=e.motor.cool.tCool;
-  state.mT={w:tc,c:tc,r:tc};state.tB={b:PACK_COOLANT};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
+  state.mT={w:tc,c:tc,r:tc,inv:tc};state.tB={b:packStartT(e.pack)};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
   state.engineHealth=1;state.blown=false;state.wearCause='';state.boostActual=0;state.nitrousActive=false;
   state.map=1;state.rpm=clamp(state.rpm,0,e.redline);
   buildRev++;dynoCache=null;
@@ -144,7 +154,7 @@ function driveMaxTorque(e,rpm,Vdc,temp,soc,tB=PACK_T_REF){
 function driveRefTorque(e,rpm){
   const c=e._refTq||(e._refTq={m:null,t:new Map()});
   if(c.m!==e.motor){c.m=e.motor;c.t.clear();}
-  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
+  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc,inv:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
   const at=k=>{   // every 25 rpm, cached per motor
     if(c.t.has(k))return c.t.get(k);
     const n=k*25,w=n*Math.PI/30;let T=motorMaxTorque(m,n,V,temp.r);
@@ -156,10 +166,13 @@ function driveRefTorque(e,rpm){
   return at(k)*(1-f)+at(k+1)*f;
 }
 // The controller protects the drive: full current until the winding reaches 150 C (class H insulation is rated 180),
-// none at 180; the magnets likewise over their last 20 C below the grade's limit.
+// none at 180; the magnets over their last 20 C below their grade's limit; and the inverter above its junction/case
+// derate start (~105 C Si IGBT / 125 C SiC) to 0 at tMax (~125 / 145 C).
 function motorDerate(e,temp){
-  const tm=e.motor.mag.Tmax;
-  return clamp((180-temp.w)/30,0,1)*clamp((tm-temp.r)/20,0,1);
+  const m=e.motor,tm=m.mag.Tmax,inv=m.inv||INVERTER.igbt;
+  const tInv=temp.inv!=null?temp.inv:m.cool.tCool;
+  const dInv=clamp((inv.tMax-tInv)/Math.max(1,inv.tMax-inv.tDerate),0,1);
+  return clamp((180-temp.w)/30,0,1)*clamp((tm-temp.r)/20,0,1)*dInv;
 }
 // The scorecard at the rated voltage, magnets at 60 C, a cool winding: peaks, the speed range at 80% of peak power,
 // the best efficiency on the full-load line, the continuous power the cooling holds, and how long it holds the peak.

@@ -369,9 +369,12 @@ const MOTOR_COOLING={
 // (no knee, run at 16 kHz). tSw is the switching energy per event over the volts and amps switched (s): an 820 A
 // automotive IGBT module loses ~75 mJ turning on and off at 400 V, 820 A (2.3e-7 s); SiC about a fifth of that.
 // Resistances are for a 1000 A device and scale inversely with the rating. Cost per amp of rating.
+// Thermal limits: Infineon HybridPACK Drive (FS820R08A6P2B Si IGBT, Tvj,op = 150 C, case/baseplate derate start ~105 C,
+// max ~125 C; pin-fin direct water-cooled Rth,jf ~0.008-0.010 K/W for 6 switches -> Ginv ~0.14 W/K per rated A, Cinv ~2.0 J/K per A);
+// SiC MOSFET (Infineon HybridPACK Drive G2 SiC / Wolfspeed XM3, Tvj,op = 175 C, derate start ~125 C, max ~145 C).
 const INVERTER={
-  igbt:{label:'SILICON IGBT',v0:0.8,r:0.0009,tSw:0.23e-6,fSw:10e3,costA:6},
-  sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11}
+  igbt:{label:'SILICON IGBT',v0:0.8,r:0.0009,tSw:0.23e-6,fSw:10e3,costA:6,tDerate:105,tMax:125},
+  sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11,tDerate:125,tMax:145}
 };
 // The water jacket (build 315): a helical channel cast in the aluminium housing round the stack, carrying 50/50
 // water-glycol at 65 C (ASHRAE Handbook Fundamentals 2017 ch. 31: rho 1050 kg/m3, cp 3500 J/kgK, k 0.40 W/mK,
@@ -403,7 +406,7 @@ function gapH(D,g,rpm){
   return (Ta<1700?2:Ta<1e4?0.128*Ta**0.367:0.409*Ta**0.241)*K_AIR/(2*g);
 }
 function motorGrc(m,rpm){
-  if(m.parts)return m.parts.reduce((x,q)=>x+q.n*motorGrc(q.m,rpm),0);
+  if(m.parts)return m.parts.reduce((x,q)=>x+q.n*motorGrc(q.m,rpm*(q.k||1)),0);
   return gapH(m.D,m.gap,rpm)*Math.PI*m.D*m.L+m.GrcR;
 }
 const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the active copper, iron and magnets
@@ -502,6 +505,7 @@ function motorBuild(s){
           Gwk:cool.wind*(Math.PI*(Ds+hSlot)*2*0.05+(cool.inSlot?2*hSlot*L*slots:0)),
           GrcR:cool.rotor*Math.PI*Dsh*L,
           Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor,
+          Ginv:(cool.jacket?0.14:0.05)*Imax, Cinv:2.0*Imax,
           mTeeth:RHO_FE*slots*wt*hSlot*Lfe, ts, gap:im?IM_GAP:GAP};
   // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 302)
   if(!im){m.dqc=dqSetup(m);m.psi20=m.dqc.psiPerB*dqSolve(m.dqc,0,0,1).b1d;}
@@ -552,7 +556,7 @@ function motorBaseW(m,Vdc,psi){
 // current each allows under the voltage (field weakening, then the most torque per volt), so the constant-power range
 // and the fall beyond it are the motor's own. An induction motor keeps its constant power to IM_CPSR times its knee.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
-  if(m.parts)return m.parts.reduce((a,q)=>a+q.n*motorMaxTorque(q.m,rpm,Vdc,tMag),0);
+  if(m.parts)return m.parts.reduce((a,q)=>{const k=q.k||1;return a+q.n*k*motorMaxTorque(q.m,rpm*k,Vdc,tMag);},0);
   if(rpm>m.nMax)return 0;
   if(m.im){
     const wb=motorBaseW(m,Vdc,m.psi20),w=Math.max(1e-6,rpm*Math.PI/30),Tpk=imTorque(m,m.Imax);
@@ -715,18 +719,21 @@ function pmLosses(m,T,rpm,Vdc,temp){
 function motorSet(parts){
   const a=parts[0].m,sum=k=>parts.reduce((x,q)=>x+q.n*(q.m[k]||0),0);
   const Tmax=Math.min(...parts.map(q=>q.m.mag.Tmax));
-  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),
-    mag:Object.assign({},a.mag,{Tmax}),nMax:Math.min(...parts.map(q=>q.m.nMax)),
-    J:sum('J'),mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
-    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
+  const sameK=parts.every(q=>!q.k||Math.abs(q.k-1)<1e-6);
+  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),dualRear:parts[0].n===2,
+    mag:Object.assign({},a.mag,{Tmax}),nMax:sameK?Math.min(...parts.map(q=>q.m.nMax)):a.nMax,
+    J:parts.reduce((x,q)=>{const k=q.k||1;return x+q.n*(q.m.J||0)*k*k;},0),
+    mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
+    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr'),Ginv:sum('Ginv'),Cinv:sum('Cinv')});
 }
 // The split: the front group's share of the torque from nothing to all it can give, in tenths and at its share of
 // the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
 function motorSetLosses(set,T,rpm,Vdc,temp){
-  const P=set.parts,at=(q,t)=>{const L=motorLosses(q.m,t/q.n,rpm,Vdc,temp);return L;};
+  const P=set.parts,at=(q,t)=>{const k=q.k||1;return motorLosses(q.m,t/(q.n*k),rpm*k,Vdc,temp);};
   const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','feS','feR','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
   if(P.length===1){const L=at(P[0],T);return add({},L,P[0].n);}
-  const r=P[0],f=P[1],mR=r.n*motorMaxTorque(r.m,rpm,Vdc,temp.r),mF=f.n*motorMaxTorque(f.m,rpm,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
+  const r=P[0],f=P[1],kr=r.k||1,kf=f.k||1;
+  const mR=r.n*kr*motorMaxTorque(r.m,rpm*kr,Vdc,temp.r),mF=f.n*kf*motorMaxTorque(f.m,rpm*kf,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
   const shares=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,mF/Math.max(1e-9,mR+mF)];
   let best=null;
   for(const sh of shares){
@@ -764,12 +771,15 @@ function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
 const feSplit=L=>L.feS!==undefined?[L.feS,L.feR]:[0.8*L.fe,0.2*L.fe];
 function motorHeatStep(m,temp,L,dt){
   const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns,Grc=motorGrc(m,L.rpm);   // explicit steps well inside the fastest node's time constant
+  const Ginv=m.Ginv||(m.cool.jacket?0.14:0.05)*m.Imax,Cinv=m.Cinv||2.0*m.Imax;
+  if(temp.inv==null)temp.inv=tc;
   for(let k=0;k<ns;k++){
     const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=Grc*(temp.r-temp.c);
     temp.w+=(L.cu-qWC-qWK)/m.Cw*h;
     const [fS,fR]=feSplit(L);
     temp.c+=(fS+L.mech+qWC+qRC-qCK)/m.Cc*h;
     temp.r+=(fR+(L.rcu||0)-qRC)/m.Cr*h;
+    temp.inv+=((L.inv||0)-Ginv*(temp.inv-tc))/Cinv*h;
   }
   return temp;
 }
@@ -782,12 +792,13 @@ function motorHeatStep(m,temp,L,dt){
 // all (thermal runaway), and the point cannot be held however long it is waited for. That returns Infinity.
 function motorSteadyTemps(m,T,rpm,Vdc){
   const tc=m.cool.tCool,a=m.Gwc/(m.Gwc+m.Gwk),Grc=motorGrc(m,rpm);
-  let temp={w:tc,c:tc,r:tc};
+  const Ginv=m.Ginv||(m.cool.jacket?0.14:0.05)*m.Imax;
+  let temp={w:tc,c:tc,r:tc,inv:tc};
   for(let k=0;k<60;k++){
     const L=motorLosses(m,T,rpm,Vdc,temp);
     const rc=L.rcu||0,Tc=tc+(L.fe+L.mech+a*L.cu+rc)/(m.Gcc+a*m.Gwk);
-    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/Grc};
-    if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity};
+    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/Grc,inv:tc+(L.inv||0)/Ginv};
+    if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity,inv:Infinity};
     if(Math.abs(next.w-temp.w)<1e-3){temp=next;break;}
     temp=next;
   }
@@ -840,16 +851,18 @@ function atYear(tab,year){
   return tab[ys[ys.length-1]];
 }
 const chemAvailable=(c,year)=>(CHEM[c]||CHEM.nca).from<=(year||2020);
-// The pack a design describes. s: {chem, series (cells in series), kWh, year}.
+// The pack a design describes. s: {chem, series (cells in series), kWh, year, cooling, ambT}.
 function packBuild(s){
   const c=CHEM[s.chem]||CHEM.nca, year=s.year||2020;
   const series=Math.max(1,s.series||1), kWh=Math.max(0.1,s.kWh||0.1);
+  const coolId=PACK_COOLING[s.cooling]?s.cooling:'liquid', cool=Object.assign({id:coolId},PACK_COOLING[coolId]);
+  const ambT=s.ambT!=null&&isFinite(+s.ambT)?clamp(+s.ambT,-10,45):PACK_T_REF;
   const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=series*vCell;
   const Ah=kWh*1000/Vnom, R=series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
   const ctp=s.chem==='lfp'&&year>=2020;
   const mass=kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
-  const cost=Math.round(kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,vMax:c.vMax?series*c.vMax:0,iMax:c.cMax*Ah,iChargeMax:c.cCharge*Ah};
+  const cost=Math.max(100,Math.round(kWh*(atYear(c.cost,year)+cool.costKwh)));
+  return {s,chem:c,year,cool,ambT,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,vMax:c.vMax?series*c.vMax:0,iMax:c.cMax*Ah,iChargeMax:c.cCharge*Ah};
 }
 // Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
 // A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
@@ -907,13 +920,23 @@ function packDrawClamped(b,soc,P,tC){
   const I=Math.max(0,Math.min(b.iMax,(V0-b.vMin)/R,V0/(2*R)));
   return {V:V0-I*R,I,heat:I*I*R};
 }
-// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
-// liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
-// from 50 C, to nothing at 60 C, the range the cells' makers rate them to.
+// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~900 J/kgK) over the pack's mass.
+// Cooling options (W/K per kWh to sink):
+//   liquid       cold plate / ribbon channels with water-glycol chiller (~2.0 W/K/kWh; Pesaran, NREL/CP-540-31018, 2001)
+//   air_forced   blower-ducted cabin/ambient air (~0.8 W/K/kWh; Pesaran NREL 2001, Prius/early Ioniq)
+//   air_passive  sealed natural-convection pack (~0.35 W/K/kWh; Nissan Leaf ZE0/ZE1, h ~ 6 W/m²K over ~1.8 m² case)
+// The battery management system cuts power from 50 C to nothing at 60 C.
 const PACK_C=900, PACK_G_KWH=2.0, PACK_COOLANT=30;
+const PACK_COOLING={
+  liquid:     {label:'LIQUID PLATE',gKwh:PACK_G_KWH,costKwh:0},
+  air_forced: {label:'FORCED AIR',  gKwh:0.8,       costKwh:-10},
+  air_passive:{label:'PASSIVE AIR', gKwh:0.35,      costKwh:-18}
+};
+const packSinkT=b=>{const a=b&&b.ambT!=null?b.ambT:PACK_T_REF;return b&&b.cool&&b.cool.id!=='liquid'?a:a+5;};
+const packStartT=b=>{const a=b&&b.ambT!=null?b.ambT:PACK_T_REF;if(a!==PACK_T_REF)return a;return b&&b.cool&&b.cool.id!=='liquid'?PACK_T_REF:PACK_COOLANT;};
 function packHeatStep(b,temp,heatW,dt){
-  const C=PACK_C*b.mass,G=PACK_G_KWH*b.kWh;
-  temp.b+=(heatW-G*(temp.b-PACK_COOLANT))/C*dt;
+  const C=PACK_C*b.mass,gKwh=b.cool?b.cool.gKwh:PACK_G_KWH,G=gKwh*b.kWh,tSink=packSinkT(b);
+  temp.b+=(heatW-G*(temp.b-tSink))/C*dt;
   return temp;
 }
 const packDerate=tB=>clamp((60-tB)/10,0,1);

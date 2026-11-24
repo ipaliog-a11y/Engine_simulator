@@ -63,7 +63,11 @@ const EVD_FIELDS={
     trade:'It sets the torque below the knee: torque is flux times current, until the iron saturates. Each amp costs money, and more current makes more heat in the copper.'},
   evRegen:{what:'How hard the motor brakes as a generator.',
     trade:'HIGH takes back all the motor and the battery can; LOW half of that; OFF none. Energy taken back goes into the battery for the rest of the lap.'},
-  evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque, and add their mass and cost. They share the battery.'},
+  evMaker:{adv:true,what:'Regenerative braking calibration: the deceleration g ceiling and kW cap before friction brakes take over.',
+    trade:'Tesla uses lift-off regen (~0.21 g, 77-90 kW); VW MEB blends to 0.30 g; Hyundai E-GMP blends up to 0.40 g.'},
+  evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque and independent rear torque-vectoring yaw assist, adding mass and cost. They share the battery.'},
+  evGearbox:{adv:true,what:'Single-speed fixed reduction, or a 2-speed EV gearbox (1.93 / 1.00, Taycan-style).',
+    trade:'A 2-speed multiplies low-speed wheel thrust by 1.93× while keeping top speed in 2nd, at the cost of ~18 kg, $1,400 and a brief powershift.'},
   evFront:{what:'A motor on the front axle, which makes the car all-wheel drive.',
     trade:'A magnet motor adds the most. An induction motor has no drag when it gives no torque, so at a cruise the controller lets it idle, as Tesla does.'},
   evFrontD:EVD_FRONT_HELP,evFrontOD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
@@ -76,7 +80,11 @@ const EVD_FIELDS={
   evKWh:{log:true,what:'How much energy the pack stores.',
     trade:'More capacity: more range, and more cells in parallel to share the current, so more power too. It costs mass and money.'},
   evYear:{adv:true,what:'The year the cells are made in.',
-    trade:'Energy per kg and cost per kWh improve with the year. A chemistry is offered only from the year it reached cars.'}
+    trade:'Energy per kg and cost per kWh improve with the year. A chemistry is offered only from the year it reached cars.'},
+  evPackCool:{adv:true,what:'How heat leaves the battery pack.',
+    trade:'Liquid plate (~2.0 W/K/kWh) holds track heat; forced air (~0.8) and passive air (~0.35) are cheaper but heat up and derate much sooner.'},
+  evAmbT:{adv:true,what:'Ambient and starting pack temperature (°C).',
+    trade:'Cold lithium cells (< 15 °C) suffer Arrhenius impedance rise (higher internal resistance) and derate power until warmed up; hot ambient reduces cooling headroom.'}
 };
 const EVD_SPEED_FIELDS=['evMotorType','evFront','evYear'];   // their change enables or disables other fields
 
@@ -113,7 +121,7 @@ function evdCompute(){
     return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
-  const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
+  const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
   const d={motor:m,pack,redline:Math.floor(m.nMax/50)*50},V=packOcv(pack,0.5),tc=m.cool.tCool,cool={w:tc,c:tc,r:60},pts=[];
   // scoreMotor's sweep at the rated voltage, so the peaks here are the ones the DYNO reports after BUILD
   let pk=0,tq=0,pkM=0;

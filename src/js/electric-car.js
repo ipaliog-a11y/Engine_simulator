@@ -14,17 +14,21 @@
 //                  cuts the current, the drive there is cut with it and the lap is solved again, as a turbo's boost
 //                  is (build 118).
 const EV_REDUCTION={label:'SINGLE-SPEED REDUCTION',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
+// Optional 2-speed EV gearbox (Porsche Taycan rear 2-speed planetary, 2020: 1st 15.56:1 / 2nd 8.05:1 = 1.933;
+// Porsche Technical Data 2020; wet-clutch powershift ~0.12 s, +18 kg, +$1,400).
+const EV_REDUCTION_2SPD={label:'2-SPEED EV GEARBOX',shift:0.12,powershift:true,eff:0.99,stall:0,mult:1,cost:2300,ratios:[1.93,1.0],mass:18};
+const EV_GEARBOXES={'1spd':{label:'1-SPEED REDUCTION',gb:EV_REDUCTION},'2spd':{label:'2-SPEED (1.93 / 1.00)',gb:EV_REDUCTION_2SPD}};
 const EV_DRIVE_EFF={fwd:0.97,rwd:0.97,awd:0.95};   // reduction gears and differential; AWD adds a transfer path
 const EV_FD_MIN=4,EV_FD_MAX=14;                    // single-speed EVs run ~7.5 (Model S Plaid) to ~11 (small city cars)
 
 // Set the driveline of an electric car: called by buildVehicle once the vehicle is otherwise built.
 function electricDriveline(v){
-  const e=engine,gb=EV_REDUCTION;
-  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  const e=engine,twoSpd=e.evGearbox==='2spd',gb=twoSpd?EV_REDUCTION_2SPD:EV_REDUCTION;
+  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=gb.shift;v.shiftCut=twoSpd?0.06:0;
   // a front motor drives the front wheels (build 183): all-wheel drive, whatever the form held when it was read
   if(e.motor.parts&&e.motor.parts.length>1)v.drive='awd';
-  v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
-  v.ratios=[1];v.gearsetApprox=false;
+  v.driveEff=(EV_DRIVE_EFF[v.drive]||0.97)*gb.eff;
+  v.ratios=twoSpd?EV_REDUCTION_2SPD.ratios.slice():[1];v.gearsetApprox=false;
   // a real car's published reduction (build 183: the Teslas) stands in for the matched one, as an engine's final drive does
   const pub=v.body&&v.body.fit&&v.body.fit.fd>0?v.body.fit.fd:0;v.fdPublished=pub;
   // matched: the motor's top speed at the speed where drag and rolling resistance take the drive's peak power
@@ -33,6 +37,44 @@ function electricDriveline(v){
   v.reductionMatched=matched;
   v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX)
     :clamp((pub?pub/gearingBias(52):matched)*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+  // Per-axle front reduction ratio for multi-motor pure EVs (evFrontFd > 0 overrides matched front = rear ratio)
+  v.frontFd=0;
+  if(e.motor.parts&&e.motor.parts.length>1){
+    const fdF=e.evFrontFd>0?clamp(e.evFrontFd,EV_FD_MIN,EV_FD_MAX):v.finalDrive;
+    v.frontFd=fdF;
+    const kNew=fdF/v.finalDrive;
+    if(Math.abs((e.motor.parts[1].k||1)-kNew)>1e-6){
+      e.motor.parts[1].k=kNew;
+      e._curve=null;e._pRef=null;e._gain=null;
+    }
+  }
+  // Dual-rear EV independent motor torque vectoring (one motor per rear wheel, no mechanical differential)
+  v.dualRearTV=!!(e.motor&&e.motor.dualRear);
+  if(v.dualRearTV){
+    const rm=e.motor.parts[0].m,V=motorRatedV(e),tOne=motorMaxTorque(rm,500,V,60);
+    const trk=v.trackR||v.track||1.6;
+    v.tvYawCap=trk*tOne*v.finalDrive*v.driveEff/Math.max(0.2,v.rTire);   // peak active yaw moment (N m)
+  }else v.tvYawCap=0;
+}
+// Independent dual-rear motor torque vectoring yaw assist: distributes rear torque asymmetrically between outer and
+// inner rear wheels (up to each motor's envelope and each tyre's friction circle) to generate direct yaw moment Mz
+// (N m) without the drag or turn-in resistance of a mechanical clutch-plate LSD.
+function evRearTorqueVector(m,v,ay,vx,Treq=0){
+  if(!m||!m.dualRear||!v||!v.rTire||!v.finalDrive)return {active:false,tOut:0,tIn:0,dT:0,Mz:0};
+  const rm=m.parts[0].m,V=motorRatedV(engine),fd=v.finalDrive*(v.ratios?v.ratios[0]:1),eff=v.driveEff||0.95;
+  const rpm=clamp(Math.abs(vx)/v.rTire*fd*30/Math.PI,1,rm.nMax);
+  const tLim=motorMaxTorque(rm,rpm,V,60);
+  const trk=v.trackR||v.track||1.6,mass=v.mass||1800,fWt=v.fWt||0.48,cg=v.cg||0.48,mu=v.mu||1.0;
+  const FzR=mass*G*(1-fWt),dFz=clamp(mass*Math.abs(ay)*cg/trk*(1-fWt),0,FzR*0.48);
+  const FzOut=FzR/2+dFz,FzIn=Math.max(0,FzR/2-dFz);
+  const FxMaxOut=mu*FzOut,FxMaxIn=mu*FzIn;
+  const tBase=clamp(Treq/2,-tLim,tLim),sg=ay>=0?1:-1;
+  // Request outer-wheel boost and inner-wheel reduction proportional to lateral acceleration (up to motor & tyre limits)
+  const wantDT=Math.min(tLim,Math.abs(ay)/(mu*G)*tLim*0.5);
+  const tOut=clamp(tBase+wantDT,-tLim,Math.min(tLim,FxMaxOut*v.rTire/(fd*eff)));
+  const tIn=clamp(tBase-wantDT,-Math.min(tLim,FxMaxIn*v.rTire/(fd*eff)),Math.min(tLim,FxMaxIn*v.rTire/(fd*eff)));
+  const Fout=tOut*fd*eff/v.rTire,Fin=tIn*fd*eff/v.rTire;
+  return {active:true,tOut,tIn,dT:(tOut-tIn)/2,Mz:sg*(trk/2)*(Fout-Fin)};
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
@@ -72,9 +114,9 @@ function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
 }
 // The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 373). The lap's
 // curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
-// the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
-// and every 5 °C from 25 to 60, straight between; cached per build and power cap.
-const EV_GAIN_T0=25,EV_GAIN_DT=5,EV_GAIN_NT=8;
+// the pack's power is the limit, warmer cells give a little more and cold cells derate via Arrhenius impedance rise
+// (packR). Taken on the curve's speeds every 5 °C from -15 to +60 °C, straight between; cached per build and power cap.
+const EV_GAIN_T0=-15,EV_GAIN_DT=5,EV_GAIN_NT=16;
 function evPackGain(e,rpm,tB){
   const cap=evPowerCap;let g=e._gain;
   if(!g||g.score!==e.score||g.cap!==cap){
@@ -104,18 +146,17 @@ function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null,soc=0.5,t
   return out;
 }
 // The heat over a lap. prof: per point the time step (s), the motor speed (rpm) and torque (Nm, negative regenerating).
-// Walks the lap twice from coolant temperature (a preparation lap, then the timed one) and gives, per point of the timed
+// Walks the lap twice from coolant/start temperature (a preparation lap, then the timed one) and gives, per point of the timed
 // lap, the share of the drive the controller and the pack allow, and the temperatures it ran at.
 function evLapHeat(e,prof,soc0=0.8){
-  const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool;
-  const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
+  const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool,b0=packStartT(b);
+  const t={w:tc,c:tc,r:tc,inv:tc},tb={b:b0};
   const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
-  let regenJ=0,driveJ=0,soc=clamp(soc0,0.05,1);
+  let regenJ=0,driveJ=0,soc=clamp(soc0,0.05,1),invMax=tc;
   for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
-    // A timed lap starts on a pack cooled to its coolant beforehand (a track mode pre-conditions it): ~400 kg of cells
-    // take a whole flat-out lap to heat, so the preparation lap that brings the motor and the rotors to their working
-    // temperature would hand the timed lap a pack already hot. The race (step 2.4) carries the pack's heat lap to lap.
-    if(lap===1&&i===0){tb.b=PACK_COOLANT;soc=clamp(soc0,0.05,1);}
+    // A timed lap starts on a pack at its start/pre-conditioned temperature: ~400 kg of cells take a whole flat-out lap
+    // to heat, so the preparation lap that brings the motor and rotors to working temp would hand the timed lap a hot pack.
+    if(lap===1&&i===0){tb.b=b0;soc=clamp(soc0,0.05,1);}
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
     // and, since build 373, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
@@ -127,14 +168,15 @@ function evLapHeat(e,prof,soc0=0.8){
     soc=clamp(soc-d.I*dt/(b.Ah*3600),0,1);
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
+      if(t.inv>invMax)invMax=t.inv;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
   }
-  return {share,tW,tR,tB,socEnd:soc,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
+  return {share,tW,tR,tB,invMax,socEnd:soc,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
 }
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
-  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&!!engine.hy.front);   // a hybrid's front axle motor too (build 195)
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&(!!engine.hy.front||engine.hy.mode==='p4'));   // a hybrid's front/P4 axle motor too
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');
@@ -145,7 +187,10 @@ function syncEvVehicleForm(ev){
 }
 // The vehicle summary's driveline line for an electric car, in place of the ratios.
 function evDrivelineLine(v){
-  return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
+  const gStr=v.ratios&&v.ratios.length>1?tr('2-Speed')+' <b>'+v.ratios.map(r=>r.toFixed(2)).join(' / ')+'</b> × ':'';
+  const fStr=v.frontFd>0&&Math.abs(v.frontFd-v.finalDrive)>0.01?' • '+tr('front')+' <b>'+v.frontFd.toFixed(2)+':1</b>':'';
+  const tvStr=v.dualRearTV?' • '+tr('active rear TV'):'';
+  return '<br>'+gStr+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1)'+fStr+tvStr+' • '+
     tr('regeneration up to')+' <b>'+Math.round(Math.min(engine.pack.pChargeMax/1000,evRegenRule(engine).kW||Infinity)*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
 }
 // The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
