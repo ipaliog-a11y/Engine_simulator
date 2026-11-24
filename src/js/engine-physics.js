@@ -1047,10 +1047,10 @@ function wiebePhasingEff(durDeg,socDeg,cr,volFn){
 // ATDC on a 13B peripheral port), so this is late phasing, not burning in the port.
 // Sources: Vorraro, Turner & Akehurst, SAE 2022-01-0591 (burn duration); hydrogen dual-spark Wankel
 // study, MBT at CA50 35-40 ATDC. Rotary CA50 taken mid-range, 37.5; burn 130.
-const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8, SI_BORE_REF=86;
+const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8, SI_BORE_REF=82.55;
 // SI flame-travel burn duration scales with bore (Heywood §9.3: flame travel distance ~ B/2 while
 // turbulent flame speed scales sublinearly with bore, giving ~B^0.35 crank-degree burn growth;
-// anchored at B = 86 mm = SI_BURN_DEG = 50 deg so typical 2.0 L 4-cyls stay put).
+// anchored at B = 82.55 mm = 3.25 in ASTM CFR reference knock cylinder = SI_BURN_DEG = 50 deg).
 const siBurnDeg=e=>SI_BURN_DEG*Math.pow(Math.max(40,e&&e.bore_mm||SI_BORE_REF)/SI_BORE_REF,0.35);
 const wiebeX50=()=>Math.pow(Math.log(2)/WIEBE_A,1/(WIEBE_M+1));   // fraction of the burn at 50% mass
 function rotaryLostWork(cr){
