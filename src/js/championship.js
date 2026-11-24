@@ -228,14 +228,27 @@ function champNewSeason(seriesId,opts){
   // attach player team cars (P4)
   const team=champTeam();
   if(team&&team.cars&&team.cars.length&&opts.useTeam){
-    team.cars.slice(0,2).forEach((seat,k)=>{
-      if(entrants.length>=CHAMP.maxGrid)entrants.pop();
+    const bop=!!(series.regs&&series.regs.bop);
+    team.cars.slice(0,2).forEach(seat=>{
+      const ref=seat.ref!=null?String(seat.ref):'';
+      const pIdx=seat.presetIdx!=null?seat.presetIdx:(ref.startsWith('p:')?+ref.slice(2):null);
+      let clsId=series.classId;
+      if(multi){
+        const p=pIdx!=null&&Number.isInteger(pIdx)?FACTORY_CARS[pIdx]:null;
+        clsId=(p&&series.classIds.find(cid=>CHAMP_CLASSES[cid]&&CHAMP_CLASSES[cid].eligible(p)))||series.classIds[0];
+      }
       let e=null;
-      if(seat.presetIdx!=null)e=champEntrantFromPreset(seat.presetIdx,{classId:series.classId,driver:seat.driver||'balanced',teamId:team.id,bop:true});
-      else if(seat.ref==='cur')e=raceEntrantFrom('cur');
-      else if(seat.ref&&String(seat.ref).startsWith('g:'))e=raceEntrantFrom(seat.ref);
-      if(e){e.teamId=team.id;e.strat=e.strat||{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:seat.driver||'balanced'};
-        e.strat.driver=seat.driver||e.strat.driver||'balanced';entrants.unshift(e);}
+      if(pIdx!=null&&Number.isInteger(pIdx))e=champEntrantFromPreset(pIdx,{classId:clsId,classTag:clsId,driver:seat.driver||'balanced',teamId:team.id,bop});
+      else if(ref==='cur')e=raceEntrantFrom('cur');
+      else if(ref.startsWith('g:'))e=raceEntrantFrom(ref);
+      if(e){
+        if(entrants.length>=CHAMP.maxGrid)entrants.pop();
+        e.teamId=team.id;
+        if(!e.classTag)e.classTag=clsId;
+        e.strat=e.strat||{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:seat.driver||'balanced'};
+        e.strat.driver=seat.driver||e.strat.driver||'balanced';
+        entrants.unshift(e);
+      }
     });
   }
   const economy=series.regs&&series.regs.economy?{
@@ -285,7 +298,12 @@ function champApplyRaceToSeason(S,R,meta){
   // economy (P3)
   if(S.economy){
     S.economy.credits-=CHAMP.entryFee;
-    results.forEach((r,k)=>{if(r.state!=='dnf'&&r.state!=='dsq')S.economy.credits+=(CHAMP.prize[k]||0);});
+    const team=champTeam(),teamId=team&&team.id;
+    results.forEach((r,k)=>{
+      if(r.state==='dnf'||r.state==='dsq')return;
+      const ent=S.entrants&&S.entrants[r.id];
+      if(ent&&ent.teamId&&(!teamId||ent.teamId===teamId))S.economy.credits+=(CHAMP.prize[k]||0);
+    });
     const career=champCareer();career.credits=S.economy.credits;champSaveCareer(career);
   }
   S.results.push({roundIdx:S.roundIdx,track:R.cfg.track,seed:R.cfg.seed,classification:results,

@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Race and championship critical bug fixes (build 442)
+
+- Fixed factory `'p:<idx>'` team cars being silently dropped from championship grids in `champNewSeason()` (`src/js/championship.js`), and assigned a valid `classTag` to player team entries so they appear in single- and multi-class standings.
+- Fixed championship economy prize payout in `champApplyRaceToSeason()` (`src/js/championship.js`) to award `CHAMP.prize` only for the player's team entrant(s) rather than every finisher on the grid (~51.5k credits/round).
+- Guarded timed races with `cfg.laps === 0` and `durationSec > 0` in `raceInit()`, `racePlan()`, `raceRecord()`, `raceStepOnce()`, and `raceCross()` (`src/js/race.js`) so recording buffers and lap/cutoff estimates remain finite and positive instead of creating a zero-length `Float32Array(NaN)`.
+- Fixed blue-flag ignore penalties (`src/js/race.js`) to check the lapping car's forward gap (`by._ahead === c && by._gap < RACE.follow * 2`) rather than the lapped car's forward gap, and reset `R.mistakeN = 0` when VSC triggers so subsequent mistakes do not immediately re-trigger VSC on every incident.
+- Updated `raceStandings()` (`src/js/race-tab.js`) to sort finished cars and compute gaps using penalty-adjusted `finishT` (matching `raceResults()` and the finish banner), preserved `0°C` air temperature in `raceConfig()`/`drawRace()`, and guarded `TRACKS[R.cfg.track]` lookups against missing circuit packs.
+- Added `tests/test267.mjs` covering all six fixes.
+
 ### High-CR and boost limits: peak cylinder pressure, pre-ignition, crevice loss, and ECU boost-cut diagnostics (build 441)
 
 - Raised `ENGINE_TYPE.petrol4.crMax` from `14` to `18` (`src/js/fuels-engine-types.js`) and synced `#edCR` and `#edRedline` HTML `min`/`max` bounds to the active engine type in `syncDesignEnable()` (`src/js/engine-build.js`), removing the silent clamp at 14:1 that froze power on high-CR petrol builds like a turbocharged Ferrari 812 (13.6:1 stock).
