@@ -62,8 +62,8 @@ function effIAT(map,rpm){
     const PR=Math.max(1,map);
     // At the efficiency the compressor has AT THIS FLOW, not one design figure for the whole map: near
     // choke at the top end a frame runs well off its island and the charge arrives hotter — a real
-    // part of why a turbo engine rolls off before its limiter. (Turbos only; a supercharger's
-    // efficiency is another law, and it keeps its design value.)
+    // part of why a turbo engine rolls off before its limiter. (Turbos use the wheel island map;
+    // superchargers use their blower-type efficiency law scAdiabaticEff.)
     const rise=compOutletT(map,rpm)-t;
     t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff||0)));
   }
@@ -537,15 +537,40 @@ function knockCa50(rpm,map,adv){
   const mix=lam<0.95?30*(0.95-lam):-30*(lam-0.95);     // ~3 deg per 0.1 lambda, the measured trend
   return burnCycle().ca50+mbtAdvance(rpm,map)+ignBonus()+mix-adv;
 }
-// Peak cylinder pressure structural ceiling for spark-ignition petrol engines (bar): modern high-output turbo
-// DI petrols (Audi 2.5 TFSI, GR Yaris G16E-GTS) are designed up to ~130-140 bar (Bosch Automotive Handbook; Heywood).
-// Diesels use rate-shaped injection and dieselImepLimit() to cap firing pressure, so wallTrace's single-zone Wiebe
-// burn is not used as a CI structural check.
+// Peak cylinder pressure structural ceiling (bar): modern high-output turbo DI petrols (Audi 2.5 TFSI,
+// GR Yaris G16E-GTS) are designed up to ~130-140 bar; modern DI diesels up to ~180-200 bar (Bosch
+// Automotive Handbook; Heywood).
 const PMAX_LIMIT_SI=140, PMAX_LIMIT_CI=200;
 const cylPmaxLimit=()=>engine.ci?PMAX_LIMIT_CI:PMAX_LIMIT_SI;
+// Closed-cycle peak cylinder pressure (bar) for CI diesels (Dual / Limited-Pressure cycle, Heywood §5.4, §10.4;
+// Bosch Automotive Handbook) and ported SI engines (2-stroke & Wankel rotary). Polytropic compression from
+// trapped IVC/BDC charge (n_c = 1.33 DI diesel, 1.30 ported/rotary due to higher surface-to-volume heat loss)
+// plus near-TDC constant-volume combustion rise: dP = alpha_v * (gamma_b - 1) * (cr - 1) * q_vol.
+const NC_CI=1.33, NC_PORTED=1.30, GAMMA_BURN=1.30;
+const CI_CV_FRAC=0.25, TWOSTROKE_CV_FRAC=0.55, ROTARY_CV_FRAC=0.48;
+function ciPortedPmax(rpm,map,adv){
+  const e=engine,cr=Math.max(1.5,e.compression),pInt=Math.max(0.3,map);
+  const prevB=e.boostNow,ve=computeVE(rpm,map);e.boostNow=prevB;
+  const Tchg=effIAT(map,rpm)+273.15;
+  const st=e.stoichAFR||(e.ci?14.5:14.7),lam=Math.max(0.5,curAFR(rpm,map)/st);
+  const air=pInt*1e5/(287*Tchg)*ve;                               // kg trapped air per m³ swept
+  const lhv=(e.fuelLHV||(e.ci?42.8:44))*1e6;
+  const qVol=air/(Math.max(1,lam)*st)*lhv/1e5;                    // burned fuel energy per m³ swept (bar)
+  if(e.ci){
+    const vIvc=Math.max(1.5,pistonVol(-180+ivcAt(rpm),cr));       // V_ivc / V_c
+    const p1=pInt*ve*(cr-1)/vIvc;                                 // trapped pressure at IVC (bar)
+    const pComp=p1*Math.pow(vIvc,NC_CI);                          // polytropic compression to TDC (bar)
+    const dP=CI_CV_FRAC*(GAMMA_BURN-1)*(cr-1)*qVol*burnPhasing(rpm);
+    return pComp+dP;
+  }
+  const pComp=pInt*ve*Math.pow(cr,NC_PORTED);
+  const cvFrac=e.type==='rotary'?ROTARY_CV_FRAC:TWOSTROKE_CV_FRAC;
+  const phF=clamp(1-0.015*(mbtAdvance(rpm,map)-adv),0.4,1.25);    // spark retard shifts burn into expansion (Heywood §9.2)
+  return pComp+cvFrac*(GAMMA_BURN-1)*(cr-1)*qVol*phF;
+}
 function cylTraceAt(rpm,map,adv){
   const e=engine;
-  if(e.ci||e.ports)return {I:0,Ipre:0,pMax:0};
+  if(e.ci||e.ports)return {I:0,Ipre:0,pMax:ciPortedPmax(rpm,map,adv)};
   if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
   const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
   const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
@@ -882,8 +907,11 @@ function pumpingMEP(rpm,map){
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult){
   let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
-  if(engine.intake==='supercharger')
-    fmep+=0.18*(SC_TYPE[engine.scType]||SC_TYPE.roots).drag*Math.max(0,map-1.0+icDpBar(airFlowAt(rpm,map),map))*(0.4+0.6*rpm/engine.redline);  // parasitic drive (by type), against the intercooler's drop too (build 256)
+  if(engine.intake==='supercharger'){
+    const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
+    const dP=Math.max(SC_BYPASS_FRAC*Math.max(0.2,engine.maxBoost),map-1.0+icDpBar(airFlowAt(rpm,map),map));
+    fmep+=0.18*sc.drag*dP*(0.4+0.6*rpm/engine.redline);            // parasitic drive (by type), off-boost bypass floor (Eaton TVS) + intercooler drop
+  }
   fmep+=pumpingMEP(rpm,map);
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;

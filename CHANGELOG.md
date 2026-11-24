@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 446)
+### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 448)
 
 - Passed actual starting wetness (`cfg.weather`) and rain compound into `racePractice()` (`src/js/race.js`) so wet/damp pit strategy computes tyre life and lap times on wet asphalt rather than dry `w = 0`.
 - Included `cfg.minStops` in `racePlan()` (`sMin = Math.max(sFuel, sTyre, sMand)`) so AI cars schedule mandatory stops instead of taking +30 s penalties, and added opportunistic VSC pit stops in `raceCross()` when inside the planned pit window.
@@ -27,6 +27,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Extended `mooseCoastPedals()` to neutralize regen for P2 hybrids (`car.el != null`) as well as EVs/power-split/series, and preserved the sign of `s.rollV` relative to tipping direction (`-tip.side * s.rollV`) on 2-wheel lift onset (`src/js/moose-run.js`).
 - Added a 2-wheel-lift rigid-body tip-over check (`ROLLOVER`, NHTSA SSF) to `skidRun()` (`src/js/skidpad-run.js`) so high-CG vehicles cannot hold steady-state lateral g above their Static Stability Factor.
 - Added `tests/test270.mjs` covering all of the above.
+
+### Supercharger adiabatic efficiency and diesel/ported peak cylinder pressure (build 447)
+
+- Added blower-type adiabatic efficiency `scAdiabaticEff(scType, pr, rpmFrac)` (`src/js/engine-constants-boost.js`) for Roots (Heywood §6.8.2 Eq. 6.36 backflow law with clearance roll-off above PR 2.0), twin-screw (internal-compression peak around PR 2.0), and centrifugal (speed- and PR-dependent radial wheel map), wired into `deriveCharge()` (`src/js/engine-build.js`) and `compOutletT()` (`src/js/engine-view.js`) so superchargers no longer fall back to the turbo wheel map.
+- Added an off-boost supercharger bypass parasitic drag floor (`SC_BYPASS_FRAC = 0.15`, Eaton TVS bypass measurements) in `pumpFrictionMEP()` (`src/js/engine-physics.js`) so belt-driven blowers keep positive parasitic drag when `map <= 1.0`.
+- Added closed-cycle peak cylinder pressure `ciPortedPmax(rpm, map, adv)` (`src/js/engine-physics.js`) using Dual / Limited-Pressure polytropic compression and constant-volume burn rise for CI diesels (`PMAX_LIMIT_CI = 200` bar) and ported SI engines (2-stroke and rotary, `PMAX_LIMIT_SI = 140` bar), replacing the `pMax: 0` stub in `cylTraceAt()`.
+- Added `tests/test268.mjs` covering supercharger adiabatic efficiency, off-boost drag, stock and extreme diesel `pMax` diagnostics/wear, and ported engine `pMax`.
+
+### EV and hybrid thermal, regen, and P2 cranking parity (build 446)
+
+- Added `packChargePower` (`src/js/electric.js`) to cap regenerative charging by cell upper voltage (`vMax`) and temperature-derated charge C-rate, and updated `packDraw` / `packDrawClamped` to reject/clamp charging past `vMax`; wired `packChargePower` into `evRegenTable` (`src/js/electric-car.js`) and `hybRegenTable` (`src/js/hybrid.js`), and integrated live SOC across the lap in `evLapHeat`.
+- Added pack thermal tracking (`state.tB`) with live hot-pack derating and negative regen torque testing on the EV LIVE bench (`src/js/electric-ui.js`).
+- Fixed the P2 hybrid full-throttle engine-start cranking deadlock and wired live motor/pack thermal derating into the hybrid bench (`src/js/hybrid-bench.js`).
+- Added hybrid lap (`hybLapHeat` in `src/js/hybrid.js`) and race (`hybRaceHeatStep` in `src/js/hybrid-race.js`) motor and pack thermal stepping and derating under sustained high-C draw.
+- Distinguished aluminium vs. copper rotor cage resistivity and mass in induction motors, added magnet eddy-current loss to NdFeB `rotorIronLoss` (`src/js/electric.js`), and applied 97% bidirectional DC-DC boost converter efficiency (`psBoostEta`, ORNL/TM-2010/253) when boosting pack voltage in power-split hybrids (`src/js/power-split.js`, `src/js/hybrid.js`).
+- Added `tests/test271.mjs` covering regen tapering, EV/hybrid bench thermal and regen, P2 cranking, hybrid lap/race thermal derating, and IM/PM/power-split refinements.
 
 ### EV and hybrid NaN guards and race pack-overload fix (build 445)
 

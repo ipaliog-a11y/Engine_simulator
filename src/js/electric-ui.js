@@ -118,7 +118,7 @@ function buildElectric(){
   e.cost=e.motor.cost+e.pack.cost;
   // a fresh drive on a charged pack
   const tc=e.motor.cool.tCool;
-  state.mT={w:tc,c:tc,r:tc};state.soc=0.9;state.battI=0;state.battKW=0;
+  state.mT={w:tc,c:tc,r:tc};state.tB={b:PACK_COOLANT};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
   state.engineHealth=1;state.blown=false;state.wearCause='';state.boostActual=0;state.nitrousActive=false;
   state.map=1;state.rpm=clamp(state.rpm,0,e.redline);
   buildRev++;dynoCache=null;
@@ -131,9 +131,9 @@ const motorRatedV=e=>packOcv(e.pack,0.5);
 // The most torque the drive gives at a speed, motor and battery together: the motor's envelope (the voltage, the
 // magnets' temperature), cut to what the pack can supply less the drive's own losses, and by the controller's thermal
 // derating. The battery cut is solved by bisection on the torque: T w + losses(T) <= the pack's limit.
-function driveMaxTorque(e,rpm,Vdc,temp,soc){
+function driveMaxTorque(e,rpm,Vdc,temp,soc,tB=PACK_T_REF){
   const m=e.motor;let T=motorMaxTorque(m,rpm,Vdc,temp.r)*motorDerate(e,temp)*(state.engineHealth||1);
-  const w=rpm*Math.PI/30,Pb=evBmsPower(e.pack,soc);   // the battery management's limit at a low charge (build 196)
+  const w=rpm*Math.PI/30,Pb=evBmsPower(e.pack,soc,tB)*packDerate(tB);   // low-charge BMS (build 196) & pack thermal derate
   const need=t=>t*w+motorLosses(m,t,rpm,Vdc,temp).total;
   if(T>0&&need(T)>Pb){let lo=0,hi=T;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(need(mid)>Pb)hi=mid;else lo=mid;}T=lo;}
   return T;
@@ -223,20 +223,34 @@ function motorPeakHold(e,V){
 // engine's) holds the speed. With the throttle closed the motor simply coasts down on its own drag.
 function stepMotorBench(dt){
   const e=engine,m=e.motor,b=e.pack,st=state;
-  const Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*b.R);
-  // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
-  // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
-  const on=st.ignOn!==false,Treq=on&&st.soc>0.005?st.throttle*driveRefTorque(e,st.rpm):0,Tmax=on&&st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc):0,T=Math.min(Treq,Tmax);
+  if(!st.tB)st.tB={b:PACK_COOLANT};
+  const tB=st.tB.b,R=packR(b,tB),Voc=packOcv(b,st.soc),Vdc=Math.max(b.vMin,Voc-(st.battI||0)*R);
+  const on=st.ignOn!==false,w=st.rpm*Math.PI/30;
+  const regenReq=st.throttle<0?-st.throttle:clamp(st.regenCmd||0,0,1);
+  let Treq=0,Tmax=0,T=0;
+  if(on&&regenReq>0&&st.rpm>5&&st.soc<0.999){
+    const Tmot=motorMaxTorque(m,st.rpm,Vdc,st.mT.r)*motorDerate(e,st.mT)*(st.engineHealth||1);
+    const Pchg=packChargePower(b,st.soc,tB)*packDerate(tB)*(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+    const TregMax=Math.max(0,Math.min(Tmot,Pchg/Math.max(1,w)));
+    Treq=-regenReq*driveRefTorque(e,st.rpm);
+    T=-Math.min(-Treq,TregMax);
+  }else{
+    // the pedal asks for a fixed share of the drive at its best (driveRefTorque); the controller draws whatever current that
+    // takes, so a partial pedal holds its torque as the pack's voltage falls, until the drive as it is now cannot give it
+    Treq=on&&st.soc>0.005?Math.max(0,st.throttle)*driveRefTorque(e,st.rpm):0;
+    Tmax=on&&st.soc>0.005?driveMaxTorque(e,st.rpm,Vdc,st.mT,st.soc,tB):0;
+    T=Math.min(Treq,Tmax);
+  }
   // what holds the torque under the pedal's request, for the LIVE panel (build 196): limp mode, the battery management at a
-  // low charge, the controller's heat, or the pack's voltage and current
+  // low charge, the controller's/pack's heat, or the pack's voltage and current
   st.evAsked=Treq;
-  st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
-  const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
-  const d=packDrawClamped(b,st.soc,Math.max(0,Pb));
-  st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
+  st.evLimit=Treq<=0||Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':(motorDerate(e,st.mT)<0.999||packDerate(tB)<0.999)?'thermal':'battery';
+  const L=motorLosses(m,T,st.rpm,Vdc,st.mT),Pb=T*w+L.total;
+  const d=packDrawClamped(b,st.soc,T<0?Pb:Math.max(0,Pb),tB);
+  st.soc=clamp(st.soc-d.I*dt/(b.Ah*3600),0,1);
   st.battI=d.I;st.battKW=d.V*d.I/1000;st.systemVoltage=d.V;
   st.evLoss=L;st.battHeat=d.heat;st.battSag=Voc-d.V;   // for the bench's readouts (build 285): the losses as the model splits them, and the pack's
-  motorHeatStep(m,st.mT,L,dt);
+  motorHeatStep(m,st.mT,L,dt);packHeatStep(b,st.tB,d.heat,dt);
   // A rotor has a third of an engine's inertia against the same stiff brake law, so a whole frame in one step overshoots
   // and rings; the speed is stepped in pieces short enough for the brake (a half of its own time constant).
   const drag=w>1?(L.mech)/w:0,hMax=0.5*e.inertia*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
@@ -245,7 +259,7 @@ function stepMotorBench(dt){
     st.rpm=clamp(omega*30/Math.PI,0,e.redline);
   }
   st.torque=T;st.powerKW=T*w/1000;st.powerHP=st.powerKW/0.7457;
-  st.thermalEff=Pb>100?clamp(T*w/Pb*100,0,100):0;
+  st.thermalEff=T>=0?(Pb>100?clamp(T*w/Pb*100,0,100):0):(T*w<-100?clamp(Math.max(0,-Pb)/(-T*w)*100,0,100):0);
   st.fuelFlowLph=0;st.bsfc=999;st.knockRisk=0;st.fuelCut=false;
   if(typeof zeroEmissions==='function')zeroEmissions();   // no tailpipe on a pure EV (build 257)
 }
@@ -273,11 +287,12 @@ function motorOperatingPoint(kind){
 // A pull at the live state: the pack's voltage now, the magnets as hot as they are now, so a hot or drained drive shows
 // on the curve. Torque, power and the drive's efficiency on the full-load line.
 function motorDynoData(){
-  const e=engine,st=state,key=[buildRev,Math.round(st.soc*200),Math.round(st.mT.r/2),Math.round(st.mT.w/2),st.engineHealth.toFixed(3)].join('|');
+  const e=engine,st=state,tB=st.tB?st.tB.b:PACK_T_REF;
+  const key=[buildRev,Math.round(st.soc*200),Math.round(st.mT.r/2),Math.round(st.mT.w/2),Math.round(tB/2),st.engineHealth.toFixed(3)].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const V=packOcv(e.pack,st.soc),pts=[],step=Math.max(100,Math.round(e.redline/70/50)*50);
   for(let rpm=step;rpm<=e.redline;rpm+=step){
-    const T=driveMaxTorque(e,rpm,V,st.mT,st.soc),kW=T*rpm*Math.PI/30/1000;
+    const T=driveMaxTorque(e,rpm,V,st.mT,st.soc,tB),kW=T*rpm*Math.PI/30/1000;
     pts.push({rpm,torque:T,powerKW:kW,powerHP:kW/0.7457,eff:T>1?motorEfficiency(e.motor,T,rpm,V,st.mT):0});
   }
   dynoCache=pts;dynoCacheKey=key;return pts;
@@ -407,7 +422,7 @@ function updateMotorUI(){
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
   hEl.querySelector('.value').textContent=st.blown?tr('DEAD'):hp;
   hEl.className='stat'+(st.blown||hp<30?' danger':(hp<70?' warning':''));
-  const status=g('status'),legend=g('legend'),der=motorDerate(engine,st.mT);
+  const status=g('status'),legend=g('legend'),tB=st.tB?st.tB.b:PACK_COOLANT,der=motorDerate(engine,st.mT)*packDerate(tB);
   if(performance.now()<statusFlashUntil){/* keep the flash */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
@@ -415,7 +430,7 @@ function updateMotorUI(){
   else if(st.soc<=0.005){status.textContent=tr('PACK EMPTY — SET THE CHARGE OR REBUILD');status.className='status-bar err';}
   else if(st.soc<EV_BMS.limp){status.textContent=tr('LIMP MODE')+' • '+tr('CHARGE')+' '+(st.soc*100).toFixed(1)+'% • '+tr('power held to')+' '+Math.round(EV_BMS.limpShare*packMaxPower(engine.pack,0.5)/1000)+' kW';status.className='status-bar err';}
   else if(st.soc<EV_BMS.low){status.textContent=tr('LOW CHARGE')+' • '+Math.round(st.soc*100)+'% • '+tr('battery power cut to')+' '+Math.round(evBmsShare(st.soc)*100)+'%'+(st.evLimit==='lowsoc'?' • '+tr('LIMITING')+' '+Math.round(st.torque/Math.max(1e-6,st.evAsked)*100)+'% '+tr('of asked'):'');status.className='status-bar warn';}
-  else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% '+tr('of full current')+' • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C';status.className='status-bar warn';}
+  else if(der<0.999){status.textContent=tr('THERMAL DERATE')+' • '+Math.round(der*100)+'% • '+tr('WINDING')+' '+Math.round(st.mT.w)+'°C • '+tr('PACK')+' '+Math.round(tB)+'°C';status.className='status-bar warn';}
   else if(st.rpm>=engine.redline-30){status.textContent=tr('SPEED LIMIT')+' • '+Math.round(st.rpm)+' RPM';status.className='status-bar warn';}
   else if(st.powerKW>3){status.textContent=tr('RUNNING')+' • '+st.powerKW.toFixed(0)+' kW @ '+Math.round(st.rpm)+' RPM • '+st.thermalEff.toFixed(1)+'%';status.className='status-bar';}
   else{status.textContent=tr('COASTING')+' • '+Math.round(st.rpm)+' RPM';status.className='status-bar';}
@@ -507,7 +522,8 @@ function drawMotorView(dt){
     const t=tr(q[0])+' '+(q[1]/1000).toFixed(1),tw=ctx.measureText(t).width;if(tx+tw>W-6){tx=x0;ty+=14;}ctx.fillText(t,tx,ty);tx+=tw+8;
   }
   ctx.fillStyle='#99aabb';
-  ctx.fillText(tr('PACK')+' '+((st.battI||0)/engine.pack.Ah).toFixed(1)+'C • '+tr('sag')+' '+Math.round(st.battSag||0)+' V • '+tr('heat')+' '+((st.battHeat||0)/1000).toFixed(1)+' kW',x0,ty+18);
+  const tB=st.tB?st.tB.b:PACK_COOLANT;
+  ctx.fillText(tr('PACK')+' '+((st.battI||0)/engine.pack.Ah).toFixed(1)+'C • '+tr('sag')+' '+Math.round(st.battSag||0)+' V • '+tr('heat')+' '+((st.battHeat||0)/1000).toFixed(1)+' kW • '+Math.round(tB)+'°C',x0,ty+18);
   // an induction motor's slip: the cage's loss is the slip's share of the power crossing the air gap
   if(m.im&&!m.parts&&L.rcu>0&&st.torque>0){
     const Pm=st.torque*st.rpm*Math.PI/30,slip=L.rcu/(Pm+L.rcu),c=imCurrents(m,st.torque,st.rpm,st.systemVoltage);
