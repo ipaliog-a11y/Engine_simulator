@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### ICE NaN guards, live-state isolation, and cache/reset fixes (build 442)
+
+- Floored net dyno `torque`/`powerKW`/`powerHP` at `>= 0` after subtracting `electricalDragTorque(rpm)` in `calcAtRpm()` (`src/js/engine-physics.js`) and guarded `peakTQ === 0` / `peakHP === 0` in `scoreEngine()` (`src/js/share-scoring.js`), fixing negative dyno torque and `NaN` scores on small engines with heavy alternators.
+- Isolated `buildKnockLimit()` (`src/js/engine-constants-boost.js`) and `peakCylLoads()` (`src/js/engine-physics.js`) by saving and restoring `state.iat`, `state.afr`, and `state.nitrousActive` at nominal build conditions so live bench state no longer leaks into `knockLimTable`, `peakPmax`, `peakPreIgn`, or Designer previews.
+- Floored `m`, `pc`, `T`, and `Tu` strictly `> 0` before `Math.pow(..., 0.8)` / `Math.pow(..., -0.55)` in `intakeFill()`, `wallTrace()` (`src/js/gas-dynamics.js`), and `endGasTraceAt()` (`src/js/engine-physics.js`).
+- Enforced `compExd_mm >= 30` when non-zero (`src/js/engine-build.js`, `src/js/engine-constants-boost.js`) and clamped the air-filter/carb pressure-drop multiplier to `>= 0.05` in `computeVE()` (`src/js/engine-physics.js`).
+- Added PI anti-windup clamping on `o2Loop.int` and reset `o2Loop` on open-loop transitions and `obdReset()` (`src/js/obd.js`); refreshed `peakPmax`/`peakPreIgn` in `rederiveBreathing()` (`src/js/parts.js`); invalidated hidden preset overrides `edSpringRpm`/`edRadHp` when displacement, redline, or boost are edited (`src/js/engine-build.js`).
+- Fixed `drawCompMap` cache key to use `buildRev` instead of coercing `e.score` to `"[object Object]"` (`src/js/engine-view.js`); fixed LIVE `RESET` to restore `engine.stoichAFR`, refill nitrous, clear `#btnNitrous`, and reset EV `state.soc`/`state.mT` (`src/js/controls-boot.js`); flashed `Invalid or corrupted share link` on `#b=` decode failure (`src/js/share-scoring.js`).
+- Added regression test `tests/test265.mjs`.
+
 ### High-CR and boost limits: peak cylinder pressure, pre-ignition, crevice loss, and ECU boost-cut diagnostics (build 441)
 
 - Raised `ENGINE_TYPE.petrol4.crMax` from `14` to `18` (`src/js/fuels-engine-types.js`) and synced `#edCR` and `#edRedline` HTML `min`/`max` bounds to the active engine type in `syncDesignEnable()` (`src/js/engine-build.js`), removing the silent clamp at 14:1 that froze power on high-CR petrol builds like a turbocharged Ferrari 812 (13.6:1 stock).

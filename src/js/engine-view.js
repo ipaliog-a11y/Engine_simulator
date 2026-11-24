@@ -212,7 +212,7 @@ function drawCompMap(px,py,S,F,LW,x,y,w,h,m){
   const e=engine;if(!(e.chokeFlow_kgs>0))return;
   const prMax=Math.max(2.4,1+(e.boost_bar||0)*1.5),fMax=1.25;
   const X=f=>x+clamp(f,0,fMax)/fMax*w,Y=pr=>y+h-clamp((pr-1)/(prMax-1),0,1)*h;
-  const key=e.score+'|'+S+'|'+prMax;
+  const key=buildRev+'|'+S+'|'+prMax;
   if(drawCompMap.key!==key){
     // the islands, once per engine: bands of efficiency
     const cv=document.createElement('canvas');cv.width=Math.ceil(w*S);cv.height=Math.ceil(h*S);

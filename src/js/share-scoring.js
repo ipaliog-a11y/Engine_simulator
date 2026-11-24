@@ -16,7 +16,7 @@ function loadFromHash(){
   const h=location.hash||'';
   if(h.indexOf('#b=')!==0)return false;
   try{const nm=applyBuild(decodeBuild(h.slice(3)));flash(tr('LOADED SHARED:')+' '+nm);return true;}
-  catch(e){return false;}
+  catch(e){flash(tr('Invalid or corrupted share link'),'warn');return false;}
 }
 // ---- Dyno pull logging (overlay saved curves for comparison) ----
 function logPull(){
@@ -43,9 +43,9 @@ function scoreEngine(){
   let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
   for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
     if(p.powerHP>peakHP){peakHP=p.powerHP;peakHPrpm=r;}if(p.torque>peakTQ){peakTQ=p.torque;peakTQrpm=r;}}
-  let lo=rMax,hi=1000;pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  let lo=rMax,hi=1000;if(peakHP>0)pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   const band=Math.max(0,hi-lo);
-  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=clamp(tqLow/peakTQ,0,1);
+  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=peakTQ>0?clamp(tqLow/peakTQ,0,1):0;
   // safety: worst knock over a stoich WOT stress sweep
   state.afr=engine.stoichAFR;let maxKnock=0;
   for(let r=1000;r<=rMax;r+=200)maxKnock=Math.max(maxKnock,computeKnockRisk(r,wotMapAt(r)));
