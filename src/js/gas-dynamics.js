@@ -65,9 +65,12 @@ function exhaustGasT(load,rpm,lambda,retard){
   // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
   // and H2, whose cp is higher, so this errs warm).
   const st=e.stoichAFR||14.7, afr=Math.max(6,st*Math.max(1,lam)), heat=(e.fuelLHV||44)*1e6*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
-  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH);
+  // Active nitrous carries 36.4% O2 vs 23.2% in air (less inert N2 diluent) plus exothermic N2O
+  // decomposition (-1.86 MJ/kg), raising EGT ~35 K per bar of nitrous IMEP (wet-kit measurements).
+  const n2oDT=typeof nitrousImep==='function'?nitrousImep()*35:0;
+  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH)+n2oDT;
   const supplied=1/(st*Math.max(0.5,lam)), excess=supplied-1/st;   // kg of fuel per kg of air, and the part not burned
-  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH);
+  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH)+n2oDT;
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
 // leaves through the exhaust port, at the mixture lam.
@@ -189,7 +192,7 @@ function wallTrace(e,rpm,map,egr=0){
   const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
   // egr: the share of the charge that is cooled exhaust (build 204), at the intake's temperature: the same fuel in more gas
   const lam=e.ci?LAMBDA_REF_CI:0.9, q=(1-egr)*(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
-  const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
+  const burn=e.ci?6*rpm*BURN_T_CI:siBurnDeg(e), soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*burn;
   const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
   const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1), V1=Vd*cr/(cr-1), m=p1*V1/(R*T1);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
@@ -224,6 +227,9 @@ function wallTrace(e,rpm,map,egr=0){
   return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
+// Cylinder wall temperature coupled to coolant (Heywood §12.4: gas-side liner/head sits ~90 K above
+// coolant at full load, anchored at 450 K when coolant = 90 °C so stock builds at 90 °C stay put).
+const wallTempK=coolantC=>360+clamp(coolantC!=null?coolantC:90,50,140);
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
 // fig. 3-9 puts a spark engine at 2-5% and a diesel near 2% when not rich. Midpoints. Rich of stoich the
 // release is already capped (exhaustGasT); this is what is lost even with oxygen to spare.
@@ -591,7 +597,9 @@ function turbineThroatAt(rpm,map,T){
 // understated low-rpm backflow on every engine, and the fitted VE bell's low side was covering for
 // it. A phaser ADVANCES the whole lobe, so it moves IVC by its full authority — not half of it, which
 // is what subtracting it from duration did.
-const ROD_STROKE=1.7;
+// Connecting-rod to crank-radius ratio L/r (Heywood §2.2: typical passenger-car engines sit at 3.0-3.5;
+// L/S = 1.7 -> L/r = 3.4). Shared by intakeFill, trappedFraction, and pistonVol in engine-physics.js.
+const ROD_RATIO=3.4, ROD_STROKE=ROD_RATIO/2;
 const VVT_AUTHORITY=45;   // crank degrees an intake cam phaser can advance the cam
 function pistonX(thetaDeg,r,l){
   const t=thetaDeg*Math.PI/180;

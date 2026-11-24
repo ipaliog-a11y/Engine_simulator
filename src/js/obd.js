@@ -12,7 +12,7 @@ const OBD_CODES={
   P0217:{t:'Engine coolant over temperature', hold:2, why:'Coolant is above 112 °C, where the wear model starts charging OVERHEAT.'},
   P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost (the LEAN/BOOST wear condition), or the lambda sensor reads leaner than the ECU can hold.'},
   P0172:{t:'System too rich (bank 1)',        hold:2, why:'The lambda sensor reads richer than the ECU can hold at part load.'},
-  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), or the valves float.'},
+  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), the valves float, or the mixture is past its flammability limit.'},
   P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
   P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
 };
@@ -25,11 +25,15 @@ function obdRunning(){
   if(isHybrid())return !!hybBenchState().engOn;
   return state.firing!==false&&!state.blown;
 }
-// The share of combustion events lost: spark (ignitionHealth) or a valve past float.
+// The share of combustion events lost: spark (ignitionHealth), valve float, or extreme lean/rich mixture misfire.
 function obdMisfire(){
   if(engine.ci)return 0;
   let m=1-ignitionHealth(state.rpm);
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)m=Math.max(m,OBD_MISFIRE);
+  if(typeof mixtureMisfireFrac==='function'){
+    const lam=state.afr/(engine.stoichAFR||14.7);
+    m=Math.max(m,mixtureMisfireFrac(lam));
+  }
   return m;
 }
 // Which conditions are present right now, by code.
