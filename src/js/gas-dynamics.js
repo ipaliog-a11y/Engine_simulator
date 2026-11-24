@@ -202,23 +202,23 @@ function wallTrace(e,rpm,map,egr=0){
   const crown=e.ci?disc+Math.PI*0.55*0.17*B*B:disc;
   const area=V=>head+crown+Math.PI*B*hc*V;
   // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
-  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
+  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
   const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
   let T=T1,num=0,den=0,pE=0,TE=0,pMax=p1;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
     const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
-    const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    const p=Math.max(1,R*T/v0), pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
     const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
     num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
-    T+=(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv;
-    pE=R*T/(v1*Vn/cr);TE=T;
+    T=Math.max(50,T+(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv);
+    pE=Math.max(1,R*T/(v1*Vn/cr));TE=T;
   }
   const pX=Math.max(1.05e5,p1), TX=TE*Math.pow(pX/pE,(g-1)/g);
   for(let th=evo;th<360;th+=d){                        // blowdown to BDC, then the exhaust stroke
     const s=th<180?(th-evo)/Math.max(1,180-evo):1;
-    const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
+    const p=Math.max(1,pE+(pX-pE)*s), T=Math.max(50,TE+(TX-TE)*s);
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
   return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
@@ -373,14 +373,14 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
-    const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
+    const Vc=V(th),pc=Math.max(1,m*R*T/Vc),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
     const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
-    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(pc/1000,0.8)*Math.pow(T,-0.55)*Math.pow(6.18*Sp,0.8);
+    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,pc/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,6.18*Sp),0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
     const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
-    m+=dm;T=U/(cv*m);
+    m=Math.max(1e-9,m+dm);T=Math.max(50,U/(cv*m));
   }
   return (m-m0)/(rho0*Vd);
 }
