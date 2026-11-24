@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### ICE knock sensitivity, mechanical/turbo limits, and nitrous accounting (build 450)
+### ICE knock sensitivity, mechanical/turbo limits, and nitrous accounting (build 451)
 
 - Wired coolant-coupled wall temperature (`wallTempK = 360 + clamp(coolant, 50, 140)`, anchored at 450 K at 90 °C; Heywood §12.4), cooled EGR charge dilution (`egrRate`), and bore-scaled SI flame-travel burn duration (`siBurnDeg = 50 * (bore / 82.55)^0.35`, ASTM CFR 3.25-in reference; Heywood §9.3) into `endGasTraceAt()` (`src/js/engine-physics.js`) and `wallTrace()` (`src/js/gas-dynamics.js`), with coolant/nitrous keys added to `_knockCache` and isolated in build-time tables.
 - Added live inertial wear in `stepWear()` above `PISTON_SPEED_LIMIT` (25 m/s, Heywood §2.2) and rotary apex-seal sliding speed `APEX_SPEED_LIMIT` (36 m/s, Yamamoto/Mazda), and unified `ROD_RATIO = 3.2` (`ROD_STROKE = 1.6`) across `gas-dynamics.js` and `engine-physics.js`.
@@ -26,6 +26,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Accounted for active nitrous fuel enrichment (`nitrousFuelKgS()`) in `meteredFuelKgS()` and `computeEmissions()`, and added nitrous cylinder heat release and exhaust temperature rise to `endGasTraceAt()`, `ciPortedPmax()`, and `exhaustGasT()`.
 - Added homogeneous SI flammability misfire roll-off (`mixtureMisfireFrac()`, `lambda < 0.72` or `lambda > 1.20`; Heywood §9.4.3) in `sparkMixture()` and wired it into `obdMisfire()` (`src/js/obd.js`) so extreme lean/rich mixtures flag `P0300`.
 - Added `tests/test272.mjs` covering all five areas.
+
+### Driving sim tyre/brake/converter parity and lap aids integration (build 450)
+
+- Added per-wheel tread temperature (`s.tyreT`), wear (`s.tyreW`), smoke intensity (`s.smoke`), wet grip scaling (`car.wet`), and lateral camber grip loss (`latCamberF`, Milliken & Milliken RCVD ch. 2) to `driveTyre` and `stepCar` (`src/js/drive-model.js`), initialized warm and dry by default to preserve existing dry-test baselines.
+- Wired per-wheel rotor temperature (`s.brakeT`) and thermal fade (Limpert ch. 3), knee-point proportioning valve (`brakeValveRear`, Limpert ch. 7 / UN ECE R13-H) when `abs === false`, and reverse gear (`s.gear === -1`) into `stepCar`.
+- Modelled hydrodynamic automatic torque converter slip and torque multiplication below stall (`GEARBOX.auto.stall` / `.mult`, Bosch Automotive Handbook; Gillespie ch. 2) in `stepCar` instead of stepping automatics as a dry clutch.
+- Wired `vehicle.aids.abs` (knee-point proportioning when off), `tc`, `esp`, and `centreCoupling(vehicle)` (`awdTractionCap`, Milliken & Milliken RCVD ch. 18) into `simulateLapCore` (`src/js/racing-line-lap.js`) and `simulateAccelRun` (`src/js/vehicle-accel.js`), added bicycle-model slip-angle understeer/oversteer (`Kus * ay`) to the lap steering trace, and added optional `wet` grip scaling to `simulateBraking`.
 
 ### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 449)
 
