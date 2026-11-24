@@ -324,8 +324,8 @@ function bindControls(){
   document.getElementById('edHyDeploy').addEventListener('change',syncDesignEnable);   // ASSIST RPM only for ABOVE and BELOW (build 192)
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
-    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'))
-      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:v==='series'?HYB_DEFAULT_SERIES:HYB_DEFAULT));
+    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'||v==='mhev'||v==='p3'||v==='p4'))
+      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:v==='series'?HYB_DEFAULT_SERIES:v==='mhev'?HYB_DEFAULT_MHEV:(v==='p3'||v==='p4')?HYB_DEFAULT_P4:HYB_DEFAULT));
     syncDesignEnable();
   });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.

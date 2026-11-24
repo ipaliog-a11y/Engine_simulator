@@ -14,8 +14,8 @@
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
 // 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
 // size reach 20,000 rpm), each sized to its rated 295 kW with the turns for the ~1,420 Nm the three are credited with
-// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, which the model's
-// nearest diff is the clutch-plate LSD (full traction off the line).
+// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, modelled with independent
+// dual-rear active torque vectoring (v.dualRearTV / evRearTorqueVector in src/js/electric-car.js).
 // The stator's outside diameter (build 314): the Model 3's 225 mm is MotorXP's teardown, and the Model Y and the Plaid's
 // magnet motors are taken to share its lamination (PROBABLE). The others are unpublished and carry the bore over 0.67 they
 // had until then (PROBABLE): the Model Y's front induction motor 210, and the hybrids' motors 226-301 (HYB_ENGINE_PRESETS).

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 451</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 452</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1089,7 +1089,7 @@ body.guided-open{overflow:hidden}
 
 <div class="design-section">Hybrid</div>
 <div class="design-grid">
-<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="p2">PARALLEL (P2)</option><option value="ps">POWER-SPLIT (eCVT)</option><option value="series">SERIES</option></select></div>
+<div class="field"><label for="edHybrid">HYBRID</label><select id="edHybrid"><option value="none">NONE</option><option value="mhev">MHEV 48V (P0/P1)</option><option value="p2">PARALLEL (P2)</option><option value="p3">PARALLEL (P3)</option><option value="p4">PARALLEL (P4 AXLE)</option><option value="ps">POWER-SPLIT (eCVT)</option><option value="series">SERIES</option></select></div>
 <div class="field"><label for="edHyDeploy">ASSIST</label><select id="edHyDeploy"><option value="full">FULL</option><option value="eco">ECO (TORQUE FILL)</option><option value="above">ABOVE RPM</option><option value="below">BELOW RPM</option></select></div>
 <div class="field"><label for="edHyPlug">PLUG-IN</label><select id="edHyPlug"><option value="no">NO</option><option value="yes">YES</option></select></div>
 </div>
@@ -1105,6 +1105,9 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edHySocHi">CHARGE HIGH (%)</label><input type="number" id="edHySocHi" min="40" max="95" step="1" value="85"></div>
 <div class="field"><label for="edHyDeployMJ">DEPLOY LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyDeployMJ" min="0" max="50" step="0.1" value="0"></div>
 <div class="field"><label for="edHyHarvestMJ">HARVEST LIMIT (MJ/LAP, 0 = NONE)</label><input type="number" id="edHyHarvestMJ" min="0" max="50" step="0.1" value="0"></div>
+<div class="field"><label for="psRho">PLANETARY ρ (0 = PRIUS)</label><input type="number" id="psRho" min="0" max="0.8" step="0.005" value="0"></div>
+<div class="field"><label for="psK2">MG2 GEAR k2 (0 = PRIUS)</label><input type="number" id="psK2" min="0" max="6" step="0.01" value="0"></div>
+<div class="field"><label for="psBusV">DC BUS V (0 = 600 V)</label><input type="number" id="psBusV" min="0" max="900" step="10" value="0"></div>
 </div>
 <div class="hy-map-wrap" data-hy><div class="hint">ASSIST MAP: the share of the motor's help over shaft speed and pedal. Click a cell to step it down by 25% (from 0 back to 100%).</div><div id="hyAssistMap"></div></div>
 
@@ -1140,10 +1143,12 @@ body.guided-open{overflow:hidden}
 <section class="evd-card" id="evdCard-inv" data-card="inv"><div class="evd-fields">
 <div class="field"><label for="evInverter">SWITCHES</label><select id="evInverter"><option value="igbt">SILICON IGBT</option><option value="sic">SiC MOSFET</option></select></div>
 <div class="field"><label for="evAmps">CURRENT RATING (A rms)</label><input type="number" id="evAmps" min="100" max="1600" step="10" value="950"></div>
-<div class="field" data-ev-only><label for="evRegen">REGENERATION</label><select id="evRegen"><option value="high">HIGH</option><option value="low">LOW</option><option value="off">OFF</option></select><input type="hidden" id="evMaker" value=""></div>
+<div class="field" data-ev-only><label for="evRegen">REGENERATION</label><select id="evRegen"><option value="high">HIGH</option><option value="low">LOW</option><option value="off">OFF</option></select></div>
+<div class="field" data-ev-only><label for="evMaker">REGEN CALIBRATION</label><select id="evMaker"><option value="">STANDARD (0.30 g)</option><option value="tesla">TESLA (0.21 g, 77 kW)</option><option value="tesla-plaid">TESLA PLAID (0.21 g, 90 kW)</option><option value="egmp">HYUNDAI E-GMP (0.40 g)</option><option value="meb">VW MEB (0.30 g)</option></select></div>
 </div></section>
 <section class="evd-card" id="evdCard-more" data-card="more"><div class="evd-fields">
 <div class="field" data-ev-only><label for="evRearCount">REAR MOTORS</label><select id="evRearCount"><option value="1">1</option><option value="2">2 (ONE PER WHEEL)</option></select></div>
+<div class="field" data-ev-only><label for="evGearbox">EV GEARBOX</label><select id="evGearbox"><option value="1spd">1-SPEED REDUCTION</option><option value="2spd">2-SPEED (1.93 / 1.00)</option></select></div>
 <div class="field"><label for="evFront">FRONT MOTOR</label><select id="evFront"><option value="none">NONE</option><option value="pm">PERMANENT MAGNET</option><option value="im">INDUCTION (COPPER CAGE)</option></select></div>
 <div class="field"><label for="evFrontD">FRONT ROTOR DIAMETER (mm)</label><input type="number" id="evFrontD" min="80" max="260" step="1" value="130"></div>
 <div class="field"><label for="evFrontOD">FRONT STATOR DIAMETER (mm)</label><input type="number" id="evFrontOD" min="100" max="400" step="1" value="196"></div>
@@ -1151,13 +1156,15 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="evFrontPoles">FRONT POLES</label><select id="evFrontPoles"><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div>
 <div class="field"><label for="evFrontTurns">FRONT TURNS PER PHASE</label><input type="number" id="evFrontTurns" min="4" max="60" step="1" value="12"></div>
 <div class="field"><label for="evFrontAmps">FRONT CURRENT (A rms)</label><input type="number" id="evFrontAmps" min="100" max="1600" step="10" value="700"></div>
-<div class="field" data-hy><label for="evFrontFd">FRONT REDUCTION (0 = MATCHED)</label><input type="number" id="evFrontFd" min="0" max="20" step="0.01" value="0"></div>
+<div class="field"><label for="evFrontFd">FRONT REDUCTION (0 = MATCHED)</label><input type="number" id="evFrontFd" min="0" max="20" step="0.01" value="0"></div>
 </div></section>
 <section class="evd-card" id="evdCard-batt" data-card="batt"><div class="evd-fields">
 <div class="field"><label for="evChem">CHEMISTRY</label><select id="evChem"><option value="lead">LEAD-ACID</option><option value="nimh">NiMH</option><option value="lfp">LFP</option><option value="nca">NCA / NMC</option><option value="ncaP">NCA (POWER CELLS)</option><option value="liHEV">Li-ION (HYBRID CELLS)</option><option value="nimhHEV">NiMH (HYBRID CELLS)</option></select></div>
-<div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="20" max="400" step="1" value="96"></div>
+<div class="field"><label for="evSeries">CELLS IN SERIES</label><input type="number" id="evSeries" min="12" max="400" step="1" value="96"></div>
 <div class="field"><label for="evKWh">CAPACITY (kWh)</label><input type="number" id="evKWh" min="0.5" max="200" step="0.01" value="75"></div>
 <div class="field"><label for="evYear">TECHNOLOGY YEAR</label><input type="number" id="evYear" min="1990" max="2026" step="1" value="2020"></div>
+<div class="field"><label for="evPackCool">PACK COOLING</label><select id="evPackCool"><option value="liquid">LIQUID PLATE</option><option value="air_forced">FORCED AIR</option><option value="air_passive">PASSIVE AIR</option></select></div>
+<div class="field"><label for="evAmbT">AMBIENT / PACK TEMP (°C)</label><input type="number" id="evAmbT" min="-10" max="45" step="1" value="25"></div>
 </div></section>
 </div>
 <aside class="evd-side" id="evdSide"></aside>
@@ -13118,9 +13125,12 @@ const MOTOR_COOLING={
 // (no knee, run at 16 kHz). tSw is the switching energy per event over the volts and amps switched (s): an 820 A
 // automotive IGBT module loses ~75 mJ turning on and off at 400 V, 820 A (2.3e-7 s); SiC about a fifth of that.
 // Resistances are for a 1000 A device and scale inversely with the rating. Cost per amp of rating.
+// Thermal limits: Infineon HybridPACK Drive (FS820R08A6P2B Si IGBT, Tvj,op = 150 C, case/baseplate derate start ~105 C,
+// max ~125 C; pin-fin direct water-cooled Rth,jf ~0.008-0.010 K/W for 6 switches -> Ginv ~0.14 W/K per rated A, Cinv ~2.0 J/K per A);
+// SiC MOSFET (Infineon HybridPACK Drive G2 SiC / Wolfspeed XM3, Tvj,op = 175 C, derate start ~125 C, max ~145 C).
 const INVERTER={
-  igbt:{label:'SILICON IGBT',v0:0.8,r:0.0009,tSw:0.23e-6,fSw:10e3,costA:6},
-  sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11}
+  igbt:{label:'SILICON IGBT',v0:0.8,r:0.0009,tSw:0.23e-6,fSw:10e3,costA:6,tDerate:105,tMax:125},
+  sic: {label:'SiC MOSFET',  v0:0,  r:0.0016,tSw:0.05e-6,fSw:16e3,costA:11,tDerate:125,tMax:145}
 };
 // The water jacket (build 315): a helical channel cast in the aluminium housing round the stack, carrying 50/50
 // water-glycol at 65 C (ASHRAE Handbook Fundamentals 2017 ch. 31: rho 1050 kg/m3, cp 3500 J/kgK, k 0.40 W/mK,
@@ -13152,7 +13162,7 @@ function gapH(D,g,rpm){
   return (Ta<1700?2:Ta<1e4?0.128*Ta**0.367:0.409*Ta**0.241)*K_AIR/(2*g);
 }
 function motorGrc(m,rpm){
-  if(m.parts)return m.parts.reduce((x,q)=>x+q.n*motorGrc(q.m,rpm),0);
+  if(m.parts)return m.parts.reduce((x,q)=>x+q.n*motorGrc(q.m,rpm*(q.k||1)),0);
   return gapH(m.D,m.gap,rpm)*Math.PI*m.D*m.L+m.GrcR;
 }
 const ACTIVE_TO_MOTOR=1.6;   // housing, shaft, bearings and end caps over the active copper, iron and magnets
@@ -13251,6 +13261,7 @@ function motorBuild(s){
           Gwk:cool.wind*(Math.PI*(Ds+hSlot)*2*0.05+(cool.inSlot?2*hSlot*L*slots:0)),
           GrcR:cool.rotor*Math.PI*Dsh*L,
           Cw:cond.cp*mCu, Cc:460*mFeS+900*0.5*mFeS, Cr:460*mRotor,
+          Ginv:(cool.jacket?0.14:0.05)*Imax, Cinv:2.0*Imax,
           mTeeth:RHO_FE*slots*wt*hSlot*Lfe, ts, gap:im?IM_GAP:GAP};
   // a magnet motor's flux linkage at no current is the loaded circuit's at zero current (build 302)
   if(!im){m.dqc=dqSetup(m);m.psi20=m.dqc.psiPerB*dqSolve(m.dqc,0,0,1).b1d;}
@@ -13301,7 +13312,7 @@ function motorBaseW(m,Vdc,psi){
 // current each allows under the voltage (field weakening, then the most torque per volt), so the constant-power range
 // and the fall beyond it are the motor's own. An induction motor keeps its constant power to IM_CPSR times its knee.
 function motorMaxTorque(m,rpm,Vdc,tMag=60){
-  if(m.parts)return m.parts.reduce((a,q)=>a+q.n*motorMaxTorque(q.m,rpm,Vdc,tMag),0);
+  if(m.parts)return m.parts.reduce((a,q)=>{const k=q.k||1;return a+q.n*k*motorMaxTorque(q.m,rpm*k,Vdc,tMag);},0);
   if(rpm>m.nMax)return 0;
   if(m.im){
     const wb=motorBaseW(m,Vdc,m.psi20),w=Math.max(1e-6,rpm*Math.PI/30),Tpk=imTorque(m,m.Imax);
@@ -13464,18 +13475,21 @@ function pmLosses(m,T,rpm,Vdc,temp){
 function motorSet(parts){
   const a=parts[0].m,sum=k=>parts.reduce((x,q)=>x+q.n*(q.m[k]||0),0);
   const Tmax=Math.min(...parts.map(q=>q.m.mag.Tmax));
-  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),
-    mag:Object.assign({},a.mag,{Tmax}),nMax:Math.min(...parts.map(q=>q.m.nMax)),
-    J:sum('J'),mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
-    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr')});
+  const sameK=parts.every(q=>!q.k||Math.abs(q.k-1)<1e-6);
+  return Object.assign({},a,{parts,count:parts.reduce((x,q)=>x+q.n,0),dualRear:parts[0].n===2,
+    mag:Object.assign({},a.mag,{Tmax}),nMax:sameK?Math.min(...parts.map(q=>q.m.nMax)):a.nMax,
+    J:parts.reduce((x,q)=>{const k=q.k||1;return x+q.n*(q.m.J||0)*k*k;},0),
+    mass:sum('mass'),cost:sum('cost'),mCu:sum('mCu'),mMag:sum('mMag'),mCage:sum('mCage'),mFeS:sum('mFeS'),mFeR:sum('mFeR'),
+    Gwc:sum('Gwc'),Gcc:sum('Gcc'),Gwk:sum('Gwk'),Cw:sum('Cw'),Cc:sum('Cc'),Cr:sum('Cr'),Ginv:sum('Ginv'),Cinv:sum('Cinv')});
 }
 // The split: the front group's share of the torque from nothing to all it can give, in tenths and at its share of
 // the capacity, whichever loses least; the rest is the rear's. Each group's motors share theirs equally.
 function motorSetLosses(set,T,rpm,Vdc,temp){
-  const P=set.parts,at=(q,t)=>{const L=motorLosses(q.m,t/q.n,rpm,Vdc,temp);return L;};
+  const P=set.parts,at=(q,t)=>{const k=q.k||1;return motorLosses(q.m,t/(q.n*k),rpm*k,Vdc,temp);};
   const add=(x,L,n)=>{for(const k of ['cu','rcu','fe','feS','feR','mech','inv','I','total'])x[k]=(x[k]||0)+n*(L[k]||0);return x;};
   if(P.length===1){const L=at(P[0],T);return add({},L,P[0].n);}
-  const r=P[0],f=P[1],mR=r.n*motorMaxTorque(r.m,rpm,Vdc,temp.r),mF=f.n*motorMaxTorque(f.m,rpm,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
+  const r=P[0],f=P[1],kr=r.k||1,kf=f.k||1;
+  const mR=r.n*kr*motorMaxTorque(r.m,rpm*kr,Vdc,temp.r),mF=f.n*kf*motorMaxTorque(f.m,rpm*kf,Vdc,temp.r),aT=Math.abs(T),sg=Math.sign(T)||1;
   const shares=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,mF/Math.max(1e-9,mR+mF)];
   let best=null;
   for(const sh of shares){
@@ -13513,12 +13527,15 @@ function motorEfficiency(m,T,rpm,Vdc,temp={w:90,r:70}){
 const feSplit=L=>L.feS!==undefined?[L.feS,L.feR]:[0.8*L.fe,0.2*L.fe];
 function motorHeatStep(m,temp,L,dt){
   const tc=m.cool.tCool,ns=Math.max(1,Math.ceil(dt/0.5)),h=dt/ns,Grc=motorGrc(m,L.rpm);   // explicit steps well inside the fastest node's time constant
+  const Ginv=m.Ginv||(m.cool.jacket?0.14:0.05)*m.Imax,Cinv=m.Cinv||2.0*m.Imax;
+  if(temp.inv==null)temp.inv=tc;
   for(let k=0;k<ns;k++){
     const qWC=m.Gwc*(temp.w-temp.c),qWK=m.Gwk*(temp.w-tc),qCK=m.Gcc*(temp.c-tc),qRC=Grc*(temp.r-temp.c);
     temp.w+=(L.cu-qWC-qWK)/m.Cw*h;
     const [fS,fR]=feSplit(L);
     temp.c+=(fS+L.mech+qWC+qRC-qCK)/m.Cc*h;
     temp.r+=(fR+(L.rcu||0)-qRC)/m.Cr*h;
+    temp.inv+=((L.inv||0)-Ginv*(temp.inv-tc))/Cinv*h;
   }
   return temp;
 }
@@ -13531,12 +13548,13 @@ function motorHeatStep(m,temp,L,dt){
 // all (thermal runaway), and the point cannot be held however long it is waited for. That returns Infinity.
 function motorSteadyTemps(m,T,rpm,Vdc){
   const tc=m.cool.tCool,a=m.Gwc/(m.Gwc+m.Gwk),Grc=motorGrc(m,rpm);
-  let temp={w:tc,c:tc,r:tc};
+  const Ginv=m.Ginv||(m.cool.jacket?0.14:0.05)*m.Imax;
+  let temp={w:tc,c:tc,r:tc,inv:tc};
   for(let k=0;k<60;k++){
     const L=motorLosses(m,T,rpm,Vdc,temp);
     const rc=L.rcu||0,Tc=tc+(L.fe+L.mech+a*L.cu+rc)/(m.Gcc+a*m.Gwk);
-    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/Grc};
-    if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity};
+    const next={w:(L.cu+m.Gwc*Tc+m.Gwk*tc)/(m.Gwc+m.Gwk),c:Tc,r:Tc+(feSplit(L)[1]+rc)/Grc,inv:tc+(L.inv||0)/Ginv};
+    if(!(next.w<1000)||!(next.r<2000))return {w:Infinity,c:Infinity,r:Infinity,inv:Infinity};
     if(Math.abs(next.w-temp.w)<1e-3){temp=next;break;}
     temp=next;
   }
@@ -13589,16 +13607,18 @@ function atYear(tab,year){
   return tab[ys[ys.length-1]];
 }
 const chemAvailable=(c,year)=>(CHEM[c]||CHEM.nca).from<=(year||2020);
-// The pack a design describes. s: {chem, series (cells in series), kWh, year}.
+// The pack a design describes. s: {chem, series (cells in series), kWh, year, cooling, ambT}.
 function packBuild(s){
   const c=CHEM[s.chem]||CHEM.nca, year=s.year||2020;
   const series=Math.max(1,s.series||1), kWh=Math.max(0.1,s.kWh||0.1);
+  const coolId=PACK_COOLING[s.cooling]?s.cooling:'liquid', cool=Object.assign({id:coolId},PACK_COOLING[coolId]);
+  const ambT=s.ambT!=null&&isFinite(+s.ambT)?clamp(+s.ambT,-10,45):PACK_T_REF;
   const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=series*vCell;
   const Ah=kWh*1000/Vnom, R=series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
   const ctp=s.chem==='lfp'&&year>=2020;
   const mass=kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
-  const cost=Math.round(kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,vMax:c.vMax?series*c.vMax:0,iMax:c.cMax*Ah,iChargeMax:c.cCharge*Ah};
+  const cost=Math.max(100,Math.round(kWh*(atYear(c.cost,year)+cool.costKwh)));
+  return {s,chem:c,year,cool,ambT,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,vMax:c.vMax?series*c.vMax:0,iMax:c.cMax*Ah,iChargeMax:c.cCharge*Ah};
 }
 // Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
 // A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
@@ -13656,13 +13676,23 @@ function packDrawClamped(b,soc,P,tC){
   const I=Math.max(0,Math.min(b.iMax,(V0-b.vMin)/R,V0/(2*R)));
   return {V:V0-I*R,I,heat:I*I*R};
 }
-// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
-// liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
-// from 50 C, to nothing at 60 C, the range the cells' makers rate them to.
+// The pack's temperature (build 180): one lumped node, the cells' heat capacity (~900 J/kgK) over the pack's mass.
+// Cooling options (W/K per kWh to sink):
+//   liquid       cold plate / ribbon channels with water-glycol chiller (~2.0 W/K/kWh; Pesaran, NREL/CP-540-31018, 2001)
+//   air_forced   blower-ducted cabin/ambient air (~0.8 W/K/kWh; Pesaran NREL 2001, Prius/early Ioniq)
+//   air_passive  sealed natural-convection pack (~0.35 W/K/kWh; Nissan Leaf ZE0/ZE1, h ~ 6 W/m²K over ~1.8 m² case)
+// The battery management system cuts power from 50 C to nothing at 60 C.
 const PACK_C=900, PACK_G_KWH=2.0, PACK_COOLANT=30;
+const PACK_COOLING={
+  liquid:     {label:'LIQUID PLATE',gKwh:PACK_G_KWH,costKwh:0},
+  air_forced: {label:'FORCED AIR',  gKwh:0.8,       costKwh:-10},
+  air_passive:{label:'PASSIVE AIR', gKwh:0.35,      costKwh:-18}
+};
+const packSinkT=b=>{const a=b&&b.ambT!=null?b.ambT:PACK_T_REF;return b&&b.cool&&b.cool.id!=='liquid'?a:a+5;};
+const packStartT=b=>{const a=b&&b.ambT!=null?b.ambT:PACK_T_REF;if(a!==PACK_T_REF)return a;return b&&b.cool&&b.cool.id!=='liquid'?PACK_T_REF:PACK_COOLANT;};
 function packHeatStep(b,temp,heatW,dt){
-  const C=PACK_C*b.mass,G=PACK_G_KWH*b.kWh;
-  temp.b+=(heatW-G*(temp.b-PACK_COOLANT))/C*dt;
+  const C=PACK_C*b.mass,gKwh=b.cool?b.cool.gKwh:PACK_G_KWH,G=gKwh*b.kWh,tSink=packSinkT(b);
+  temp.b+=(heatW-G*(temp.b-tSink))/C*dt;
   return temp;
 }
 const packDerate=tB=>clamp((60-tB)/10,0,1);
@@ -32614,7 +32644,8 @@ function initGuide(){
 // are step 2.3; until then the VEHICLE, TRACK and RACE tabs say so instead of running an electric car through a
 // combustion gearbox. New words are English for now (decision 11): tr() shows the English where Greek is missing.
 const EV_DEFAULT={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:134,evPoles:6,evTurns:12,evMagnet:'ndfeb',evMagT:6.5,evMagW:84,evRetention:'bridges',evCooling:'jacket',evLamination:0.35,evWire:'round',evConductor:'copper',evRegen:'high',
-  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evMaker:''};
+  evMaxRpm:18000,evInverter:'igbt',evAmps:950,evRearCount:1,evGearbox:'1spd',evFront:'none',evFrontD:130,evFrontOD:196,evFrontStack:110,evFrontPoles:4,evFrontTurns:12,evFrontAmps:700,evFrontFd:0,
+  evChem:'nca',evSeries:96,evKWh:75,evYear:2020,evPackCool:'liquid',evAmbT:25,evMaker:'',psRho:0,psK2:0,psBusV:0};
 // The race spends energy, not fuel (step 2.4): until then an electric car drives the 0-100 and the lap but does not race.
 // One reduction is all an electric car has: GEARING on the VEHICLE tab sets it (build 180).
 const EV_GEAR_NOTE='An electric car has one fixed reduction: set it with GEARING on the VEHICLE tab.';
@@ -32637,14 +32668,20 @@ const rotorWord=m=>m.im?'ROTOR':'MAGNETS';
 // ---- the design form ----
 function readElectricFromForm(){
   const g=id=>document.getElementById(id),num=(id,lo,hi)=>clamp(+g(id).value||EV_DEFAULT[id],lo,hi);
+  const numZ=(id,lo,hi,d)=>{const el=g(id);if(!el||el.value==='')return d;const v=+el.value;return isFinite(v)?clamp(v,lo,hi):d;};
   return {evMotorType:g('evMotorType').value==='im'?'im':'pm',evRotorD:num('evRotorD',80,260),evStatorOD:num('evStatorOD',100,400),evStack:num('evStack',40,250),evPoles:+g('evPoles').value||6,
     evTurns:Math.round(num('evTurns',4,120)),evMagnet:g('evMagnet').value,evMagT:num('evMagT',2,15),evMagW:Math.round(num('evMagW',40,100)),evRetention:g('evRetention').value,
     evCooling:g('evCooling').value,evLamination:+g('evLamination').value===0.2?0.2:0.35,evWire:g('evWire').value==='hairpin'?'hairpin':'round',evConductor:g('evConductor').value==='aluminium'?'aluminium':'copper',
     evRegen:EV_REGEN[g('evRegen').value]?g('evRegen').value:'high',evMaxRpm:Math.round(num('evMaxRpm',4000,25000)),evInverter:g('evInverter').value,
     evAmps:Math.round(num('evAmps',100,1600)),evRearCount:g('evRearCount').value==='2'?2:1,
+    evGearbox:g('evGearbox')&&g('evGearbox').value==='2spd'?'2spd':'1spd',
     evFront:['pm','im'].includes(g('evFront').value)?g('evFront').value:'none',evFrontFd:Math.max(0,+g('evFrontFd').value||0),evFrontD:num('evFrontD',80,260),evFrontOD:num('evFrontOD',100,400),evFrontStack:num('evFrontStack',40,250),
-    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',20,400)),
-    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:''};
+    evFrontPoles:+g('evFrontPoles').value||4,evFrontTurns:Math.round(num('evFrontTurns',4,60)),evFrontAmps:Math.round(num('evFrontAmps',100,1600)),evChem:g('evChem').value,evSeries:Math.round(num('evSeries',12,400)),
+    evKWh:num('evKWh',0.5,200),evYear:Math.round(num('evYear',1990,2026)),
+    evPackCool:g('evPackCool')&&PACK_COOLING[g('evPackCool').value]?g('evPackCool').value:'liquid',
+    evAmbT:Math.round(numZ('evAmbT',-10,45,25)),
+    evMaker:EV_REGEN_RULES.some(r=>r.id===g('evMaker').value)?g('evMaker').value:'',
+    psRho:numZ('psRho',0,0.8,0),psK2:numZ('psK2',0,6,0),psBusV:Math.round(numZ('psBusV',0,900,0))};
 }
 function applyElectricToForm(e){
   // a design saved before build 314 names no stator: fill it as motorBuild does, from its own rotor
@@ -32669,7 +32706,8 @@ function syncElectricSections(){
   panel.classList.toggle('hy',hy);   // a hybrid's motor and battery, under its engine (build 186)
   if(hs){const d=document.getElementById('edHyDeploy');if(d)d.disabled=!hy||hs.value==='ps'||hs.value==='series';   // a power-split deploys all it has (build 189)
     const r=document.getElementById('edHyRpm');if(r&&d)r.disabled=d.disabled||!/^(above|below)$/.test(d.value);
-    const pl=document.getElementById('edHyPlug');if(pl)pl.disabled=!hy;}
+    const pl=document.getElementById('edHyPlug');if(pl)pl.disabled=!hy||hs.value==='mhev';
+    ['psRho','psK2','psBusV'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!hy||hs.value!=='ps';});}
   if(ev||hy){
     // a chemistry that had not reached cars by the technology year is offered disabled (decision 9)
     const year=clamp(+document.getElementById('evYear').value||2020,1990,2026),chem=document.getElementById('evChem');
@@ -32680,10 +32718,12 @@ function syncElectricSections(){
     ['evMagnet','evMagT','evMagW','evRetention'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=im;});
   }
   if(ev||hy){
-    // a front motor (build 183; a hybrid's front axle motor, build 195): its fields, and the car is all-wheel drive
+    // a front motor (build 183; a hybrid's front axle motor, build 195) or P4 hybrid e-axle: its fields, and AWD lock
     const front=document.getElementById('evFront').value!=='none';
-    ['evFrontD','evFrontOD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps','evFrontFd'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
-    evDriveLock(front);
+    const roadHy=hy&&hs&&(hs.value==='p3'||hs.value==='p4');
+    ['evFrontD','evFrontOD','evFrontStack','evFrontPoles','evFrontTurns','evFrontAmps'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!front;});
+    const ffd=document.getElementById('evFrontFd');if(ffd)ffd.disabled=!(front||roadHy);
+    evDriveLock(front||(hy&&hs&&hs.value==='p4'));
   }else evDriveLock(false);
   if(typeof evdSync==='function')evdSync(ev,hy);   // the drive's cards follow the form (build 238)
   return ev;
@@ -32714,7 +32754,7 @@ function buildElectric(){
   engine=readEngineFromForm();   // type 'electric'; the combustion fields stay with it, for switching back
   const e=engine;
   e.motor=evMotorOf(e);
-  e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
+  e.pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
   // What the rest of the app reads off any engine: its speed range, its inertia, and the bench brake's scale.
   e.redline=Math.floor(e.motor.nMax/50)*50;e.idleRpmEff=0;e.inertia=e.motor.J;
   e.intake='na';e.maxBoost=0;e.mapMax=1;e.afrMode='fixed';e.stoichAFR=14.7;e.ci=false;e.displacement_L=0;
@@ -32723,7 +32763,7 @@ function buildElectric(){
   e.cost=e.motor.cost+e.pack.cost;
   // a fresh drive on a charged pack
   const tc=e.motor.cool.tCool;
-  state.mT={w:tc,c:tc,r:tc};state.tB={b:PACK_COOLANT};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
+  state.mT={w:tc,c:tc,r:tc,inv:tc};state.tB={b:packStartT(e.pack)};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
   state.engineHealth=1;state.blown=false;state.wearCause='';state.boostActual=0;state.nitrousActive=false;
   state.map=1;state.rpm=clamp(state.rpm,0,e.redline);
   buildRev++;dynoCache=null;
@@ -32749,7 +32789,7 @@ function driveMaxTorque(e,rpm,Vdc,temp,soc,tB=PACK_T_REF){
 function driveRefTorque(e,rpm){
   const c=e._refTq||(e._refTq={m:null,t:new Map()});
   if(c.m!==e.motor){c.m=e.motor;c.t.clear();}
-  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
+  const m=e.motor,tc=m.cool.tCool,temp={w:tc,c:tc,r:tc,inv:tc},V=packOcv(e.pack,1),Pb=packMaxPower(e.pack,1);
   const at=k=>{   // every 25 rpm, cached per motor
     if(c.t.has(k))return c.t.get(k);
     const n=k*25,w=n*Math.PI/30;let T=motorMaxTorque(m,n,V,temp.r);
@@ -32761,10 +32801,13 @@ function driveRefTorque(e,rpm){
   return at(k)*(1-f)+at(k+1)*f;
 }
 // The controller protects the drive: full current until the winding reaches 150 C (class H insulation is rated 180),
-// none at 180; the magnets likewise over their last 20 C below the grade's limit.
+// none at 180; the magnets over their last 20 C below their grade's limit; and the inverter above its junction/case
+// derate start (~105 C Si IGBT / 125 C SiC) to 0 at tMax (~125 / 145 C).
 function motorDerate(e,temp){
-  const tm=e.motor.mag.Tmax;
-  return clamp((180-temp.w)/30,0,1)*clamp((tm-temp.r)/20,0,1);
+  const m=e.motor,tm=m.mag.Tmax,inv=m.inv||INVERTER.igbt;
+  const tInv=temp.inv!=null?temp.inv:m.cool.tCool;
+  const dInv=clamp((inv.tMax-tInv)/Math.max(1,inv.tMax-inv.tDerate),0,1);
+  return clamp((180-temp.w)/30,0,1)*clamp((tm-temp.r)/20,0,1)*dInv;
 }
 // The scorecard at the rated voltage, magnets at 60 C, a cool winding: peaks, the speed range at 80% of peak power,
 // the best efficiency on the full-load line, the continuous power the cooling holds, and how long it holds the peak.
@@ -33160,17 +33203,21 @@ const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh
 //                  cuts the current, the drive there is cut with it and the lap is solved again, as a turbo's boost
 //                  is (build 118).
 const EV_REDUCTION={label:'SINGLE-SPEED REDUCTION',shift:0,powershift:true,eff:1,stall:0,mult:1,cost:900};
+// Optional 2-speed EV gearbox (Porsche Taycan rear 2-speed planetary, 2020: 1st 15.56:1 / 2nd 8.05:1 = 1.933;
+// Porsche Technical Data 2020; wet-clutch powershift ~0.12 s, +18 kg, +$1,400).
+const EV_REDUCTION_2SPD={label:'2-SPEED EV GEARBOX',shift:0.12,powershift:true,eff:0.99,stall:0,mult:1,cost:2300,ratios:[1.93,1.0],mass:18};
+const EV_GEARBOXES={'1spd':{label:'1-SPEED REDUCTION',gb:EV_REDUCTION},'2spd':{label:'2-SPEED (1.93 / 1.00)',gb:EV_REDUCTION_2SPD}};
 const EV_DRIVE_EFF={fwd:0.97,rwd:0.97,awd:0.95};   // reduction gears and differential; AWD adds a transfer path
 const EV_FD_MIN=4,EV_FD_MAX=14;                    // single-speed EVs run ~7.5 (Model S Plaid) to ~11 (small city cars)
 
 // Set the driveline of an electric car: called by buildVehicle once the vehicle is otherwise built.
 function electricDriveline(v){
-  const e=engine,gb=EV_REDUCTION;
-  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=0;v.shiftCut=0;
+  const e=engine,twoSpd=e.evGearbox==='2spd',gb=twoSpd?EV_REDUCTION_2SPD:EV_REDUCTION;
+  v.gb=gb;v.gbLabel=gb.label;v.shiftTime=gb.shift;v.shiftCut=twoSpd?0.06:0;
   // a front motor drives the front wheels (build 183): all-wheel drive, whatever the form held when it was read
   if(e.motor.parts&&e.motor.parts.length>1)v.drive='awd';
-  v.driveEff=EV_DRIVE_EFF[v.drive]||0.97;
-  v.ratios=[1];v.gearsetApprox=false;
+  v.driveEff=(EV_DRIVE_EFF[v.drive]||0.97)*gb.eff;
+  v.ratios=twoSpd?EV_REDUCTION_2SPD.ratios.slice():[1];v.gearsetApprox=false;
   // a real car's published reduction (build 183: the Teslas) stands in for the matched one, as an engine's final drive does
   const pub=v.body&&v.body.fit&&v.body.fit.fd>0?v.body.fit.fd:0;v.fdPublished=pub;
   // matched: the motor's top speed at the speed where drag and rolling resistance take the drive's peak power
@@ -33179,6 +33226,44 @@ function electricDriveline(v){
   v.reductionMatched=matched;
   v.finalDrive=v.finalDriveSet>0?clamp(v.finalDriveSet,EV_FD_MIN,EV_FD_MAX)
     :clamp((pub?pub/gearingBias(52):matched)*gearingBias(v.gearing),EV_FD_MIN,EV_FD_MAX);
+  // Per-axle front reduction ratio for multi-motor pure EVs (evFrontFd > 0 overrides matched front = rear ratio)
+  v.frontFd=0;
+  if(e.motor.parts&&e.motor.parts.length>1){
+    const fdF=e.evFrontFd>0?clamp(e.evFrontFd,EV_FD_MIN,EV_FD_MAX):v.finalDrive;
+    v.frontFd=fdF;
+    const kNew=fdF/v.finalDrive;
+    if(Math.abs((e.motor.parts[1].k||1)-kNew)>1e-6){
+      e.motor.parts[1].k=kNew;
+      e._curve=null;e._pRef=null;e._gain=null;
+    }
+  }
+  // Dual-rear EV independent motor torque vectoring (one motor per rear wheel, no mechanical differential)
+  v.dualRearTV=!!(e.motor&&e.motor.dualRear);
+  if(v.dualRearTV){
+    const rm=e.motor.parts[0].m,V=motorRatedV(e),tOne=motorMaxTorque(rm,500,V,60);
+    const trk=v.trackR||v.track||1.6;
+    v.tvYawCap=trk*tOne*v.finalDrive*v.driveEff/Math.max(0.2,v.rTire);   // peak active yaw moment (N m)
+  }else v.tvYawCap=0;
+}
+// Independent dual-rear motor torque vectoring yaw assist: distributes rear torque asymmetrically between outer and
+// inner rear wheels (up to each motor's envelope and each tyre's friction circle) to generate direct yaw moment Mz
+// (N m) without the drag or turn-in resistance of a mechanical clutch-plate LSD.
+function evRearTorqueVector(m,v,ay,vx,Treq=0){
+  if(!m||!m.dualRear||!v||!v.rTire||!v.finalDrive)return {active:false,tOut:0,tIn:0,dT:0,Mz:0};
+  const rm=m.parts[0].m,V=motorRatedV(engine),fd=v.finalDrive*(v.ratios?v.ratios[0]:1),eff=v.driveEff||0.95;
+  const rpm=clamp(Math.abs(vx)/v.rTire*fd*30/Math.PI,1,rm.nMax);
+  const tLim=motorMaxTorque(rm,rpm,V,60);
+  const trk=v.trackR||v.track||1.6,mass=v.mass||1800,fWt=v.fWt||0.48,cg=v.cg||0.48,mu=v.mu||1.0;
+  const FzR=mass*G*(1-fWt),dFz=clamp(mass*Math.abs(ay)*cg/trk*(1-fWt),0,FzR*0.48);
+  const FzOut=FzR/2+dFz,FzIn=Math.max(0,FzR/2-dFz);
+  const FxMaxOut=mu*FzOut,FxMaxIn=mu*FzIn;
+  const tBase=clamp(Treq/2,-tLim,tLim),sg=ay>=0?1:-1;
+  // Request outer-wheel boost and inner-wheel reduction proportional to lateral acceleration (up to motor & tyre limits)
+  const wantDT=Math.min(tLim,Math.abs(ay)/(mu*G)*tLim*0.5);
+  const tOut=clamp(tBase+wantDT,-tLim,Math.min(tLim,FxMaxOut*v.rTire/(fd*eff)));
+  const tIn=clamp(tBase-wantDT,-Math.min(tLim,FxMaxIn*v.rTire/(fd*eff)),Math.min(tLim,FxMaxIn*v.rTire/(fd*eff)));
+  const Fout=tOut*fd*eff/v.rTire,Fin=tIn*fd*eff/v.rTire;
+  return {active:true,tOut,tIn,dT:(tOut-tIn)/2,Mz:sg*(trk/2)*(Fout-Fin)};
 }
 // The drive's torque at the wheels' motor speed, at its rated conditions (the pack at half charge, magnets at 60 C, the
 // winding at coolant temperature): the design figure, as an engine's curve is taken at best power and 25 C. Cached per
@@ -33218,9 +33303,9 @@ function driveTorqueRated(e,rpm,V,temp,Pcap,tC){
 }
 // The drive's torque with the pack at tB °C over its rated (25 °C) torque, at a motor speed (build 373). The lap's
 // curve is the rated one; the lap walks the pack's temperature (evLapHeat) and scales the torque by this, so where
-// the pack's power is the limit, the warmer cells' lower resistance gives a little more. Taken on the curve's speeds
-// and every 5 °C from 25 to 60, straight between; cached per build and power cap.
-const EV_GAIN_T0=25,EV_GAIN_DT=5,EV_GAIN_NT=8;
+// the pack's power is the limit, warmer cells give a little more and cold cells derate via Arrhenius impedance rise
+// (packR). Taken on the curve's speeds every 5 °C from -15 to +60 °C, straight between; cached per build and power cap.
+const EV_GAIN_T0=-15,EV_GAIN_DT=5,EV_GAIN_NT=16;
 function evPackGain(e,rpm,tB){
   const cap=evPowerCap;let g=e._gain;
   if(!g||g.score!==e.score||g.cap!==cap){
@@ -33250,18 +33335,17 @@ function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null,soc=0.5,t
   return out;
 }
 // The heat over a lap. prof: per point the time step (s), the motor speed (rpm) and torque (Nm, negative regenerating).
-// Walks the lap twice from coolant temperature (a preparation lap, then the timed one) and gives, per point of the timed
+// Walks the lap twice from coolant/start temperature (a preparation lap, then the timed one) and gives, per point of the timed
 // lap, the share of the drive the controller and the pack allow, and the temperatures it ran at.
 function evLapHeat(e,prof,soc0=0.8){
-  const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool;
-  const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
+  const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool,b0=packStartT(b);
+  const t={w:tc,c:tc,r:tc,inv:tc},tb={b:b0};
   const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
-  let regenJ=0,driveJ=0,soc=clamp(soc0,0.05,1);
+  let regenJ=0,driveJ=0,soc=clamp(soc0,0.05,1),invMax=tc;
   for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
-    // A timed lap starts on a pack cooled to its coolant beforehand (a track mode pre-conditions it): ~400 kg of cells
-    // take a whole flat-out lap to heat, so the preparation lap that brings the motor and the rotors to their working
-    // temperature would hand the timed lap a pack already hot. The race (step 2.4) carries the pack's heat lap to lap.
-    if(lap===1&&i===0){tb.b=PACK_COOLANT;soc=clamp(soc0,0.05,1);}
+    // A timed lap starts on a pack at its start/pre-conditioned temperature: ~400 kg of cells take a whole flat-out lap
+    // to heat, so the preparation lap that brings the motor and rotors to working temp would hand the timed lap a hot pack.
+    if(lap===1&&i===0){tb.b=b0;soc=clamp(soc0,0.05,1);}
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
     // and, since build 373, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
@@ -33273,14 +33357,15 @@ function evLapHeat(e,prof,soc0=0.8){
     soc=clamp(soc-d.I*dt/(b.Ah*3600),0,1);
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
+      if(t.inv>invMax)invMax=t.inv;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
   }
-  return {share,tW,tR,tB,socEnd:soc,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
+  return {share,tW,tR,tB,invMax,socEnd:soc,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
 }
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.
 function syncEvVehicleForm(ev){
-  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&!!engine.hy.front);   // a hybrid's front axle motor too (build 195)
+  evDriveLock(ev&&!!(engine.motor&&engine.motor.parts&&engine.motor.parts.length>1)||isHybrid()&&(!!engine.hy.front||engine.hy.mode==='p4'));   // a hybrid's front/P4 axle motor too
   ['vhGearbox','vhGears','vhSpacing'].forEach(id=>{const el=document.getElementById(id);
     if(el){const f=el.closest('.field');if(f)f.style.display=ev?'none':'';}});
   const lb=document.getElementById('lblGearing');
@@ -33291,7 +33376,10 @@ function syncEvVehicleForm(ev){
 }
 // The vehicle summary's driveline line for an electric car, in place of the ratios.
 function evDrivelineLine(v){
-  return '<br>'+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • '+
+  const gStr=v.ratios&&v.ratios.length>1?tr('2-Speed')+' <b>'+v.ratios.map(r=>r.toFixed(2)).join(' / ')+'</b> × ':'';
+  const fStr=v.frontFd>0&&Math.abs(v.frontFd-v.finalDrive)>0.01?' • '+tr('front')+' <b>'+v.frontFd.toFixed(2)+':1</b>':'';
+  const tvStr=v.dualRearTV?' • '+tr('active rear TV'):'';
+  return '<br>'+gStr+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1)'+fStr+tvStr+' • '+
     tr('regeneration up to')+' <b>'+Math.round(Math.min(engine.pack.pChargeMax/1000,evRegenRule(engine).kW||Infinity)*(EV_REGEN[engine.evRegen]||EV_REGEN.high).k)+' kW</b> • '+tr('motor and pack')+' '+powertrain().mass()+' kg';
 }
 // The TRACK panel's cells for an electric car: the motor's hottest and how much of the lap it was cut back, the pack's
@@ -33663,7 +33751,8 @@ function evCycleLine(v){
 //   the engine do everything it can and the motor give only what the engine cannot (the most efficient use of a
 //   small pack), and where a lap would still spend more than braking returns, the deploy is cut to the share that
 //   balances (hybridLap). The race burns fuel for the engine's share of the power only.
-const HYBRID_MODES={none:{label:'NONE'},p2:{label:'PARALLEL (P2)'},ps:{label:'POWER-SPLIT (eCVT)'},series:{label:'SERIES'}};   // power-split: build 189, src/js/power-split.js; series: build 193
+const HYBRID_MODES={none:{label:'NONE'},mhev:{label:'MHEV 48V (P0/P1)'},p2:{label:'PARALLEL (P2)'},p3:{label:'PARALLEL (P3)'},p4:{label:'PARALLEL (P4 AXLE)'},ps:{label:'POWER-SPLIT (eCVT)'},series:{label:'SERIES'}};   // power-split: build 189; series: build 193; mhev/p3/p4: build 450
+const isDirectMode=m=>m==='ps'||m==='series';
 // DEPLOY: how the controller uses the motor at full throttle. FULL gives everything the motor and pack can. ECO is an
 // efficiency-first calibration (the Ioniq's): the motor only fills the engine's curve up to its peak torque, so it helps
 // off the line and low in the revs and adds nothing at speed, where the pack's energy is spent least well. Hyundai's
@@ -33711,6 +33800,12 @@ const hybAssistWindow=(e,rpm)=>{const t=hybTune(e);return e.hyDeploy==='above'?(
 // 12 poles) and a 1.56 kWh pack of hybrid cells, the size of the Ioniq Hybrid's 32 kW / 170 Nm system.
 const HYB_DEFAULT={evMotorType:'pm',evRotorD:200,evStatorOD:301,evStack:40,evPoles:12,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
   evMaxRpm:8000,evInverter:'igbt',evAmps:400,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:64,evKWh:1.56,evYear:2016};
+// 48V MHEV (P0/P1): Bosch/Mercedes 48V belt/crank starter-generator (~12-15 kW, ~60-80 Nm at crank, 13s 48.5 V 0.5 kWh Li-ion pack).
+const HYB_DEFAULT_MHEV={evMotorType:'pm',evRotorD:140,evStatorOD:210,evStack:40,evPoles:12,evTurns:8,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'air',
+  evMaxRpm:8000,evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:13,evKWh:0.5,evYear:2020};
+// P3 (post-transmission) / P4 (electric axle AWD): ~60-90 kW traction motor on its own fixed reduction, 1.8 kWh hybrid pack.
+const HYB_DEFAULT_P4={evMotorType:'pm',evRotorD:150,evStatorOD:225,evStack:70,evPoles:8,evTurns:24,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
+  evMaxRpm:14000,evInverter:'igbt',evAmps:350,evRearCount:1,evFront:'none',evChem:'liHEV',evSeries:96,evKWh:1.8,evYear:2021};
 // A power-split's when it is first chosen (build 189): the 4th-generation Prius's MG2 (53 kW and 163 Nm on the 600 V bus,
 // 17,000 rpm) and its 1.31 kWh nickel-metal hydride pack of 168 cells (201.6 V).
 const HYB_DEFAULT_PS={evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:60,evPoles:8,evTurns:92,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',
@@ -33726,13 +33821,24 @@ function buildHybrid(e){
   if(!e.hyMode||e.hyMode==='none'){delete e.hy;return null;}
   const motor=motorBuild({type:e.evMotorType,rotorD:e.evRotorD,statorOD:e.evStatorOD,stackL:e.evStack,poles:e.evPoles,turns:e.evTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
     retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evAmps,maxRpm:e.evMaxRpm});
-  const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
-  e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost};
+  const pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
+  e.hy={mode:e.hyMode,motor,pack,mass:Math.round(motor.mass+pack.mass),cost:motor.cost+pack.cost,
+    noEv:e.hyMode==='mhev',roadMotor:e.hyMode==='p3'||e.hyMode==='p4'};
+  if(e.hyMode==='p4'){e.hy.mass+=12;e.hy.cost+=500;}   // e-axle reduction housing & halfshafts
+  if(e.hyMode==='p3'){e.hy.mass+=6;e.hy.cost+=300;}    // gearbox-output transfer gear
   if(e.hyMode==='ps'){   // the eCVT: MG1 sized to the engine, and the planetary set (~12 kg) in place of a gearbox
-    const mg1=psMg1Build(e,motor);e.hy.mg1=mg1;e.hy.mass=Math.round(motor.mass+mg1.mass+pack.mass+12);e.hy.cost+=mg1.cost+600;
+    const psCfg={
+      rho:e.psRho>0.1&&e.psRho<1?+e.psRho:PS.rho,
+      k2:e.psK2>0.5&&e.psK2<10?+e.psK2:PS.k2,
+      busV:e.psBusV>=100&&e.psBusV<=1200?+e.psBusV:PS.busV
+    };
+    e.hy.ps=psCfg;
+    const mg1=psMg1Build(e,motor,psCfg);e.hy.mg1=mg1;e.hy.mg1T=psMg1TempInit(e.hy);
+    e.hy.mass=Math.round(motor.mass+mg1.mass+pack.mass+12);e.hy.cost+=mg1.cost+600;
   }
   if(e.hyMode==='series'){   // the generator on the crank, sized to the engine (build 193); one reduction, no gearbox (~8 kg)
-    const gen=seriesGenBuild(e,motor,packOcv(pack,HYB_SOC));e.hy.mg1=gen;e.hy.mass=Math.round(motor.mass+gen.mass+pack.mass+8);e.hy.cost+=gen.cost+300;
+    const gen=seriesGenBuild(e,motor,packOcv(pack,HYB_SOC));e.hy.mg1=gen;e.hy.mg1T=psMg1TempInit(e.hy);
+    e.hy.mass=Math.round(motor.mass+gen.mass+pack.mass+8);e.hy.cost+=gen.cost+300;
   }
   // a front axle motor (build 195): the electric car's FRONT MOTOR fields, on its own fixed reduction to the front wheels,
   // the car all-wheel drive; it shares the pack with the main motor in proportion to their peak powers
@@ -33749,14 +33855,14 @@ function buildHybrid(e){
 // The motor's torque at an engine speed (Nm): its envelope at the pack's charge-sustaining voltage, magnets at 60 C,
 // cut to what the pack gives there (the electric car's own law), and to nothing past the motor's top speed.
 // The bus the motors run on: the pack's own voltage, or a power-split's boost converter's.
-const hybBusV=hy=>hy.mode==='ps'?PS.busV:packOcv(hy.pack,HYB_SOC);
+const hybBusV=hy=>hy.mode==='ps'?psParams(hy).busV:packOcv(hy.pack,HYB_SOC);
 function hybMotorTq(hy,rpm){
   if(rpm>hy.motor.nMax)return 0;
   const V=hybBusV(hy),tc=hy.motor.cool.tCool,cool={w:tc,c:tc,r:60};
   const Pb=packMaxPower(hy.pack,HYB_SOC)*(hy.shareR||1);   // with a front motor, the main motor's share of the pack (build 195)
   return driveTorqueRated(hy,Math.max(rpm,1),V,cool,Pb);
 }
-// ---- the front axle motor (build 195) ----
+// ---- the front axle motor (build 195) & P3/P4 post-gearbox / e-axle traction motor ----
 // Its torque at its own speed (Nm): its envelope at the bus, cut to its share of the pack.
 function hybFrontTq(hy,rpm){
   const f=hy.front,m=f.motor;if(rpm>m.nMax)return 0;
@@ -33769,19 +33875,34 @@ function hybFrontTq(hy,rpm){
 // let go), as an electric car's is; set on the vehicle when it is built. Past its top speed it is declutched.
 const HYB_FRONT_EFF=0.97;
 function hybFrontSetup(v){
-  const hy=engine.hy,f=hy&&hy.front;if(!f){v.frontFd=0;v.frontTab=null;return;}
-  const nTop=motorTopRpm(f.motor,hybBusV(hy));   // where it has torque to give (build 302: the voltage can end it early)
-  // the car's top speed on everything it has: the engine and main motor's peak, and the front motor's
-  const c=hybCurves();let P=0,Pf=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
-  for(let r=200;r<=nTop;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
-  const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
-  v.frontFdMatched=vMax>1?nTop*2*Math.PI*v.rTire/60/vMax:8;
-  v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
-  // the wheel force every 0.5 m/s, at full deploy (the lap's deploy share scales it)
-  const tab=[];for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;tab.push(n>nTop?0:hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire);}
+  const hy=engine.hy,f=hy&&hy.front,rm=hy&&hy.roadMotor;
+  if(!f&&!rm){if(!v.ev)v.frontFd=0;v.frontTab=null;return;}
+  if(hy.mode==='p4')v.drive='awd';   // P4 electric axle makes the car through-the-road AWD
+  const c=hybCurves();let P=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
+  const tab=Array(261).fill(0);
+  if(rm){
+    const nTop=motorTopRpm(hy.motor,hybBusV(hy));
+    let Pm=0;for(let r=200;r<=nTop;r+=200)Pm=Math.max(Pm,hybMotorTq(hy,r)*r*Math.PI/30);
+    const vMax=dragLimitedV((P+Pm)/1000*v.driveEff,v.cdA,v.crr,v.mass);
+    const fdM=vMax>1?nTop*2*Math.PI*v.rTire/60/vMax:8;
+    const fd=engine.evFrontFd>0?engine.evFrontFd:fdM;
+    v.frontFdMatched=fdM;v.frontFd=fd;
+    const t=hybTune(engine);
+    for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*fd*30/Math.PI;
+      if(n<=nTop)tab[k]+=hybMotorTq(hy,n)*hybAssistShare(n/Math.max(1,hy.motor.nMax),1,t)*fd*HYB_FRONT_EFF/v.rTire;}
+  }
+  if(f){
+    const nTop=motorTopRpm(f.motor,hybBusV(hy));
+    let Pf=0;for(let r=200;r<=nTop;r+=200)Pf=Math.max(Pf,hybFrontTq(hy,r)*r*Math.PI/30);
+    const vMax=dragLimitedV((P+Pf)/1000*v.driveEff,v.cdA,v.crr,v.mass);
+    v.frontFdMatched=vMax>1?nTop*2*Math.PI*v.rTire/60/vMax:8;
+    v.frontFd=f.fd>0?f.fd:v.frontFdMatched;
+    for(let k=0;k<=260;k++){const vv=k*0.5,n=vv/v.rTire*v.frontFd*30/Math.PI;
+      if(n<=nTop)tab[k]+=hybFrontTq(hy,n)*v.frontFd*HYB_FRONT_EFF/v.rTire;}
+  }
   v.frontTab=tab;
 }
-// The front motor's force at the wheels (N) at a road speed (m/s).
+// The front/e-axle/P3 motor's force at the wheels (N) at a road speed (m/s).
 function hybFrontF(vv){
   const t=vehicle&&vehicle.frontTab;if(!t)return 0;
   const x=Math.max(0,vv)/0.5,i=Math.min(t.length-2,Math.floor(x)),f=x-i;
@@ -33794,13 +33915,14 @@ function hybCurves(){
   const e=engine,hy=e.hy;
   if(hy._c&&hy._c.score===e.score)return hy._c;
   const t=hybTune(e);
-  if(hy.mode==='ps'||hy.mode==='series'){   // on MG2's (the traction motor's) speed (builds 189, 193); the assist map's flat-out row on top (192)
+  if(isDirectMode(hy.mode)){   // on MG2's (the traction motor's) speed (builds 189, 193); the assist map's flat-out row on top (192)
     hy._c=Object.assign({score:e.score},psCurves());const R=hy._c.eng,nMax=hy.motor.nMax;
     hy._c.mot=hy._c.mot.map((m,i)=>m*hybAssistShare(R[i].rpm/nMax,1,t));return hy._c;
   }
   const eng=buildTorqueCurve(),full=eng.map(p=>hybMotorTq(hy,p.rpm));
   const pk=Math.max(...eng.map(p=>p.tq));
-  const mot=(e.hyDeploy==='eco'?full.map((t,i)=>Math.min(t,Math.max(0,pk-eng[i].tq))):full)
+  // P3 (post-gearbox) and P4 (electric axle) deliver torque directly to the road via hybFrontF(vv), not through ICE gears
+  const mot=hy.roadMotor?eng.map(()=>0):(e.hyDeploy==='eco'?full.map((tq,i)=>Math.min(tq,Math.max(0,pk-eng[i].tq))):full)
     .map((m,i)=>m*hybAssistWindow(e,eng[i].rpm)*hybAssistShare(eng[i].rpm/e.redline,1,t));   // the tune (build 192)
   hy._c={score:e.score,eng,mot,full};
   return hy._c;
@@ -33811,7 +33933,7 @@ const hybMotorAt=rpm=>{const c=hybCurves(),R=c.eng;
   return c.mot[c.mot.length-1];};
 // The motor's regeneration on the engine's overrun table (Nm, 500 rpm up in 250s): the electric car's law, on the bus.
 function hybRegenTable(rl,soc=HYB_SOC,tC=PACK_T_REF){
-  const hy=engine.hy,out=[],V=hy.mode==='ps'?PS.busV:motorRatedV(hy),Pc=packChargePower(hy.pack,soc,tC),k=(HYB_REGEN[hybTune().regen]||HYB_REGEN.high).k;
+  const hy=engine.hy,out=[],V=hy.mode==='ps'?psParams(hy).busV:motorRatedV(hy),Pc=packChargePower(hy.pack,soc,tC),k=(HYB_REGEN[hybTune().regen]||HYB_REGEN.high).k;
   for(let r=500;r<=rl+250;r+=250){
     const n=Math.min(r,rl),w=n*Math.PI/30,T=motorMaxTorque(hy.motor,n,V,60);
     out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w))));   // REGENERATION's share (build 192)
@@ -33822,8 +33944,8 @@ function hybRegenTable(rl,soc=HYB_SOC,tC=PACK_T_REF){
 // engine's full load could not give; - regenerating, its share of the overrun), and the pack's energy over the lap.
 function hybLapEnergy(L){
   const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
-  const etaBoost=psBoostEta(hy);
-  const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=hy.mode!=='p2'?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
+  const etaBoost=psBoostEta(hy),direct=isDirectMode(hy.mode);
+  const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=direct?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
   const engAt=rpm=>{const R0=c.eng;if(rpm<=R0[0].rpm)return R0[0].tq;for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return R0[i-1].tq+(R0[i].tq-R0[i-1].tq)*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return R0[R0.length-1].tq;};
   const pm=new Float32Array(n);let deployJ=0,regenJ=0;
   for(let i=0;i<n;i++){
@@ -33831,12 +33953,16 @@ function hybLapEnergy(L){
     if(R.pwr[i]>0){
       const Pm=Math.max(0,R.pwr[i]-engAt(rpm)*w);
       if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)/etaBoost*dt;}
-      // a front axle motor (build 195) drives where the car is flat out (the engine and main motor at their full): its
-      // force at that speed, its losses at its own speed and torque
-      if(hy.front&&Pm>0){
+      // a front axle motor (build 195) or P3/P4 road motor drives where the car is flat out: its force at that speed,
+      // its losses at its own speed and torque
+      if((hy.front&&Pm>0)||hy.roadMotor){
         const Ff=hybFrontF(v[i]);
-        if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
-          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,temp).total)/etaBoost*dt;}
+        if(Ff>0&&vehicle&&vehicle.frontFd>0){
+          const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
+          const fm=hy.roadMotor?hy.motor:hy.front.motor;
+          if(hy.roadMotor)pm[i]+=Ff*v[i]/HYB_FRONT_EFF;
+          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(fm,Tf,Math.max(nf,1),V,temp).total)/etaBoost*dt;
+        }
       }
     }else if(R.eb&&R.eb[i]>0&&rpm>=500){
       const k=Math.min(regen.length-1,Math.floor((rpm-500)/250)),Tr=regen[k],To=ov[Math.min(ov.length-1,k)]||0;
@@ -33849,7 +33975,7 @@ function hybLapEnergy(L){
   // energy from the pack, each stop returns the run-down's from idle (hybStartStop; P2s run the lap through). The lap's engine
   // takes its speeds without inertia, so the energy between idle and the speed it ran at is neither burnt nor returned.
   let ssJ=0,starts=0;
-  if(hy.mode!=='p2'){
+  if(direct){
     const S=hybStartStop(),back=S.stopJ(engine.idleRpmEff);
     for(let i=0;i<n;i++){const j=(i+1)%n,a=R.pwr[i]>0,b=R.pwr[j]>0;
       if(!a&&b){ssJ+=S.startJ-back;starts++;}}
@@ -33859,14 +33985,14 @@ function hybLapEnergy(L){
   const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
   return {pm,starts,startStopKJ:ssJ/1000,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
 }
-// Hybrid lap thermal walk: steps motor (winding, core, rotor) and pack temperatures across a prep lap and the timed lap
+// Hybrid lap thermal walk: steps motor (winding, core, rotor, inverter) and pack temperatures across a prep lap and the timed lap
 // so small hybrid packs (1.3-2.1 kWh) and traction motors heat up and derate realistically under sustained high-C draw.
 function hybLapHeat(e,L,pm,soc0=HYB_SOC){
   const hy=e.hy,m=hy.motor,b=hy.pack,V=hybBusV(hy),etaBoost=psBoostEta(hy);
-  const R=L.replay,v=L.v,p=L.track.line,n=R.rpm.length,tc=m.cool.tCool;
-  const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
+  const R=L.replay,v=L.v,p=L.track.line,n=R.rpm.length,tc=m.cool.tCool,b0=packStartT(b);
+  const t={w:tc,c:tc,r:tc,inv:tc},tb={b:b0};
   const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
-  let soc=clamp(soc0,0.1,0.95),wMax=tc,rMax=tc,bMax=PACK_COOLANT,minShare=1,sumShare=0;
+  let soc=clamp(soc0,0.1,0.95),wMax=tc,rMax=tc,bMax=b0,minShare=1,sumShare=0;
   for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
     const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2),rpm=Math.max(1,R.rpm[i]),w=rpm*Math.PI/30;
     const now=motorDerate({motor:m},t)*packDerate(tb.b);
@@ -33875,7 +34001,7 @@ function hybLapHeat(e,L,pm,soc0=HYB_SOC){
     let Pbat=0;
     if(Pm>0){
       let Pbus=Pm+Lm.total;
-      if(hy.front){
+      if(hy.front&&!hy.roadMotor){
         const Ff=hybFrontF(v[i])*now;
         if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
           Pbus+=Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,t).total;}
@@ -33949,9 +34075,17 @@ function hybSummaryLine(e){
       tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b>';
   }
   if(hy.mode==='ps'){   // on MG2's shaft, the system's power and the two machines (build 189)
+    const V=psParams(hy).busV;
     c.eng.forEach((p,i)=>{const P=(p.tq+c.mot[i])*p.rpm*Math.PI/30;if(P>sys)sys=P;});
-    return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES.ps.label)+' • MG1 <b>'+Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm</b>, MG2 <b>'+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm</b> • '+
+    return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES.ps.label)+' • MG1 <b>'+Math.round(motorMaxTorque(hy.mg1,100,V,60))+' Nm</b>, MG2 <b>'+Math.round(motorMaxTorque(hy.motor,100,V,60))+' Nm</b> • '+
       tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round(sys/1000)+' kW</b>';
+  }
+  if(hy.roadMotor){   // P3 / P4: ICE + independent road/e-axle motor peak
+    let pIce=0,pMot=0;
+    c.eng.forEach(p=>{const P=p.tq*p.rpm*Math.PI/30;if(P>pIce)pIce=P;tq=Math.max(tq,p.tq);});
+    for(let r=200;r<=hy.motor.nMax;r+=200)pMot=Math.max(pMot,hybMotorTq(hy,r)*r*Math.PI/30);
+    return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES[hy.mode].label)+' • '+tr('motor')+' <b>'+Math.round(pMot/1000)+' kW</b> • '+
+      tr('pack')+' '+hy.pack.kWh+' kWh '+tr(hy.pack.chem.label)+' • +'+hy.mass+' kg • '+tr('system')+' <b>'+Math.round((pIce+pMot)/1000)+' kW</b>';
   }
   c.eng.forEach((p,i)=>{const t=p.tq+c.mot[i],P=t*p.rpm*Math.PI/30;if(P>sys){sys=P;sysR=p.rpm;}tq=Math.max(tq,t);});
   return '<br><b>'+tr('HYBRID')+'</b> '+tr(HYBRID_MODES[hy.mode].label)+', '+tr((HYBRID_DEPLOY[e.hyDeploy]||HYBRID_DEPLOY.full).label)+' • '+tr('motor')+' <b>'+Math.round(Math.max(...c.full))+' Nm</b> • '+
@@ -34017,7 +34151,16 @@ function bindHybMap(){
 //                    current set for 110% of the engine's peak reaction torque and for 31% of the engine's peak power
 //                    (22.5 kW against 72 kW on the 4th-generation Prius).
 const PS={rho:30/78,k2:65/17,busV:600,boostEta:0.97,mg1Margin:1.1,mg1Share:22.5/72};
-const psBoostEta=hy=>hy&&hy.mode==='ps'&&PS.busV>packOcv(hy.pack,HYB_SOC)*1.05?PS.boostEta:1;
+// Per-build power-split geometry and DC bus voltage (defaulting to Gen-4 Prius P610: 30/78, 65/17, 600 V).
+function psParams(hy){
+  const p=hy&&hy.ps;
+  return {
+    rho:p&&p.rho>0.1&&p.rho<1?p.rho:PS.rho,
+    k2: p&&p.k2>0.5&&p.k2<10?p.k2:PS.k2,
+    busV:p&&p.busV>=100&&p.busV<=1200?p.busV:PS.busV
+  };
+}
+const psBoostEta=hy=>hy&&hy.mode==='ps'&&psParams(hy).busV>packOcv(hy.pack,HYB_SOC)*1.05?PS.boostEta:1;
 const isPowerSplit=()=>isHybrid()&&engine.hy.mode==='ps';
 // A hybrid with no gearbox, whose vehicle shaft is its traction motor's: a power-split, or a series hybrid (build 193).
 const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='series');
@@ -34039,22 +34182,36 @@ function hybMachineFrom(mg2,T1,P1,V,maxRpm){
   return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
 }
 // MG1, for 110% of the engine's peak reaction torque and 31% of its peak power.
-function psMg1Build(e,mg2){
-  const rho=PS.rho;
-  return hybMachineFrom(mg2,PS.mg1Margin*e.score.peakTQ*rho/(1+rho),PS.mg1Share*e.score.peakHP*745.7,PS.busV);
+function psMg1Build(e,mg2,psCfg){
+  const p=psCfg||PS,rho=p.rho||PS.rho,busV=p.busV||PS.busV;
+  return hybMachineFrom(mg2,PS.mg1Margin*e.score.peakTQ*rho/(1+rho),PS.mg1Share*e.score.peakHP*745.7,busV);
+}
+// MG1 thermal node initialization and stepping (winding, core, rotor, inverter).
+function psMg1TempInit(hy){
+  const tc=hy&&hy.mg1?hy.mg1.cool.tCool:65;
+  return {w:tc,c:tc,r:tc,inv:tc};
+}
+function psMg1Step(hy,Ts,ns,temp,dt){
+  if(!hy||!hy.mg1)return {P1:0,L:null};
+  const m=hy.mg1,tc=m.cool.tCool;
+  if(!temp)temp={w:tc,c:tc,r:tc,inv:tc};
+  const aT=Math.abs(Ts),aN=Math.max(Math.abs(ns),1);
+  const L=aT>0?motorLosses(m,aT,aN,hybBusV(hy),temp):{cu:0,fe:0,feS:0,feR:0,mech:0,inv:0,I:0,total:0,rpm:Math.abs(ns)};
+  if(dt>0)motorHeatStep(m,temp,L,dt);
+  return {P1:Ts*ns*Math.PI/30-L.total,L};
 }
 // How the engine reaches the shaft (build 193): at an engine speed ne and the shaft's (MG2's) n2, the speed MG1 turns at
 // (ns), its share of the engine's torque (ks: it holds ks Te) and the share that reaches the shaft mechanically (kr, at
 // MG2's speed). A power-split's planetary (Willis); a series hybrid's generator on the crank, nothing mechanical.
 function hybGear(hy,ne,n2){
   if(hy.mode==='series')return {ns:ne,ks:1,kr:0};
-  const rho=PS.rho,nr=n2/PS.k2;
-  return {ns:((1+rho)*ne-nr)/rho,ks:rho/(1+rho),kr:1/(1+rho)/PS.k2};
+  const p=psParams(hy),rho=p.rho,nr=n2/p.k2;
+  return {ns:((1+rho)*ne-nr)/rho,ks:rho/(1+rho),kr:1/(1+rho)/p.k2};
 }
 // The electrical power MG1 puts on the bus (W, negative drawing) holding the sun torque Ts at the sun speed ns.
 function psMg1Elec(hy,Ts,ns,temp){
-  const P=Ts*ns*Math.PI/30;
-  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),hybBusV(hy),temp).total;
+  const P=Ts*ns*Math.PI/30,tc=hy.mg1.cool.tCool,t=temp||hy.mg1T||{w:tc,c:tc,r:60,inv:tc};
+  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),hybBusV(hy),t).total;
 }
 // MG2's most torque (Nm, negative braking) for the electrical power Pin it has (W): T w + losses(T) <= Pin, on its envelope.
 function psMg2For(hy,n2,Pin,temp){
@@ -34068,14 +34225,14 @@ function psMg2For(hy,n2,Pin,temp){
 // The engine speeds MG1 allows at a ring speed (rpm): |ns| within MG1's top speed.
 function psEngineRange(hy,nr){
   if(hy.mode==='series')return {lo:0,hi:Math.min(engine.redline,hy.mg1.nMax)};   // the generator turns with the crank
-  const rho=PS.rho,n1=hy.mg1.nMax,e=engine;
+  const rho=psParams(hy).rho,n1=hy.mg1.nMax,e=engine;
   return {lo:Math.max(0,(nr-n1*rho)/(1+rho)),hi:Math.min(e.redline,(n1*rho+nr)/(1+rho))};
 }
 // Full throttle at an MG2 speed (rpm): the engine at the speed that gives the most at the wheels, its torque cut to
 // what MG1 can hold, MG1's power through MG2, and the pack's Pb (W) on top. Returns the torque at the MG2 shaft (the
-// powertrain's shaft: the ring's torque comes in through the 65:17 gear) and the engine's speed and power there.
+// powertrain's shaft: the ring's torque comes in through the k2 gear) and the engine's speed and power there.
 function psFullLoad(n2,Pb,tqAt){
-  const e=engine,hy=e.hy,nr=n2/PS.k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
+  const e=engine,hy=e.hy,nr=n2/psParams(hy).k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
   let best={tq:psMg2For(hy,n2,Pb,temp),ne:0,Pe:0};   // the engine stopped: MG2 on the pack alone
   if(R.hi>R.lo){
     const N=24,r0=Math.max(R.lo,e.idleRpmEff||700);
@@ -34208,9 +34365,9 @@ function psStartStopTimes(L,c){
 }
 // The driveline line of the VEHICLE summary.
 function psDrivelineLine(v){
-  const hy=engine.hy;
+  const hy=engine.hy,V=psParams(hy).busV;
   return '<br>'+tr('eCVT (POWER-SPLIT)')+' • '+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • MG1 '+
-    Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm';
+    Math.round(motorMaxTorque(hy.mg1,100,V,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,V,60))+' Nm';
 }
 // The engine's speed at full throttle for an MG2 speed (rpm), off the curves: the bench's SPORT mode holds it there.
 function psEngineRpmAt(n2){
@@ -34275,10 +34432,11 @@ let hybBench=null;   // the bench's hybrid state; rebuilt when the engine's hybr
 function hybBenchState(){
   const hy=engine.hy;
   if(hybBench&&hybBench.hy===hy)return hybBench;
-  const prev=hybBench,tc=hy.motor.cool.tCool;
+  const prev=hybBench,tc=hy.motor.cool.tCool,direct=isDirectMode(hy.mode);
   hybBench={hy,view:prev?prev.view:'flow',trail:[],mode:prev?prev.mode:'auto',soc:prev?prev.soc:HYB_SOC,hold:prev?prev.hold:HYB_SOC,cmd:prev?prev.cmd:0,neSet:prev?prev.neSet:0,
-    n:hy.mode!=='p2'?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
-    Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc},tB:{b:PACK_COOLANT},lowFlash:0};
+    n:direct?0:engine.idleRpmEff,engOn:true,thrE:state.throttle,Te:0,Tm:0,T1:0,ns:0,ne:engine.idleRpmEff,
+    Pe:0,Pm:0,P1:0,Pb:0,Psys:0,mT:{w:tc,c:tc,r:tc,inv:tc},mg1T:hy.mg1?psMg1TempInit(hy):null,tB:{b:packStartT(hy.pack)},
+    k0Temp:40,k0SlipW:0,k0SlipJ:0,k0Locked:true,lowFlash:0};
   state.rpm=engine.idleRpmEff;
   return hybBench;
 }
@@ -34313,8 +34471,8 @@ function hybBrakeAt(n,nMax,nMin,ref){
 // The controller: from the pedal, the mode and the charge, whether the engine runs, what it is asked for, and the motor's
 // torque (P2) or MG2's (power-split) before the pack's limits.
 function hybControl(H,dt){
-  const e=engine,hy=e.hy,B=HYB_BENCH,ps=hy.mode!=='p2',p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;   // ps: the traction motor's shaft (a power-split, or a series hybrid, build 193)
-  const pack=hy.pack,tB=H.tB?H.tB.b:PACK_COOLANT,pDer=packDerate(tB),mDer=motorDerate({motor:hy.motor},H.mT),tR=H.mT?H.mT.r:60;
+  const e=engine,hy=e.hy,B=HYB_BENCH,ps=isDirectMode(hy.mode),p=state.throttle,mode=H.mode,n=H.n,w=Math.max(n,1)*Math.PI/30;   // ps: the traction motor's shaft (a power-split, or a series hybrid, build 193)
+  const pack=hy.pack,tB=H.tB?H.tB.b:packStartT(pack),pDer=packDerate(tB),mDer=motorDerate({motor:hy.motor},H.mT),tR=H.mT?H.mT.r:60;
   const Pmax=packMaxPower(pack,clamp(H.soc,0.05,1),tB)*pDer,Pchg=packChargePower(pack,clamp(H.soc,0,1),tB)*pDer;
   // the HYBRID TUNE (build 192): its charge window, electric-driving power, regeneration and load-point shifting
   const tu=hybTune(e),lo=tu.socLo/100,hi=tu.socHi/100,kRegen=(HYB_REGEN[tu.regen]||HYB_REGEN.high).k;
@@ -34323,7 +34481,7 @@ function hybControl(H,dt){
   if(ps){const c=hybCurves(),R=c.eng,i=Math.min(R.length-1,Math.max(0,Math.round(n/Math.max(1,R[1].rpm-R[0].rpm))));
     TmMax=motorMaxTorque(hy.motor,Math.max(n,1),hybBusV(hy),tR)*mDer;full=R[i].tq+c.mot[i]*Math.min(mDer,pDer);}
   else{TmMax=Math.max(0,hybMotorFor(hy,n,Pmax,H.mT));full=hybEngTq(Math.max(n,e.idleRpmEff))+TmMax;}
-  const D=(mode==='ev'?TmMax:full)*p,Pd=D*w;
+  const D=(mode==='ev'&&!hy.noEv?TmMax:full)*p,Pd=D*w;
   // the charge the mode wants, and the engine
   if(mode==='hold'&&H.lastMode!=='hold')H.hold=H.soc;
   H.lastMode=mode;
@@ -34335,7 +34493,8 @@ function hybControl(H,dt){
   let on=H.engOn;
   // the car switched off (POWER OFF, build 306): no engine, no motor, no charging
   if(state.ignOn===false){H.engOn=false;H.dwell=0;H.thrE=0;H.TeWant=null;H.TmWant=0;return {Pmax,Pchg};}
-  if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
+  if(hy.noEv){on=true;}   // 48V MHEV (P0/P1): belt/crank starter-generator permanently coupled to ICE, no pure-EV drive
+  else if(mode==='ev'){on=H.soc<lo;if(on&&!H.lowFlash){H.lowFlash=1;flash(tr('PACK LOW • ENGINE STARTED'),'warn');}if(!on)H.lowFlash=0;}
   else if(mode==='auto'||mode==='hold'){
     const low=H.soc<socT-0.1;
     // a hysteresis band: the engine starts past the motor's share and stops only well below it (a depleting plug-in's band
@@ -34353,7 +34512,7 @@ function hybControl(H,dt){
   if(deplete)Pc=-B.chargeShare*Pchg;   // no load-point shifting: the engine charges only a low pack
   const pedalThr=mode==='sport'||mode==='engine'||mode==='manual';
   if(ps){
-    const nr=n/PS.k2,R=psEngineRange(hy,nr),O=psOol();
+    const nr=n/psParams(hy).k2,R=psEngineRange(hy,nr),O=psOol();
     if(on){
       let ne;
       if(mode==='manual')ne=H.neSet||e.idleRpmEff;
@@ -34384,7 +34543,7 @@ function hybControl(H,dt){
 }
 // One bench step for a hybrid, in place of stepEngine.
 function stepHybridBench(dt){
-  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=hy.mode!=='p2',m=hy.motor,pack=hy.pack;
+  const e=engine,hy=e.hy,H=hybBenchState(),B=state.ignOn===false?{...HYB_BENCH,auxW:0}:HYB_BENCH,ps=isDirectMode(hy.mode),m=hy.motor,pack=hy.pack;
   const lim=hybControl(H,dt);
   // fuel on once the engine has been spun up to where it fires (hybSpin); asked to stop, the fuel is cut (build 349)
   if(!H.engOn)H.fired=false;else if(!H.fired&&state.rpm>=hybFireRpm(H)-1)H.fired=true;
@@ -34396,7 +34555,7 @@ function stepHybridBench(dt){
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
   }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
-  // MG1 (power-split): the engine's speed and its reaction
+  // MG1 (power-split / series): the engine's speed, reaction, and tracked MG1 thermal node
   let P1=0;
   if(ps){
     if(run){state.rpm+=(H.neT-state.rpm)*(1-Math.exp(-dt/B.neTau));state.rpm=clamp(state.rpm,e.idleRpmEff,e.redline);H.Tspin=0;}
@@ -34405,7 +34564,10 @@ function stepHybridBench(dt){
     // spinning it up or braking it down, MG1's torque at the crank (H.Tspin) is the sun's as the engine's would be, reversed,
     // at the step's mean speed: the pack pays for the start and takes the stop back (build 401)
     const Ts=run?H.Te*G.ks:-(H.Tspin||0)*G.ks;H.T1=Ts;
-    P1=Ts!==0&&(H.engOn||H.Tspin)?psMg1Elec(hy,Ts,run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns,{w:tc+20,c:tc+15,r:60}):0;
+    if(!H.mg1T)H.mg1T=psMg1TempInit(hy);
+    const nsEval=run?H.ns:hybGear(hy,(H.ne+H.neSpin0)/2,H.n).ns;
+    const mg1Res=psMg1Step(hy,Ts!==0&&(H.engOn||H.Tspin)?Ts:0,nsEval,H.mg1T,dt);
+    P1=Ts!==0&&(H.engOn||H.Tspin)?mg1Res.P1:0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
   // takes, with the 12 V load and MG1's power on the same bus (through the DC-DC boost converter on a power-split)
@@ -34435,25 +34597,49 @@ function stepHybridBench(dt){
   H.soc=clamp(H.soc-d.I*dt/(pack.Ah*3600),0,1);
   motorHeatStep(m,temp,L,dt);packHeatStep(pack,H.tB,d.heat,dt);
   H.Tm=Tm;H.Pm=Tm*w0/1000;H.P1=P1/1000;H.Pb=d.V*d.I/1000;
-  // the shaft
+  // the shaft (K0 clutch thermal model: C_k0 = 900 J/K ~2 kg steel plates, G_k0 = 15 W/K to 40 C housing/oil)
   const drag=H.n>1?L.mech/w0:0;
+  let k0SlipW=0;
   if(ps){
     const Tring=run?H.Te*hybGear(hy,H.ne,H.n).kr:-Tcancel,ref=Math.max(50,Math.max(...hybCurves().eng.map(q=>q.tq))),J=m.J+0.02;
     const hMax=0.5*J*Math.PI/(30*ref/(220*m.nMax/e.redline)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tring+Tm-drag-hybBrakeAt(H.n,m.nMax,0,ref))/J*h;H.n=clamp(om*30/Math.PI,0,m.nMax);}
-    H.Tshaft=Tring+Tm;
+    H.Tshaft=Tring+Tm;H.k0Locked=true;
   }else if(run){
-    // the clutch closed: the engine and the motor turn the shaft together, never below the engine's idle
-    if(H.n<e.idleRpmEff)H.n=e.idleRpmEff;
-    const J=e.inertia+m.J,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
-    for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(H.Te+Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,e.idleRpmEff,e.redline);}
-    state.rpm=H.n;H.ne=H.n;H.Tshaft=H.Te+Tm;
+    const dRpm=H.n-state.rpm;
+    if(!hy.noEv&&(!H.k0Locked||Math.abs(dRpm)>15)){
+      // P2 K0 clutch synchronizing slip: transfer torque smoothly until ICE and motor shafts match within 15 rpm
+      H.k0Locked=false;
+      const tCap=Math.max(80,e.loadRefTq*0.8),TcSync=clamp(dRpm*0.4,-tCap,tCap);
+      const Jm=m.J+0.05,Je=Math.max(0.05,e.inertia),ref=e.loadRefTq;
+      const hMax=0.5*Math.min(Jm,Je)*Math.PI/(30*Math.max(1,e.brakeGain)),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
+      for(let k=0;k<ns;k++){
+        const dW=(H.n-state.rpm)*Math.PI/30,tcS=clamp(dW*30/Math.PI*0.4,-tCap,tCap);
+        const omM=H.n*Math.PI/30+(Tm-tcS-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/Jm*h;
+        const omE=state.rpm*Math.PI/30+(H.Te+tcS)/Je*h;
+        H.n=clamp(omM*30/Math.PI,0,e.redline);state.rpm=clamp(omE*30/Math.PI,e.idleRpmEff,e.redline);
+        k0SlipW=Math.abs(tcS)*Math.abs(H.n-state.rpm)*Math.PI/30;
+      }
+      if(Math.abs(H.n-state.rpm)<=15){H.k0Locked=true;state.rpm=clamp(H.n,e.idleRpmEff,e.redline);H.n=state.rpm;}
+      H.ne=state.rpm;H.Tshaft=Tm+TcSync;
+    }else{
+      // K0 clutch closed (or MHEV permanently coupled): engine and motor turn the shaft together
+      H.k0Locked=true;
+      if(H.n<e.idleRpmEff)H.n=e.idleRpmEff;
+      const J=e.inertia+m.J,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
+      for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(H.Te+Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,e.idleRpmEff,e.redline);}
+      state.rpm=H.n;H.ne=H.n;H.Tshaft=H.Te+Tm;
+    }
   }else{
-    // the clutch open: the motor alone; the engine runs down to a stop
+    // the clutch open (or slipping during P2 ICE cranking): motor drives shaft, ICE cranks or runs down
+    H.k0Locked=false;
     const J=m.J+0.05,ref=e.loadRefTq,hMax=0.5*J*Math.PI/(30*e.brakeGain),ns=Math.max(1,Math.ceil(dt/hMax)),h=dt/ns;
     for(let k=0;k<ns;k++){const om=H.n*Math.PI/30+(Tm-drag-hybBrakeAt(H.n,e.redline,e.idleRpmEff,ref))/J*h;H.n=clamp(om*30/Math.PI,0,Math.min(e.redline,m.nMax));}
     hybSpin(H,dt);H.ne=state.rpm;H.Tshaft=Tm;
+    if(H.engOn&&H.Tc2>0)k0SlipW=H.Tc2*Math.abs(H.n-state.rpm)*Math.PI/30;
   }
+  H.k0SlipW=k0SlipW;H.k0SlipJ=(H.k0SlipJ||0)+k0SlipW*dt;
+  H.k0Temp=(H.k0Temp!=null?H.k0Temp:40)+(k0SlipW-15*((H.k0Temp!=null?H.k0Temp:40)-40))/900*dt;
   H.Pe=run?H.Te*Math.max(H.ne,1)*Math.PI/30/1000:0;
   H.Psys=H.Tshaft*Math.max(H.n,0)*Math.PI/30/1000;
   state.systemVoltage=14.0;   // the 12 V side runs off the pack through a DC-DC converter
@@ -34477,14 +34663,14 @@ const hybBenchEngineOff=()=>isHybrid()&&hybBench&&hybBench.hy===engine.hy&&!hybB
 // a P2's clutch opens and its engine runs down on Tf alone. It fires at idle, or a P2 at the shaft's speed (its clutch
 // closes there). Build 401: the crank's energy is drawn from the pack and the stop's returned to it (H.Tspin, MG1's torque
 // at the crank; H.Tc2 a P2's motor's), and MG2 cancels MG1's reaction on the ring (stepHybridBench).
-const hybFireRpm=H=>engine.hy.mode==='p2'?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
+const hybFireRpm=H=>!isDirectMode(engine.hy.mode)?clamp(H.n,engine.idleRpmEff,engine.redline):engine.idleRpmEff;
 function hybSpin(H,dt){
-  const e=engine,hy=e.hy,V=hybBusV(hy),tR=H.mT?H.mT.r:60;
+  const e=engine,hy=e.hy,V=hybBusV(hy),tR=H.mT?H.mT.r:60,direct=isDirectMode(hy.mode);
   let J=e.inertia,Tc=0;
-  if(hy.mode!=='p2'){const G=hybGear(hy,state.rpm,H.n);J+=hy.mg1.J/(G.ks*G.ks);
+  if(direct){const G=hybGear(hy,state.rpm,H.n);J+=hy.mg1.J/(G.ks*G.ks);
     Tc=motorMaxTorque(hy.mg1,Math.max(Math.abs(G.ns),1),V,60)/G.ks*(H.engOn?1:state.rpm>0?-1:0);}
   else if(H.engOn)Tc=H.Tc2!=null?H.Tc2:Math.max(0,motorMaxTorque(hy.motor,Math.max(H.n,1),V,tR)-Math.abs(H.Tm||0));
-  H.Tspin=hy.mode!=='p2'&&(state.rpm>0||H.engOn)?Tc:0;
+  H.Tspin=direct&&(state.rpm>0||H.engOn)?Tc:0;
   const Tf=Math.min(0,brakeTorqueRaw(Math.max(state.rpm,1),state.map,true));
   const w0=state.rpm*Math.PI/30,wu=w0+(Tc+(state.rpm>0?Tf:0))/J*dt,w=Math.max(0,wu);
   H.neSpin0=state.rpm;state.rpm=H.engOn?Math.min(w*30/Math.PI,hybFireRpm(H)):w*30/Math.PI;
@@ -34500,8 +34686,8 @@ function hybSpin(H,dt){
 function hybStartStop(){
   const e=engine,hy=e.hy;
   if(hy._ss&&hy._ss.score===e.score)return hy._ss;
-  const ps=hy.mode==='ps',V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
-  const ks=ps?PS.rho/(1+PS.rho):1,kr=ps?1/(1+PS.rho)/PS.k2:0,J=e.inertia+hy.mg1.J/(ks*ks),h=0.002,k30=30/Math.PI;
+  const ps=hy.mode==='ps',V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60},pp=psParams(hy);
+  const ks=ps?pp.rho/(1+pp.rho):1,kr=ps?1/(1+pp.rho)/pp.k2:0,J=e.inertia+hy.mg1.J/(ks*ks),h=0.002,k30=30/Math.PI;
   const c0=state.coolant,o0=state.oil;state.coolant=90;state.oil=100;
   try{
     const mg=(rpm,dir)=>{const ns=Math.max(rpm/ks,1),T1=motorMaxTorque(hy.mg1,ns,V,60),Tc=dir*T1/ks;
@@ -34611,9 +34797,10 @@ function drawHybridFlow(H){
     flow([[222,96],[222,63]],H.Pm,motCol);
     flow([[148,17],[164,17],[164,109],[196,109]],H.P1,H.P1>=0?C.charge:C.bat);
     flow([[148,125],[164,125],[164,111]],-H.Pb,batCol);
-    c.fillStyle='#ffcc00';c.fillRect(161*S,106*S,6*S,6*S);c.font=F(4.5);c.textAlign='left';c.textBaseline='top';c.fillStyle='#888';c.fillText(PS.busV+' V',168*S,126*S);
+    const pp=psParams(hy);
+    c.fillStyle='#ffcc00';c.fillRect(161*S,106*S,6*S,6*S);c.font=F(4.5);c.textAlign='left';c.textBaseline='top';c.fillStyle='#888';c.fillText(Math.round(pp.busV)+' V',168*S,126*S);
     box(4,46,58,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
-    box(98,46,52,34,'PSD','ρ '+PS.rho.toFixed(3),H.engOn);
+    box(98,46,52,34,'PSD','ρ '+pp.rho.toFixed(3),H.engOn);
     box(98,4,52,26,'MG1',Math.round(H.ns)+' rpm',Math.abs(H.P1)>0.2);
     box(238,46,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(196,96,52,26,'MG2',(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
@@ -37555,8 +37742,8 @@ function bindChalRank(){
 // (src/js/electric.js); the front induction unit of the Model 3 and Model Y is sized to its published 219 Nm and
 // 137 kW at 6380 rpm on 320 V; the Plaid's three are carbon-sleeved magnet motors (the sleeve is what lets a rotor this
 // size reach 20,000 rpm), each sized to its rated 295 kW with the turns for the ~1,420 Nm the three are credited with
-// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, which the model's
-// nearest diff is the clutch-plate LSD (full traction off the line).
+// together. The Plaid's rear has no differential: a motor per wheel gives each its own torque, modelled with independent
+// dual-rear active torque vectoring (v.dualRearTV / evRearTorqueVector in src/js/electric-car.js).
 // The stator's outside diameter (build 314): the Model 3's 225 mm is MotorXP's teardown, and the Model Y and the Plaid's
 // magnet motors are taken to share its lamination (PROBABLE). The others are unpublished and carry the bore over 0.67 they
 // had until then (PROBABLE): the Model Y's front induction motor 210, and the hybrids' motors 226-301 (HYB_ENGINE_PRESETS).
@@ -38129,7 +38316,11 @@ const EVD_FIELDS={
     trade:'It sets the torque below the knee: torque is flux times current, until the iron saturates. Each amp costs money, and more current makes more heat in the copper.'},
   evRegen:{what:'How hard the motor brakes as a generator.',
     trade:'HIGH takes back all the motor and the battery can; LOW half of that; OFF none. Energy taken back goes into the battery for the rest of the lap.'},
-  evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque, and add their mass and cost. They share the battery.'},
+  evMaker:{adv:true,what:'Regenerative braking calibration: the deceleration g ceiling and kW cap before friction brakes take over.',
+    trade:'Tesla uses lift-off regen (~0.21 g, 77-90 kW); VW MEB blends to 0.30 g; Hyundai E-GMP blends up to 0.40 g.'},
+  evRearCount:{what:'One rear motor, or one for each rear wheel.',trade:'Two motors give twice the torque and independent rear torque-vectoring yaw assist, adding mass and cost. They share the battery.'},
+  evGearbox:{adv:true,what:'Single-speed fixed reduction, or a 2-speed EV gearbox (1.93 / 1.00, Taycan-style).',
+    trade:'A 2-speed multiplies low-speed wheel thrust by 1.93× while keeping top speed in 2nd, at the cost of ~18 kg, $1,400 and a brief powershift.'},
   evFront:{what:'A motor on the front axle, which makes the car all-wheel drive.',
     trade:'A magnet motor adds the most. An induction motor has no drag when it gives no torque, so at a cruise the controller lets it idle, as Tesla does.'},
   evFrontD:EVD_FRONT_HELP,evFrontOD:EVD_FRONT_HELP,evFrontStack:EVD_FRONT_HELP,evFrontPoles:EVD_FRONT_HELP,evFrontTurns:EVD_FRONT_HELP,evFrontAmps:EVD_FRONT_HELP,
@@ -38142,7 +38333,11 @@ const EVD_FIELDS={
   evKWh:{log:true,what:'How much energy the pack stores.',
     trade:'More capacity: more range, and more cells in parallel to share the current, so more power too. It costs mass and money.'},
   evYear:{adv:true,what:'The year the cells are made in.',
-    trade:'Energy per kg and cost per kWh improve with the year. A chemistry is offered only from the year it reached cars.'}
+    trade:'Energy per kg and cost per kWh improve with the year. A chemistry is offered only from the year it reached cars.'},
+  evPackCool:{adv:true,what:'How heat leaves the battery pack.',
+    trade:'Liquid plate (~2.0 W/K/kWh) holds track heat; forced air (~0.8) and passive air (~0.35) are cheaper but heat up and derate much sooner.'},
+  evAmbT:{adv:true,what:'Ambient and starting pack temperature (°C).',
+    trade:'Cold lithium cells (< 15 °C) suffer Arrhenius impedance rise (higher internal resistance) and derate power until warmed up; hot ambient reduces cooling headroom.'}
 };
 const EVD_SPEED_FIELDS=['evMotorType','evFront','evYear'];   // their change enables or disables other fields
 
@@ -38179,7 +38374,7 @@ function evdCompute(){
     return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
-  const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear});
+  const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
   const d={motor:m,pack,redline:Math.floor(m.nMax/50)*50},V=packOcv(pack,0.5),tc=m.cool.tCool,cool={w:tc,c:tc,r:60},pts=[];
   // scoreMotor's sweep at the rated voltage, so the peaks here are the ones the DYNO reports after BUILD
   let pk=0,tq=0,pkM=0;
@@ -40345,8 +40540,8 @@ function bindControls(){
   document.getElementById('edHyDeploy').addEventListener('change',syncDesignEnable);   // ASSIST RPM only for ABOVE and BELOW (build 192)
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
-    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'))
-      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:v==='series'?HYB_DEFAULT_SERIES:HYB_DEFAULT));
+    if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'||v==='mhev'||v==='p3'||v==='p4'))
+      applyElectricToForm(Object.assign({},EV_DEFAULT,v==='ps'?HYB_DEFAULT_PS:v==='series'?HYB_DEFAULT_SERIES:v==='mhev'?HYB_DEFAULT_MHEV:(v==='p3'||v==='p4')?HYB_DEFAULT_P4:HYB_DEFAULT));
     syncDesignEnable();
   });
   // Switching engine type resets CR / redline / cylinders to that cycle's sensible defaults.

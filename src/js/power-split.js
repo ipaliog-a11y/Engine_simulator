@@ -20,7 +20,16 @@
 //                    current set for 110% of the engine's peak reaction torque and for 31% of the engine's peak power
 //                    (22.5 kW against 72 kW on the 4th-generation Prius).
 const PS={rho:30/78,k2:65/17,busV:600,boostEta:0.97,mg1Margin:1.1,mg1Share:22.5/72};
-const psBoostEta=hy=>hy&&hy.mode==='ps'&&PS.busV>packOcv(hy.pack,HYB_SOC)*1.05?PS.boostEta:1;
+// Per-build power-split geometry and DC bus voltage (defaulting to Gen-4 Prius P610: 30/78, 65/17, 600 V).
+function psParams(hy){
+  const p=hy&&hy.ps;
+  return {
+    rho:p&&p.rho>0.1&&p.rho<1?p.rho:PS.rho,
+    k2: p&&p.k2>0.5&&p.k2<10?p.k2:PS.k2,
+    busV:p&&p.busV>=100&&p.busV<=1200?p.busV:PS.busV
+  };
+}
+const psBoostEta=hy=>hy&&hy.mode==='ps'&&psParams(hy).busV>packOcv(hy.pack,HYB_SOC)*1.05?PS.boostEta:1;
 const isPowerSplit=()=>isHybrid()&&engine.hy.mode==='ps';
 // A hybrid with no gearbox, whose vehicle shaft is its traction motor's: a power-split, or a series hybrid (build 193).
 const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='series');
@@ -42,22 +51,36 @@ function hybMachineFrom(mg2,T1,P1,V,maxRpm){
   return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
 }
 // MG1, for 110% of the engine's peak reaction torque and 31% of its peak power.
-function psMg1Build(e,mg2){
-  const rho=PS.rho;
-  return hybMachineFrom(mg2,PS.mg1Margin*e.score.peakTQ*rho/(1+rho),PS.mg1Share*e.score.peakHP*745.7,PS.busV);
+function psMg1Build(e,mg2,psCfg){
+  const p=psCfg||PS,rho=p.rho||PS.rho,busV=p.busV||PS.busV;
+  return hybMachineFrom(mg2,PS.mg1Margin*e.score.peakTQ*rho/(1+rho),PS.mg1Share*e.score.peakHP*745.7,busV);
+}
+// MG1 thermal node initialization and stepping (winding, core, rotor, inverter).
+function psMg1TempInit(hy){
+  const tc=hy&&hy.mg1?hy.mg1.cool.tCool:65;
+  return {w:tc,c:tc,r:tc,inv:tc};
+}
+function psMg1Step(hy,Ts,ns,temp,dt){
+  if(!hy||!hy.mg1)return {P1:0,L:null};
+  const m=hy.mg1,tc=m.cool.tCool;
+  if(!temp)temp={w:tc,c:tc,r:tc,inv:tc};
+  const aT=Math.abs(Ts),aN=Math.max(Math.abs(ns),1);
+  const L=aT>0?motorLosses(m,aT,aN,hybBusV(hy),temp):{cu:0,fe:0,feS:0,feR:0,mech:0,inv:0,I:0,total:0,rpm:Math.abs(ns)};
+  if(dt>0)motorHeatStep(m,temp,L,dt);
+  return {P1:Ts*ns*Math.PI/30-L.total,L};
 }
 // How the engine reaches the shaft (build 193): at an engine speed ne and the shaft's (MG2's) n2, the speed MG1 turns at
 // (ns), its share of the engine's torque (ks: it holds ks Te) and the share that reaches the shaft mechanically (kr, at
 // MG2's speed). A power-split's planetary (Willis); a series hybrid's generator on the crank, nothing mechanical.
 function hybGear(hy,ne,n2){
   if(hy.mode==='series')return {ns:ne,ks:1,kr:0};
-  const rho=PS.rho,nr=n2/PS.k2;
-  return {ns:((1+rho)*ne-nr)/rho,ks:rho/(1+rho),kr:1/(1+rho)/PS.k2};
+  const p=psParams(hy),rho=p.rho,nr=n2/p.k2;
+  return {ns:((1+rho)*ne-nr)/rho,ks:rho/(1+rho),kr:1/(1+rho)/p.k2};
 }
 // The electrical power MG1 puts on the bus (W, negative drawing) holding the sun torque Ts at the sun speed ns.
 function psMg1Elec(hy,Ts,ns,temp){
-  const P=Ts*ns*Math.PI/30;
-  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),hybBusV(hy),temp).total;
+  const P=Ts*ns*Math.PI/30,tc=hy.mg1.cool.tCool,t=temp||hy.mg1T||{w:tc,c:tc,r:60,inv:tc};
+  return P-motorLosses(hy.mg1,Math.abs(Ts),Math.max(Math.abs(ns),1),hybBusV(hy),t).total;
 }
 // MG2's most torque (Nm, negative braking) for the electrical power Pin it has (W): T w + losses(T) <= Pin, on its envelope.
 function psMg2For(hy,n2,Pin,temp){
@@ -71,14 +94,14 @@ function psMg2For(hy,n2,Pin,temp){
 // The engine speeds MG1 allows at a ring speed (rpm): |ns| within MG1's top speed.
 function psEngineRange(hy,nr){
   if(hy.mode==='series')return {lo:0,hi:Math.min(engine.redline,hy.mg1.nMax)};   // the generator turns with the crank
-  const rho=PS.rho,n1=hy.mg1.nMax,e=engine;
+  const rho=psParams(hy).rho,n1=hy.mg1.nMax,e=engine;
   return {lo:Math.max(0,(nr-n1*rho)/(1+rho)),hi:Math.min(e.redline,(n1*rho+nr)/(1+rho))};
 }
 // Full throttle at an MG2 speed (rpm): the engine at the speed that gives the most at the wheels, its torque cut to
 // what MG1 can hold, MG1's power through MG2, and the pack's Pb (W) on top. Returns the torque at the MG2 shaft (the
-// powertrain's shaft: the ring's torque comes in through the 65:17 gear) and the engine's speed and power there.
+// powertrain's shaft: the ring's torque comes in through the k2 gear) and the engine's speed and power there.
 function psFullLoad(n2,Pb,tqAt){
-  const e=engine,hy=e.hy,nr=n2/PS.k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
+  const e=engine,hy=e.hy,nr=n2/psParams(hy).k2,R=psEngineRange(hy,nr),tc=hy.motor.cool.tCool,temp={w:tc,c:tc,r:60};
   let best={tq:psMg2For(hy,n2,Pb,temp),ne:0,Pe:0};   // the engine stopped: MG2 on the pack alone
   if(R.hi>R.lo){
     const N=24,r0=Math.max(R.lo,e.idleRpmEff||700);
@@ -211,9 +234,9 @@ function psStartStopTimes(L,c){
 }
 // The driveline line of the VEHICLE summary.
 function psDrivelineLine(v){
-  const hy=engine.hy;
+  const hy=engine.hy,V=psParams(hy).busV;
   return '<br>'+tr('eCVT (POWER-SPLIT)')+' • '+tr('Reduction')+' <b>'+v.finalDrive.toFixed(2)+':1</b> ('+tr('matched')+' '+v.reductionMatched.toFixed(2)+':1) • MG1 '+
-    Math.round(motorMaxTorque(hy.mg1,100,PS.busV,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,PS.busV,60))+' Nm';
+    Math.round(motorMaxTorque(hy.mg1,100,V,60))+' Nm • MG2 '+Math.round(motorMaxTorque(hy.motor,100,V,60))+' Nm';
 }
 // The engine's speed at full throttle for an MG2 speed (rpm), off the curves: the bench's SPORT mode holds it there.
 function psEngineRpmAt(n2){
