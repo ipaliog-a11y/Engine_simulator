@@ -161,8 +161,8 @@ const hybMotorAt=rpm=>{const c=hybCurves(),R=c.eng;
   for(let i=1;i<R.length;i++)if(rpm<=R[i].rpm)return c.mot[i-1]+(c.mot[i]-c.mot[i-1])*(rpm-R[i-1].rpm)/(R[i].rpm-R[i-1].rpm);
   return c.mot[c.mot.length-1];};
 // The motor's regeneration on the engine's overrun table (Nm, 500 rpm up in 250s): the electric car's law, on the bus.
-function hybRegenTable(rl){
-  const hy=engine.hy,out=[],V=hy.mode==='ps'?PS.busV:motorRatedV(hy),Pc=hy.pack.pChargeMax,k=(HYB_REGEN[hybTune().regen]||HYB_REGEN.high).k;
+function hybRegenTable(rl,soc=HYB_SOC,tC=PACK_T_REF){
+  const hy=engine.hy,out=[],V=hy.mode==='ps'?PS.busV:motorRatedV(hy),Pc=packChargePower(hy.pack,soc,tC),k=(HYB_REGEN[hybTune().regen]||HYB_REGEN.high).k;
   for(let r=500;r<=rl+250;r+=250){
     const n=Math.min(r,rl),w=n*Math.PI/30,T=motorMaxTorque(hy.motor,n,V,60);
     out.push(k*Math.max(0,Math.min(T,Pc/Math.max(1,w))));   // REGENERATION's share (build 192)
@@ -173,6 +173,7 @@ function hybRegenTable(rl){
 // engine's full load could not give; - regenerating, its share of the overrun), and the pack's energy over the lap.
 function hybLapEnergy(L){
   const hy=engine.hy,R=L.replay,n=R.rpm.length,c=hybCurves(),V=hybBusV(hy),tc=hy.motor.cool.tCool,temp={w:tc+20,c:tc+15,r:60};
+  const etaBoost=psBoostEta(hy);
   const pt=powertrain(),v=L.v,p=L.track.line,m=vehicle.mass,rl=pt.maxRpm(),regen=hybRegenTable(rl),ov=hy.mode!=='p2'?[]:COMBUSTION.overrunTable(rl);   // a power-split's engine stops: no overrun
   const engAt=rpm=>{const R0=c.eng;if(rpm<=R0[0].rpm)return R0[0].tq;for(let i=1;i<R0.length;i++)if(rpm<=R0[i].rpm)return R0[i-1].tq+(R0[i].tq-R0[i-1].tq)*(rpm-R0[i-1].rpm)/(R0[i].rpm-R0[i-1].rpm);return R0[R0.length-1].tq;};
   const pm=new Float32Array(n);let deployJ=0,regenJ=0;
@@ -180,18 +181,18 @@ function hybLapEnergy(L){
     const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2),rpm=R.rpm[i],w=rpm*Math.PI/30;
     if(R.pwr[i]>0){
       const Pm=Math.max(0,R.pwr[i]-engAt(rpm)*w);
-      if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)*dt;}
+      if(Pm>0){const T=Pm/Math.max(1,w);pm[i]=Pm;deployJ+=(Pm+motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)/etaBoost*dt;}
       // a front axle motor (build 195) drives where the car is flat out (the engine and main motor at their full): its
       // force at that speed, its losses at its own speed and torque
       if(hy.front&&Pm>0){
         const Ff=hybFrontF(v[i]);
         if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
-          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,temp).total)*dt;}
+          deployJ+=(Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,temp).total)/etaBoost*dt;}
       }
     }else if(R.eb&&R.eb[i]>0&&rpm>=500){
       const k=Math.min(regen.length-1,Math.floor((rpm-500)/250)),Tr=regen[k],To=ov[Math.min(ov.length-1,k)]||0;
       const share=Tr/Math.max(1e-6,Tr+To),P=R.eb[i]*m*v[i]*share*(vehicle.driveEff||0.9);   // at the shaft, through the driveline
-      const T=P/Math.max(1,w),Pb=Math.max(0,P-motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total);
+      const T=P/Math.max(1,w),Pb=Math.max(0,P-motorLosses(hy.motor,T,Math.max(rpm,1),V,temp).total)*etaBoost;
       pm[i]=-P;regenJ+=Pb*dt;
     }
   }
@@ -203,11 +204,50 @@ function hybLapEnergy(L){
     const S=hybStartStop(),back=S.stopJ(engine.idleRpmEff);
     for(let i=0;i<n;i++){const j=(i+1)%n,a=R.pwr[i]>0,b=R.pwr[j]>0;
       if(!a&&b){ssJ+=S.startJ-back;starts++;}}
-    deployJ+=ssJ;
+    deployJ+=ssJ/etaBoost;
   }
   // a racing class's harvest limit (build 196): past it the motor stops regenerating and the friction brakes take the rest
   const hv=+hybTune().harvestMJ||0,rawKJ=regenJ/1000;
   return {pm,starts,startStopKJ:ssJ/1000,deployKJ:deployJ/1000,regenKJ:hv>0?Math.min(rawKJ,hv*1000):rawKJ,rawRegenKJ:rawKJ};
+}
+// Hybrid lap thermal walk: steps motor (winding, core, rotor) and pack temperatures across a prep lap and the timed lap
+// so small hybrid packs (1.3-2.1 kWh) and traction motors heat up and derate realistically under sustained high-C draw.
+function hybLapHeat(e,L,pm,soc0=HYB_SOC){
+  const hy=e.hy,m=hy.motor,b=hy.pack,V=hybBusV(hy),etaBoost=psBoostEta(hy);
+  const R=L.replay,v=L.v,p=L.track.line,n=R.rpm.length,tc=m.cool.tCool;
+  const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
+  const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
+  let soc=clamp(soc0,0.1,0.95),wMax=tc,rMax=tc,bMax=PACK_COOLANT,minShare=1,sumShare=0;
+  for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
+    const j=(i+1)%n,dt=p[i].ds3/Math.max(2,(v[i]+v[j])/2),rpm=Math.max(1,R.rpm[i]),w=rpm*Math.PI/30;
+    const now=motorDerate({motor:m},t)*packDerate(tb.b);
+    const Pm=(pm[i]||0)*now,T=Pm/Math.max(1,w);
+    const Lm=Pm!==0?motorLosses(m,Math.abs(T),rpm,V,t):{cu:0,fe:0,feS:0,feR:0,mech:0,inv:0,I:0,total:0,rpm};
+    let Pbat=0;
+    if(Pm>0){
+      let Pbus=Pm+Lm.total;
+      if(hy.front){
+        const Ff=hybFrontF(v[i])*now;
+        if(Ff>0){const nf=v[i]/vehicle.rTire*vehicle.frontFd*30/Math.PI,Tf=Ff*vehicle.rTire/(vehicle.frontFd*HYB_FRONT_EFF);
+          Pbus+=Ff*v[i]/HYB_FRONT_EFF+motorLosses(hy.front.motor,Tf,Math.max(nf,1),V,t).total;}
+      }
+      Pbat=Pbus/etaBoost;
+    }else if(Pm<0){
+      Pbat=Math.min(0,Pm+Lm.total)*etaBoost;
+      const Pc=packChargePower(b,soc,tb.b)*packDerate(tb.b);
+      if(-Pbat>Pc)Pbat=-Pc;
+    }
+    const d=packDrawClamped(b,soc,Pbat,tb.b);
+    soc=clamp(soc-d.I*dt/(b.Ah*3600),0.05,0.98);
+    motorHeatStep(m,t,Lm,dt);packHeatStep(b,tb,d.heat,dt);
+    if(lap===1){
+      const sh=motorDerate({motor:m},t)*packDerate(tb.b);
+      share[i]=sh;tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
+      if(t.w>wMax)wMax=t.w;if(t.r>rMax)rMax=t.r;if(tb.b>bMax)bMax=tb.b;
+      if(sh<minShare)minShare=sh;sumShare+=sh;
+    }
+  }
+  return {share,tW,tR,tB,wMax,rMax,bMax,minShare,meanShare:sumShare/Math.max(1,n)};
 }
 // A lap on a charge-sustaining hybrid: solved with the motor at full deploy; if it spends more of the pack than
 // braking returns, solved again with the deploy cut in proportion, until it balances (two rounds settle it).
@@ -240,7 +280,13 @@ function hybridLap(key,opts){
       if(ok){used=ok.m;L=ok.Lm;E=ok.Em;B=ok.Bm;}
     }
   }finally{hybDeployShare=1;}
-  L.hy={share:used,pm:E.pm,starts:E.starts,startStopKJ:E.startStopKJ,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ};
+  let Hth=hybLapHeat(engine,L,E.pm);
+  if(Hth.minShare<0.999&&used>0){
+    const kTh=used*Hth.meanShare;
+    try{hybDeployShare=kTh;const Lt=simulateLapRun(key,opts);if(Lt){L=Lt;E=hybLapEnergy(L);used=kTh;Hth=hybLapHeat(engine,L,E.pm);}}finally{hybDeployShare=1;}
+  }
+  L.hy={share:used,pm:E.pm,starts:E.starts,startStopKJ:E.startStopKJ,deployKJ:E.deployKJ,regenKJ:E.regenKJ,rawRegenKJ:E.rawRegenKJ,
+    wMax:Hth.wMax,bMax:Hth.bMax,minShare:Hth.minShare,heat:Hth};
   return L;
 }
 // The design summary's line for a hybrid.
