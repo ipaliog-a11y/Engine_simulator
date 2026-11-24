@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 446)
+
+- Passed actual starting wetness (`cfg.weather`) and rain compound into `racePractice()` (`src/js/race.js`) so wet/damp pit strategy computes tyre life and lap times on wet asphalt rather than dry `w = 0`.
+- Included `cfg.minStops` in `racePlan()` (`sMin = Math.max(sFuel, sTyre, sMand)`) so AI cars schedule mandatory stops instead of taking +30 s penalties, and added opportunistic VSC pit stops in `raceCross()` when inside the planned pit window.
+- Kept a reduced aerodynamic slipstream/dirty-air wake active alongside `RACE.spray` in wet weather (`w > 0.2`), and floored ICE race fuel burn at `M.idleGs` (matching `COMBUSTION.fuelRate`) so slow traffic does not drop fuel burn to zero.
+- Filtered out `init: 'kick'` plans for clutchless EVs (`car.ev`) in `driftPlans()` and stopped `driftDriver()` from sending `clutch: 1` for EVs (`src/js/drift-run.js`).
+- Extended `mooseCoastPedals()` to neutralize regen for P2 hybrids (`car.el != null`) as well as EVs/power-split/series, and preserved the sign of `s.rollV` relative to tipping direction (`-tip.side * s.rollV`) on 2-wheel lift onset (`src/js/moose-run.js`).
+- Added a 2-wheel-lift rigid-body tip-over check (`ROLLOVER`, NHTSA SSF) to `skidRun()` (`src/js/skidpad-run.js`) so high-CG vehicles cannot hold steady-state lateral g above their Static Stability Factor.
+- Added `tests/test270.mjs` covering all of the above.
+
 ### EV and hybrid NaN guards and race pack-overload fix (build 445)
 
 - Guarded PM motors whose rotor bridge leakage exceeds magnet flux (`Am * Br <= leak`, e.g. small rotor with 12-pole Ferrite) in `magnetCircuit`, `statorFrom`, `dqSetup`, `dqBinv`, `dqSolve`, `tMagOf`, and `motorBaseW` (`src/js/electric.js`), keeping zero-flux builds finite (zero torque, finite geometry and losses) without moving healthy presets.

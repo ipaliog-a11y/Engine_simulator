@@ -34,14 +34,14 @@ function mooseConeHit(car,s,D,G){
   }
   return false;
 }
-// After entry: ICE lifts (engine braking). EV throttle=0 is full regen — far stronger than ICE overrun — so
-// Model Y / 3 / Plaid stopped before the exit (~x 40–55) and still scored clear (exit cones never reached).
-// Coast = thr that zeros motor torque: T = thr·wot − (1−thr)·ov = 0.
+// After entry: ICE lifts (engine braking). EV and hybrid (P2 / power-split / series) throttle=0 applies full regen —
+// far stronger than ICE overrun — scrubbing speed before the exit. Coast = thr that zeros drive/regen torque:
+// T = thr·wot − (1−thr)·ov = 0.
 function mooseCoastPedals(car,s,u,D){
   if(s.x+car.a+D.ovF<=0)return;
   u.brake=0;
-  if(!car.ev){u.throttle=0;return;}
-  const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
+  if(!car.ev&&car.el==null){u.throttle=0;return;}
+  const T0=driveEngine(car,0,s.rpm,s.boost,s.soc),T1=driveEngine(car,1,s.rpm,s.boost,s.soc);
   u.throttle=T1>T0?Math.max(0,Math.min(1,-T0/(T1-T0))):0;
 }
 // One pass at entry speed vk (km/h). Returns {ok,ay,beta,line,outcome,...} (and optional samples for a later replay).
@@ -84,10 +84,11 @@ function mooseRun(car,D,vk,shape,sample,quick){
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
     if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}}
     // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
-    // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
+    // side and lifts the left wheels, so the outward acceleration is −side·ay and outward roll rate is −side·rollV
+    // with side −1 for the left wheels up (rolling back toward level has −side·rollV < 0 and settles instead of tipping)
     const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
     if(judge&&(leftUp||rightUp)){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
-    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=-tip.side*(s.rollV||0);}
     if(tip.phi>0){
       const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
       const z=tH*sn+h*c,dd=tH*c-h*sn;
