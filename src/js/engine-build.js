@@ -22,7 +22,7 @@ function readEngineFromForm(){
     govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
-    turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
+    turboSize:g('edTurboSize').value,compExd_mm:(()=>{const v=+g('edCompWheel').value||0;return v>0?clamp(v,30,110):0;})(),
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
@@ -44,8 +44,8 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
-    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    radHp:0,   // what a STOCK radiator was sized for (build 219), read below
+    springRpm:0,
     ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
@@ -63,6 +63,12 @@ function readEngineFromForm(){
   // A real engine's own cam card (build 427) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
   {const m=/^([\d.]+)\/([\d.]+)\/([\d.]+)@(\w+)$/.exec(g('edCamSpec').value||'');
    if(m&&!e.camPart&&m[4]===e.cam){e.camDur_deg=+m[1];e.camLsa_deg=+m[2];e.camLift_mm=+m[3];}}
+  // A real engine's factory spring redline and stock radiator sizing travel with its displacement, redline, and boost.
+  {const tag=e.cylinders+'/'+e.bore_mm+'/'+e.stroke_mm+'/'+e.redline+'/'+e.intake+'/'+e.boost_bar;
+   const ms=/^([\d.]+)(?:@(.+))?$/.exec(g('edSpringRpm').value||'');
+   if(ms&&(!ms[2]||ms[2]===tag))e.springRpm=Math.max(0,Math.round(+ms[1]||0));
+   const mr=/^([\d.]+)(?:@(.+))?$/.exec(g('edRadHp').value||'');
+   if(mr&&(!mr[2]||mr[2]===tag))e.radHp=Math.max(0,+mr[1]||0);}
   return e;
 }
 function applyEngineToForm(e){
@@ -82,13 +88,14 @@ function applyEngineToForm(e){
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
-  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  const specTag=(+e.cylinders||4)+'/'+(+e.bore_mm)+'/'+(+e.stroke_mm)+'/'+(+e.redline)+'/'+e.intake+'/'+(e.intake==='na'?0:(+e.boost_bar||0));
+  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm>0?e.springRpm+'@'+specTag:'0';
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
-  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp||0;g('edFan').value=e.fan||'electric';
+  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);

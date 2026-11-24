@@ -132,22 +132,26 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
-  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
-  const tb=[];let any=false;
-  for(let r=1000;r<=e.redline+199;r+=200){
-    const rr=Math.min(r,e.redline),b0=boostAvail(rr);
-    let bar=e.maxBoost;
-    if(b0>0&&over(rr,b0)){
-      any=true;let lo=0,hi=b0;
-      if(over(rr,0))hi=0;
-      else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
-      bar=lo;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  try{
+    _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
+    const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+    const tb=[];let any=false;
+    for(let r=1000;r<=e.redline+199;r+=200){
+      const rr=Math.min(r,e.redline),b0=boostAvail(rr);
+      let bar=e.maxBoost;
+      if(b0>0&&over(rr,b0)){
+        any=true;let lo=0,hi=b0;
+        if(over(rr,0))hi=0;
+        else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
+        bar=lo;
+      }
+      tb.push({rpm:rr,bar});
     }
-    tb.push({rpm:rr,bar});
-  }
-  e.knockLimTable=any?tb:null;
-  return any;
+    e.knockLimTable=any?tb:null;
+    return any;
+  }finally{Object.assign(state,sv);}
 }
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
@@ -156,9 +160,9 @@ function buildKnockLimit(){
 // own compressor and turbine wheels and its one housing A/R, in place of the frame's wheel, TURB_WHEEL and the housing step.
 function turboFrame(e){
   const tb=TURBO[e.turboSize]||TURBO.medium,P=e.turboPart;
-  if(P){const exd=P.compD_mm/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/P.compD_mm,ars:[P.ar,P.ar,P.ar]});}
+  if(P){const cD=Math.max(30,P.compD_mm||0),exd=cD/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/cD,ars:[P.ar,P.ar,P.ar]});}
   if(!(e.compExd_mm>0))return Object.assign({},tb,{turbK:TURB_WHEEL});
-  const exd=e.compExd_mm/1000,k=exd/tb.exd;
+  const exd=clamp(e.compExd_mm,30,110)/1000,k=exd/tb.exd;
   return Object.assign({},tb,{exd,turbK:TURB_WHEEL,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance

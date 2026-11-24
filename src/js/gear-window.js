@@ -114,11 +114,11 @@ function gwAxes(g,L,xMax,yMax,xStep,yStep,yFmt,xLab,yLab){
   g.strokeStyle='#444';g.beginPath();g.moveTo(L.x0,L.y1);g.lineTo(L.x0,L.y0);g.lineTo(L.x1,L.y0);g.stroke();
   g.fillStyle='#667';g.textAlign='right';g.fillText(xLab,L.x1,L.y0+19);g.textAlign='left';g.fillText(yLab,L.x0-30,L.y1-9);
 }
-const gwNice=(x,steps)=>{const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;};
+const gwNice=(x,steps)=>{if(!(x>0)||!isFinite(x)||!(steps>0))return 1;const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;};
 // The speed range both graphs share: to a little past the top speed, or the top gear's limiter if that is lower.
 function gwXMax(){
   const P=perf||{},vTop=(P.freeSpeed||P.topSpeed||200),n=vehicle.ratios.length;
-  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
+  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.max(10,Math.min(vLimTop,vTop*1.12));
   const st=gwNice(x,7);return {xMax:Math.ceil(x/st)*st,xStep:st};
 }
 function gwLayout(W,H,xMax,yMax){
@@ -184,7 +184,7 @@ function drawGearForce(){
   const grip=V.mu*V.mass*G*V.drivenWt;   // the driven tyres' grip at rest (weight transfer and downforce move it)
   const {xMax,xStep}=gwXMax();
   let fMax=0;for(let i=0;i<n;i++)for(let vk=2;vk<=xMax;vk+=2){const f=Fgear(i,vk/3.6);if(f)fMax=Math.max(fMax,f);}
-  const yStep=gwNice(fMax/1000*1.1,5),yMax=Math.ceil(fMax/1000*1.1/yStep)*yStep;
+  const fTop=Math.max(1,fMax/1000*1.1),yStep=gwNice(fTop,5),yMax=Math.ceil(fTop/yStep)*yStep;
   const L=gwLayout(W,H,xMax,yMax);gw.layoutForce={L,xMax,yMax,Fgear,Fres,Pmax,eff,grip};
   gwAxes(g,L,xMax,yMax,xStep,yStep,y=>String(+y.toFixed(1)),'km/h','kN');
   const line=(fn,from,col,w,dash)=>{g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();let on=false;

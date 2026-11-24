@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 442</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 445</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4956,23 +4956,23 @@ function wallTrace(e,rpm,map,egr=0){
   const crown=e.ci?disc+Math.PI*0.55*0.17*B*B:disc;
   const area=V=>head+crown+Math.PI*B*hc*V;
   // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
-  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
+  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
   const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
   let T=T1,num=0,den=0,pE=0,TE=0,pMax=p1;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
     const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
-    const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    const p=Math.max(1,R*T/v0), pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
     const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
     num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
-    T+=(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv;
-    pE=R*T/(v1*Vn/cr);TE=T;
+    T=Math.max(50,T+(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv);
+    pE=Math.max(1,R*T/(v1*Vn/cr));TE=T;
   }
   const pX=Math.max(1.05e5,p1), TX=TE*Math.pow(pX/pE,(g-1)/g);
   for(let th=evo;th<360;th+=d){                        // blowdown to BDC, then the exhaust stroke
     const s=th<180?(th-evo)/Math.max(1,180-evo):1;
-    const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
+    const p=Math.max(1,pE+(pX-pE)*s), T=Math.max(50,TE+(TX-TE)*s);
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
   return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
@@ -5127,14 +5127,14 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
-    const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
+    const Vc=V(th),pc=Math.max(1,m*R*T/Vc),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
     const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
-    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(pc/1000,0.8)*Math.pow(T,-0.55)*Math.pow(6.18*Sp,0.8);
+    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,pc/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,6.18*Sp),0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
     const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
-    m+=dm;T=U/(cv*m);
+    m=Math.max(1e-9,m+dm);T=Math.max(50,U/(cv*m));
   }
   return (m-m0)/(rho0*Vd);
 }
@@ -8664,22 +8664,26 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
-  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
-  const tb=[];let any=false;
-  for(let r=1000;r<=e.redline+199;r+=200){
-    const rr=Math.min(r,e.redline),b0=boostAvail(rr);
-    let bar=e.maxBoost;
-    if(b0>0&&over(rr,b0)){
-      any=true;let lo=0,hi=b0;
-      if(over(rr,0))hi=0;
-      else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
-      bar=lo;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  try{
+    _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
+    const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+    const tb=[];let any=false;
+    for(let r=1000;r<=e.redline+199;r+=200){
+      const rr=Math.min(r,e.redline),b0=boostAvail(rr);
+      let bar=e.maxBoost;
+      if(b0>0&&over(rr,b0)){
+        any=true;let lo=0,hi=b0;
+        if(over(rr,0))hi=0;
+        else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
+        bar=lo;
+      }
+      tb.push({rpm:rr,bar});
     }
-    tb.push({rpm:rr,bar});
-  }
-  e.knockLimTable=any?tb:null;
-  return any;
+    e.knockLimTable=any?tb:null;
+    return any;
+  }finally{Object.assign(state,sv);}
 }
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
@@ -8688,9 +8692,9 @@ function buildKnockLimit(){
 // own compressor and turbine wheels and its one housing A/R, in place of the frame's wheel, TURB_WHEEL and the housing step.
 function turboFrame(e){
   const tb=TURBO[e.turboSize]||TURBO.medium,P=e.turboPart;
-  if(P){const exd=P.compD_mm/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/P.compD_mm,ars:[P.ar,P.ar,P.ar]});}
+  if(P){const cD=Math.max(30,P.compD_mm||0),exd=cD/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/cD,ars:[P.ar,P.ar,P.ar]});}
   if(!(e.compExd_mm>0))return Object.assign({},tb,{turbK:TURB_WHEEL});
-  const exd=e.compExd_mm/1000,k=exd/tb.exd;
+  const exd=clamp(e.compExd_mm,30,110)/1000,k=exd/tb.exd;
   return Object.assign({},tb,{exd,turbK:TURB_WHEEL,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
@@ -10115,7 +10119,7 @@ function readEngineFromForm(){
     govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
-    turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
+    turboSize:g('edTurboSize').value,compExd_mm:(()=>{const v=+g('edCompWheel').value||0;return v>0?clamp(v,30,110):0;})(),
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
@@ -10137,8 +10141,8 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
-    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    radHp:0,   // what a STOCK radiator was sized for (build 219), read below
+    springRpm:0,
     ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
@@ -10156,6 +10160,12 @@ function readEngineFromForm(){
   // A real engine's own cam card (build 427) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
   {const m=/^([\d.]+)\/([\d.]+)\/([\d.]+)@(\w+)$/.exec(g('edCamSpec').value||'');
    if(m&&!e.camPart&&m[4]===e.cam){e.camDur_deg=+m[1];e.camLsa_deg=+m[2];e.camLift_mm=+m[3];}}
+  // A real engine's factory spring redline and stock radiator sizing travel with its displacement, redline, and boost.
+  {const tag=e.cylinders+'/'+e.bore_mm+'/'+e.stroke_mm+'/'+e.redline+'/'+e.intake+'/'+e.boost_bar;
+   const ms=/^([\d.]+)(?:@(.+))?$/.exec(g('edSpringRpm').value||'');
+   if(ms&&(!ms[2]||ms[2]===tag))e.springRpm=Math.max(0,Math.round(+ms[1]||0));
+   const mr=/^([\d.]+)(?:@(.+))?$/.exec(g('edRadHp').value||'');
+   if(mr&&(!mr[2]||mr[2]===tag))e.radHp=Math.max(0,+mr[1]||0);}
   return e;
 }
 function applyEngineToForm(e){
@@ -10175,13 +10185,14 @@ function applyEngineToForm(e){
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
-  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  const specTag=(+e.cylinders||4)+'/'+(+e.bore_mm)+'/'+(+e.stroke_mm)+'/'+(+e.redline)+'/'+e.intake+'/'+(e.intake==='na'?0:(+e.boost_bar||0));
+  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm>0?e.springRpm+'@'+specTag:'0';
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
-  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp||0;g('edFan').value=e.fan||'electric';
+  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);
@@ -10855,7 +10866,7 @@ function computeVE(rpm,map){
   // leaves the charge that much thinner.
   ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
-  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
+  ve*=Math.max(0.05,1-(filterDp(Q)+carbDp(Q))/101325);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -11194,21 +11205,21 @@ function endGasTraceAt(rpm,map,ca50){
   // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
   // where the gas has longest.
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
-  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,Ipre=0,V0=V00,x0=0,pPrev=p1,pMax=p1;
+  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,TT),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
+  let T=Math.max(50,T1),Tu=Math.max(50,T1),I=0,Ipre=0,V0=V00,x0=0,pPrev=Math.max(1,p1),pMax=pPrev;
   const c1=dt*1000/onF,pRef=5e5;
   for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
-    const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    const Vn=cyc.vol(th+d,cr),p=Math.max(1,R*T*cr/(v1*V0)),xn=xb(th+d),A=ends+4*Vc*V0/B;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
-    Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
+    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv));pPrev=p;
     if(p>pRef){
       const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
       I+=dI;
       if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
     }
-    T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
+    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv);
     V0=Vn;x0=xn;
   }
   return {I,Ipre,pMax:pMax/1e5};
@@ -11299,13 +11310,17 @@ function knockAt(rpm,map,adv){
 // Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
 function peakCylLoads(){
   const e=engine;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
   let pMax=0,preIgn=0;
-  for(let r=1000;r<=e.redline;r+=400){
-    const m=wotMapAt(r),adv=activeAdvance(r,m);
-    const tr=cylTraceAt(r,m,adv);
-    if(tr.pMax>pMax)pMax=tr.pMax;
-    if(tr.Ipre>preIgn)preIgn=tr.Ipre;
-  }
+  try{
+    for(let r=1000;r<=e.redline;r+=400){
+      const m=wotMapAt(r),adv=activeAdvance(r,m);
+      const tr=cylTraceAt(r,m,adv);
+      if(tr.pMax>pMax)pMax=tr.pMax;
+      if(tr.Ipre>preIgn)preIgn=tr.Ipre;
+    }
+  }finally{Object.assign(state,sv);}
   return {pMax,preIgn};
 }
 // Summary of how much boost the ECU's knock limiter pulled below the engine's target curve.
@@ -11851,9 +11866,9 @@ function calcAtRpm(rpm,mapOverride){
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm);   // power strokes/rev per type, minus alternator load
-  let powerKW=torque*rpm*2*Math.PI/60/1000;
-  let powerHP=powerKW/0.7457;
+  let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm));   // power strokes/rev per type, minus alternator load
+  let powerKW=Math.max(0,torque*rpm*2*Math.PI/60/1000);
+  let powerHP=Math.max(0,powerKW/0.7457);
 
   const knock=computeKnockRisk(rpm,map);
   if(knock>60){const derate=1-0.32*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate;}
@@ -12351,7 +12366,7 @@ const OBD_CODES={
 const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
 const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
 let obd={codes:{},timers:{},cycleSeen:{},runS:0,wasRunning:true,flash:false,open:false};
-function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;}
+function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;if(typeof o2Loop!=='undefined'){o2Loop.trim=0;o2Loop.int=0;o2Loop.side=0;o2Loop.hist.length=0;o2Loop.seen=1;o2Loop.mv=null;}}
 function obdRunning(){
   if(isElectric())return false;
   if(isHybrid())return !!hybBenchState().engOn;
@@ -12433,7 +12448,7 @@ function lambdaFromIp(ip){
 // The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
 // 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
 const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
-let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+let o2Loop={live:false,on:true,trim:0,int:0,t:0,hist:[],seen:1,side:0,mv:null};
 function o2LoopActive(){
   const s=engine.lambdaSensor;
   return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
@@ -12450,7 +12465,7 @@ function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambda
 function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
 function o2LoopStep(dt){
   const L=o2Loop;L.dt=dt;
-  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
+  if(!o2LoopActive()){L.trim=0;L.int=0;L.side=0;L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
   L.t+=dt;
   if(!L.hist.length)L.hist.push([L.t,L.seen]);
   const dTime=o2DeadTime();let late=L.hist[0][1];
@@ -12467,7 +12482,8 @@ function o2LoopStep(dt){
     // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
     const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
     const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
-    L.int=(L.int||0)+e*dt;
+    const maxInt=O2_TRIM_MAX*ti/Math.max(1e-6,kc);
+    L.int=clamp((L.int||0)+e*dt,-maxInt,maxInt);
     L.trim=-kc*(e+L.int/ti);
   }
   L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);
@@ -13699,11 +13715,16 @@ function genRatios(n,spacing){
 }
 // The same fit for one box: its span residual and its progression φ2 (least squares on ln(i_j/i_n)).
 function fitGearbox(r){
-  const n=r.length;let Saa=0,Sab=0,Sbb=0,Sya=0,Syb=0;
-  for(let j=0;j<n;j++){const k=n-1-j,y=Math.log(r[j]/r[n-1]),fb=k*(k-1)/2;Saa+=k*k;Sab+=k*fb;Sbb+=fb*fb;Sya+=y*k;Syb+=y*fb;}
-  const det=Saa*Sbb-Sab*Sab,a=(Sya*Sbb-Syb*Sab)/det,b=(Saa*Syb-Sab*Sya)/det;
+  const n=r?r.length:0;
+  if(n<2)return {res:0,phi2:1,phi1:1,prog:0};
   const L=Math.log(r[0]/r[n-1]);
-  return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:b*(n-1)*(n-2)/2/L};
+  if(n<3)return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:1,phi1:Math.exp(L),prog:0};
+  let Saa=0,Sab=0,Sbb=0,Sya=0,Syb=0;
+  for(let j=0;j<n;j++){const k=n-1-j,y=Math.log(r[j]/r[n-1]),fb=k*(k-1)/2;Saa+=k*k;Sab+=k*fb;Sbb+=fb*fb;Sya+=y*k;Syb+=y*fb;}
+  const det=Saa*Sbb-Sab*Sab;
+  if(!(Math.abs(det)>1e-12))return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:1,phi1:Math.exp(L/(n-1)),prog:0};
+  const a=(Sya*Sbb-Syb*Sab)/det,b=(Saa*Syb-Sab*Sya)/det;
+  return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:Math.abs(L)>1e-9?b*(n-1)*(n-2)/2/L:0};
 }
 // The published boxes the spacing law and the family averages are fitted on: all but research batch 1's (build 199).
 const gearsFitted=()=>Object.values(GEARSETS).filter(g=>!g.batch);
@@ -13977,11 +13998,11 @@ function gwAxes(g,L,xMax,yMax,xStep,yStep,yFmt,xLab,yLab){
   g.strokeStyle='#444';g.beginPath();g.moveTo(L.x0,L.y1);g.lineTo(L.x0,L.y0);g.lineTo(L.x1,L.y0);g.stroke();
   g.fillStyle='#667';g.textAlign='right';g.fillText(xLab,L.x1,L.y0+19);g.textAlign='left';g.fillText(yLab,L.x0-30,L.y1-9);
 }
-const gwNice=(x,steps)=>{const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;};
+const gwNice=(x,steps)=>{if(!(x>0)||!isFinite(x)||!(steps>0))return 1;const raw=x/steps,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;};
 // The speed range both graphs share: to a little past the top speed, or the top gear's limiter if that is lower.
 function gwXMax(){
   const P=perf||{},vTop=(P.freeSpeed||P.topSpeed||200),n=vehicle.ratios.length;
-  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.min(vLimTop,vTop*1.12);
+  const vLimTop=gwV(powertrain().maxRpm(),n-1)*3.6,x=Math.max(10,Math.min(vLimTop,vTop*1.12));
   const st=gwNice(x,7);return {xMax:Math.ceil(x/st)*st,xStep:st};
 }
 function gwLayout(W,H,xMax,yMax){
@@ -14047,7 +14068,7 @@ function drawGearForce(){
   const grip=V.mu*V.mass*G*V.drivenWt;   // the driven tyres' grip at rest (weight transfer and downforce move it)
   const {xMax,xStep}=gwXMax();
   let fMax=0;for(let i=0;i<n;i++)for(let vk=2;vk<=xMax;vk+=2){const f=Fgear(i,vk/3.6);if(f)fMax=Math.max(fMax,f);}
-  const yStep=gwNice(fMax/1000*1.1,5),yMax=Math.ceil(fMax/1000*1.1/yStep)*yStep;
+  const fTop=Math.max(1,fMax/1000*1.1),yStep=gwNice(fTop,5),yMax=Math.ceil(fTop/yStep)*yStep;
   const L=gwLayout(W,H,xMax,yMax);gw.layoutForce={L,xMax,yMax,Fgear,Fres,Pmax,eff,grip};
   gwAxes(g,L,xMax,yMax,xStep,yStep,y=>String(+y.toFixed(1)),'km/h','kN');
   const line=(fn,from,col,w,dash)=>{g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();let on=false;
@@ -14294,15 +14315,19 @@ function scModes(w){
 }
 // The response at f (Hz) to a road wave of amplitude 1, with a linear damper c at the wheel: the body's and the wheel's
 // movement (amplitude ratios) and the tyre's load swing (N per m of road).
+const SC_GAIN_CAP=50;
 function scFreq(w,c,f){
   const om=2*Math.PI*f,o2=om*om;
   // ms Zs'' = ks (Zu - Zs) + c (Zu' - Zs');  mu Zu'' = -ks (Zu - Zs) - c (Zu' - Zs') + kt (Zr - Zu)
   // as  a Zs + b Zu = 0,  b Zs + d Zu = kt Zr  with complex a, b, d
   const a=[w.ks-w.ms*o2,om*c],b=[-w.ks,-om*c],d=[w.ks+w.kt-w.mu*o2,om*c];
-  const mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]],div=(x,y)=>{const n=y[0]*y[0]+y[1]*y[1];return [(x[0]*y[0]+x[1]*y[1])/n,(x[1]*y[0]-x[0]*y[1])/n];};
-  const ad=mul(a,d),bb=mul(b,b),det=[ad[0]-bb[0],ad[1]-bb[1]];
-  const zu=div([a[0]*w.kt,a[1]*w.kt],det),zs=div(mul([-b[0],-b[1]],zu),a);
-  return {body:Math.hypot(zs[0],zs[1]),wheel:Math.hypot(zu[0],zu[1]),load:w.kt*Math.hypot(1-zu[0],zu[1])};
+  const mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]];
+  const ad=mul(a,d),bb=mul(b,b),det=[ad[0]-bb[0],ad[1]-bb[1]],detN=det[0]*det[0]+det[1]*det[1];
+  const divDet=x=>detN>1e-12?[(x[0]*det[0]+x[1]*det[1])/detN,(x[1]*det[0]-x[0]*det[1])/detN]:[SC_GAIN_CAP,0];
+  const zu=divDet([a[0]*w.kt,a[1]*w.kt]),zs=divDet([-b[0]*w.kt,-b[1]*w.kt]);
+  const body=Math.min(SC_GAIN_CAP,Math.hypot(zs[0],zs[1])),wheel=Math.min(SC_GAIN_CAP,Math.hypot(zu[0],zu[1]));
+  return {body:isFinite(body)?body:SC_GAIN_CAP,wheel:isFinite(wheel)?wheel:SC_GAIN_CAP,
+    load:w.kt*(isFinite(zu[0])&&isFinite(zu[1])?Math.min(SC_GAIN_CAP,Math.hypot(1-zu[0],zu[1])):SC_GAIN_CAP)};
 }
 // The quarter car in time over a road zr(t) (m), from rest at its static height. Positions are measured from there,
 // upward. Returns the samples kept and what the run did: the tyre's least and greatest load, and the time it spent in
@@ -14418,7 +14443,10 @@ function renderSuspWin(){
 }
 function drawSuspFreq(){
   const C=gwCanvas('susFreq');if(!C||!sc.r)return;const {g,W,H}=C,r=sc.r;
-  const yMax=Math.max(1.5,Math.ceil(Math.max(...r.body,...r.wheel)*2)/2);
+  let peak=0;
+  for(let i=0;i<r.body.length;i++)if(isFinite(r.body[i])&&r.body[i]>peak)peak=r.body[i];
+  for(let i=0;i<r.wheel.length;i++)if(isFinite(r.wheel[i])&&r.wheel[i]>peak)peak=r.wheel[i];
+  const yMax=Math.min(SC_GAIN_CAP,Math.max(1.5,Math.ceil(peak*2)/2));
   const x0=40,x1=W-10,y0=H-26,y1=16,lf0=Math.log(SC_FMIN),lf1=Math.log(SC_FMAX);
   const px=f=>x0+(x1-x0)*(Math.log(f)-lf0)/(lf1-lf0),py=a=>y0-(y0-y1)*a/yMax;
   g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
@@ -14440,8 +14468,9 @@ function drawSuspFreq(){
 }
 function drawSuspStep(){
   const C=gwCanvas('susStep');if(!C||!sc.r)return;const {g,W,H}=C,s=sc.r.sim;
-  const mm=a=>a*1000,all=[...s.zs,...s.zu,...s.zr].map(mm);
-  let lo=Math.min(0,...all),hi=Math.max(0,...all);if(hi-lo<1){hi+=0.5;lo-=0.5;}
+  const mm=a=>a*1000;
+  let lo=0,hi=0;for(const arr of [s.zs,s.zu,s.zr])for(const v of arr){const m=mm(v);if(isFinite(m)){if(m<lo)lo=m;if(m>hi)hi=m;}}
+  if(hi-lo<1){hi+=0.5;lo-=0.5;}
   const st=gwNice(hi-lo,5);lo=Math.floor(lo/st)*st;hi=Math.ceil(hi/st)*st;
   const x0=40,x1=W-10,y0=H-26,y1=16,px=t=>x0+(x1-x0)*t/SC_T,py=v=>y0-(y0-y1)*(v-lo)/(hi-lo);
   g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
@@ -14583,7 +14612,7 @@ function buildVehicle(){
   FD.fWtCar=vehicle.fWt;   // the factory's split with this engine in it: what the CHASSIS NUMBERS card shows
   if(D)vehicle.fWt=D.fWt;  // a designed split is the car's own, as built with this engine
   // the ballast at its place along the car (its front axle's share) and its height: the mass-weighted mean of the two
-  if(bk>0){vehicle.fWt=(vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass;vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
+  if(bk>0){vehicle.fWt=clamp((vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass,0.15,0.85);vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
   if(vehicle.tyrePart)vehicle.crr*=tyrePressCrr(vehicle);   // the designed pressures, the axles by their load (build 313)
   syncDimsForm();
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
@@ -14712,17 +14741,17 @@ function simulateBraking(v0,T0){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
     let fF,fR;
-    if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.min(g[0],cF);fR=Math.min(g[1],cR);aL=(fF+fR)/m;}}
+    if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.max(0,Math.min(g[0],cF));fR=Math.max(0,Math.min(g[1],cR));aL=(fF+fR)/m;}}
     else{   // the most front force (m/s2) at which neither axle is past its grip: a bisection, as locking is monotonic
-      const ok=xf=>{const xr=Math.min(valve(xf),cR/m),g=grip(xf+xr,dn);return xf*m<=g[0]+1e-6&&xr*m<=g[1]+1e-6;};
+      const ok=xf=>{const xr=Math.max(0,Math.min(valve(xf),cR/m)),g=grip(xf+xr,dn);return xf*m<=g[0]+1e-6&&xr*m<=g[1]+1e-6;};
       let lo=0,hi=cF/m;if(ok(hi))lo=hi;else for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
-      fF=lo*m;fR=Math.min(valve(lo),cR/m)*m;aL=(fF+fR)/m;}
+      fF=Math.max(0,lo*m);fR=Math.max(0,Math.min(valve(lo),cR/m)*m);aL=(fF+fR)/m;}
     const rise=Math.min(1,t/BRAKE_RISE_S),mech=aL*rise;   // rising to it over the pressure build-up time
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
     brakeHeatStep(st,th,mech,v,dt,undefined,aL>0?fF/(fF+fR):undefined);   // the work, into each axle's rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
   }
-  return {dist:x,time:t,tF:st.F,tR:st.R};
+  return {dist:x,time:t,tF:st.F,tR:st.R,timedOut:v>0.15};
 }
 // A road car's knee-point proportioning valve: the rear brake (m/s2) at a front brake xf (m/s2). Limpert (Brake Design and
 // Safety, 3rd ed., SAE 2011, ch. 7) and Breuer & Bill (Brake Technology Handbook, SAE 2008, ch. on brake-force
@@ -14734,8 +14763,8 @@ function simulateBraking(v0,T0){
 // at 0.4 g (ours, from that minimax: no maker's knee is cited). Past 0.8 g the second line carries on; it never falls.
 function brakeValveRear(fWt,hL){
   const X=z=>z*(fWt+z*hL)*G,Y=z=>z*(1-fWt-z*hL)*G,zk=R13H_Z/2;
-  const xk=X(zk),yk=Y(zk),s=Math.max(0,(Y(R13H_Z)-yk)/Math.max(1e-6,X(R13H_Z)-xk));
-  return xf=>xf<=xk?yk*xf/xk:yk+s*(xf-xk);
+  const xk=X(zk),yk=Math.max(0,Y(zk)),yEnd=Math.max(0,Y(R13H_Z)),s=Math.max(0,(yEnd-yk)/Math.max(1e-6,X(R13H_Z)-xk));
+  return xf=>Math.max(0,xk>1e-6&&xf<=xk?yk*xf/xk:yk+s*Math.max(0,xf-xk));
 }
 // A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
 // independent of the live driving state. Every live variable that feeds torque — mixture,
@@ -15053,8 +15082,7 @@ function simulateAccelRun(){
       if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
     }
   }
-  const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
-  const vFree=vTop||vRedline;
+  const vFree=vTop;
   // The governor caps what the car could otherwise hold; it cannot add speed the car does not have.
   const governed=vGov>0&&vFree>vGov, topSpeed=(governed?vGov:vFree)*3.6;
   Object.assign(state,svLive);
@@ -15589,7 +15617,7 @@ function driveSprint(car){
 // Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
 function driveSineDwell(car,mult){
   const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
-  const A6=0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
+  const A6=0.3*DRIVE_G*L*Math.max(0.1,1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
   const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
   let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
   while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
@@ -15716,6 +15744,7 @@ function driveDriver(car,s,line,d){
 // road's vertical curvature along it, 1/m, negative over a crest; z and grip: the height (m) and the grip under each
 // wheel, four of each, as driveRoadAt gives them} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
+  if(!(dt>0))return s;
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
@@ -16134,6 +16163,7 @@ if(typeof window!=='undefined'&&window.REAL_TRACKS)Object.assign(TRACKS,window.R
 function simulateAccel(){const r=simulateAccelRun();return r&&detachResult(r);}
 function catmullClosed(cp,step){
   const n=cp.length,dense=[];
+  if(n<2)return cp.slice();
   const lerp=(a,b,ta,tb,t)=>{const w=(tb-ta)>1e-9?(t-ta)/(tb-ta):0;return {x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w};};
   for(let i=0;i<n;i++){
     const p0=cp[(i-1+n)%n],p1=cp[i],p2=cp[(i+1)%n],p3=cp[(i+2)%n];
@@ -16154,7 +16184,7 @@ function catmullClosed(cp,step){
   let k=0;
   for(let j=0;j<N;j++){
     const want=j*total/N;
-    while(cum[k+1]<want)k++;
+    while(k<cum.length-2&&cum[k+1]<want)k++;
     const a=dense[k],b=dense[(k+1)%m],seg=cum[k+1]-cum[k],w=seg>1e-9?(want-cum[k])/seg:0;
     out.push({x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w});
   }
@@ -16167,17 +16197,34 @@ function catmullClosed(cp,step){
 // GPS jitter otherwise reads as curvature and invents corners that aren't there.
 // Nothing about a road's shape is ours to ship — this imports the user's own file at runtime and
 // stores it only in their browser.
+const GPX_MAX_PTS=4000;
 function parseGPX(text){
-  const out=[];
-  const re=/<(?:trkpt|rtept|wpt)[^>]*?lat="([-\d.]+)"[^>]*?lon="([-\d.]+)"[^>]*?>([\s\S]*?)<\/(?:trkpt|rtept|wpt)>/g;
+  const src=String(text||''),out=[];
+  const re=/<(trkpt|rtept|wpt)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1>)/g;
   let m;
-  while((m=re.exec(text))){
-    const ele=/<ele>([-\d.]+)<\/ele>/.exec(m[3]);
-    out.push({lat:parseFloat(m[1]),lon:parseFloat(m[2]),ele:ele?parseFloat(ele[1]):0});
+  while((m=re.exec(src))){
+    const la=/\blat\s*=\s*["']([-+\d.eE]+)["']/.exec(m[2]),lo=/\blon\s*=\s*["']([-+\d.eE]+)["']/.exec(m[2]);
+    if(!la||!lo)continue;
+    const lat=+la[1],lon=+lo[1];
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)continue;
+    const em=m[3]&&/<ele>\s*([-+\d.eE]+)\s*<\/ele>/.exec(m[3]);
+    const ev=em?+em[1]:NaN;
+    out.push({lat,lon,ele:Number.isFinite(ev)?ev:null});
   }
-  if(!out.length){   // self-closing points carry no elevation
-    const re2=/<(?:trkpt|rtept|wpt)[^>]*?lat="([-\d.]+)"[^>]*?lon="([-\d.]+)"[^>]*?\/>/g;
-    while((m=re2.exec(text)))out.push({lat:parseFloat(m[1]),lon:parseFloat(m[2]),ele:0});
+  // Interpolate missing <ele> tags from neighbouring valid fixes; if none carry elevation, default to 0.
+  let first=-1;
+  for(let i=0;i<out.length;i++)if(out[i].ele!=null){first=i;break;}
+  if(first<0){for(const p of out)p.ele=0;}
+  else{
+    for(let i=0;i<first;i++)out[i].ele=out[first].ele;
+    let prev=first;
+    for(let i=first+1;i<out.length;i++){
+      if(out[i].ele!=null){
+        if(i>prev+1){const a=out[prev].ele,b=out[i].ele,span=i-prev;for(let j=prev+1;j<i;j++)out[j].ele=a+(b-a)*(j-prev)/span;}
+        prev=i;
+      }
+    }
+    for(let i=prev+1;i<out.length;i++)out[i].ele=out[prev].ele;
   }
   return out;
 }
@@ -16196,6 +16243,7 @@ function gpxToTrack(text,opts){
   let pts=raw.map(p=>({x:(p.lon-lon0)*kx,y:-(p.lat-lat0)*ky,z:p.ele}));
   // Drop consecutive duplicates, which break the spline.
   pts=pts.filter((p,i)=>i===0||Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y)>0.5);
+  if(pts.length<2)throw new Error('trace is stationary');
   // Resample the closed loop at a uniform step. The trace usually doesn't quite close, so the
   // last leg back to the start is included and bridged.
   const step=opts.step||22;
@@ -16205,7 +16253,8 @@ function gpxToTrack(text,opts){
     const d=Math.hypot(b.x-a.x,b.y-a.y);
     seg.push(d);total+=d;
   }
-  const nOut=Math.max(24,Math.round(total/step));
+  if(!(total>=10))throw new Error('trace is too short');
+  const nOut=clamp(Math.round(total/step),24,GPX_MAX_PTS);
   const outPts=[];
   let idx=0,carry=0;
   for(let k=0;k<nOut;k++){
@@ -16224,9 +16273,14 @@ function gpxToTrack(text,opts){
       outPts[i].x=(a.x+2*b.x+c.x)/4;outPts[i].y=(a.y+2*b.y+c.y)/4;outPts[i].z=(a.z+2*b.z+c.z)/4;
     }
   }
+  // Circular moving-average on elevation (like user-road.js) so metre-scale GPS vertical jitter does not read as steep grades.
+  if(passes>0&&n>=5){
+    const zs=outPts.map(p=>p.z);
+    for(let i=0;i<n;i++){let sum=0;for(let d=-2;d<=2;d++)sum+=zs[(i+d+n)%n];outPts[i].z=sum/5;}
+  }
   // Re-origin so coordinates are positive, matching the hand-built circuits.
-  const minX=Math.min(...outPts.map(p=>p.x)),minY=Math.min(...outPts.map(p=>p.y));
-  const zMin=Math.min(...outPts.map(p=>p.z));
+  let minX=Infinity,minY=Infinity,zMin=Infinity;
+  for(const p of outPts){if(p.x<minX)minX=p.x;if(p.y<minY)minY=p.y;if(p.z<zMin)zMin=p.z;}
   outPts.forEach(p=>{p.x=+(p.x-minX).toFixed(2);p.y=+(p.y-minY).toFixed(2);p.z=+(p.z-zMin).toFixed(2);});
   const gap=Math.hypot(pts[0].x-pts[pts.length-1].x,pts[0].y-pts[pts.length-1].y);
   return {
@@ -16344,10 +16398,11 @@ function buildTrack(key){
   for(let i=0;i<n;i++){p[i].w=W0*mul[i]/mAvg;p[i].hw=p[i].w/2;wMin=Math.min(wMin,p[i].w);wMax=Math.max(wMax,p[i].w);}
   // Corner count comes from the same detector the report uses, so the two never disagree.
   let corners=0;
-  const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const q of p){if(q.x<minX)minX=q.x;if(q.x>maxX)maxX=q.x;if(q.y<minY)minY=q.y;if(q.y>maxY)maxY=q.y;}
   const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:W0,
     wMin,wMax,wLabel:(wMax-wMin<0.4?Math.round(W0)+' m':Math.round(wMin)+'–'+Math.round(wMax)+' m'),
-    minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+    minX,maxX,minY,maxY};
   T.line=optimiseLine(T);       // minimum curvature over the whole width: the map's reference line and corner count
   T.corners=detectCorners(T.line).length;
   trackCache[key]=T;return T;
@@ -17827,10 +17882,11 @@ function racePractice(M,cfg,maxLaps,mode,ff0,hx){
 // An electric car (build 181) cannot charge in the pit lane: it starts full, stops only for tyres, and its energy manager
 // chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
-  const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
+  const N=cfg.laps>0?cfg.laps:Math.max(1,Math.ceil((cfg.durationSec||0)/Math.max(1,M.lapNom)));
+  const ev=M.ev?evRacePlanFF(M,N,cc.mode):null;
   // a plug-in hybrid (build 196): its share of the depleting laps, and the fuel a lap between the two
-  const hx=M.hy?hybRacePlanX(M,M.hy.usable,cfg.laps):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
-  const N=cfg.laps, fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
+  const hx=M.hy?hybRacePlanX(M,M.hy.usable,N):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
+  const fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
   if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
   const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
@@ -17900,9 +17956,11 @@ function raceInit(models,cfg){
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
-  const recEst=est*1.3*(cfg.laps+1)/cfg.laps+60;
+  const maxLap=Math.max(...models.map(M=>M.lapNom));
+  const recEst=(cfg.laps>0?est*1.3*(cfg.laps+1)/cfg.laps:est*1.3+maxLap*2)+60;
   const recDt=Math.max(RACE.recDt,recEst/40000);
-  R.rec={dt:recDt,n:0,cap:Math.ceil(recEst/recDt)+10,K:20,data:null,next:0};
+  const recCap=Math.max(16,Math.ceil(recEst/recDt)+10);
+  R.rec={dt:recDt,n:0,cap:recCap,K:20,data:null,next:0};
   R.rec.data=R.cars.map(()=>new Float32Array(R.rec.cap*R.rec.K));
   return R;
 }
@@ -17917,7 +17975,7 @@ const RACE_TYRE_CODE={inter:1,wet:2};
 function raceRecord(R){
   const rc=R.rec;
   if(rc.n>=rc.cap){
-    const cap=rc.cap*2;
+    const cap=Math.max(16,rc.cap*2);
     rc.data=rc.data.map(a=>{const b=new Float32Array(cap*rc.K);b.set(a);return b;});rc.cap=cap;
   }
   const flag={run:0,pit:1,fin:2,dnf:3};
@@ -18077,7 +18135,7 @@ function raceStepOnce(R){
       // ignore blue (championship P5): still blocking a faster car as the flag expires
       if(prev>0&&c.blue<=0&&c._blueBy!=null){
         const by=cars.find(x=>x.id===c._blueBy);
-        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&c._gap<RACE.follow*2){
+        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&by._ahead===c&&by._gap<RACE.follow*2){
           const pen=typeof CHAMP!=='undefined'?CHAMP.blueIgnorePen:5;
           c.timePenalty=(c.timePenalty||0)+pen;c.blueIgnore=(c.blueIgnore||0)+1;
           raceEvent(R,c,'blue_ignore',{by:c._blueBy,pen});
@@ -18097,6 +18155,7 @@ function raceStepOnce(R){
         // VSC (championship P5): enough mistakes open a virtual safety car for a named number of leader laps
         if(cfg.vsc&&!R.vsc&&!R.chequered&&R.mistakeN>=(typeof CHAMP!=='undefined'?CHAMP.vscMistakes:3)){
           R.vsc={fromLap:R.leaderLaps||0,left:typeof CHAMP!=='undefined'?CHAMP.vscLaps:1};
+          R.mistakeN=0;
           raceEvent(R,null,'vsc');
         }
       }
@@ -18130,7 +18189,7 @@ function raceStepOnce(R){
   R.t+=dt;
   if(R.t>=R.rec.next){raceRecord(R);R.rec.next+=R.rec.dt;}
   if(cars.every(c=>c.state==='fin'||c.state==='dnf')){R.done=true;raceRecord(R);}
-  else if(R.t>R.cfg.laps*Math.max(...cars.map(c=>c.M.lapNom))*4+600){   // nobody is getting there
+  else if(R.t>(R.cfg.durationSec>0?R.cfg.durationSec*2+Math.max(...cars.map(c=>c.M.lapNom))*4:R.cfg.laps*Math.max(...cars.map(c=>c.M.lapNom))*4)+600){   // nobody is getting there
     for(const c of cars)if(c.state!=='fin'&&c.state!=='dnf'){c.state='dnf';raceEvent(R,c,'dnf',{why:'TIME LIMIT'});}
     R.done=true;raceRecord(R);
   }
@@ -18182,11 +18241,13 @@ function raceCross(R,c){
     if(corners.length)c.mistake={at:corners[Math.floor(R.rnd()*corners.length)],d:null};
   }
   if(c.lapsDone<0)return;
+  const left=cfg.laps>0?cfg.laps-c.lapsDone:Math.max(0,Math.ceil(Math.max(0,cfg.durationSec-R.t)/Math.max(1,M.lapNom)));
+  const totLaps=cfg.laps>0?cfg.laps:c.lapsDone+left;
   // an electric car's energy manager looks again at what is left for the laps that are left
-  if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
-  if(M.hy&&cfg.laps-c.lapsDone>0)hybRaceManage(M,c,cfg.laps-c.lapsDone);   // a plug-in's, for its own charge (build 196)
+  if(M.ev&&left>0)evRaceManage(M,c,left,mode);
+  if(M.hy&&left>0)hybRaceManage(M,c,left);   // a plug-in's, for its own charge (build 196)
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
-  const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
+  const fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';
   let tyre=c.ty.key;
   if(c.cc.wetCall!=='stay'&&left>=2){
@@ -18201,10 +18262,10 @@ function raceCross(R,c){
     // an unplanned stop takes the place of a planned one coming up soon
     const nextIdx=c.plan.stops.findIndex(l=>l>c.lapsDone);
     if(!planned&&nextIdx>=0){
-      const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:cfg.laps;
+      const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:totLaps;
       if(next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
     }
-    const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:cfg.laps)-c.lapsDone);
+    const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:totLaps)-c.lapsDone);
     const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
     const service=Math.max(RACE.tyreChange,add/M.fuelRho/RACE.refuelLps);
     c.state='pit';c.pit={t:M.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
@@ -18516,16 +18577,17 @@ class Gas{
   T(){return this.n?this.E/(2.5*this.n*GR):0;}
   m(){return AIR_M*this.n;}
   epm(){return this.n?this.E/this.n:0;}
-  c(){if(!this.n||!this.E)return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
+  c(){if(!(this.n>0)||!(this.E>0))return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
   bke(){const m=this.m();if(!m)return 0;const vx=this.px/m;return 0.5*m*vx*vx;}
   dyn(dx){
-    if(!this.n||!this.E)return 0;
+    if(!(this.n>0)||!(this.E>0))return 0;
     const v=dx*this.px/this.m();if(v<=0)return 0;
-    const P=this.P(),x=1+0.2*v*v/(P*1.4/(this.m()/this.V));
+    const P=this.P(),c2=P*1.4/(this.m()/this.V);if(!(c2>0))return 0;
+    const x=1+0.2*v*v/c2;
     return P*(Math.sqrt(x*x*x*x*x*x*x)-1);
   }
   setV(V){this.E-=(V-this.V)*this.P();if(this.E<0)this.E=0;this.V=V;}
-  lose(dn,e){this.E-=e*dn;this.n-=dn;if(this.n<0)this.n=0;}
+  lose(dn,e){this.E-=e*dn;if(this.E<0)this.E=0;this.n-=dn;if(this.n<0)this.n=0;}
   gain(dn,e,fr=1){const n0=this.n;this.E+=dn*e;this.n+=dn;if(this.n>0)this.fr=(n0*this.fr+dn*fr)/this.n;}
   dissipate(){
     const m=this.m();if(!m||!this.px)return;
@@ -18542,10 +18604,11 @@ class Gas{
     this.E-=0.5*m*(v1*v1-v0*v0);if(this.E<0)this.E=0;
   }
   static rate(k,P0,P1,T0,T1,lim,choke){
-    if(!k)return 0;
+    if(!(k>0))return 0;
     let dir,T,p0,pT;
     if(P0>P1){dir=1;T=T0;p0=P0;pT=P1;}else{dir=-1;T=T1;p0=P1;pT=P0;}
-    const pr=pT/p0;let f;
+    if(!(p0>0)||!(T>0))return 0;
+    const pr=gclamp(pT/p0,0,1);let f;
     if(pr<=lim)f=choke/Math.sqrt(GR*T);
     else{const s=Math.pow(pr,1/1.4);f=Math.sqrt(Math.max(7*s*(s-pr),0)/(GR*T));}
     return f*dir*p0*k;
@@ -19213,58 +19276,64 @@ const SOUND_LEVEL=0.15;
 //             so a closed throttle above idle feeds a charge too thin to burn; with the pipe still hot
 //             from the pull, it lights there. Injection cuts the fuel (DFCO) and stays quiet. Anti-lag
 //             does it on purpose, and keeps the pipe hot itself.
+const setParam=(p,v,t,tau)=>{if(p&&Number.isFinite(t))p.setTargetAtTime(Number.isFinite(v)?v:0,t,tau);};
 function soundDrive(dt,s=state){
-  const e=engine,lam=s.afr/(e.stoichAFR||14.7);
+  const e=engine,stoich=e.stoichAFR||14.7,afr=Number.isFinite(s.afr)&&s.afr>0?s.afr:stoich,lam=afr/stoich;
+  const rpm=Number.isFinite(s.rpm)?s.rpm:0,map=Number.isFinite(s.map)?s.map:0.3,thr=Number.isFinite(s.throttle)?s.throttle:0;
+  const boost=Number.isFinite(s.boostActual)?s.boostActual:0,rl=Math.max(1,e.redline||1),idle=Number.isFinite(e.idleRpmEff)?e.idleRpmEff:800;
+  const step=Number.isFinite(dt)&&dt>=0?dt:0;
   // a diesel has no throttle plate: whatever the live manifold reads, it traps atmosphere plus boost
-  const trapped=e.ci?1+Math.max(0,s.boostActual||0):s.map;
+  const trapped=e.ci?1+Math.max(0,boost):map;
   const strength=s.blown?0:trapped*(s.fuelCut?0.12:0.12+0.88*Math.min(1,1/Math.max(0.5,lam)));
   // exhaust heat: rises with load over about a second, and is gone a second and a half after it. It
   // has to be above what an idle or a fuelled overrun keeps up on its own (~0.35) for anything to pop.
-  Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-dt/(strength>Sound.hot?0.8:1.5)));
-  const lope=(e.lumpiness||0)*clamp(1-(s.rpm-e.idleRpmEff)/2600,0.12,1)*clamp((1.05-s.map)/0.6,0.15,1);
-  const overrun=s.throttle<0.03&&s.rpm>e.idleRpmEff+150&&s.rpm<e.redline;
+  if(!Number.isFinite(Sound.hot))Sound.hot=0;
+  Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-step/(strength>Sound.hot?0.8:1.5)));
+  const lope=(e.lumpiness||0)*clamp(1-(rpm-idle)/2600,0.12,1)*clamp((1.05-map)/0.6,0.15,1);
+  const overrun=thr<0.03&&rpm>idle+150&&rpm<rl;
   let crackle=0;
-  if(overrun&&!e.canDFCO)crackle=0.35*clamp((s.rpm-e.idleRpmEff)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
+  if(overrun&&!e.canDFCO)crackle=0.35*clamp((rpm-idle)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
   // anti-lag: on a lift it keeps the fuel and fires late, so the charge burns on in the manifold and the
   // turbine: bangs, with crackle between them
   let bang=0;
-  if(overrun&&e.antilag&&s.rpm>2500){crackle=Math.max(crackle,0.15);bang=0.3;}
+  if(overrun&&e.antilag&&rpm>2500){crackle=Math.max(crackle,0.15);bang=0.3;}
   // compressor whine
   let whineF=0,whineA=0;
   if(e.intake==='turbo'&&e.shaftJ){
-    const n=Math.sqrt(2*Math.max(0,s.shaftE||0)/e.shaftJ)*60/(2*Math.PI);
+    const n=Math.sqrt(2*Math.max(0,Number.isFinite(s.shaftE)?s.shaftE:0)/e.shaftJ)*60/(2*Math.PI);
     whineF=n/60*COMP_BLADES;
     // the pressure rise goes with tip speed squared; a closed throttle unloads the wheel
     // anti-lag keeps the wheel working on a lift
-    whineA=TURBO_WHINE.level*turboSoundScale(e)*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(s.throttle>0.1||e.antilag?1:0.4);
+    whineA=TURBO_WHINE.level*turboSoundScale(e)*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(thr>0.1||e.antilag?1:0.4);
     // the ducting, filter and bonnet lining soak up the top end: near full speed the blade pass is
     // past 10 kHz, and heard straight it is a squeal rather than a whistle
     whineA/=1+Math.pow(whineF/TURBO_WHINE.roll,2);
   }else if(e.intake==='supercharger'){
     const sc=SC_SOUND[e.scType]||SC_SOUND.roots;
-    whineF=s.rpm*sc.drive/60*sc.passes;
-    const bf=clamp(s.boostActual/Math.max(0.05,e.boost_bar),0,1);
+    whineF=rpm*sc.drive/60*sc.passes;
+    const bf=clamp(boost/Math.max(0.05,e.boost_bar||0.05),0,1);
     // a Roots or a screw moves air from idle but only compresses (and so only whines hard) on boost, its
     // bypass open the rest of the time; a centrifugal's whistle goes with its impeller speed squared
-    whineA=e.scType==='centrifugal'?sc.level*Math.pow(clamp(s.rpm/e.redline,0,1),2)*(0.3+0.7*bf):sc.level*(0.08+0.92*bf*bf);
+    whineA=e.scType==='centrifugal'?sc.level*Math.pow(clamp(rpm/rl,0,1),2)*(0.3+0.7*bf):sc.level*(0.08+0.92*bf*bf);
     whineA/=1+Math.pow(whineF/sc.roll,2);
   }
   // induction roar: volumetric flow goes with manifold pressure x rpm
   const forced=e.intake!=='na';
-  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(s.map*s.rpm/e.redline,0,1.5)*0.15;
+  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(map*rpm/rl,0,1.5)*0.15;
   // knock: a diesel's ignition delay is longest cold and at light load, where the injected fuel
   // waits longest and then all goes at once; a petrol engine past its knock limit detonates on
   // more of its cycles the further past it is
   let knockProb=0,knockAmp=0;
   // How hard it rings is how much fuel goes up at once: for a diesel that is the fuel injected during the
   // delay, which is not the load; for a detonating petrol charge it is the end gas, which is.
-  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-s.coolant)/50,1,2)*clamp(1.3-strength,0.3,1);}
-  else{knockProb=clamp((s.knockRisk-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
+  const cool=Number.isFinite(s.coolant)?s.coolant:90,kr=Number.isFinite(s.knockRisk)?s.knockRisk:0;
+  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1);}
+  else{knockProb=clamp((kr-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
   // blow-off: the charge pipe holds the boost the compressor made while the throttle was open; when the
   // throttle shuts on it, however gently, the valve vents it, once (a diesel has no throttle to shut)
   let bov=null;
   if(e.intake==='turbo'&&!e.ci){
-    if(s.throttle>=0.1)Sound.chargeP=Math.max(0,s.boostActual||0);
+    if(thr>=0.1)Sound.chargeP=Math.max(0,boost);
     else if(Sound.chargeP>0.15){bov={amp:0.25*Math.min(1.5,Sound.chargeP)*turboSoundScale(e)};Sound.chargeP=0;}
   }
   if(s.blown)return {strength:0,lope:0,crackle:0,bang:0,whineF,whineA:0,intake:0,knockProb:0,knockAmp:0,bov:null};
@@ -19373,9 +19442,9 @@ function updateScreech(t){
   const vs=screechSlide();
   if(!vs&&!Sound.screechGain)return;
   if(!Sound.screechGain)initScreech();
-  const k=clamp(vs/SCREECH_REF_MS,0,1);
-  Sound.screechGain.gain.setTargetAtTime(SCREECH_LEVEL*k,t,0.03);
-  Sound.screechBp.forEach((bp,i)=>bp.frequency.setTargetAtTime(SCREECH_F[i]*(1+0.15*k),t,0.05));
+  const k=clamp((Number.isFinite(vs)?vs:0)/SCREECH_REF_MS,0,1);
+  setParam(Sound.screechGain.gain,SCREECH_LEVEL*k,t,0.03);
+  Sound.screechBp.forEach((bp,i)=>setParam(bp.frequency,SCREECH_F[i]*(1+0.15*k),t,0.05));
 }
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
@@ -19423,10 +19492,11 @@ function motorSoundConfig(e){
 // A torque shared between the groups as the controller shares it to lose least: an induction front motor carries nothing
 // until the rear group runs short (its field would cost more than it gives), then each group its share of the peak.
 function motorTorqueSplit(c,T){
-  if(c.groups.length<2)return [T,0];
+  const T0=Number.isFinite(T)?T:0;
+  if(!c||!c.groups||c.groups.length<2||!(c.Tpk>0))return [T0,0];
   const [r,f]=c.groups;
-  if(f.im&&Math.abs(T)<=0.6*r.Tpk)return [T,0];
-  return [T*r.Tpk/c.Tpk,T*f.Tpk/c.Tpk];
+  if(f.im&&Math.abs(T0)<=0.6*r.Tpk)return [T0,0];
+  return [T0*r.Tpk/c.Tpk,T0*f.Tpk/c.Tpk];
 }
 // What the drive is doing now, or null when there is nothing to hear: the dyno's electric car or a hybrid's motor (the
 // bench), or the lap replay (the shaft power it recorded over the motor's speed; on a lift the drive's own braking, eb, is
@@ -19436,18 +19506,18 @@ function motorSoundState(c){
   const e=engine;
   if(soundSource()===state){   // where the engine's sound is heard from the bench
     if(state.ignOn===false)return null;   // the car switched off (POWER OFF): no current, nothing to hear (build 306)
-    if(isElectric())return {rpm:state.rpm,T:state.blown?0:state.torque};
-    if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:hybBench.n,T:hybBench.Tm||0};
+    if(isElectric())return {rpm:Number.isFinite(state.rpm)?state.rpm:0,T:state.blown?0:(Number.isFinite(state.torque)?state.torque:0)};
+    if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:Number.isFinite(hybBench.n)?hybBench.n:0,T:Number.isFinite(hybBench.Tm)?hybBench.Tm:0};
     return null;
   }
   if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing){
-    const st=replayAt(lapResult,lapReplay.t),w=Math.max(1,st.rpm)*Math.PI/30;
+    const st=replayAt(lapResult,lapReplay.t),rpm=Number.isFinite(st.rpm)?st.rpm:0,w=Math.max(1,rpm)*Math.PI/30;
     if(isElectric()){
       const R=lapResult.replay,eb=R.eb&&st.i!=null?R.eb[st.i]:0;
       const T=st.pwr>0?st.pwr/w:-(eb*vehicle.mass*vehicle.rTire/Math.max(1,vehicle.finalDrive*(vehicle.ratios?vehicle.ratios[0]:1)));
-      return {rpm:st.rpm,T};
+      return {rpm,T:Number.isFinite(T)?T:0};
     }
-    if(e.hy&&lapResult.hy&&st.i!=null)return {rpm:st.rpm,T:(lapResult.hy.pm[st.i]||0)/w};
+    if(e.hy&&lapResult.hy&&st.i!=null){const T=(lapResult.hy.pm[st.i]||0)/w;return {rpm,T:Number.isFinite(T)?T:0};}
   }
   return null;
 }
@@ -19457,12 +19527,12 @@ function updateMotorSound(t){
   const key=isElectric()||e.hy?JSON.stringify([buildRev,e.hyMode,vehicle&&vehicle.finalDrive]):'';
   if(key!==Sound.motorKey){Sound.motorKey=key;Sound.motorCfg=key?motorSoundConfig(e):null;if(Sound.motorCfg)Sound.motor.port.postMessage(Sound.motorCfg);}
   const c=Sound.motorCfg,st=Sound.on?motorSoundState(c):null;
-  if(!st){p.get('level').setTargetAtTime(0,t,0.05);return;}
+  if(!st){setParam(p.get('level'),0,t,0.05);return;}
   const [t0,t1]=motorTorqueSplit(c,st.T);
-  p.get('rpm').setTargetAtTime(Math.max(0,st.rpm),t,0.03);
-  p.get('tq0').setTargetAtTime(t0,t,0.05);p.get('tq1').setTargetAtTime(t1,t,0.05);
-  p.get('mod').setTargetAtTime(Math.min(1,Math.max(0,st.rpm)/Math.max(1,c.knee)),t,0.05);
-  p.get('level').setTargetAtTime(MOTOR_SOUND_LEVEL,t,0.08);
+  setParam(p.get('rpm'),Math.max(0,st.rpm),t,0.03);
+  setParam(p.get('tq0'),t0,t,0.05);setParam(p.get('tq1'),t1,t,0.05);
+  setParam(p.get('mod'),Math.min(1,Math.max(0,st.rpm)/Math.max(1,c.knee)),t,0.05);
+  setParam(p.get('level'),MOTOR_SOUND_LEVEL,t,0.08);
 }
 // The motor's chain: the worklet -> its level -> a limiter, beside the engine's.
 function initMotorChain(){
@@ -19645,9 +19715,9 @@ function updateSound(){
   engineSound(src);
 }
 function engineSound(src){
-  const t=Sound.ctx.currentTime,s=src||state;
+  const t=Sound.ctx.currentTime,s=src||state,rpm=Number.isFinite(s.rpm)?s.rpm:0;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
-  const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
+  const bright=(440+rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){
     const d=soundDrive(Math.min(0.1,t-(Sound.lastT||t)),s);Sound.lastT=t;
     const size=clamp(Math.sqrt((engine.dispCyl_L||0.45)/0.45),0.6,1.5);   // a pulse's energy scales with its cylinder
@@ -19656,21 +19726,21 @@ function engineSound(src){
       engine.runnerL,engine.runnerD_mm,engine.bore_mm,engine.chargeVol].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.cfg=soundConfig(engine);Sound.node.port.postMessage(Sound.cfg);}
     const p=Sound.node.parameters;
-    p.get('rpm').setTargetAtTime(s.rpm,t,0.05);
-    p.get('bright').setTargetAtTime(bright,t,0.05);
-    p.get('level').setTargetAtTime(!src||s.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
+    setParam(p.get('rpm'),rpm,t,0.05);
+    setParam(p.get('bright'),bright,t,0.05);
+    setParam(p.get('level'),!src||s.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
     // GAS model: the gas simulation makes the exhaust; the pulse node keeps only its other voices
     const gas=soundModelIsGas()&&Sound.gas;
-    p.get('strength').setTargetAtTime(gas?0:exhaustStrength(engine,s,d.strength),t,0.012);    // quick, so the limiter's cut is heard
+    setParam(p.get('strength'),gas?0:exhaustStrength(engine,s,d.strength),t,0.012);    // quick, so the limiter's cut is heard
     if(Sound.gas)updateGasSound(gas&&src&&!s.blown,s,t,size,d.strength);
-    p.get('lope').setTargetAtTime(d.lope,t,0.08);
-    p.get('crackle').setTargetAtTime(d.crackle,t,0.03);
-    p.get('whineF').setTargetAtTime(d.whineF,t,0.03);
-    p.get('whineA').setTargetAtTime(d.whineA,t,0.06);
-    p.get('bang').setTargetAtTime(d.bang,t,0.03);
-    p.get('intake').setTargetAtTime(d.intake,t,0.05);
-    p.get('knockProb').setTargetAtTime(d.knockProb,t,0.05);
-    p.get('knockAmp').setTargetAtTime(d.knockAmp,t,0.05);
+    setParam(p.get('lope'),d.lope,t,0.08);
+    setParam(p.get('crackle'),d.crackle,t,0.03);
+    setParam(p.get('whineF'),d.whineF,t,0.03);
+    setParam(p.get('whineA'),d.whineA,t,0.06);
+    setParam(p.get('bang'),d.bang,t,0.03);
+    setParam(p.get('intake'),d.intake,t,0.05);
+    setParam(p.get('knockProb'),d.knockProb,t,0.05);
+    setParam(p.get('knockAmp'),d.knockAmp,t,0.05);
     if(d.bov)Sound.node.port.postMessage({bov:{amp:d.bov.amp,tau:Sound.cfg.bovTau}});
     return;
   }
@@ -19679,14 +19749,14 @@ function engineSound(src){
   // Firing frequency: 4-stroke fires once per cylinder every 2 revs; a 2-stroke and a rotary
   // make a power event every rev, so they fire twice as often (higher, busier note).
   const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;
-  const fire=engine.cylinders*(s.rpm/60)*perRev;
-  Sound.osc.frequency.setTargetAtTime(fire,t,0.05);
-  Sound.sub.frequency.setTargetAtTime(fire/2,t,0.05);
-  Sound.filter.frequency.setTargetAtTime(bright,t,0.05);
-  Sound.gain.gain.setTargetAtTime(loud,t,0.08);
-  Sound.lfo.frequency.setTargetAtTime(Math.max(4,s.rpm/60),t,0.05);
-  const depth=(engine.lumpiness||0)*loud*clamp(1-(s.rpm-engine.idleRpmEff)/2600,0.12,1);
-  Sound.lfoGain.gain.setTargetAtTime(depth,t,0.08);
+  const fire=engine.cylinders*(rpm/60)*perRev;
+  setParam(Sound.osc.frequency,fire,t,0.05);
+  setParam(Sound.sub.frequency,fire/2,t,0.05);
+  setParam(Sound.filter.frequency,bright,t,0.05);
+  setParam(Sound.gain.gain,loud,t,0.08);
+  setParam(Sound.lfo.frequency,Math.max(4,rpm/60),t,0.05);
+  const depth=(engine.lumpiness||0)*loud*clamp(1-(rpm-engine.idleRpmEff)/2600,0.12,1);
+  setParam(Sound.lfoGain.gain,depth,t,0.08);
 }
 // The gas model's operating point, from the same state soundDrive reads: the trapped charge (a diesel's is
 // atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, VVT cam advance, and a
@@ -19709,34 +19779,35 @@ function updateGasSound(live,s,t,size,strength){
       }
       setGasIR(chain.ir);
       // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
-      Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
-      Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
+      setParam(Sound.gasLp.frequency,chain.lpHz,t,0.1);
+      setParam(Sound.gasGain.gain,chain.gain,t,0.1);
     }
-    const rf=clamp(s.rpm/Math.max(1,e.redline),0,1);
-    g.get('rpm').setTargetAtTime(s.rpm,t,0.05);
-    g.get('map').setTargetAtTime(101325*(e.ci?1+Math.max(0,s.boostActual||0):Math.max(0.1,s.map)),t,0.03);
-    g.get('fuel').setTargetAtTime(s.fuelCut?0:1,t,0.01);
-    g.get('lambda').setTargetAtTime(clamp(s.afr/(e.stoichAFR||14.7),0.6,6),t,0.05);
+    const rpm=Number.isFinite(s.rpm)?s.rpm:0,stoich=e.stoichAFR||14.7,afr=Number.isFinite(s.afr)&&s.afr>0?s.afr:stoich;
+    const rf=clamp(rpm/Math.max(1,e.redline||1),0,1);
+    setParam(g.get('rpm'),rpm,t,0.05);
+    setParam(g.get('map'),101325*(e.ci?1+Math.max(0,Number.isFinite(s.boostActual)?s.boostActual:0):Math.max(0.1,Number.isFinite(s.map)?s.map:0.3)),t,0.03);
+    setParam(g.get('fuel'),s.fuelCut?0:1,t,0.01);
+    setParam(g.get('lambda'),clamp(afr/stoich,0.6,6),t,0.05);
     const tm=gasTiming(e,rf);
-    g.get('spark').setTargetAtTime(tm.spark,t,0.1);
-    g.get('burn').setTargetAtTime(tm.burn,t,0.1);
-    g.get('camAdv').setTargetAtTime(typeof camAdvAt==='function'?camAdvAt(s.rpm):0,t,0.08);
+    setParam(g.get('spark'),tm.spark,t,0.1);
+    setParam(g.get('burn'),tm.burn,t,0.1);
+    setParam(g.get('camAdv'),typeof camAdvAt==='function'?camAdvAt(rpm):0,t,0.08);
   }
   // The worklet levels the gas model's own swings away (it is ~300x quieter at idle than flat out, and not
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's
   // pulse strength (trapped charge x fuelling, so a lean diesel idle is light load) to GAS_LOUD_LAW. The
   // floor is a few percent of the build's flat-out signal, so a fuel cut stays near-silent.
-  g.get('level').setTargetAtTime(live&&Sound.gasF?gasLevel(size,exhaustStrength(e,s,strength))/Sound.gasF:0,t,0.04);
-  g.get('floor').setTargetAtTime(GAS_FLOOR*(Sound.gasRef||1),t,0.1);
+  setParam(g.get('level'),live&&Sound.gasF?gasLevel(size,exhaustStrength(e,s,strength))/Sound.gasF:0,t,0.04);
+  setParam(g.get('floor'),GAS_FLOOR*(Sound.gasRef||1),t,0.1);
 }
 function setSound(on){
   Sound.on=on;
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
-  else if(Sound.node){Sound.node.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.gas)Sound.gas.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.screechGain)Sound.screechGain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
-  else if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+  else if(Sound.node){const t=Sound.ctx.currentTime;setParam(Sound.node.parameters.get('level'),0,t,0.05);
+    if(Sound.gas)setParam(Sound.gas.parameters.get('level'),0,t,0.05);
+    if(Sound.motor)setParam(Sound.motor.parameters.get('level'),0,t,0.05);
+    if(Sound.screechGain)setParam(Sound.screechGain.gain,0,t,0.05);}
+  else if(Sound.gain)setParam(Sound.gain.gain,0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');
 }
@@ -20693,7 +20764,7 @@ function loadFromHash(){
   const h=location.hash||'';
   if(h.indexOf('#b=')!==0)return false;
   try{const nm=applyBuild(decodeBuild(h.slice(3)));flash(tr('LOADED SHARED:')+' '+nm);return true;}
-  catch(e){return false;}
+  catch(e){flash(tr('Invalid or corrupted share link'),'warn');return false;}
 }
 // ---- Dyno pull logging (overlay saved curves for comparison) ----
 function logPull(){
@@ -20720,9 +20791,9 @@ function scoreEngine(){
   let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
   for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
     if(p.powerHP>peakHP){peakHP=p.powerHP;peakHPrpm=r;}if(p.torque>peakTQ){peakTQ=p.torque;peakTQrpm=r;}}
-  let lo=rMax,hi=1000;pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  let lo=rMax,hi=1000;if(peakHP>0)pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   const band=Math.max(0,hi-lo);
-  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=clamp(tqLow/peakTQ,0,1);
+  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=peakTQ>0?clamp(tqLow/peakTQ,0,1):0;
   // safety: worst knock over a stoich WOT stress sweep
   state.afr=engine.stoichAFR;let maxKnock=0;
   for(let r=1000;r<=rMax;r+=200)maxKnock=Math.max(maxKnock,computeKnockRisk(r,wotMapAt(r)));
@@ -24708,7 +24779,7 @@ function drawCompMap(px,py,S,F,LW,x,y,w,h,m){
   const e=engine;if(!(e.chokeFlow_kgs>0))return;
   const prMax=Math.max(2.4,1+(e.boost_bar||0)*1.5),fMax=1.25;
   const X=f=>x+clamp(f,0,fMax)/fMax*w,Y=pr=>y+h-clamp((pr-1)/(prMax-1),0,1)*h;
-  const key=e.score+'|'+S+'|'+prMax;
+  const key=buildRev+'|'+S+'|'+prMax;
   if(drawCompMap.key!==key){
     // the islands, once per engine: bands of efficiency
     const cv=document.createElement('canvas');cv.width=Math.ceil(w*S);cv.height=Math.ceil(h*S);
@@ -28468,11 +28539,16 @@ function renderRaceSetup(){
   if(pg){pg.hidden=raceUI.phase!=='computing';pg.querySelector('.race-prog-bar').style.width=Math.round(raceUI.prog*100)+'%';pg.querySelector('span').textContent=raceUI.progTxt;}
   raceTopInfo();
 }
+function raceAirVal(el){
+  if(!el||el.value==='')return RACE.air;
+  const v=+el.value;
+  return Number.isFinite(v)?v:RACE.air;
+}
 function raceConfig(){
   const g=id=>document.getElementById(id);
   return {track:g('raceTrk').value,laps:clamp(Math.round(+g('raceLaps').value||5),1,100),
     strategy:'auto',grid:g('raceGrid').value,warmers:g('raceWarmers').checked,
-    weather:g('raceWeather').value,air:+g('raceAir').value||RACE.air,
+    weather:g('raceWeather').value,air:raceAirVal(g('raceAir')),
     cars:raceUI.entrants.map(e=>{const x=Object.assign({},e.strat);if(/^\d$/.test(x.stops))x.stops=+x.stops;return x;}),
     seed:(Math.round(+g('raceSeed').value)>>>0)||1};
 }
@@ -28534,12 +28610,12 @@ function raceStandings(R,t){
     const laps=c.laps.filter(l=>l.end<=t);
     const pits=R.events.filter(e=>e.car===c.id&&e.type==='pit'&&e.t<=t);
     const lastOut=R.events.filter(e=>e.car===c.id&&e.type==='pitout'&&e.t<=t).pop();
-    return {k,c,s,fin,dnf,laps,last:laps.length?laps[laps.length-1].t:null,best:laps.length?Math.min(...laps.map(l=>l.t)):null,
+    return {k,c,s,fin,finT:fin?(c.finishT!=null?c.finishT:fin.t):null,dnf,laps,last:laps.length?laps[laps.length-1].t:null,best:laps.length?Math.min(...laps.map(l=>l.t)):null,
       pits:pits.length,inPit:s.flag===1&&!fin,tyreAge:lastOut?laps.filter(l=>l.end>lastOut.t).length:laps.length};
   });
   S.sort((a,b)=>{
     if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;
-    if(a.fin&&b.fin)return b.laps.length-a.laps.length||a.fin.t-b.fin.t;
+    if(a.fin&&b.fin)return b.laps.length-a.laps.length||a.finT-b.finT;
     if(a.fin&&!b.fin)return b.s.sTot>a.s.sTot+1?1:-1;
     if(b.fin&&!a.fin)return a.s.sTot>b.s.sTot+1?-1:1;
     return b.s.sTot-a.s.sTot;
@@ -28550,7 +28626,7 @@ function raceStandings(R,t){
     if(p===0){x.gap=null;return;}
     const ld=lead.laps.length-x.laps.length;
     if(x.dnf){x.gap='DNF';return;}
-    if(x.fin&&lead.fin&&ld===0){x.gap='+'+(x.fin.t-lead.fin.t).toFixed(1);return;}
+    if(x.fin&&lead.fin&&ld===0){x.gap='+'+Math.max(0,x.finT-lead.finT).toFixed(1);return;}
     const down=Math.floor((lead.s.sTot-x.s.sTot)/Lc);
     if(down>=1&&!x.fin){x.gap='+'+down+' '+tr(down>1?'LAPS':'LAP');return;}
     if(x.fin&&ld>0){x.gap='+'+ld+' '+tr(ld>1?'LAPS':'LAP');return;}
@@ -28602,7 +28678,8 @@ function renderRacePanel(force){
   const sc=document.getElementById('raceScrub');if(sc&&!raceUI.scrubbing)sc.value=Math.round(t/R.t*1000);
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   const wNow=S[0].s.wet;
-  document.getElementById('raceHead').innerHTML='<b>'+esc(TRACKS[R.cfg.track].label)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
+  const trkLabel=(TRACKS[R.cfg.track]||{}).label||R.cfg.track;
+  document.getElementById('raceHead').innerHTML='<b>'+esc(trkLabel)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
     (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'')+
     '<br>'+raceWeatherText(wNow)+' • '+tr('AIR')+' '+R.cfg.air+'°C • '+tr('TRACK')+' '+Math.round(raceTrackTemp(R.cfg.air,wNow))+'°C';
   const row=x=>{
@@ -28663,7 +28740,8 @@ function drawRace(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   const R=raceUI.run;
-  ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
+  const rTrkLabel=R?((TRACKS[R.cfg.track]||{}).label||R.cfg.track):'';
+  ctx.fillText(tr('RACE')+(R?' • '+rTrkLabel:''),12,19);
   if(!R||raceUI.phase!=='live'){
     if(raceUI.phase==='computing'){
       ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
@@ -28673,7 +28751,7 @@ function drawRace(){
       const g=id=>document.getElementById(id);
       const key=(g('raceTrk')&&g('raceTrk').value)||trackKey;
       const wx=(g('raceWeather')&&g('raceWeather').value)||'dry';
-      const air=+(g('raceAir')&&g('raceAir').value)||RACE.air;
+      const air=raceAirVal(g('raceAir'));
       const laps=clamp(Math.round(+(g('raceLaps')&&g('raceLaps').value)||5),1,100);
       drawTrackPreview(key,{weather:wx,air,title:tr('RACE'),
         sub:[laps+' '+tr('LAPS')+' • '+raceUI.entrants.length+' '+tr('ENTRANTS')+' • '+tr('Pick two or more cars, then START RACE.')]});
@@ -28713,7 +28791,7 @@ function drawRace(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.textAlign='left';
-  if(W>=560)ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
+  if(W>=560)ctx.fillText(tr('RACE')+' • '+rTrkLabel,12,19);
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
@@ -28806,7 +28884,7 @@ function raceTopInfo(){
   const R=raceUI.run;
   if(!R||raceUI.phase!=='live'){el.textContent=raceUI.phase==='computing'?raceUI.progTxt:tr('Set up the race');return;}
   const S=raceStandings(R,raceUI.t),lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
-  el.textContent=TRACKS[R.cfg.track].label+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
+  el.textContent=((TRACKS[R.cfg.track]||{}).label||R.cfg.track)+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
 }
 function bindRacePage(){
   document.getElementById('raceBack').addEventListener('click',()=>setTab(racePage.from));
@@ -29049,14 +29127,27 @@ function champNewSeason(seriesId,opts){
   // attach player team cars (P4)
   const team=champTeam();
   if(team&&team.cars&&team.cars.length&&opts.useTeam){
-    team.cars.slice(0,2).forEach((seat,k)=>{
-      if(entrants.length>=CHAMP.maxGrid)entrants.pop();
+    const bop=!!(series.regs&&series.regs.bop);
+    team.cars.slice(0,2).forEach(seat=>{
+      const ref=seat.ref!=null?String(seat.ref):'';
+      const pIdx=seat.presetIdx!=null?seat.presetIdx:(ref.startsWith('p:')?+ref.slice(2):null);
+      let clsId=series.classId;
+      if(multi){
+        const p=pIdx!=null&&Number.isInteger(pIdx)?FACTORY_CARS[pIdx]:null;
+        clsId=(p&&series.classIds.find(cid=>CHAMP_CLASSES[cid]&&CHAMP_CLASSES[cid].eligible(p)))||series.classIds[0];
+      }
       let e=null;
-      if(seat.presetIdx!=null)e=champEntrantFromPreset(seat.presetIdx,{classId:series.classId,driver:seat.driver||'balanced',teamId:team.id,bop:true});
-      else if(seat.ref==='cur')e=raceEntrantFrom('cur');
-      else if(seat.ref&&String(seat.ref).startsWith('g:'))e=raceEntrantFrom(seat.ref);
-      if(e){e.teamId=team.id;e.strat=e.strat||{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:seat.driver||'balanced'};
-        e.strat.driver=seat.driver||e.strat.driver||'balanced';entrants.unshift(e);}
+      if(pIdx!=null&&Number.isInteger(pIdx))e=champEntrantFromPreset(pIdx,{classId:clsId,classTag:clsId,driver:seat.driver||'balanced',teamId:team.id,bop});
+      else if(ref==='cur')e=raceEntrantFrom('cur');
+      else if(ref.startsWith('g:'))e=raceEntrantFrom(ref);
+      if(e){
+        if(entrants.length>=CHAMP.maxGrid)entrants.pop();
+        e.teamId=team.id;
+        if(!e.classTag)e.classTag=clsId;
+        e.strat=e.strat||{stops:'auto',mode:'normal',start:'auto',wetCall:'auto',driver:seat.driver||'balanced'};
+        e.strat.driver=seat.driver||e.strat.driver||'balanced';
+        entrants.unshift(e);
+      }
     });
   }
   const economy=series.regs&&series.regs.economy?{
@@ -29106,7 +29197,12 @@ function champApplyRaceToSeason(S,R,meta){
   // economy (P3)
   if(S.economy){
     S.economy.credits-=CHAMP.entryFee;
-    results.forEach((r,k)=>{if(r.state!=='dnf'&&r.state!=='dsq')S.economy.credits+=(CHAMP.prize[k]||0);});
+    const team=champTeam(),teamId=team&&team.id;
+    results.forEach((r,k)=>{
+      if(r.state==='dnf'||r.state==='dsq')return;
+      const ent=S.entrants&&S.entrants[r.id];
+      if(ent&&ent.teamId&&(!teamId||ent.teamId===teamId))S.economy.credits+=(CHAMP.prize[k]||0);
+    });
     const career=champCareer();career.credits=S.economy.credits;champSaveCareer(career);
   }
   S.results.push({roundIdx:S.roundIdx,track:R.cfg.track,seed:R.cfg.seed,classification:results,
@@ -30575,6 +30671,7 @@ function rederiveBreathing(){
   e.wotRich=wotNeedsEnrichment();
   if(buildKnockLimit())buildBoostTable(26);
   {const p=peakEgts();e.peakEgt=p.probe;e.peakEgtGas=p.gas;}
+  {const c=peakCylLoads();e.peakPmax=c.pMax;e.peakPreIgn=c.preIgn;}
 }
 // Run fn on a copy of the engine with another part of a kind: a designed one, or a factory key. The build, the live
 // state and the caches are as they were afterwards. The copy gets its own score object: the knock-timing and fuel-map
@@ -34492,11 +34589,11 @@ function hybridCycle(v,prof){
   // through a 90% electrical path, and added as fuel. Within the 0.5% tolerance nothing is corrected.
   const bestBsfc=Math.min(...psOol().P.map((P,i)=>psOol().gs[i]*3.6e6/P));
   const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
-  const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
+  const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density,l100=km>0?L/km*100:0;
   if(prof){const tT=R.evS+R.onS+R.stopS;
-    return {km,l100:L/km*100,L,kg,evShare:R.evS/tT,onShare:R.onS/tT,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
-      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:R.fbS/tT};}
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
+    return {km,l100,L,kg,evShare:tT>0?R.evS/tT:0,onShare:tT>0?R.onS/tT:0,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
+      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:tT>0?R.fbS/tT:0};}
+  const res={km,l100,co2:km>0?kg*0.865*44/12*1000/km:0,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
   if(e.hyPlug)res.plug=plugCycles(run0,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
   e._hcyc={score:e.score,key,res};return res;
 }
@@ -35512,7 +35609,7 @@ function driftRun(car,plan,sample,D){
     o.eMax=Math.max(o.eMax,Math.abs(d.e||0));o.maxI=Math.max(o.maxI,d.i||0);
     const p0=C.line[d.i],p1=C.line[Math.min(C.line.length-1,d.i+1)];
     const hp=Math.atan2(p1.y-p0.y,p1.x-p0.x);
-    let dh=s.psi-hp;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;
+    let dh=s.psi-hp;dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     const eCG=-(s.x-p0.x)*Math.sin(hp)+(s.y-p0.y)*Math.cos(hp);
     if(Math.abs(eCG)+driftReach(D,dh)>C.halfW)o.off=true;
     const spd=s.speed||Math.hypot(s.vx,s.vy);
@@ -35623,9 +35720,9 @@ function skidRun(car,v,sample){
   while(s.t<tMax){
     const u=driveDriver(car,s,line,d);
     stepCar(car,s,u,dt);
-    const a=Math.atan2(s.y-R,s.x);let da=a-pa;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;ang+=da;pa=a;
+    const a=Math.atan2(s.y-R,s.x);let da=a-pa;da=Number.isFinite(da)?da-2*Math.PI*Math.round(da/(2*Math.PI)):0;ang+=da;pa=a;
     const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
-    let dh=s.psi-(a+Math.PI/2);dh-=2*Math.PI*Math.round(dh/(2*Math.PI));
+    let dh=s.psi-(a+Math.PI/2);dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2){spin=true;}
     if(!judging&&ang>=2*Math.PI){judging=true;tJ=s.t;}
     if(judging){
@@ -38240,7 +38337,9 @@ function vcdDrawAids(dc,r){
   const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,A=vcdAids(),top=4,ph=96,mid=top+ph/2;
   x.fillStyle=C.well;x.fillRect(0,top,W,ph);
   if(!A.swd)return;
-  const all=A.swd.path.concat(A.off?A.off.path:[]),xm=Math.max(...all.map(p=>p[0])),ym=Math.max(4,...all.map(p=>Math.abs(p[1])));
+  const all=A.swd.path.concat(A.off?A.off.path:[]);
+  let xm=0,ym=4;for(const p of all){if(p[0]>xm)xm=p[0];const ay=Math.abs(p[1]);if(ay>ym)ym=ay;}
+  if(!(xm>0))return;
   const px=p=>6+p[0]/xm*(W-12),py=p=>mid-p[1]/ym*(ph/2-8);
   x.fillStyle=C.edge2;for(let i=0;i<W;i+=8)x.fillRect(i,Math.round(mid),4,1);            // the lane the car starts in
   const car=(p,col)=>{x.save();x.translate(Math.round(px(p)),Math.round(py(p)));x.rotate(-p[2]);x.fillStyle=col;x.fillRect(-5,-3,10,6);x.fillStyle=C.well;x.fillRect(1,-2,2,4);x.restore();};
@@ -39448,7 +39547,16 @@ function bindControls(){
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{
+    state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
+    state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();
+    state.coolant=90;state.oil=100;state.batterySOC=1.0;
+    state.nitrousCharge=1.0;state.nitrousActive=false;
+    const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}
+    if(isElectric()){const tc=(engine.motor&&engine.motor.cool?engine.motor.cool.tCool:40);state.mT={w:tc,c:tc,r:tc};state.soc=0.9;state.battI=0;state.battKW=0;}
+    const afr=engine.ci?(engine.stoichAFR||14.5)*1.4:(engine.stoichAFR||14.7);
+    applyPreset({throttle:0.10,load:0.20,afr,iat:25,coolant:90,oil:100});
+  });
   // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
   // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
   // decides.
