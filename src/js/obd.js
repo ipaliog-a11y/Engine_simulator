@@ -19,7 +19,7 @@ const OBD_CODES={
 const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
 const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
 let obd={codes:{},timers:{},cycleSeen:{},runS:0,wasRunning:true,flash:false,open:false};
-function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;}
+function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;if(typeof o2Loop!=='undefined'){o2Loop.trim=0;o2Loop.int=0;o2Loop.side=0;o2Loop.hist.length=0;o2Loop.seen=1;o2Loop.mv=null;}}
 function obdRunning(){
   if(isElectric())return false;
   if(isHybrid())return !!hybBenchState().engOn;
@@ -101,7 +101,7 @@ function lambdaFromIp(ip){
 // The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
 // 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
 const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
-let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+let o2Loop={live:false,on:true,trim:0,int:0,t:0,hist:[],seen:1,side:0,mv:null};
 function o2LoopActive(){
   const s=engine.lambdaSensor;
   return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
@@ -118,7 +118,7 @@ function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambda
 function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
 function o2LoopStep(dt){
   const L=o2Loop;L.dt=dt;
-  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
+  if(!o2LoopActive()){L.trim=0;L.int=0;L.side=0;L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
   L.t+=dt;
   if(!L.hist.length)L.hist.push([L.t,L.seen]);
   const dTime=o2DeadTime();let late=L.hist[0][1];
@@ -135,7 +135,8 @@ function o2LoopStep(dt){
     // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
     const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
     const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
-    L.int=(L.int||0)+e*dt;
+    const maxInt=O2_TRIM_MAX*ti/Math.max(1e-6,kc);
+    L.int=clamp((L.int||0)+e*dt,-maxInt,maxInt);
     L.trim=-kc*(e+L.int/ti);
   }
   L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);

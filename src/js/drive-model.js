@@ -523,7 +523,7 @@ function driveSprint(car){
 // Returns those, the most the car went sideways (deg) and its path [[x, y, heading]...] every 0.1 s.
 function driveSineDwell(car,mult){
   const s=driveRolling(car,80),v=80/3.6,L=car.a+car.b,T=1/0.7,t0=0.5,end=t0+T+0.5;
-  const A6=0.3*DRIVE_G*L*(1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
+  const A6=0.3*DRIVE_G*L*Math.max(0.1,1+car.Kus*v*v)/(v*v),A270=car.steerLock*4.71/8.5,A=mult?Math.min(mult*A6,A270):Math.max(6.5*A6,A270);
   const st=t=>t<0?0:t<0.75*T?Math.sin(2*Math.PI*0.7*t):t<0.75*T+0.5?-1:t<T+0.5?Math.sin(2*Math.PI*0.7*(t-0.5)):0;
   let pk=0,y=0,r1=0,r175=0,beta=0,n=0;const path=[];
   while(s.t<end+2){const t=s.t-t0;stepCar(car,s,{steer:A*st(t)/car.steerLock,throttle:0,brake:0,gear:s.gear},0.005);
@@ -650,6 +650,7 @@ function driveDriver(car,s,line,d){
 // road's vertical curvature along it, 1/m, negative over a crest; z and grip: the height (m) and the grip under each
 // wheel, four of each, as driveRoadAt gives them} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
 function stepCar(car,s,u,dt){
+  if(!(dt>0))return s;
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];

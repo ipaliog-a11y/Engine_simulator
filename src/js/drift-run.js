@@ -221,7 +221,7 @@ function driftRun(car,plan,sample,D){
     o.eMax=Math.max(o.eMax,Math.abs(d.e||0));o.maxI=Math.max(o.maxI,d.i||0);
     const p0=C.line[d.i],p1=C.line[Math.min(C.line.length-1,d.i+1)];
     const hp=Math.atan2(p1.y-p0.y,p1.x-p0.x);
-    let dh=s.psi-hp;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;
+    let dh=s.psi-hp;dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     const eCG=-(s.x-p0.x)*Math.sin(hp)+(s.y-p0.y)*Math.cos(hp);
     if(Math.abs(eCG)+driftReach(D,dh)>C.halfW)o.off=true;
     const spd=s.speed||Math.hypot(s.vx,s.vy);

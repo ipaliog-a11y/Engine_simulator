@@ -319,11 +319,11 @@ function hybridCycle(v,prof){
   // through a 90% electrical path, and added as fuel. Within the 0.5% tolerance nothing is corrected.
   const bestBsfc=Math.min(...psOol().P.map((P,i)=>psOol().gs[i]*3.6e6/P));
   const corr=Math.abs(R.E)>=capJ*0.005?-R.E/3.6e6*bestBsfc/0.9:0;
-  const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density;
+  const km=R.x/1000,kg=(R.fuel+corr)/1000,L=kg/fp0.density,l100=km>0?L/km*100:0;
   if(prof){const tT=R.evS+R.onS+R.stopS;
-    return {km,l100:L/km*100,L,kg,evShare:R.evS/tT,onShare:R.onS/tT,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
-      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:R.fbS/tT};}
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
+    return {km,l100,L,kg,evShare:tT>0?R.evS/tT:0,onShare:tT>0?R.onS/tT:0,dSocKJ:R.E/1000,s:sBest,corrected:corr!==0,
+      packOutKWh:R.Jout/3.6e6,packInKWh:R.Jin/3.6e6,limitShare:tT>0?R.fbS/tT:0};}
+  const res={km,l100,co2:km>0?kg*0.865*44/12*1000/km:0,kg,evShare:R.evS/(WLTC_3B.length-1),onShare:R.onS/(WLTC_3B.length-1),dSocKJ:R.E/1000,s:sBest,warmS:R.warmS,corrected:corr!==0};
   if(e.hyPlug)res.plug=plugCycles(run0,res,tu,capJ,fp0);   // a plug-in's charge-depleting cycles (build 194)
   e._hcyc={score:e.score,key,res};return res;
 }

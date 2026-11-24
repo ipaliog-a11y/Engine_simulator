@@ -70,11 +70,16 @@ function genRatios(n,spacing){
 }
 // The same fit for one box: its span residual and its progression φ2 (least squares on ln(i_j/i_n)).
 function fitGearbox(r){
-  const n=r.length;let Saa=0,Sab=0,Sbb=0,Sya=0,Syb=0;
-  for(let j=0;j<n;j++){const k=n-1-j,y=Math.log(r[j]/r[n-1]),fb=k*(k-1)/2;Saa+=k*k;Sab+=k*fb;Sbb+=fb*fb;Sya+=y*k;Syb+=y*fb;}
-  const det=Saa*Sbb-Sab*Sab,a=(Sya*Sbb-Syb*Sab)/det,b=(Saa*Syb-Sab*Sya)/det;
+  const n=r?r.length:0;
+  if(n<2)return {res:0,phi2:1,phi1:1,prog:0};
   const L=Math.log(r[0]/r[n-1]);
-  return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:b*(n-1)*(n-2)/2/L};
+  if(n<3)return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:1,phi1:Math.exp(L),prog:0};
+  let Saa=0,Sab=0,Sbb=0,Sya=0,Syb=0;
+  for(let j=0;j<n;j++){const k=n-1-j,y=Math.log(r[j]/r[n-1]),fb=k*(k-1)/2;Saa+=k*k;Sab+=k*fb;Sbb+=fb*fb;Sya+=y*k;Syb+=y*fb;}
+  const det=Saa*Sbb-Sab*Sab;
+  if(!(Math.abs(det)>1e-12))return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:1,phi1:Math.exp(L/(n-1)),prog:0};
+  const a=(Sya*Sbb-Syb*Sab)/det,b=(Saa*Syb-Sab*Sya)/det;
+  return {res:L-(GEAR_SPAN_D+GEAR_SPAN_C*Math.log(n-1)),phi2:Math.exp(b),phi1:Math.exp(a),prog:Math.abs(L)>1e-9?b*(n-1)*(n-2)/2/L:0};
 }
 // The published boxes the spacing law and the family averages are fitted on: all but research batch 1's (build 199).
 const gearsFitted=()=>Object.values(GEARSETS).filter(g=>!g.batch);

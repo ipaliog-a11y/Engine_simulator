@@ -33,9 +33,9 @@ function skidRun(car,v,sample){
   while(s.t<tMax){
     const u=driveDriver(car,s,line,d);
     stepCar(car,s,u,dt);
-    const a=Math.atan2(s.y-R,s.x);let da=a-pa;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;ang+=da;pa=a;
+    const a=Math.atan2(s.y-R,s.x);let da=a-pa;da=Number.isFinite(da)?da-2*Math.PI*Math.round(da/(2*Math.PI)):0;ang+=da;pa=a;
     const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
-    let dh=s.psi-(a+Math.PI/2);dh-=2*Math.PI*Math.round(dh/(2*Math.PI));
+    let dh=s.psi-(a+Math.PI/2);dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2){spin=true;}
     if(!judging&&ang>=2*Math.PI){judging=true;tJ=s.t;}
     if(judging){

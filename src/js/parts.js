@@ -556,6 +556,7 @@ function rederiveBreathing(){
   e.wotRich=wotNeedsEnrichment();
   if(buildKnockLimit())buildBoostTable(26);
   {const p=peakEgts();e.peakEgt=p.probe;e.peakEgtGas=p.gas;}
+  {const c=peakCylLoads();e.peakPmax=c.pMax;e.peakPreIgn=c.preIgn;}
 }
 // Run fn on a copy of the engine with another part of a kind: a designed one, or a factory key. The build, the live
 // state and the caches are as they were afterwards. The copy gets its own score object: the knock-timing and fuel-map

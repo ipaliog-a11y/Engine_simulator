@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Race and championship critical bug fixes (build 442)
+### Race and championship critical bug fixes (build 444)
 
 - Fixed factory `'p:<idx>'` team cars being silently dropped from championship grids in `champNewSeason()` (`src/js/championship.js`), and assigned a valid `classTag` to player team entries so they appear in single- and multi-class standings.
 - Fixed championship economy prize payout in `champApplyRaceToSeason()` (`src/js/championship.js`) to award `CHAMP.prize` only for the player's team entrant(s) rather than every finisher on the grid (~51.5k credits/round).
@@ -26,6 +26,26 @@ they are accurate about *what* shipped but not about the day it shipped.
 - Fixed blue-flag ignore penalties (`src/js/race.js`) to check the lapping car's forward gap (`by._ahead === c && by._gap < RACE.follow * 2`) rather than the lapped car's forward gap, and reset `R.mistakeN = 0` when VSC triggers so subsequent mistakes do not immediately re-trigger VSC on every incident.
 - Updated `raceStandings()` (`src/js/race-tab.js`) to sort finished cars and compute gaps using penalty-adjusted `finishT` (matching `raceResults()` and the finish banner), preserved `0°C` air temperature in `raceConfig()`/`drawRace()`, and guarded `TRACKS[R.cfg.track]` lookups against missing circuit packs.
 - Added `tests/test267.mjs` covering all six fixes.
+
+### Vehicle, suspension, GPX, and audio crash/NaN guards (build 443)
+
+- Clamped `vehicle.fWt` after ballast to `[0.15, 0.85]` and floored `brakeValveRear` and `simulateBraking` axle brake forces at `>= 0` (`src/js/vehicle-accel.js`), preventing extreme front ballast from producing negative rear brake force or cooling rear rotors below ambient. Removed the `vRedline` fallback when drag exceeds drive force at every speed (reporting `0` instead), and returned `timedOut: v > 0.15` from `simulateBraking` when hitting the 25 s cap.
+- Added div-by-zero and sign guards in `driveSineDwell` (`1 + Kus*v^2 >= 0.1`), `stepCar` (`dt <= 0`), `vcdDrawAids` (`xm <= 0`), `fitGearbox` (`< 3` gears), `hybridCycle` (`km === 0` / `tT === 0`), and `gwNice` / `drawGearForce` (`fMax <= 0`).
+- Guarded zero-damping resonance (`cb = cr = 0`) in `scFreq` and capped `yMax` in `drawSuspFreq` (`src/js/susp-window.js`) so the tick loop cannot hang on `Infinity` or `NaN`.
+- Replaced unbounded `while (dh > Math.PI)` / `while (da > Math.PI)` angle-wrapping loops in `src/js/drift-run.js` and `src/js/skidpad-run.js` with finite-checked modular wrapping.
+- Hardened GPX track import (`src/js/tracks-gpx.js`): `parseGPX` now accepts `lon`-before-`lat` and single quotes, validates finite lat/lon bounds, and interpolates missing `<ele>` tags; `gpxToTrack` rejects stationary/short traces, smooths elevation, caps resampled output at `4000` points, and replaces spread `Math.min/max` calls with loops; `catmullClosed` bounds `k < cum.length - 2`.
+- Guarded WebAudio `setTargetAtTime` calls (`setParam`), `soundDrive` (non-finite AFR/RPM/MAP and `e.redline`), `motorTorqueSplit` (`Tpk <= 0`), `motorSoundState`, and worklet `Gas.c`/`Gas.dyn`/`Gas.rate` (`E <= 0`, `T <= 0`) in `src/js/sound.js`.
+- Added regression test `tests/test266.mjs`.
+
+### ICE NaN guards, live-state isolation, and cache/reset fixes (build 442)
+
+- Floored net dyno `torque`/`powerKW`/`powerHP` at `>= 0` after subtracting `electricalDragTorque(rpm)` in `calcAtRpm()` (`src/js/engine-physics.js`) and guarded `peakTQ === 0` / `peakHP === 0` in `scoreEngine()` (`src/js/share-scoring.js`), fixing negative dyno torque and `NaN` scores on small engines with heavy alternators.
+- Isolated `buildKnockLimit()` (`src/js/engine-constants-boost.js`) and `peakCylLoads()` (`src/js/engine-physics.js`) by saving and restoring `state.iat`, `state.afr`, and `state.nitrousActive` at nominal build conditions so live bench state no longer leaks into `knockLimTable`, `peakPmax`, `peakPreIgn`, or Designer previews.
+- Floored `m`, `pc`, `T`, and `Tu` strictly `> 0` before `Math.pow(..., 0.8)` / `Math.pow(..., -0.55)` in `intakeFill()`, `wallTrace()` (`src/js/gas-dynamics.js`), and `endGasTraceAt()` (`src/js/engine-physics.js`).
+- Enforced `compExd_mm >= 30` when non-zero (`src/js/engine-build.js`, `src/js/engine-constants-boost.js`) and clamped the air-filter/carb pressure-drop multiplier to `>= 0.05` in `computeVE()` (`src/js/engine-physics.js`).
+- Added PI anti-windup clamping on `o2Loop.int` and reset `o2Loop` on open-loop transitions and `obdReset()` (`src/js/obd.js`); refreshed `peakPmax`/`peakPreIgn` in `rederiveBreathing()` (`src/js/parts.js`); invalidated hidden preset overrides `edSpringRpm`/`edRadHp` when displacement, redline, or boost are edited (`src/js/engine-build.js`).
+- Fixed `drawCompMap` cache key to use `buildRev` instead of coercing `e.score` to `"[object Object]"` (`src/js/engine-view.js`); fixed LIVE `RESET` to restore `engine.stoichAFR`, refill nitrous, clear `#btnNitrous`, and reset EV `state.soc`/`state.mT` (`src/js/controls-boot.js`); flashed `Invalid or corrupted share link` on `#b=` decode failure (`src/js/share-scoring.js`).
+- Added regression test `tests/test265.mjs`.
 
 ### High-CR and boost limits: peak cylinder pressure, pre-ignition, crevice loss, and ECU boost-cut diagnostics (build 441)
 

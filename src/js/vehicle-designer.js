@@ -246,7 +246,9 @@ function vcdDrawAids(dc,r){
   const C=DC_COLOURS,x=dcCtx(cv),W=cv.width,A=vcdAids(),top=4,ph=96,mid=top+ph/2;
   x.fillStyle=C.well;x.fillRect(0,top,W,ph);
   if(!A.swd)return;
-  const all=A.swd.path.concat(A.off?A.off.path:[]),xm=Math.max(...all.map(p=>p[0])),ym=Math.max(4,...all.map(p=>Math.abs(p[1])));
+  const all=A.swd.path.concat(A.off?A.off.path:[]);
+  let xm=0,ym=4;for(const p of all){if(p[0]>xm)xm=p[0];const ay=Math.abs(p[1]);if(ay>ym)ym=ay;}
+  if(!(xm>0))return;
   const px=p=>6+p[0]/xm*(W-12),py=p=>mid-p[1]/ym*(ph/2-8);
   x.fillStyle=C.edge2;for(let i=0;i<W;i+=8)x.fillRect(i,Math.round(mid),4,1);            // the lane the car starts in
   const car=(p,col)=>{x.save();x.translate(Math.round(px(p)),Math.round(py(p)));x.rotate(-p[2]);x.fillStyle=col;x.fillRect(-5,-3,10,6);x.fillStyle=C.well;x.fillRect(1,-2,2,4);x.restore();};
