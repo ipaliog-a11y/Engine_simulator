@@ -14,11 +14,13 @@
 // at its own speed and torque). What is a rule, and named:
 //   the gears        the 4th-generation Prius's (P610 transaxle): 30 sun and 78 ring teeth, and MG2 geared 65:17 to
 //                    the ring's counter gear (10.84:1 to the wheels with its 2.834 differential);
-//   the bus          a boost converter raises the pack to 600 V for both machines (Toyota's since 2004);
+//   the bus          a boost converter raises the pack to 600 V for both machines (Toyota's since 2004); bidirectional
+//                    DC-DC converter efficiency ~97% (Burress et al., ORNL/TM-2010/253, 2010 Prius THS-II);
 //   MG1              the traction motor's design (the GEN-4 MG1 and MG2 share a stator diameter), its stack and
 //                    current set for 110% of the engine's peak reaction torque and for 31% of the engine's peak power
 //                    (22.5 kW against 72 kW on the 4th-generation Prius).
-const PS={rho:30/78,k2:65/17,busV:600,mg1Margin:1.1,mg1Share:22.5/72};
+const PS={rho:30/78,k2:65/17,busV:600,boostEta:0.97,mg1Margin:1.1,mg1Share:22.5/72};
+const psBoostEta=hy=>hy&&hy.mode==='ps'&&PS.busV>packOcv(hy.pack,HYB_SOC)*1.05?PS.boostEta:1;
 const isPowerSplit=()=>isHybrid()&&engine.hy.mode==='ps';
 // A hybrid with no gearbox, whose vehicle shaft is its traction motor's: a power-split, or a series hybrid (build 193).
 const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='series');
@@ -98,7 +100,7 @@ function psFullLoad(n2,Pb,tqAt){
 function psCurves(){
   const e=engine,hy=e.hy,curve=buildTorqueCurve();
   const tqAt=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
-  const Pb=packMaxPower(hy.pack,HYB_SOC),nMax=hy.motor.nMax,step=Math.max(50,Math.round(nMax/100/50)*50);
+  const Pb=packMaxPower(hy.pack,HYB_SOC)*psBoostEta(hy),nMax=hy.motor.nMax,step=Math.max(50,Math.round(nMax/100/50)*50);
   const eng=[],mot=[],full=[],eta=[],ne=[];
   for(let r=0;r<=nMax+1;r+=step){
     const n=Math.min(r,nMax),a=psFullLoad(n,0,tqAt),b=psFullLoad(n,Pb,tqAt),w=Math.max(n,1)*Math.PI/30;

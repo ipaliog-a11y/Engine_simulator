@@ -66,8 +66,9 @@ const WIRE={round:{label:'ROUND (STRANDED)',fill:FILL,layers:0},hairpin:{label:'
 // 20 C and 0.403%/K (IEC 60889), 2703 kg/m³, 897 J/kg K, at about 30% of copper's price per kilogram (Redalyc, Ingeniería e
 // Investigación, citing Sullivan 2007 and Widmer et al. 2014-16; PROBABLE, prices move): $3.3/kg. Its own higher heat
 // capacity per kilogram is kept; its lower thermal conductivity in the slot is not modelled (the liner dominates).
+const RHO_AL=2.8264e-8, ALPHA_AL=0.00403;   // IEC 60889, 61% IACS aluminium
 const CONDUCTOR={copper:{label:'COPPER',rho:RHO_CU,alpha:ALPHA_CU,dens:RHO_CU_M,cp:385,cost:11},
-  aluminium:{label:'ALUMINIUM',rho:2.8264e-8,alpha:0.00403,dens:2703,cp:897,cost:3.3}};
+  aluminium:{label:'ALUMINIUM',rho:RHO_AL,alpha:ALPHA_AL,dens:2703,cp:897,cost:3.3}};
 // Non-oriented silicon steel, 0.35 mm (M270-35A class): about 2.7 W/kg at 1.5 T 50 Hz and 19 W/kg at 1.0 T 400 Hz.
 // Split into hysteresis (∝ f B²) and eddy (∝ (t f B)²), solved from those two points; a thinner sheet cuts only the eddy.
 const FE_KH=0.0206, FE_KE=6.71e-5, FE_T_REF=0.35;
@@ -105,11 +106,12 @@ const laminationOf=mm=>Math.abs(+mm-0.2)<0.02?LAMINATION['0.20']:LAMINATION['0.3
 // Magnets: remanence at 20 C (T), its temperature coefficient (/K), the highest temperature before the coercivity
 // gives way and the loss is permanent (C), and the price ($/kg). SH and UH grades: Hcj >= 20 kOe and 25 kOe.
 // Build 292: the recoil permeability (mur: sintered NdFeB 1.05, sintered ferrite 1.1, the makers' usual figures) and the
-// density (kg/m3: NdFeB 7500-7600, ferrite 4800-5000).
+// density (kg/m3: NdFeB 7500-7600, ferrite 4800-5000). Electrical conductivity sigma (S/m): sintered NdFeB ~7.1e5 S/m
+// (~1.4 uOhm m, Pyrhonen et al. 2014 Table 3.3 / Arnold Magnetics); ceramic ferrite is insulating (0).
 const MAGNET={
-  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6,mur:1.1,rho:4900},
-  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60,mur:1.05,rho:7500},
-  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95,mur:1.05,rho:7500}
+  ferrite:{label:'FERRITE',Br:0.42,alpha:-0.0020,Tmax:250,cost:6,mur:1.1,rho:4900,sigma:0},
+  ndfeb:  {label:'NdFeB (SH)',Br:1.28,alpha:-0.0012,Tmax:150,cost:60,mur:1.05,rho:7500,sigma:7.1e5},
+  ndfebDy:{label:'NdFeB + Dy (UH)',Br:1.23,alpha:-0.0011,Tmax:180,cost:95,mur:1.05,rho:7500,sigma:7.1e5}
 };
 // ---- the magnets as geometry (build 292) ----
 // A pole is a V of two magnet bars buried under the rotor's surface, as the Model 3's (MotorXP's teardown). The design
@@ -475,20 +477,20 @@ function motorBuild(s){
   if(im){
     const hR=IM_HR*D,Abars=0.5*Math.PI*(D-hR)*hR,ringA=hR*IM_RING*D,ringD=D-hR;
     Qr=2*Math.round(slots*1.23/2);
-    const Rbar=RHO_CU*L/(Abars/Qr),Rring=RHO_CU*(Math.PI*ringD/Qr)/ringA;
+    const Rbar=cond.rho*L/(Abars/Qr),Rring=cond.rho*(Math.PI*ringD/Qr)/ringA;
     Rr20=4*3*(KW_WIND*N)**2/Qr*(Rbar+Rring/(2*Math.sin(Math.PI*p/Qr)**2));
-    mCage=RHO_CU_M*(Abars*L+2*Math.PI*ringD*ringA);
+    mCage=cond.dens*(Abars*L+2*Math.PI*ringD*ringA);
     ImR=IM_BG*IM_GAP*IM_KCS*p/(MU0*(3*Math.SQRT2/Math.PI)*KW_WIND*N);
   }
   const vDrop=im?IM_R_DROP*Math.sqrt(1+(IM_SIGMA*Math.sqrt(Math.max(0,s.invAmps**2-ImR*ImR))/Math.max(1,ImR))**2):null;
-  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-RHO_FE*vMag-(im?RHO_FE*mCage/RHO_CU_M*0.9:0);
+  const mFeR=RHO_FE*Math.PI/4*(D*D-Dsh*Dsh)*Lfe-RHO_FE*vMag-(im?RHO_FE*mCage/cond.dens*0.9:0);
   const mRotor=mFeR+mMag+mCage, J=0.5*mRotor*((D/2)**2+(Dsh/2)**2)*(s.retention==='sleeve'&&!im?1.03:1);
   const mass=(mCu+mFeS+mRotor)*ACTIVE_TO_MOTOR;
   // speed ceilings: the rotor surface, the inverter's output frequency (1.2 kHz IGBT, 2 kHz SiC)
   const nTip=ret.vTip/(Math.PI*D)*60, nFreq=(s.inverter==='sic'?2000:1200)*60/p;
   const nMax=Math.min(s.maxRpm||20000,nTip,nFreq);
   const Imax=s.invAmps;
-  const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*11+150:0));
+  const cost=Math.round(mCu*cond.cost+(mFeS+mFeR)*(3+lam.premium)+mMag*mag.cost+ret.cost+cool.cost+Imax*inv.costA+400+(im?mCage*cond.cost+150:0));
   const m={s,im,mag,ret,cool,inv,lam,wire,cond,barH,barEta,D,L,Lfe,Ds,OD,poles,p,N,slots,Bg,circ,magT,magW,wt,hSlot,hy,psi20,R20,mlt,Acu,mCu,mFeS,mFeR,mMag,mRotor,J,mass,
           strand:dStrand,cuLayers,Jpk:6*N*s.invAmps/Acu,   // the slot copper's current density at full current (A/m²)
           nTip,nFreq,nMax,Imax,cost,Qr,Rr20,mCage,ImR,vDrop,
@@ -665,10 +667,20 @@ const feLoss=(m,f,B)=>{const t=(m.s.lamination||0.35)/FE_T_REF;return (FE_KH*f+F
 // frequency (slots x rev/s). The ripple's amplitude is beta Bg, with Carter's beta for the slot opening over the gap,
 // beta = (1 - u)^2 / (2 (1 + u^2)), u = b0/(2g) + sqrt(1 + (b0/(2g))^2) (Pyrhonen 2014, 3.1.2), and it dies into the
 // iron as exp(-2 pi y / slot pitch): the loss is a skin of a quarter of the slot pitch over 2 pi, the rotor's surface
-// round. Measured on the mean of the gap field's square. The magnets' own eddy currents are not counted (left open).
+// round. Measured on the mean of the gap field's square. Buried sintered NdFeB magnets also see the attenuated slot
+// ripple (Pyrhonen 2014, eq. 3.85; Ishak, Zhu & Howe, IEEE Trans. Magn. 41, 2005), segmented axially to 21.5 mm.
 function rotorIronLoss(m,rpm,Bg2){
   const x=SLOT_OPEN/(2*m.gap),u=x+Math.sqrt(1+x*x),beta=(1-u)**2/(2*(1+u*u));
-  return feLoss(m,m.slots*rpm/60,1)*beta*beta*Bg2*RHO_FE*m.D*m.L*m.ts/4;
+  const fSlot=m.slots*rpm/60;
+  let p=feLoss(m,fSlot,1)*beta*beta*Bg2*RHO_FE*m.D*m.L*m.ts/4;
+  if(!m.im&&m.mag&&m.mag.sigma>0&&m.mMag>0&&fSlot>0){
+    const tau=Math.PI*m.D/m.poles,bBar=Math.min(1,m.magW)*tau/2,lSeg=0.0215;
+    const dAvg=POLE_EDGE+0.5*bBar*Math.tan(V_PHI),atten=Math.exp(-2*Math.PI*dAvg/Math.max(1e-4,m.ts));
+    const bEff2=bBar*bBar*lSeg*lSeg/(bBar*bBar+lSeg*lSeg),vMag=m.mMag/m.mag.rho;
+    const delta=Math.sqrt(1/(Math.PI*fSlot*MU0*m.mag.sigma)),skin=Math.min(1,delta/Math.max(1e-4,m.magT));
+    p+=(Math.PI*Math.PI/6)*m.mag.sigma*fSlot*fSlot*beta*beta*Bg2*atten*atten*bEff2*vMag*skin;
+  }
+  return p;
 }
 // Losses at an operating point (W): torque T (Nm, negative when regenerating), speed (rpm), bus voltage, and the node
 // temperatures {w,r}. Copper and inverter follow the current; the stator's iron, its teeth and its yoke each at their own
@@ -726,13 +738,16 @@ function motorSetLosses(set,T,rpm,Vdc,temp){
   return best;
 }
 // An induction motor's: the stator's copper on the whole current, the cage's on the torque current (rcu, into the rotor),
-// iron on the field it runs at, the rest as a magnet machine's.
+// iron on the field it runs at (plus rotor core iron loss at slip frequency s*f_syn; Pyrhonen 2014 ch. 7), the rest as a magnet machine's.
 function imLosses(m,T,rpm,Vdc,temp){
   const c=imCurrents(m,T,rpm,Vdc),I=c.I,w=rpm*Math.PI/30;
-  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+ALPHA_CU*(temp.r-20));
-  // the teeth and the yoke at the densities they were sized to (build 293), scaled by the field; the rotor's, the ripple's
+  const alphaR=m.cond?m.cond.alpha:ALPHA_CU;
+  const cu=3*I*I*motorR(m,temp.w)*copperAC(m,rpm,temp.w),rcu=3*c.Iq*c.Iq*m.Rr20*(1+alphaR*(temp.r-20));
+  // the teeth and the yoke at the densities they were sized to (build 293), scaled by the field; the rotor's, the ripple's plus slip frequency
   const f=m.p*rpm/60,fl=c.fl,Bt=m.wt?IM_BG*m.ts/(0.95*m.wt)*fl:0,By=IM_BG*fl*2/Math.PI*Math.PI*m.D/m.poles/(0.95*2*m.hy);
-  const feS=feLoss(m,f,Bt)*m.mTeeth+feLoss(m,f,By)*(m.mFeS-m.mTeeth),feR=rotorIronLoss(m,rpm,IM_BG*IM_BG*fl*fl/2),fe=feS+feR;
+  const pAg=Math.abs(T)*w+rcu,slip=pAg>0?rcu/pAg:0,fSlip=rpm>0?f*slip/Math.max(0.05,1-slip):0;
+  const feS=feLoss(m,f,Bt)*m.mTeeth+feLoss(m,f,By)*(m.mFeS-m.mTeeth);
+  const feR=rotorIronLoss(m,rpm,IM_BG*IM_BG*fl*fl/2)+(fSlip>0&&m.mFeR>0?feLoss(m,fSlip,IM_BG*fl)*m.mFeR:0),fe=feS+feR;
   const mech=0.15*w+5e-8*w*w*w*(m.D/0.15)**4*(m.L/0.134);
   const inv=m.inv,rS=inv.r*1000/m.Imax;
   const invL=I>0?3*(0.9*inv.v0*I+rS*I*I)+3*(Math.SQRT2/Math.PI)*inv.tSw*inv.fSw*Vdc*I:0;
@@ -834,7 +849,7 @@ function packBuild(s){
   const ctp=s.chem==='lfp'&&year>=2020;
   const mass=kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
   const cost=Math.round(kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,iMax:c.cMax*Ah};
+  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,vMax:c.vMax?series*c.vMax:0,iMax:c.cMax*Ah,iChargeMax:c.cCharge*Ah};
 }
 // Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
 // A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
@@ -867,20 +882,28 @@ function packOcv(b,soc){
   return b.series*(t[k]+(t[k+1]-t[k])*(x-k));
 }
 // Drawing P watts (negative: charging) at a state of charge: the terminal voltage, the current and the heat in the cells.
-// The current solves P = (Voc - I R) I; null if the pack cannot give that much (past the cut-off or the rate).
+// The current solves P = (Voc - I R) I; null if the pack cannot give or take that much (past the cut-off/charge voltage or C-rate).
 // tC: the cells' temperature (°C), for the resistance (packR); omitted, the 25 °C one.
 function packDraw(b,soc,P,tC){
   const R=packR(b,tC),V0=packOcv(b,soc),disc=V0*V0-4*R*P;
   if(disc<0)return null;
   const I=(V0-Math.sqrt(disc))/(2*R),V=V0-I*R;
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
+  if(P<0&&((b.vMax>0&&V>b.vMax)||-I>(b.iChargeMax!=null?b.iChargeMax:b.chem.cCharge*b.Ah)))return null;
   return {V,I,heat:I*I*R};
 }
-// Like packDraw, but clamps discharge overload to the pack's max-power current so thermal/energy callers never drop heat to 0.
+// Like packDraw, but clamps discharge and charge overloads to the pack's limits so thermal/energy callers never drop heat to 0.
 function packDrawClamped(b,soc,P,tC){
   const d=packDraw(b,soc,P,tC);
-  if(d||!(P>0))return d||{V:packOcv(b,soc),I:0,heat:0};
+  if(d)return d;
   const R=packR(b,tC),V0=packOcv(b,soc);
+  if(P<0){
+    const iChg=b.iChargeMax!=null?b.iChargeMax:b.chem.cCharge*b.Ah;
+    const iV=b.vMax>0?Math.max(0,(b.vMax-V0)/R):Infinity;
+    const I=-Math.max(0,Math.min(iChg,iV));
+    return {V:V0-I*R,I,heat:I*I*R};
+  }
+  if(!(P>0))return {V:V0,I:0,heat:0};
   const I=Math.max(0,Math.min(b.iMax,(V0-b.vMin)/R,V0/(2*R)));
   return {V:V0-I*R,I,heat:I*I*R};
 }
@@ -901,15 +924,17 @@ function packMaxPower(b,soc,tC){
   return Math.max(0,(V0-I*R)*I);
 }
 // The most it can take back (W): the plating limit, or the current that would lift the cells to their charge
-// voltage, whichever is lower. At 25 °C the plating limit is the lower one on the factory packs, so the
-// regeneration cap does not move. vMax is the usual charge voltage: 4.20 V for NCA/NMC, 3.65 V for LFP.
+// voltage, whichever is lower. At 25 °C and 50% SOC the plating limit is the lower one on the factory packs, while
+// high SOC or cold cells taper regen as V0 approaches vMax or R rises. vMax: 4.20 V for NCA/NMC, 3.65 V for LFP.
 function packChargePower(b,soc,tC){
   const R=packR(b,tC),V0=packOcv(b,soc);
   let P=b.pChargeMax;
   const vmax=b.chem.vMax;
-  if(vmax>0&&V0<b.series*vmax){
-    const I=Math.max(0,(b.series*vmax-V0)/R);
-    P=Math.min(P,I*b.series*vmax);
+  if(vmax>0){
+    const Vmax=b.series*vmax;
+    if(V0>=Vmax)return 0;
+    const I=Math.max(0,(Vmax-V0)/R);
+    P=Math.min(P,I*Vmax);
   }
   return Math.max(0,P);
 }
