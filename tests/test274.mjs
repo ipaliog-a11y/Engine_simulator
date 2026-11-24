@@ -93,22 +93,21 @@ const r = await page.evaluate(() => {
   for (let i = 0; i < 200; i++) stepCar(carEv, sRevEv, { steer: 0, throttle: 0.5, brake: 0, gear: -1 }, 0.01);
   out.reverse = { iceVx: sRevIce.vx, iceX: sRevIce.x, evVx: sRevEv.vx, evX: sRevEv.x };
 
-  // 4. Automatic torque converter multiplication below stall speed
+  // 4. Automatic torque converter multiplication below stall speed (in 3rd gear so tyres are not traction-capped)
   loadCar('Golf GTI');
   document.getElementById('vhGearbox').value = 'auto';
   buildVehicle();
-  const carAuto = driveCar();
-  const sAuto = driveLaunch(carAuto);
-  carAuto.tc = false;
-  // Hold brakes? No, free launch from stall for 0.05 s and compare Fx against 1:1 engine torque
-  let peakFx = 0;
-  for (let i = 0; i < 15; i++) {
-    stepCar(carAuto, sAuto, { steer: 0, throttle: 1, brake: 0, gear: 1 }, 0.005);
+  const carAuto = driveCar(), carAuto1 = Object.assign({}, carAuto, { tcMult: 1 });
+  carAuto.tc = false; carAuto1.tc = false;
+  const sAuto = driveLaunch(carAuto), sAuto1 = driveLaunch(carAuto1);
+  let peakFx = 0, peakFx1 = 0;
+  for (let i = 0; i < 20; i++) {
+    stepCar(carAuto, sAuto, { steer: 0, throttle: 1, brake: 0, gear: 3 }, 0.005);
+    stepCar(carAuto1, sAuto1, { steer: 0, throttle: 1, brake: 0, gear: 3 }, 0.005);
     peakFx = Math.max(peakFx, sAuto.Fx[0] + sAuto.Fx[1] + sAuto.Fx[2] + sAuto.Fx[3]);
+    peakFx1 = Math.max(peakFx1, sAuto1.Fx[0] + sAuto1.Fx[1] + sAuto1.Fx[2] + sAuto1.Fx[3]);
   }
-  const tqAtStall = driveEngine(carAuto, 1, carAuto.tcStall, sAuto.boost, sAuto.soc);
-  const fxNoMult = tqAtStall * carAuto.ratios[0] * carAuto.fd * carAuto.eff / carAuto.r;
-  out.autoTc = { tcStall: carAuto.tcStall, tcMult: carAuto.tcMult, peakFx, fxNoMult };
+  out.autoTc = { tcStall: carAuto.tcStall, tcMult: carAuto.tcMult, peakFx, peakFx1 };
 
   // 5. simulateLapCore: non-ABS slower than ABS + steering trace includes Kus * ay
   loadCar('Golf GTI');
@@ -140,8 +139,8 @@ const r = await page.evaluate(() => {
     brkDry: brkDry.dist, brkWet: brkWet.dist
   };
 
-  // 7. Existing driveSineDwell ESP sanity check
-  loadCar('MX-5');
+  // 7. Existing driveSineDwell ESP sanity check (ND MX-5 has ESP fitted)
+  loadCar('MX-5 2.0 (ND');
   const sd = driveSineDwell(driveCar());
   out.sd = { pass: sd.pass, r1: sd.r1, r175: sd.r175, y: sd.y };
 
@@ -165,7 +164,7 @@ if (!(r.reverse.iceVx < -2 && r.reverse.iceX < -2)) fails.push(`ICE reverse fail
 if (!(r.reverse.evVx < -2 && r.reverse.evX < -2)) fails.push(`EV reverse failed (vx=${r.reverse.evVx.toFixed(2)}, x=${r.reverse.evX.toFixed(2)})`);
 
 if (!(r.autoTc.tcStall > 0 && r.autoTc.tcMult > 1)) fails.push(`auto torque converter params missing (${JSON.stringify(r.autoTc)})`);
-if (!(r.autoTc.peakFx > r.autoTc.fxNoMult * 1.15)) fails.push(`auto torque converter did not multiply launch force (${r.autoTc.peakFx.toFixed(0)} vs ${r.autoTc.fxNoMult.toFixed(0)} N)`);
+if (!(r.autoTc.peakFx > r.autoTc.peakFx1 * 1.3)) fails.push(`auto torque converter did not multiply launch force (${r.autoTc.peakFx.toFixed(0)} vs ${r.autoTc.peakFx1.toFixed(0)} N)`);
 
 if (!(r.lap.tNoAbs > r.lap.tAbs + 0.05)) fails.push(`non-ABS lap not slower than ABS (${r.lap.tAbs.toFixed(2)} vs ${r.lap.tNoAbs.toFixed(2)} s)`);
 if (!(r.lap.maxSteerDiff > 0.002)) fails.push(`lap steering trace missing Kus*ay slip-angle delta (max diff ${r.lap.maxSteerDiff.toFixed(5)} rad)`);
