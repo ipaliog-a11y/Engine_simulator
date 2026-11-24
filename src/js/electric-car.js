@@ -93,8 +93,8 @@ function evGrid(e){const c=evCurve(e);return {rpms:c.map(p=>p.rpm),boosts:[0],tq
 // Regeneration as overrun torque (Nm, positive), on the engine's 500-rpm-up table: the motor's torque at that speed,
 // capped by the power the pack takes back, then by the maker's calibration (evRegenRule: a deceleration on car v, and a
 // regen kW limit). Below ~500 rpm a real car fades it out to stop smoothly; the table's floor does the same.
-function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null){
-  const out=[],V=motorRatedV(e),R=evRegenRule(e),Pc=Math.min(e.pack.pChargeMax,R.kW?R.kW*1000:Infinity),k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
+function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null,soc=0.5,tC=PACK_T_REF){
+  const out=[],V=motorRatedV(e),R=evRegenRule(e),Pc=Math.min(packChargePower(e.pack,soc,tC),R.kW?R.kW*1000:Infinity),k=(EV_REGEN[e.evRegen]||EV_REGEN.high).k;
   // the torque that slows car v (test mass and inertias) by g: the eco run's F = T·fd/(r·eff), turned round
   const Tg=v&&v.rTire&&v.finalDrive?R.g*G*(v.mass+(v.wheelI||0)/(v.rTire*v.rTire)+e.motor.J*(v.finalDrive/v.rTire)**2)*v.rTire*(v.driveEff||1)/v.finalDrive:Infinity;
   for(let r=500;r<=rl+250;r+=250){
@@ -106,28 +106,30 @@ function evRegenTable(e,rl,v=typeof vehicle!=='undefined'?vehicle:null){
 // The heat over a lap. prof: per point the time step (s), the motor speed (rpm) and torque (Nm, negative regenerating).
 // Walks the lap twice from coolant temperature (a preparation lap, then the timed one) and gives, per point of the timed
 // lap, the share of the drive the controller and the pack allow, and the temperatures it ran at.
-function evLapHeat(e,prof){
+function evLapHeat(e,prof,soc0=0.8){
   const m=e.motor,b=e.pack,V=motorRatedV(e),n=prof.dt.length,tc=m.cool.tCool;
   const t={w:tc,c:tc,r:tc},tb={b:PACK_COOLANT};
   const share=new Float64Array(n),tW=new Float64Array(n),tR=new Float64Array(n),tB=new Float64Array(n);
-  let regenJ=0,driveJ=0;
+  let regenJ=0,driveJ=0,soc=clamp(soc0,0.05,1);
   for(let lap=0;lap<2;lap++)for(let i=0;i<n;i++){
     // A timed lap starts on a pack cooled to its coolant beforehand (a track mode pre-conditions it): ~400 kg of cells
     // take a whole flat-out lap to heat, so the preparation lap that brings the motor and the rotors to their working
     // temperature would hand the timed lap a pack already hot. The race (step 2.4) carries the pack's heat lap to lap.
-    if(lap===1&&i===0)tb.b=PACK_COOLANT;
+    if(lap===1&&i===0){tb.b=PACK_COOLANT;soc=clamp(soc0,0.05,1);}
     // the controller and the battery management act as the heat builds, not after it: the torque asked for is cut by the
     // share the temperatures allow at that moment, which is what holds a hot pack near its limit instead of past it
     // and, since build 373, the pack's power at its temperature over the rated curve's 25 °C (evPackGain)
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
-    const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
-    const d=packDrawClamped(b,0.5,P,tb.b);   // at the pack's temperature (build 346)
+    let P=T*w+L.total;                           // battery power: drawing (+), or taking back (-) less the losses
+    if(P<0){const Pc=packChargePower(b,soc,tb.b)*packDerate(tb.b);if(-P>Pc)P=-Pc;}
+    const d=packDrawClamped(b,soc,P,tb.b);       // at live SOC and pack temperature
+    soc=clamp(soc-d.I*dt/(b.Ah*3600),0,1);
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
   }
-  return {share,tW,tR,tB,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
+  return {share,tW,tR,tB,socEnd:soc,driveKWh:driveJ/3.6e6,regenKWh:regenJ/3.6e6};
 }
 // The VEHICLE tab for an electric car: no gearbox type, speeds or spacing to choose, and GEARING sets the reduction.
 // Called on every build, so an engine gets its own fields back.

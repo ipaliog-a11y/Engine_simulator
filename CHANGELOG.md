@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### EV and hybrid thermal, regen, and P2 cranking parity (build 446)
+
+- Added `packChargePower` (`src/js/electric.js`) to cap regenerative charging by cell upper voltage (`vMax`) and temperature-derated charge C-rate, and updated `packDraw` / `packDrawClamped` to reject/clamp charging past `vMax`; wired `packChargePower` into `evRegenTable` (`src/js/electric-car.js`) and `hybRegenTable` (`src/js/hybrid.js`), and integrated live SOC across the lap in `evLapHeat`.
+- Added pack thermal tracking (`state.tB`) with live hot-pack derating and negative regen torque testing on the EV LIVE bench (`src/js/electric-ui.js`).
+- Fixed the P2 hybrid full-throttle engine-start cranking deadlock and wired live motor/pack thermal derating into the hybrid bench (`src/js/hybrid-bench.js`).
+- Added hybrid lap (`hybLapHeat` in `src/js/hybrid.js`) and race (`hybRaceHeatStep` in `src/js/hybrid-race.js`) motor and pack thermal stepping and derating under sustained high-C draw.
+- Distinguished aluminium vs. copper rotor cage resistivity and mass in induction motors, added magnet eddy-current loss to NdFeB `rotorIronLoss` (`src/js/electric.js`), and applied 97% bidirectional DC-DC boost converter efficiency (`psBoostEta`, ORNL/TM-2010/253) when boosting pack voltage in power-split hybrids (`src/js/power-split.js`, `src/js/hybrid.js`).
+- Added `tests/test271.mjs` covering regen tapering, EV/hybrid bench thermal and regen, P2 cranking, hybrid lap/race thermal derating, and IM/PM/power-split refinements.
+
 ### EV and hybrid NaN guards and race pack-overload fix (build 445)
 
 - Guarded PM motors whose rotor bridge leakage exceeds magnet flux (`Am * Br <= leak`, e.g. small rotor with 12-pole Ferrite) in `magnetCircuit`, `statorFrom`, `dqSetup`, `dqBinv`, `dqSolve`, `tMagOf`, and `motorBaseW` (`src/js/electric.js`), keeping zero-flux builds finite (zero torque, finite geometry and losses) without moving healthy presets.
