@@ -300,7 +300,10 @@ function compOutletT(map,rpm){
   // the compressor delivers the boost plus what the intercooler and its pipe drop (build 256)
   const PR=Math.max(1,map)+(rpm>0?icDpBar(airFlowAt(rpm,Math.max(1,map)),map):0),t=state.iat;
   const eta=(rpm>0&&engine.intake==='turbo'&&engine.chokeFlow_kgs>0)
-    ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR):engine.compEff;
+    ?compIslandEff(compFlowFrac(rpm,airFlowAt(rpm,PR)),PR)
+    :engine.intake==='supercharger'
+      ?scAdiabaticEff(engine.scType,PR,rpm>0?clamp(rpm/engine.redline,0,1):0.85)
+      :engine.compEff;
   return t+(t+273.15)*(Math.pow(PR,0.283)-1)/clamp(eta||0.72,0.30,0.85);
 }
 function vizTempCol(T){const f=clamp((T-20)/160,0,1);return `rgb(${Math.round(68+170*f)},${Math.round(170-70*f)},${Math.round(255-200*f)})`;}
