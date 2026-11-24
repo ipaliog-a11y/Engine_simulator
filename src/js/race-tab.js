@@ -79,11 +79,16 @@ function renderRaceSetup(){
   if(pg){pg.hidden=raceUI.phase!=='computing';pg.querySelector('.race-prog-bar').style.width=Math.round(raceUI.prog*100)+'%';pg.querySelector('span').textContent=raceUI.progTxt;}
   raceTopInfo();
 }
+function raceAirVal(el){
+  if(!el||el.value==='')return RACE.air;
+  const v=+el.value;
+  return Number.isFinite(v)?v:RACE.air;
+}
 function raceConfig(){
   const g=id=>document.getElementById(id);
   return {track:g('raceTrk').value,laps:clamp(Math.round(+g('raceLaps').value||5),1,100),
     strategy:'auto',grid:g('raceGrid').value,warmers:g('raceWarmers').checked,
-    weather:g('raceWeather').value,air:+g('raceAir').value||RACE.air,
+    weather:g('raceWeather').value,air:raceAirVal(g('raceAir')),
     cars:raceUI.entrants.map(e=>{const x=Object.assign({},e.strat);if(/^\d$/.test(x.stops))x.stops=+x.stops;return x;}),
     seed:(Math.round(+g('raceSeed').value)>>>0)||1};
 }
@@ -145,12 +150,12 @@ function raceStandings(R,t){
     const laps=c.laps.filter(l=>l.end<=t);
     const pits=R.events.filter(e=>e.car===c.id&&e.type==='pit'&&e.t<=t);
     const lastOut=R.events.filter(e=>e.car===c.id&&e.type==='pitout'&&e.t<=t).pop();
-    return {k,c,s,fin,dnf,laps,last:laps.length?laps[laps.length-1].t:null,best:laps.length?Math.min(...laps.map(l=>l.t)):null,
+    return {k,c,s,fin,finT:fin?(c.finishT!=null?c.finishT:fin.t):null,dnf,laps,last:laps.length?laps[laps.length-1].t:null,best:laps.length?Math.min(...laps.map(l=>l.t)):null,
       pits:pits.length,inPit:s.flag===1&&!fin,tyreAge:lastOut?laps.filter(l=>l.end>lastOut.t).length:laps.length};
   });
   S.sort((a,b)=>{
     if(a.dnf&&!b.dnf)return 1;if(b.dnf&&!a.dnf)return -1;
-    if(a.fin&&b.fin)return b.laps.length-a.laps.length||a.fin.t-b.fin.t;
+    if(a.fin&&b.fin)return b.laps.length-a.laps.length||a.finT-b.finT;
     if(a.fin&&!b.fin)return b.s.sTot>a.s.sTot+1?1:-1;
     if(b.fin&&!a.fin)return a.s.sTot>b.s.sTot+1?-1:1;
     return b.s.sTot-a.s.sTot;
@@ -161,7 +166,7 @@ function raceStandings(R,t){
     if(p===0){x.gap=null;return;}
     const ld=lead.laps.length-x.laps.length;
     if(x.dnf){x.gap='DNF';return;}
-    if(x.fin&&lead.fin&&ld===0){x.gap='+'+(x.fin.t-lead.fin.t).toFixed(1);return;}
+    if(x.fin&&lead.fin&&ld===0){x.gap='+'+Math.max(0,x.finT-lead.finT).toFixed(1);return;}
     const down=Math.floor((lead.s.sTot-x.s.sTot)/Lc);
     if(down>=1&&!x.fin){x.gap='+'+down+' '+tr(down>1?'LAPS':'LAP');return;}
     if(x.fin&&ld>0){x.gap='+'+ld+' '+tr(ld>1?'LAPS':'LAP');return;}
@@ -213,7 +218,8 @@ function renderRacePanel(force){
   const sc=document.getElementById('raceScrub');if(sc&&!raceUI.scrubbing)sc.value=Math.round(t/R.t*1000);
   const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   const wNow=S[0].s.wet;
-  document.getElementById('raceHead').innerHTML='<b>'+esc(TRACKS[R.cfg.track].label)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
+  const trkLabel=(TRACKS[R.cfg.track]||{}).label||R.cfg.track;
+  document.getElementById('raceHead').innerHTML='<b>'+esc(trkLabel)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
     (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'')+
     '<br>'+raceWeatherText(wNow)+' • '+tr('AIR')+' '+R.cfg.air+'°C • '+tr('TRACK')+' '+Math.round(raceTrackTemp(R.cfg.air,wNow))+'°C';
   const row=x=>{
@@ -274,7 +280,8 @@ function drawRace(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   const R=raceUI.run;
-  ctx.fillText(tr('RACE')+(R?' • '+TRACKS[R.cfg.track].label:''),12,19);
+  const rTrkLabel=R?((TRACKS[R.cfg.track]||{}).label||R.cfg.track):'';
+  ctx.fillText(tr('RACE')+(R?' • '+rTrkLabel:''),12,19);
   if(!R||raceUI.phase!=='live'){
     if(raceUI.phase==='computing'){
       ctx.font='8px "Press Start 2P"';ctx.fillStyle='#778';
@@ -284,7 +291,7 @@ function drawRace(){
       const g=id=>document.getElementById(id);
       const key=(g('raceTrk')&&g('raceTrk').value)||trackKey;
       const wx=(g('raceWeather')&&g('raceWeather').value)||'dry';
-      const air=+(g('raceAir')&&g('raceAir').value)||RACE.air;
+      const air=raceAirVal(g('raceAir'));
       const laps=clamp(Math.round(+(g('raceLaps')&&g('raceLaps').value)||5),1,100);
       drawTrackPreview(key,{weather:wx,air,title:tr('RACE'),
         sub:[laps+' '+tr('LAPS')+' • '+raceUI.entrants.length+' '+tr('ENTRANTS')+' • '+tr('Pick two or more cars, then START RACE.')]});
@@ -324,7 +331,7 @@ function drawRace(){
   drawPixelRect(0,0,W,28,'#12121c');
   ctx.fillStyle=C.yellow;ctx.font='10px "Press Start 2P"';
   ctx.textAlign='left';
-  if(W>=560)ctx.fillText(tr('RACE')+' • '+TRACKS[R.cfg.track].label,12,19);
+  if(W>=560)ctx.fillText(tr('RACE')+' • '+rTrkLabel,12,19);
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
@@ -417,7 +424,7 @@ function raceTopInfo(){
   const R=raceUI.run;
   if(!R||raceUI.phase!=='live'){el.textContent=raceUI.phase==='computing'?raceUI.progTxt:tr('Set up the race');return;}
   const S=raceStandings(R,raceUI.t),lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
-  el.textContent=TRACKS[R.cfg.track].label+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
+  el.textContent=((TRACKS[R.cfg.track]||{}).label||R.cfg.track)+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
 }
 function bindRacePage(){
   document.getElementById('raceBack').addEventListener('click',()=>setTab(racePage.from));

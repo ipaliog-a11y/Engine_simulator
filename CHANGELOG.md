@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Race and championship critical bug fixes (build 444)
+
+- Fixed factory `'p:<idx>'` team cars being silently dropped from championship grids in `champNewSeason()` (`src/js/championship.js`), and assigned a valid `classTag` to player team entries so they appear in single- and multi-class standings.
+- Fixed championship economy prize payout in `champApplyRaceToSeason()` (`src/js/championship.js`) to award `CHAMP.prize` only for the player's team entrant(s) rather than every finisher on the grid (~51.5k credits/round).
+- Guarded timed races with `cfg.laps === 0` and `durationSec > 0` in `raceInit()`, `racePlan()`, `raceRecord()`, `raceStepOnce()`, and `raceCross()` (`src/js/race.js`) so recording buffers and lap/cutoff estimates remain finite and positive instead of creating a zero-length `Float32Array(NaN)`.
+- Fixed blue-flag ignore penalties (`src/js/race.js`) to check the lapping car's forward gap (`by._ahead === c && by._gap < RACE.follow * 2`) rather than the lapped car's forward gap, and reset `R.mistakeN = 0` when VSC triggers so subsequent mistakes do not immediately re-trigger VSC on every incident.
+- Updated `raceStandings()` (`src/js/race-tab.js`) to sort finished cars and compute gaps using penalty-adjusted `finishT` (matching `raceResults()` and the finish banner), preserved `0°C` air temperature in `raceConfig()`/`drawRace()`, and guarded `TRACKS[R.cfg.track]` lookups against missing circuit packs.
+- Added `tests/test267.mjs` covering all six fixes.
+
 ### Vehicle, suspension, GPX, and audio crash/NaN guards (build 443)
 
 - Clamped `vehicle.fWt` after ballast to `[0.15, 0.85]` and floored `brakeValveRear` and `simulateBraking` axle brake forces at `>= 0` (`src/js/vehicle-accel.js`), preventing extreme front ballast from producing negative rear brake force or cooling rear rotors below ambient. Removed the `vRedline` fallback when drag exceeds drive force at every speed (reporting `0` instead), and returned `timedOut: v > 0.15` from `simulateBraking` when hitting the 25 s cap.

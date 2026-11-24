@@ -467,10 +467,11 @@ function racePractice(M,cfg,maxLaps,mode,ff0,hx){
 // An electric car (build 181) cannot charge in the pit lane: it starts full, stops only for tyres, and its energy manager
 // chooses the power that lasts the distance (evRacePlanFF).
 function racePlan(M,cfg,cc){
-  const ev=M.ev?evRacePlanFF(M,cfg.laps,cc.mode):null;
+  const N=cfg.laps>0?cfg.laps:Math.max(1,Math.ceil((cfg.durationSec||0)/Math.max(1,M.lapNom)));
+  const ev=M.ev?evRacePlanFF(M,N,cc.mode):null;
   // a plug-in hybrid (build 196): its share of the depleting laps, and the fuel a lap between the two
-  const hx=M.hy?hybRacePlanX(M,M.hy.usable,cfg.laps):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
-  const N=cfg.laps, fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
+  const hx=M.hy?hybRacePlanX(M,M.hy.usable,N):0,fplH=M.hy?M.fuelPerLapKg+(M.hy.fplKg-M.fuelPerLapKg)*hx:M.fuelPerLapKg;
+  const fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
   if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
   const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
@@ -540,9 +541,11 @@ function raceInit(models,cfg){
   });
   for(const c of R.cars)c.sTot=raceDist(R,c);
   // recording, sized for the race and grown if it runs long
-  const recEst=est*1.3*(cfg.laps+1)/cfg.laps+60;
+  const maxLap=Math.max(...models.map(M=>M.lapNom));
+  const recEst=(cfg.laps>0?est*1.3*(cfg.laps+1)/cfg.laps:est*1.3+maxLap*2)+60;
   const recDt=Math.max(RACE.recDt,recEst/40000);
-  R.rec={dt:recDt,n:0,cap:Math.ceil(recEst/recDt)+10,K:20,data:null,next:0};
+  const recCap=Math.max(16,Math.ceil(recEst/recDt)+10);
+  R.rec={dt:recDt,n:0,cap:recCap,K:20,data:null,next:0};
   R.rec.data=R.cars.map(()=>new Float32Array(R.rec.cap*R.rec.K));
   return R;
 }
@@ -557,7 +560,7 @@ const RACE_TYRE_CODE={inter:1,wet:2};
 function raceRecord(R){
   const rc=R.rec;
   if(rc.n>=rc.cap){
-    const cap=rc.cap*2;
+    const cap=Math.max(16,rc.cap*2);
     rc.data=rc.data.map(a=>{const b=new Float32Array(cap*rc.K);b.set(a);return b;});rc.cap=cap;
   }
   const flag={run:0,pit:1,fin:2,dnf:3};
@@ -717,7 +720,7 @@ function raceStepOnce(R){
       // ignore blue (championship P5): still blocking a faster car as the flag expires
       if(prev>0&&c.blue<=0&&c._blueBy!=null){
         const by=cars.find(x=>x.id===c._blueBy);
-        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&c._gap<RACE.follow*2){
+        if(by&&by.state==='run'&&by.sTot-c.sTot>Lc/2&&by._ahead===c&&by._gap<RACE.follow*2){
           const pen=typeof CHAMP!=='undefined'?CHAMP.blueIgnorePen:5;
           c.timePenalty=(c.timePenalty||0)+pen;c.blueIgnore=(c.blueIgnore||0)+1;
           raceEvent(R,c,'blue_ignore',{by:c._blueBy,pen});
@@ -737,6 +740,7 @@ function raceStepOnce(R){
         // VSC (championship P5): enough mistakes open a virtual safety car for a named number of leader laps
         if(cfg.vsc&&!R.vsc&&!R.chequered&&R.mistakeN>=(typeof CHAMP!=='undefined'?CHAMP.vscMistakes:3)){
           R.vsc={fromLap:R.leaderLaps||0,left:typeof CHAMP!=='undefined'?CHAMP.vscLaps:1};
+          R.mistakeN=0;
           raceEvent(R,null,'vsc');
         }
       }
@@ -770,7 +774,7 @@ function raceStepOnce(R){
   R.t+=dt;
   if(R.t>=R.rec.next){raceRecord(R);R.rec.next+=R.rec.dt;}
   if(cars.every(c=>c.state==='fin'||c.state==='dnf')){R.done=true;raceRecord(R);}
-  else if(R.t>R.cfg.laps*Math.max(...cars.map(c=>c.M.lapNom))*4+600){   // nobody is getting there
+  else if(R.t>(R.cfg.durationSec>0?R.cfg.durationSec*2+Math.max(...cars.map(c=>c.M.lapNom))*4:R.cfg.laps*Math.max(...cars.map(c=>c.M.lapNom))*4)+600){   // nobody is getting there
     for(const c of cars)if(c.state!=='fin'&&c.state!=='dnf'){c.state='dnf';raceEvent(R,c,'dnf',{why:'TIME LIMIT'});}
     R.done=true;raceRecord(R);
   }
@@ -822,11 +826,13 @@ function raceCross(R,c){
     if(corners.length)c.mistake={at:corners[Math.floor(R.rnd()*corners.length)],d:null};
   }
   if(c.lapsDone<0)return;
+  const left=cfg.laps>0?cfg.laps-c.lapsDone:Math.max(0,Math.ceil(Math.max(0,cfg.durationSec-R.t)/Math.max(1,M.lapNom)));
+  const totLaps=cfg.laps>0?cfg.laps:c.lapsDone+left;
   // an electric car's energy manager looks again at what is left for the laps that are left
-  if(M.ev&&cfg.laps-c.lapsDone>0)evRaceManage(M,c,cfg.laps-c.lapsDone,mode);
-  if(M.hy&&cfg.laps-c.lapsDone>0)hybRaceManage(M,c,cfg.laps-c.lapsDone);   // a plug-in's, for its own charge (build 196)
+  if(M.ev&&left>0)evRaceManage(M,c,left,mode);
+  if(M.hy&&left>0)hybRaceManage(M,c,left);   // a plug-in's, for its own charge (build 196)
   // the pit lane: on the planned lap; now if the fuel or the tyres will not see another; or for the weather
-  const left=cfg.laps-c.lapsDone, fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
+  const fpl=c.plan.fpl||M.fuelPerLapKg*1.03;
   const noStops=c.plan.want==='none';
   let tyre=c.ty.key;
   if(c.cc.wetCall!=='stay'&&left>=2){
@@ -841,10 +847,10 @@ function raceCross(R,c){
     // an unplanned stop takes the place of a planned one coming up soon
     const nextIdx=c.plan.stops.findIndex(l=>l>c.lapsDone);
     if(!planned&&nextIdx>=0){
-      const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:cfg.laps;
+      const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:totLaps;
       if(next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
     }
-    const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:cfg.laps)-c.lapsDone);
+    const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:totLaps)-c.lapsDone);
     const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
     const service=Math.max(RACE.tyreChange,add/M.fuelRho/RACE.refuelLps);
     c.state='pit';c.pit={t:M.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
