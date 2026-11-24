@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Supercharger adiabatic efficiency and diesel/ported peak cylinder pressure (build 446)
+
+- Added blower-type adiabatic efficiency `scAdiabaticEff(scType, pr, rpmFrac)` (`src/js/engine-constants-boost.js`) for Roots (Heywood §6.8.2 Eq. 6.36 backflow law with clearance roll-off above PR 2.0), twin-screw (internal-compression peak around PR 2.0), and centrifugal (speed- and PR-dependent radial wheel map), wired into `deriveCharge()` (`src/js/engine-build.js`) and `compOutletT()` (`src/js/engine-view.js`) so superchargers no longer fall back to the turbo wheel map.
+- Added an off-boost supercharger bypass parasitic drag floor (`SC_BYPASS_FRAC = 0.15`, Eaton TVS bypass measurements) in `pumpFrictionMEP()` (`src/js/engine-physics.js`) so belt-driven blowers keep positive parasitic drag when `map <= 1.0`.
+- Added closed-cycle peak cylinder pressure `ciPortedPmax(rpm, map, adv)` (`src/js/engine-physics.js`) using Dual / Limited-Pressure polytropic compression and constant-volume burn rise for CI diesels (`PMAX_LIMIT_CI = 200` bar) and ported SI engines (2-stroke and rotary, `PMAX_LIMIT_SI = 140` bar), replacing the `pMax: 0` stub in `cylTraceAt()`.
+- Added `tests/test268.mjs` covering supercharger adiabatic efficiency, off-boost drag, stock and extreme diesel `pMax` diagnostics/wear, and ported engine `pMax`.
+
 ### EV and hybrid NaN guards and race pack-overload fix (build 445)
 
 - Guarded PM motors whose rotor bridge leakage exceeds magnet flux (`Am * Br <= leak`, e.g. small rotor with 12-pole Ferrite) in `magnetCircuit`, `statorFrom`, `dqSetup`, `dqBinv`, `dqSolve`, `tMagOf`, and `motorBaseW` (`src/js/electric.js`), keeping zero-flux builds finite (zero torque, finite geometry and losses) without moving healthy presets.

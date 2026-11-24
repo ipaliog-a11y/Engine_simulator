@@ -234,6 +234,26 @@ const SC_TYPE={
   screw:      {label:'TWIN-SCREW', lo:0.78,hi:1.00,exp:1,drag:1.00},
   centrifugal:{label:'CENTRIFUGAL',lo:0.04,hi:1.00,exp:2,drag:0.80}
 };
+// Off-boost bypass / mechanical parasitic drive floor as a fraction of full-boost drag:
+// belt flexure, step-up drive, rotor windage and bypass circulation still draw ~15% at map <= 1
+// (Eaton TVS bypass parasitic loss measurements; Heywood §6.8.2).
+const SC_BYPASS_FRAC=0.15;
+// Supercharger adiabatic (isentropic) efficiency by blower type, pressure ratio and speed fraction.
+//   · Roots (Eaton TVS): no internal compression; ideal backflow efficiency is
+//     (PR^((γ-1)/γ) - 1) / (((γ-1)/γ)*(PR - 1)) (Heywood §6.8.2 Eq. 6.36), scaled by ~0.74
+//     volumetric/port efficiency for 4-lobe twisted rotors with clearance back-leakage roll-off above PR 2.0.
+//   · Twin-screw (Lysholm/Whipple): internal compression (built-in volume ratio ~1.7 → PR ~2.0)
+//     peaks ~0.74 around PR 2.0 and tapers with off-design over/under-compression (Whipple/Lysholm maps).
+//   · Centrifugal (Rotrex/Vortech): belt-driven radial wheel tracking a parabolic operating line,
+//     peaking ~0.77 at high speed and moderate PR, tapering at low speed and high PR > 2.4 (Rotrex/Vortech maps).
+function scAdiabaticEff(scType,pr,rpmFrac){
+  const PR=Math.max(1,pr||1),f=clamp(rpmFrac==null?0.85:rpmFrac,0,1);
+  if(scType==='screw')return clamp(0.74-0.06*Math.pow(PR-2.0,2),0.45,0.76);
+  if(scType==='centrifugal')return clamp(0.77-0.10*Math.pow(1-f,2)-0.05*Math.pow(Math.max(0,PR-2.4),2),0.45,0.78);
+  const g=0.2857;   // (gamma - 1) / gamma for air (gamma = 1.4)
+  const ideal=PR<=1.001?1:(Math.pow(PR,g)-1)/(g*(PR-1));
+  return clamp(0.74*ideal-0.08*Math.pow(Math.max(0,PR-2.0),1.5),0.35,0.65);
+}
 const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nitrous shot
 // Intercooler core: heat = residual charge-heat added per bar of boost (°C). A bigger core
 // cools the charge far better (denser air, more knock margin) but its extra volume adds a
