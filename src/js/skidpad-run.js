@@ -6,16 +6,17 @@
 //
 // One run at speed v: the car starts on the circle at v with the yaw rate v/R, settles for one lap, and is judged on
 // the next. Outcomes (worst first):
-//   SPIN   body slip β over 25°, or heading more than 90° off the circle
-//   WIDE   the CG more than SKID_TOL outside the circle (pushed wide: understeer at the limit)
-//   TIGHT  the CG more than SKID_TOL inside it (the tail stepped out and tucked the nose in)
-//   SLOW   on the line, but the judged lap not finished in time
-//   HOLD   none of these: the car holds the circle at its own steady speed
+//   ROLLOVER  both wheels on one side lift (Fz = 0) and the rigid body tips past its outer tyres (NHTSA SSF = t/2h)
+//   SPIN      body slip β over 25°, or heading more than 90° off the circle
+//   WIDE      the CG more than SKID_TOL outside the circle (pushed wide: understeer at the limit)
+//   TIGHT     the CG more than SKID_TOL inside it (the tail stepped out and tucked the nose in)
+//   SLOW      on the line, but the judged lap not finished in time
+//   HOLD      none of these: the car holds the circle at its own steady speed
 // driveDriver's speed loop is proportional (1/s), so the car settles a little under v, short by the tyres' cornering
 // drag; v only drives the search. The score is the judged lap's own time, as on a real pad.
 // SKID_TOL (1 m either side) is this game's lane, not a standard: the magazines' drivers keep to a painted circle.
 const SKID_D=60.96,SKID_R=SKID_D/2,SKID_TOL=1;
-const SKID_RANK={HOLD:0,SLOW:1,TIGHT:2,WIDE:3,SPIN:4};
+const SKID_RANK={HOLD:0,SLOW:1,TIGHT:2,WIDE:3,SPIN:4,ROLLOVER:5};
 function skidLine(R,v){
   const N=Math.round(2*Math.PI*R/0.5),line=[];
   for(let k=0;k<N;k++){const a=-Math.PI/2+2*Math.PI*k/N;line.push({x:R*Math.cos(a),y:R+R*Math.sin(a),v,grade:0,kv:0});}
@@ -27,9 +28,11 @@ function skidRun(car,v,sample){
   s.vx=v;s.yaw=v/R;s.w=s.w.map(()=>v/car.r);
   for(let k=car.ratios.length;k>=1;k--){s.gear=k;if(v/car.r*car.ratios[k-1]*car.fd*30/Math.PI>=2500)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
-  const o={v,eMax:0,eMin:0,betaMax:0,ayMean:0,lapT:0,vMean:0,steer:0,samples:sample?[]:null,line,R};
+  const o={v,eMax:0,eMin:0,betaMax:0,ayMean:0,lapT:0,vMean:0,steer:0,lift2:0,tipMax:0,rolled:false,samples:sample?[]:null,line,R};
+  const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH);
+  const tip={phi:0,phiV:0,side:0};
   const dt=0.005,tMax=4*2*Math.PI*R/Math.max(3,v)+5;
-  let ang=0,pa=-Math.PI/2,judging=false,tJ=0,ayS=0,vS=0,stS=0,n=0,nextT=0,spin=false;
+  let ang=0,pa=-Math.PI/2,judging=false,tJ=0,ayS=0,vS=0,stS=0,n=0,nextT=0,spin=false,rolled=false;
   while(s.t<tMax){
     const u=driveDriver(car,s,line,d);
     stepCar(car,s,u,dt);
@@ -37,6 +40,18 @@ function skidRun(car,v,sample){
     const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
     let dh=s.psi-(a+Math.PI/2);dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2){spin=true;}
+    // Two-wheel lift and rigid-body tip-over about the outer contact patches (NHTSA SSF, matching moose-run.js).
+    const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
+    if(judging&&(leftUp||rightUp))o.lift2+=dt;
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=-tip.side*(s.rollV||0);}
+    if(tip.phi>0){
+      const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
+      const z=tH*sn+h*c,dd=tH*c-h*sn;
+      tip.phiV+=dt*car.m*(aOut*z-g*dd)/Io;tip.phi+=dt*tip.phiV;
+      if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
+      o.tipMax=Math.max(o.tipMax,tip.phi);
+      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0)rolled=true;
+    }
     if(!judging&&ang>=2*Math.PI){judging=true;tJ=s.t;}
     if(judging){
       const e=R-Math.hypot(s.x,s.y-R);   // + inside the circle
@@ -50,10 +65,11 @@ function skidRun(car,v,sample){
       if(ang>=4*Math.PI){o.lapT=s.t-tJ;break;}
       if(!sample&&(o.eMin<-SKID_TOL||o.eMax>SKID_TOL))break;
     }
-    if(spin)break;
+    if(spin||rolled)break;
   }
+  o.rolled=rolled;
   o.ayMean=n?ayS/n/g:0;o.vMean=n?vS/n:0;o.steer=n?stS/n:0;
-  o.outcome=spin?'SPIN':!o.lapT&&!(o.eMin<-SKID_TOL||o.eMax>SKID_TOL)?'SLOW'
+  o.outcome=rolled?'ROLLOVER':spin?'SPIN':!o.lapT&&!(o.eMin<-SKID_TOL||o.eMax>SKID_TOL)?'SLOW'
     :o.eMin<-SKID_TOL?'WIDE':o.eMax>SKID_TOL?'TIGHT':'HOLD';
   o.ok=o.outcome==='HOLD';
   // the magazines' figure: the judged lap's time at the circle's radius
@@ -79,5 +95,6 @@ function simulateSkidpadChallenge(){
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
   return{ok:true,kind:'skidpad',outcome:R.outcome,speedKmh:R.vMean*3.6,targetKmh:v*3.6,gLap:R.gLap,ayMean:R.ayMean,lapT:R.lapT,
     betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
+    lift2:R.lift2,tipMax:R.tipMax,ssf:(car.tF+car.tR)/4/car.h,
     radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
 }

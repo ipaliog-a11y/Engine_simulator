@@ -421,7 +421,9 @@ function deriveCharge(){
   // choke the wheel cannot pass more air however fast it spins, and the efficiency it does have
   // collapses, so what does get through arrives hot. That heat then costs density through effIAT
   // and knock margin on top — the punishment is paid in physics rather than by a `choke` constant.
-  engine.compEff=engine.intake==='na'?1:compIslandEff(engine.turboLoad,PR);
+  engine.compEff=engine.intake==='na'?1
+    :engine.intake==='supercharger'?scAdiabaticEff(engine.scType,PR,0.85)
+    :compIslandEff(engine.turboLoad,PR);
   // ---- Spool point and rate, both priced off pressure ratio ----
   // A compressor makes pressure by spinning, and shaft speed has to be bought with exhaust
   // energy. Turbine speed for a given pressure ratio goes like √(PR^0.283 − 1), so asking a

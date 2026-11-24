@@ -18,13 +18,30 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 447)
+### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 449)
 
 - Clamped per-wheel and per-axle normal loads to `[0, N]` on wheel lift in `axleLatCap` (`src/js/tyres-brakes-driveline.js`), `simulateBraking`, and `simulateAccelRun` (`src/js/vehicle-accel.js`) so stoppies, wheelies, and inside-wheel lift conserve total vertical load instead of creating phantom normal force above `Wtot`.
 - Kept solid-axle roll center height at `min(rTire, cg * 0.75)` (`src/js/vehicle-accel.js`, Milliken & Milliken RCVD ch. 17) so low-CG solid-axle builds retain a positive roll moment arm and non-zero roll gradient while stock-height solid-axle cars keep `rc = rTire`.
 - Bounded cornering speed ceilings in `simulateLapCore` (`src/js/racing-line-lap.js`) and `ecoMinTime` (`src/js/eco-run.js`) by the four tyres' ETRTO load rating `Nmax`, preventing extreme-downforce featherweight builds from jumping to `VMAX` in corners while straights remain unaffected.
 - Updated `ecoFuelRule`, `ecoFuelKg`, `ecoCostTable`, and `ecoDP` (`src/js/eco-run.js`) to compute reflected engine rotational inertia `meff` from the active gear rather than 1st gear at all speeds, and updated `ecoMinTime` braking to include aero downforce (`N/m`) and `TYRE_MU_X` without applying straight-line `dCorner` differential scrub.
 - Added `tests/test269.mjs` covering all four fixes.
+
+### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 448)
+
+- Passed actual starting wetness (`cfg.weather`) and rain compound into `racePractice()` (`src/js/race.js`) so wet/damp pit strategy computes tyre life and lap times on wet asphalt rather than dry `w = 0`.
+- Included `cfg.minStops` in `racePlan()` (`sMin = Math.max(sFuel, sTyre, sMand)`) so AI cars schedule mandatory stops instead of taking +30 s penalties, and added opportunistic VSC pit stops in `raceCross()` when inside the planned pit window.
+- Kept a reduced aerodynamic slipstream/dirty-air wake active alongside `RACE.spray` in wet weather (`w > 0.2`), and floored ICE race fuel burn at `M.idleGs` (matching `COMBUSTION.fuelRate`) so slow traffic does not drop fuel burn to zero.
+- Filtered out `init: 'kick'` plans for clutchless EVs (`car.ev`) in `driftPlans()` and stopped `driftDriver()` from sending `clutch: 1` for EVs (`src/js/drift-run.js`).
+- Extended `mooseCoastPedals()` to neutralize regen for P2 hybrids (`car.el != null`) as well as EVs/power-split/series, and preserved the sign of `s.rollV` relative to tipping direction (`-tip.side * s.rollV`) on 2-wheel lift onset (`src/js/moose-run.js`).
+- Added a 2-wheel-lift rigid-body tip-over check (`ROLLOVER`, NHTSA SSF) to `skidRun()` (`src/js/skidpad-run.js`) so high-CG vehicles cannot hold steady-state lateral g above their Static Stability Factor.
+- Added `tests/test270.mjs` covering all of the above.
+
+### Supercharger adiabatic efficiency and diesel/ported peak cylinder pressure (build 447)
+
+- Added blower-type adiabatic efficiency `scAdiabaticEff(scType, pr, rpmFrac)` (`src/js/engine-constants-boost.js`) for Roots (Heywood §6.8.2 Eq. 6.36 backflow law with clearance roll-off above PR 2.0), twin-screw (internal-compression peak around PR 2.0), and centrifugal (speed- and PR-dependent radial wheel map), wired into `deriveCharge()` (`src/js/engine-build.js`) and `compOutletT()` (`src/js/engine-view.js`) so superchargers no longer fall back to the turbo wheel map.
+- Added an off-boost supercharger bypass parasitic drag floor (`SC_BYPASS_FRAC = 0.15`, Eaton TVS bypass measurements) in `pumpFrictionMEP()` (`src/js/engine-physics.js`) so belt-driven blowers keep positive parasitic drag when `map <= 1.0`.
+- Added closed-cycle peak cylinder pressure `ciPortedPmax(rpm, map, adv)` (`src/js/engine-physics.js`) using Dual / Limited-Pressure polytropic compression and constant-volume burn rise for CI diesels (`PMAX_LIMIT_CI = 200` bar) and ported SI engines (2-stroke and rotary, `PMAX_LIMIT_SI = 140` bar), replacing the `pMax: 0` stub in `cylTraceAt()`.
+- Added `tests/test268.mjs` covering supercharger adiabatic efficiency, off-boost drag, stock and extreme diesel `pMax` diagnostics/wear, and ported engine `pMax`.
 
 ### EV and hybrid thermal, regen, and P2 cranking parity (build 446)
 

@@ -165,16 +165,17 @@ function driftDriver(car,s,C,d,plan){
   const vGrip=Math.sqrt(car.mu*DRIVE_G*C.R);
   if(v>1.12*vGrip&&absB<0.65*absT)thr*=Math.max(0.2,1-0.30*(v-1.12*vGrip));
   // Clutch kick (build 359): pedal down, full throttle, rev up for plan.kick steps, then dump.
+  // Direct-drive EVs have no friction clutch to kick or disengage.
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
-  if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
+  if(!car.ev&&!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
-  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down and lever up until β reaches 72% of target
+  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down (ICE only) and lever up until β reaches 72% of target
   // (once per corner, while speed > 5 m/s), then drop lever, close clutch, and hold the slide on power.
   let hb=0;const hbKey=z==='c1'?'hb1':'hb2';
   if(plan.init==='handbrake'&&!d[hbKey]){
-    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){clutch=0;d.hbing=false;}}
-    else{hb=1;thr=0;clutch=1;d.hbing=true;}
-  }else if(d.hbing){clutch=0;d.hbing=false;}
+    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){if(!car.ev)clutch=0;d.hbing=false;}}
+    else{hb=1;thr=0;if(!car.ev)clutch=1;d.hbing=true;}
+  }else if(d.hbing){if(!car.ev)clutch=0;d.hbing=false;}
   const u={steer:st,throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:(clutch!=null||hb)?s.gear:null};
   if(clutch!=null)u.clutch=clutch;
   if(hb)u.handbrake=hb;
@@ -203,7 +204,7 @@ function driftRun(car,plan,sample,D){
   s.vx=plan.v;s.w=s.w.map(()=>plan.v/car.r);
   // A single-speed car (an EV) has no second gear: until build 379 it was put in gear 2 and never drove (STALL).
   s.gear=Math.min(plan.gear||2,car.ratios.length);s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
-  const k0=gripOnly?0:(plan.kick|0);
+  const k0=gripOnly||car.ev?0:(plan.kick|0);
   const d={i:0,kick1:k0,kick2:k0,pull:plan.pull||2.2,seen1:false,seen2:false};
   let len=0;for(let k=1;k<C.line.length;k++)len+=Math.hypot(C.line[k].x-C.line[k-1].x,C.line[k].y-C.line[k-1].y);
   const tMax=3*len/plan.v;let slowT=0;   // three times the course at entry speed, or 2 s near standstill: STALL
@@ -248,11 +249,12 @@ function driftRun(car,plan,sample,D){
   return o;
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
-// FWD: no kick, and one target β for power and flick; handbrake keeps all three. AWD: no handbrake (falls back to power).
+// FWD: no kick, and one target β for power and flick; handbrake keeps all three. EV: no clutch kick. AWD: no handbrake unless electronic-clutch.
 function driftCanAwdHb(car){return car.drive==='awd'&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');}
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
-  if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if((car.drive==='fwd'||car.ev)&&method==='kick')method='power';   // no clutch kick on FWD grip path or clutchless EV
+  if(car.ev)P=P.filter(p=>p.init!=='kick');
   if(car.drive==='awd'&&!driftCanAwdHb(car)){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));

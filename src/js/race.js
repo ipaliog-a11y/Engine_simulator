@@ -288,12 +288,15 @@ function raceCarModel(entry,key,opts){
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
     if(EV)fpl=EV.ev.epl[0]*1000;   // an electric car's: at full power
+    // Idle fuel flow (g/s), matching COMBUSTION.fuelRate (Heywood / EPA ~0.3-0.6 L/h per L displacement); 0 for EV.
+    const carb=!EV&&!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
+    const idleGs=EV?0:0.12*(engine.displacement_L||2)*(carb?2.5:1);
     const M={name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
       vRest:Float32Array.from(rest.v),vNom,vApex,tF:Float32Array.from(nom.replay.tF),fadeProf:Float32Array.from(nom.replay.fade),
       ebProf:Float32Array.from(nom.replay.eb||[]),frProf:Float32Array.from(nom.replay.frB||[]),
       brakeOnset:nom.brakeOnset,brakeTh:vehicle.brakeTh,
       brakeCar:{mass:vehicle.mass,brakeFrontShare:vehicle.brakeFrontShare||0.7,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,mu:vehicle.mu},
-      lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,
+      lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,idleGs,
       tankL,tankKg,fuelRho:fuel.density,fuelLabel:fuel.label,
       mass:vehicle.mass,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,track:vehicle.track,drive:vehicle.drive,
       clA:vehicle.clA,cdA:vehicle.cdA,aeroBal:vehicle.aeroBal,crr:vehicle.crr,muRef:vehicle.muRef,tyreCold:vehicle.tyrePart?Math.min(vehicle.tyrePart.front_kPa,vehicle.tyrePart.rear_kPa):undefined,mu0:tt.mu,
@@ -438,12 +441,16 @@ function raceTyreCallPays(M,cur,next,w,left){
   const gc=raceTyreScore(M,cur,w),gn=raceTyreScore(M,raceCompound(next),w);
   return gn>gc&&(raceLapAtGrip(M,gc)-raceLapAtGrip(M,gn))*left>M.pitLoss+RACE.tyreChange;
 }
+function raceStartWet(kind){
+  return kind==='wet'||kind==='drying'?RACE.wetFull:kind==='damp'?0.4*RACE.wetFull:0;
+}
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode,ff0,hx){
-  const air=cfg.air!=null?cfg.air:RACE.air,w=0;
+function racePractice(M,cfg,maxLaps,mode,ff0,hx,ty0){
+  const air=cfg.air!=null?cfg.air:RACE.air,w=raceStartWet(cfg.weather);
   const env={air,track:raceTrackTemp(air,w),w};
-  const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
+  const ty=ty0||(w>0?raceCompound(raceBestCompound(M,w)):M.tyre);
+  const T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
   const ff=ff0!=null?ff0:0.5,sv=mode==='save'?0.99:1;let life=null;
   M.massNow=M.ev?M.mass:M.mass-M.tankKg*0.5;
   for(let lap=0;lap<maxLaps;lap++){
@@ -459,10 +466,10 @@ function racePractice(M,cfg,maxLaps,mode,ff0,hx){
     if(life==null&&Math.max(...W)>=RACE.wearLimit)life=lap+1;
     if(life!=null&&lap>=life+1)break;
   }
-  return {laps,life:life||Infinity};
+  return {laps,life:life||Infinity,w,tyre:ty.key};
 }
 // The stops, chosen once at the start (build 137; per car, build 141). cc.stops is 'auto' (the fewest the
-// fuel and the tyres allow, or one or two more if the time fresher tyres win back pays for the pit lane),
+// fuel, tyres and mandatory minStops allow, or one or two more if fresher tyres pay for the pit lane),
 // a number of stops, or 'none'. Fuel saving burns ~10% less a lap.
 // An electric car (build 181) cannot charge in the pit lane: it starts full, stops only for tyres, and its energy manager
 // chooses the power that lasts the distance (evRacePlanFF).
@@ -474,15 +481,18 @@ function racePlan(M,cfg,cc){
   const fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
   if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
+  const w0=raceStartWet(cfg.weather);
+  const tyKey=!cc.start||cc.start==='auto'?raceBestCompound(M,w0):cc.start==='own'?M.tyre.key:cc.start;
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx,raceCompound(tyKey));
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
   const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
   const sTyre=lifeLaps===Infinity?0:Math.max(0,Math.ceil(N/lifeLaps)-1);
+  const sMand=Math.min(Math.max(0,N-1),Math.max(0,Math.round(cfg.minStops||0)));
   const stintsOf=s=>{const a=[];for(let k=0;k<=s;k++)a.push(Math.round((k+1)*N/(s+1))-Math.round(k*N/(s+1)));return a;};
   let best=null;
   if(want==='auto'){
-    const sMin=Math.max(sFuel,sTyre);
+    const sMin=Math.max(sFuel,sTyre,sMand);
     for(let s=sMin;s<=sMin+2&&s<N;s++){
       const stints=stintsOf(s);
       if(!ev&&stints.some(x=>x*fpl>M.tankKg*0.97))continue;
@@ -493,7 +503,7 @@ function racePlan(M,cfg,cc){
   }else{
     const s=clamp(Math.round(+want)||0,0,Math.max(0,N-1));best={s,stints:stintsOf(s),est:null};
   }
-  if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
+  if(!best){const s=Math.max(sFuel,sTyre,sMand);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
   return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want,hyX:hx},
     ev?{evFF:ev.ff}:{});
@@ -635,10 +645,14 @@ function raceStepOnce(R){
     const ah=c._ahead;
     if(ah){
       // the tow and the dirty air, from the two cars' lengths and this car's own drag, power and downforce; in the
-      // wet, the spray (a rule)
+      // wet, drivers offset slightly out of the densest spray plume so the wake is reduced, alongside the spray rule
       const x=(c._gap-(c.M.len+ah.M.len)/2)/ah.M.len;
-      if(w>0.2){if(c._gap<Math.max(10,c.v))vt*=RACE.spray;}
-      else vt*=raceWake(c.M,c.v,lim,x);
+      const wk=raceWake(c.M,c.v,lim,x);
+      if(w>0.2){
+        const wetK=1-0.4*clamp((w-0.2)/(RACE.wetFull-0.2),0,1);
+        vt*=1+(wk-1)*wetK;
+        if(c._gap<Math.max(10,c.v))vt*=RACE.spray;
+      }else vt*=wk;
     }
     c._vt=vt;c._lim=lim;
   }
@@ -711,7 +725,8 @@ function raceStepOnce(R){
       brakeHeatStep(c.BT,M.brakeTh,mech-eb,c.v,dt,M.brakeCar,mech>0.3&&M.frProf&&M.frProf.length?M.frProf[c.i]:undefined);
     }
     const r=clamp(c.v/Math.max(1,c._pv),0,1.05);
-    const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
+    const frStep=Math.max(M.idleGs||0,c._fr*r*r*(c.cc.mode==='save'?0.9:1));
+    const burn=frStep*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
     if(M.hy)hybRaceSpend(M,c,c.v*dt);
@@ -841,14 +856,22 @@ function raceCross(R,c){
   }
   const weather=tyre!==c.ty.key;
   const planned=c.plan.stops.includes(c.lapsDone);
-  const need=planned&&!noStops||(!noStops&&!M.ev&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
+  const nextIdx0=c.plan.stops.findIndex(l=>l>c.lapsDone);
+  const nextStop=nextIdx0>=0?c.plan.stops[nextIdx0]:null;
+  const afterNext=nextIdx0>=0&&c.plan.stops[nextIdx0+1]!=null?c.plan.stops[nextIdx0+1]:totLaps;
+  // Under VSC, track pace is cut to vscPace (~60%), so pitting loses far less time against rivals.
+  // Take an upcoming planned stop early when inside the pit window and the remaining stint fits in the tank.
+  const vscPit=!noStops&&!!R.vsc&&c.lapsDone>=1&&nextStop!=null&&left>=1
+    &&(nextStop-c.lapsDone)<=Math.max(3,Math.ceil(totLaps*0.25))
+    &&(M.ev||(afterNext-c.lapsDone)*fpl<=M.tankKg*0.97);
+  const need=planned&&!noStops||vscPit||(!noStops&&!M.ev&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
   if(need){
     if(!weather&&left>0&&raceBestCompound(M,w)!==tyre&&c.cc.wetCall!=='stay')tyre=raceBestCompound(M,w);
     // an unplanned stop takes the place of a planned one coming up soon
     const nextIdx=c.plan.stops.findIndex(l=>l>c.lapsDone);
     if(!planned&&nextIdx>=0){
       const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:totLaps;
-      if(next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
+      if(vscPit||next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
     }
     const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:totLaps)-c.lapsDone);
     const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
@@ -856,7 +879,7 @@ function raceCross(R,c){
     c.state='pit';c.pit={t:M.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
     if(c.laps.length)c.laps[c.laps.length-1].pit=true;
     c.stints.push({tyre,from:c.lapsDone+1});
-    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,lane:M.pitLoss,tyre,why:weather?'weather':planned?'plan':'need'});
+    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,lane:M.pitLoss,tyre,why:weather?'weather':planned?'plan':vscPit?'vsc':'need'});
   }
 }
 // Run the race to the flag (or for a slice of wall time when budgetMs is given, so a page can keep
