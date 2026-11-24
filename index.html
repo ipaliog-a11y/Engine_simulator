@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 442</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 443</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4956,23 +4956,23 @@ function wallTrace(e,rpm,map,egr=0){
   const crown=e.ci?disc+Math.PI*0.55*0.17*B*B:disc;
   const area=V=>head+crown+Math.PI*B*hc*V;
   // Woschni's coefficient in W/m2K, with B in m, p in kPa, T in K, w in m/s: his published 3.26.
-  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(T,-0.55)*Math.pow(w,0.8);
+  const hW=(p,T,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
   const d=0.5, dt=d/(6*Math.max(300,rpm));               // seconds per step
   let T=T1,num=0,den=0,pE=0,TE=0,pMax=p1;
   for(let th=-180;th<evo;th+=d){                       // closed: compression, burn, expansion
     const V0=Vt(th),Vn=Vt(th+d),v0=v1*V0/cr,dv=v1*(Vn-V0)/cr;
-    const p=R*T/v0, pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
+    const p=Math.max(1,R*T/v0), pm=p1*Math.pow(cr/V0,g), burning=th>=soc;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(burning?3.24e-3*Vd*T1/(p1*V1)*(p-pm):0));
     const Q=hW(p,T,w)*area(V0)*(T-T_WALL)*dt;           // J lost this step
     num+=Q*(1-Math.pow(V0/Vevo,g-1));den+=Q;
-    T+=(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv;
-    pE=R*T/(v1*Vn/cr);TE=T;
+    T=Math.max(50,T+(q*(xb(th+d)-xb(th))-p*dv-Q/m)/cv);
+    pE=Math.max(1,R*T/(v1*Vn/cr));TE=T;
   }
   const pX=Math.max(1.05e5,p1), TX=TE*Math.pow(pX/pE,(g-1)/g);
   for(let th=evo;th<360;th+=d){                        // blowdown to BDC, then the exhaust stroke
     const s=th<180?(th-evo)/Math.max(1,180-evo):1;
-    const p=pE+(pX-pE)*s, T=TE+(TX-TE)*s;
+    const p=Math.max(1,pE+(pX-pE)*s), T=Math.max(50,TE+(TX-TE)*s);
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
   return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
@@ -5127,14 +5127,14 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
-    const Vc=V(th),pc=m*R*T/Vc,k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
+    const Vc=V(th),pc=Math.max(1,m*R*T/Vc),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
     const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
     u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
     const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
-    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(pc/1000,0.8)*Math.pow(T,-0.55)*Math.pow(6.18*Sp,0.8);
+    const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,pc/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,6.18*Sp),0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
     const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
-    m+=dm;T=U/(cv*m);
+    m=Math.max(1e-9,m+dm);T=Math.max(50,U/(cv*m));
   }
   return (m-m0)/(rho0*Vd);
 }
@@ -8664,22 +8664,26 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
-  const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
-  const tb=[];let any=false;
-  for(let r=1000;r<=e.redline+199;r+=200){
-    const rr=Math.min(r,e.redline),b0=boostAvail(rr);
-    let bar=e.maxBoost;
-    if(b0>0&&over(rr,b0)){
-      any=true;let lo=0,hi=b0;
-      if(over(rr,0))hi=0;
-      else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
-      bar=lo;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  try{
+    _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
+    const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
+    const tb=[];let any=false;
+    for(let r=1000;r<=e.redline+199;r+=200){
+      const rr=Math.min(r,e.redline),b0=boostAvail(rr);
+      let bar=e.maxBoost;
+      if(b0>0&&over(rr,b0)){
+        any=true;let lo=0,hi=b0;
+        if(over(rr,0))hi=0;
+        else for(let i=0;i<12;i++){const m=(lo+hi)/2;if(over(rr,m))hi=m;else lo=m;}
+        bar=lo;
+      }
+      tb.push({rpm:rr,bar});
     }
-    tb.push({rpm:rr,bar});
-  }
-  e.knockLimTable=any?tb:null;
-  return any;
+    e.knockLimTable=any?tb:null;
+    return any;
+  }finally{Object.assign(state,sv);}
 }
 // The frame an engine runs (build 131): the size class, or the maker's own compressor wheel where it is known
 // (COMPRESSOR WHEEL, mm at the exducer), with its housings scaled with it (a geometrically similar volute: A/R is
@@ -8688,9 +8692,9 @@ function buildKnockLimit(){
 // own compressor and turbine wheels and its one housing A/R, in place of the frame's wheel, TURB_WHEEL and the housing step.
 function turboFrame(e){
   const tb=TURBO[e.turboSize]||TURBO.medium,P=e.turboPart;
-  if(P){const exd=P.compD_mm/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/P.compD_mm,ars:[P.ar,P.ar,P.ar]});}
+  if(P){const cD=Math.max(30,P.compD_mm||0),exd=cD/1000;return Object.assign({},tb,{exd,turbK:P.turbD_mm/cD,ars:[P.ar,P.ar,P.ar]});}
   if(!(e.compExd_mm>0))return Object.assign({},tb,{turbK:TURB_WHEEL});
-  const exd=e.compExd_mm/1000,k=exd/tb.exd;
+  const exd=clamp(e.compExd_mm,30,110)/1000,k=exd/tb.exd;
   return Object.assign({},tb,{exd,turbK:TURB_WHEEL,ars:tb.ars.map(a=>a*k)});
 }
 // Steady wide-open-throttle boost against rpm, sampled once per engine: solving the shaft balance
@@ -10115,7 +10119,7 @@ function readEngineFromForm(){
     govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
-    turboSize:g('edTurboSize').value,compExd_mm:clamp(+g('edCompWheel').value||0,0,110),
+    turboSize:g('edTurboSize').value,compExd_mm:(()=>{const v=+g('edCompWheel').value||0;return v>0?clamp(v,30,110):0;})(),
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
@@ -10137,8 +10141,8 @@ function readEngineFromForm(){
     timingMode:g('edTiming').value,
     afrMode:g('edAfrMode').value,
     radiator:g('edRadiator').value,
-    radHp:Math.max(0,+g('edRadHp').value||0),   // what a STOCK radiator was sized for (build 219)
-    springRpm:Math.max(0,Math.round(+g('edSpringRpm').value||0)),
+    radHp:0,   // what a STOCK radiator was sized for (build 219), read below
+    springRpm:0,
     ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,   // a real engine's own valves (build 287), read below   // the redline the STOCK springs were sized for (build 234)
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
@@ -10156,6 +10160,12 @@ function readEngineFromForm(){
   // A real engine's own cam card (build 427) travels with the factory class it replaced: 'dur/lsa/lift@cam'.
   {const m=/^([\d.]+)\/([\d.]+)\/([\d.]+)@(\w+)$/.exec(g('edCamSpec').value||'');
    if(m&&!e.camPart&&m[4]===e.cam){e.camDur_deg=+m[1];e.camLsa_deg=+m[2];e.camLift_mm=+m[3];}}
+  // A real engine's factory spring redline and stock radiator sizing travel with its displacement, redline, and boost.
+  {const tag=e.cylinders+'/'+e.bore_mm+'/'+e.stroke_mm+'/'+e.redline+'/'+e.intake+'/'+e.boost_bar;
+   const ms=/^([\d.]+)(?:@(.+))?$/.exec(g('edSpringRpm').value||'');
+   if(ms&&(!ms[2]||ms[2]===tag))e.springRpm=Math.max(0,Math.round(+ms[1]||0));
+   const mr=/^([\d.]+)(?:@(.+))?$/.exec(g('edRadHp').value||'');
+   if(mr&&(!mr[2]||mr[2]===tag))e.radHp=Math.max(0,+mr[1]||0);}
   return e;
 }
 function applyEngineToForm(e){
@@ -10175,13 +10185,14 @@ function applyEngineToForm(e){
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
-  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm||0;
+  const specTag=(+e.cylinders||4)+'/'+(+e.bore_mm)+'/'+(+e.stroke_mm)+'/'+(+e.redline)+'/'+e.intake+'/'+(e.intake==='na'?0:(+e.boost_bar||0));
+  g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm>0?e.springRpm+'@'+specTag:'0';
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
-  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp||0;g('edFan').value=e.fan||'electric';
+  g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
   applyElectricToForm(e);
@@ -10855,7 +10866,7 @@ function computeVE(rpm,map){
   // leaves the charge that much thinner.
   ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
-  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
+  ve*=Math.max(0.05,1-(filterDp(Q)+carbDp(Q))/101325);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -11194,21 +11205,21 @@ function endGasTraceAt(rpm,map,ca50){
   // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
   // where the gas has longest.
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
-  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,Ipre=0,V0=V00,x0=0,pPrev=p1,pMax=p1;
+  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,TT),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
+  let T=Math.max(50,T1),Tu=Math.max(50,T1),I=0,Ipre=0,V0=V00,x0=0,pPrev=Math.max(1,p1),pMax=pPrev;
   const c1=dt*1000/onF,pRef=5e5;
   for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
-    const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    const Vn=cyc.vol(th+d,cr),p=Math.max(1,R*T*cr/(v1*V0)),xn=xb(th+d),A=ends+4*Vc*V0/B;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
-    Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
+    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv));pPrev=p;
     if(p>pRef){
       const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
       I+=dI;
       if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
     }
-    T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
+    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv);
     V0=Vn;x0=xn;
   }
   return {I,Ipre,pMax:pMax/1e5};
@@ -11299,13 +11310,17 @@ function knockAt(rpm,map,adv){
 // Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
 function peakCylLoads(){
   const e=engine;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
   let pMax=0,preIgn=0;
-  for(let r=1000;r<=e.redline;r+=400){
-    const m=wotMapAt(r),adv=activeAdvance(r,m);
-    const tr=cylTraceAt(r,m,adv);
-    if(tr.pMax>pMax)pMax=tr.pMax;
-    if(tr.Ipre>preIgn)preIgn=tr.Ipre;
-  }
+  try{
+    for(let r=1000;r<=e.redline;r+=400){
+      const m=wotMapAt(r),adv=activeAdvance(r,m);
+      const tr=cylTraceAt(r,m,adv);
+      if(tr.pMax>pMax)pMax=tr.pMax;
+      if(tr.Ipre>preIgn)preIgn=tr.Ipre;
+    }
+  }finally{Object.assign(state,sv);}
   return {pMax,preIgn};
 }
 // Summary of how much boost the ECU's knock limiter pulled below the engine's target curve.
@@ -11851,9 +11866,9 @@ function calcAtRpm(rpm,mapOverride){
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm);   // power strokes/rev per type, minus alternator load
-  let powerKW=torque*rpm*2*Math.PI/60/1000;
-  let powerHP=powerKW/0.7457;
+  let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm));   // power strokes/rev per type, minus alternator load
+  let powerKW=Math.max(0,torque*rpm*2*Math.PI/60/1000);
+  let powerHP=Math.max(0,powerKW/0.7457);
 
   const knock=computeKnockRisk(rpm,map);
   if(knock>60){const derate=1-0.32*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate;}
@@ -12351,7 +12366,7 @@ const OBD_CODES={
 const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
 const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
 let obd={codes:{},timers:{},cycleSeen:{},runS:0,wasRunning:true,flash:false,open:false};
-function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;}
+function obdReset(){obd.codes={};obd.timers={};obd.cycleSeen={};obd.runS=0;obd.wasRunning=obdRunning();obd.flash=false;if(typeof o2Loop!=='undefined'){o2Loop.trim=0;o2Loop.int=0;o2Loop.side=0;o2Loop.hist.length=0;o2Loop.seen=1;o2Loop.mv=null;}}
 function obdRunning(){
   if(isElectric())return false;
   if(isHybrid())return !!hybBenchState().engOn;
@@ -12433,7 +12448,7 @@ function lambdaFromIp(ip){
 // The same sheet gives 800 +/- 55 mV at lambda 0.97 and 50 +/- 30 mV at 1.10: the model gives 52 mV there, but 895 mV at
 // 0.97, 40 mV over the band (open: a real electrode does not reach full equilibrium rich; not tuned).
 const O2_PIPE_VOL=1.5,O2_T_RATIO=3,O2_SENSOR_TAU=0.1,O2_P=0.01,O2_I=0.05,O2_TRIM_MAX=0.25,O2_TAU_FALL=0.150,O2_TAU_RISE=0.076;
-let o2Loop={live:false,on:true,trim:0,t:0,hist:[],seen:1,side:0};
+let o2Loop={live:false,on:true,trim:0,int:0,t:0,hist:[],seen:1,side:0,mv:null};
 function o2LoopActive(){
   const s=engine.lambdaSensor;
   return o2Loop.on&&!!s&&s!=='none'&&!engine.ci&&engine.afrMode==='auto'&&!isElectric()&&obdRunning()&&!state.fuelCut&&
@@ -12450,7 +12465,7 @@ function o2SensorMv(lam){return o2Loop.mv!=null&&o2LoopActive()?o2Loop.mv:lambda
 function o2LoopFactor(){return o2Loop.live&&o2Loop.on&&o2LoopActive()?1+o2Loop.trim:1;}
 function o2LoopStep(dt){
   const L=o2Loop;L.dt=dt;
-  if(!o2LoopActive()){L.trim*=Math.exp(-dt/0.5);L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
+  if(!o2LoopActive()){L.trim=0;L.int=0;L.side=0;L.hist.length=0;L.seen=state.afr/(engine.stoichAFR||14.7);L.mv=null;return;}
   L.t+=dt;
   if(!L.hist.length)L.hist.push([L.t,L.seen]);
   const dTime=o2DeadTime();let late=L.hist[0][1];
@@ -12467,7 +12482,8 @@ function o2LoopStep(dt){
     // wideband PI, SIMC-tuned on the dead time (Skogestad 2003: Kc = tau/(theta+tc), Ti = min(tau, 4(theta+tc)), tc = theta)
     const th=dTime,tau=O2_SENSOR_TAU,kc=tau/(2*th),ti=Math.min(tau,8*th);
     const target=mappedAFR(state.rpm,state.map)/engine.stoichAFR,e=lambdaFromIp(lambdaSensorIp(L.seen))/target-1;   // read through Ip
-    L.int=(L.int||0)+e*dt;
+    const maxInt=O2_TRIM_MAX*ti/Math.max(1e-6,kc);
+    L.int=clamp((L.int||0)+e*dt,-maxInt,maxInt);
     L.trim=-kc*(e+L.int/ti);
   }
   L.trim=clamp(L.trim,-O2_TRIM_MAX,O2_TRIM_MAX);
@@ -20730,7 +20746,7 @@ function loadFromHash(){
   const h=location.hash||'';
   if(h.indexOf('#b=')!==0)return false;
   try{const nm=applyBuild(decodeBuild(h.slice(3)));flash(tr('LOADED SHARED:')+' '+nm);return true;}
-  catch(e){return false;}
+  catch(e){flash(tr('Invalid or corrupted share link'),'warn');return false;}
 }
 // ---- Dyno pull logging (overlay saved curves for comparison) ----
 function logPull(){
@@ -20757,9 +20773,9 @@ function scoreEngine(){
   let peakHP=0,peakHPrpm=0,peakTQ=0,peakTQrpm=0;const pts=[];
   for(let r=1000;r<=rMax;r+=100){const p=calcAtRpm(r);pts.push(p);
     if(p.powerHP>peakHP){peakHP=p.powerHP;peakHPrpm=r;}if(p.torque>peakTQ){peakTQ=p.torque;peakTQrpm=r;}}
-  let lo=rMax,hi=1000;pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  let lo=rMax,hi=1000;if(peakHP>0)pts.forEach(p=>{if(p.powerHP>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   const band=Math.max(0,hi-lo);
-  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=clamp(tqLow/peakTQ,0,1);
+  const tqLow=(pts.find(p=>p.rpm>=2000)||pts[0]).torque,drive=peakTQ>0?clamp(tqLow/peakTQ,0,1):0;
   // safety: worst knock over a stoich WOT stress sweep
   state.afr=engine.stoichAFR;let maxKnock=0;
   for(let r=1000;r<=rMax;r+=200)maxKnock=Math.max(maxKnock,computeKnockRisk(r,wotMapAt(r)));
@@ -24745,7 +24761,7 @@ function drawCompMap(px,py,S,F,LW,x,y,w,h,m){
   const e=engine;if(!(e.chokeFlow_kgs>0))return;
   const prMax=Math.max(2.4,1+(e.boost_bar||0)*1.5),fMax=1.25;
   const X=f=>x+clamp(f,0,fMax)/fMax*w,Y=pr=>y+h-clamp((pr-1)/(prMax-1),0,1)*h;
-  const key=e.score+'|'+S+'|'+prMax;
+  const key=buildRev+'|'+S+'|'+prMax;
   if(drawCompMap.key!==key){
     // the islands, once per engine: bands of efficiency
     const cv=document.createElement('canvas');cv.width=Math.ceil(w*S);cv.height=Math.ceil(h*S);
@@ -30612,6 +30628,7 @@ function rederiveBreathing(){
   e.wotRich=wotNeedsEnrichment();
   if(buildKnockLimit())buildBoostTable(26);
   {const p=peakEgts();e.peakEgt=p.probe;e.peakEgtGas=p.gas;}
+  {const c=peakCylLoads();e.peakPmax=c.pMax;e.peakPreIgn=c.preIgn;}
 }
 // Run fn on a copy of the engine with another part of a kind: a designed one, or a factory key. The build, the live
 // state and the caches are as they were afterwards. The copy gets its own score object: the knock-timing and fuel-map
@@ -39483,7 +39500,16 @@ function bindControls(){
   document.getElementById('btnOptimal').addEventListener('click',()=>applyOperatingPoint('torque'));
   document.getElementById('btnMaxPower').addEventListener('click',()=>applyOperatingPoint('power'));
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
-  document.getElementById('btnReset').addEventListener('click',()=>{state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();state.coolant=90;state.oil=100;state.batterySOC=1.0;applyPreset({throttle:0.10,load:0.20,afr:14.7,iat:25,coolant:90,oil:100})});
+  document.getElementById('btnReset').addEventListener('click',()=>{
+    state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
+    state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();
+    state.coolant=90;state.oil=100;state.batterySOC=1.0;
+    state.nitrousCharge=1.0;state.nitrousActive=false;
+    const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}
+    if(isElectric()){const tc=(engine.motor&&engine.motor.cool?engine.motor.cool.tCool:40);state.mT={w:tc,c:tc,r:tc};state.soc=0.9;state.battI=0;state.battKW=0;}
+    const afr=engine.ci?(engine.stoichAFR||14.5)*1.4:(engine.stoichAFR||14.7);
+    applyPreset({throttle:0.10,load:0.20,afr,iat:25,coolant:90,oil:100});
+  });
   // Starter / Power Off (build 254). On an electric car or a hybrid they switch the whole car on (READY) and off
   // (build 306): off, nothing drives, charges or is heard; a hybrid comes on with its engine running, then the controller
   // decides.

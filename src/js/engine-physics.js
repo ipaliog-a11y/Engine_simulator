@@ -123,7 +123,7 @@ function computeVE(rpm,map){
   // leaves the charge that much thinner.
   ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
-  ve*=1-(filterDp(Q)+carbDp(Q))/101325;
+  ve*=Math.max(0.05,1-(filterDp(Q)+carbDp(Q))/101325);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
   // ---- derived valvetrain limits (see PHYSICS CORE) ----
   // These replace a valve-float term that only fired ABOVE the redline and so never ran inside the
@@ -462,21 +462,21 @@ function endGasTraceAt(rpm,map,ca50){
   // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
   // where the gas has longest.
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
-  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(p/1000,0.8)*Math.pow(TT,-0.55)*Math.pow(w,0.8);
-  let T=T1,Tu=T1,I=0,Ipre=0,V0=V00,x0=0,pPrev=p1,pMax=p1;
+  const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,TT),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
+  let T=Math.max(50,T1),Tu=Math.max(50,T1),I=0,Ipre=0,V0=V00,x0=0,pPrev=Math.max(1,p1),pMax=pPrev;
   const c1=dt*1000/onF,pRef=5e5;
   for(let th=th0;th<soc+burn;th+=d){
     if(x0>=0.9)break;
-    const Vn=cyc.vol(th+d,cr),p=R*T*cr/(v1*V0),xn=xb(th+d),A=ends+4*Vc*V0/B;
+    const Vn=cyc.vol(th+d,cr),p=Math.max(1,R*T*cr/(v1*V0)),xn=xb(th+d),A=ends+4*Vc*V0/B;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
-    Tu=Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv);pPrev=p;
+    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv));pPrev=p;
     if(p>pRef){
       const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
       I+=dI;
       if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
     }
-    T+=(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv;
+    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv);
     V0=Vn;x0=xn;
   }
   return {I,Ipre,pMax:pMax/1e5};
@@ -567,13 +567,17 @@ function knockAt(rpm,map,adv){
 // Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
 function peakCylLoads(){
   const e=engine;
+  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
   let pMax=0,preIgn=0;
-  for(let r=1000;r<=e.redline;r+=400){
-    const m=wotMapAt(r),adv=activeAdvance(r,m);
-    const tr=cylTraceAt(r,m,adv);
-    if(tr.pMax>pMax)pMax=tr.pMax;
-    if(tr.Ipre>preIgn)preIgn=tr.Ipre;
-  }
+  try{
+    for(let r=1000;r<=e.redline;r+=400){
+      const m=wotMapAt(r),adv=activeAdvance(r,m);
+      const tr=cylTraceAt(r,m,adv);
+      if(tr.pMax>pMax)pMax=tr.pMax;
+      if(tr.Ipre>preIgn)preIgn=tr.Ipre;
+    }
+  }finally{Object.assign(state,sv);}
   return {pMax,preIgn};
 }
 // Summary of how much boost the ECU's knock limiter pulled below the engine's target curve.
@@ -1119,9 +1123,9 @@ function calcAtRpm(rpm,mapOverride){
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm);   // power strokes/rev per type, minus alternator load
-  let powerKW=torque*rpm*2*Math.PI/60/1000;
-  let powerHP=powerKW/0.7457;
+  let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm));   // power strokes/rev per type, minus alternator load
+  let powerKW=Math.max(0,torque*rpm*2*Math.PI/60/1000);
+  let powerHP=Math.max(0,powerKW/0.7457);
 
   const knock=computeKnockRisk(rpm,map);
   if(knock>60){const derate=1-0.32*((knock-60)/40);powerKW*=derate;powerHP*=derate;torque*=derate;}
