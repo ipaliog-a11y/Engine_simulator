@@ -33,7 +33,7 @@ const r = await page.evaluate(() => {
   const out = {};
 
   // 1. Coolant temp knock sensitivity & wallTempK anchor
-  load('VW EA888 2.0 TSI (Golf GTI)', { timingMode: 'fixed', ignitionAdv: 24, afrMode: 'fixed' });
+  load('VW EA888 2.0 TSI (Golf GTI Mk7)', { timingMode: 'fixed', ignitionAdv: 24, afrMode: 'fixed' });
   state.afr = engine.stoichAFR * 0.92; state.iat = 25; state.nitrousActive = false;
   const map1 = 1.8, rpm1 = 3500;
   state.coolant = 65; const kCool65 = cylTraceAt(rpm1, map1, 24).I;
@@ -43,19 +43,19 @@ const r = await page.evaluate(() => {
   out.coolant = { tw90: wallTempK(90), kCool65, kCool90, kCool115 };
 
   // 2. Bore-size burn duration & knock sensitivity (same ~2.0 L displacement & CR)
-  load('2.0 Turbo I4', { bore_mm: 76, stroke_mm: 110.2, compression: 10.5, timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
+  load('2.0 Turbo Hot-Hatch I4', { bore_mm: 76, stroke_mm: 110.2, compression: 10.5, timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
   state.coolant = 90; state.iat = 25; state.afr = engine.stoichAFR * 0.92;
   const burnSmall = siBurnDeg(engine), kSmallBore = cylTraceAt(3500, 1.6, 22).I;
-  load('2.0 Turbo I4', { bore_mm: 100, stroke_mm: 63.7, compression: 10.5, timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
+  load('2.0 Turbo Hot-Hatch I4', { bore_mm: 100, stroke_mm: 63.7, compression: 10.5, timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
   state.coolant = 90; state.iat = 25; state.afr = engine.stoichAFR * 0.92;
   const burnLarge = siBurnDeg(engine), kLargeBore = cylTraceAt(3500, 1.6, 22).I;
   out.bore = { burnSmall, burnLarge, kSmallBore, kLargeBore };
 
   // 3. Cooled EGR reduces end-gas knock integral
-  load('2.0 Turbo I4', { compression: 10.5, egr: 'none', timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
+  load('2.0 Turbo Hot-Hatch I4', { compression: 10.5, egr: 'none', timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
   state.coolant = 90; state.iat = 25; state.afr = engine.stoichAFR * 0.95;
   const kNoEgr = cylTraceAt(3500, 1.6, 22).I;
-  load('2.0 Turbo I4', { compression: 10.5, egr: 'cooled-full', timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
+  load('2.0 Turbo Hot-Hatch I4', { compression: 10.5, egr: 'cooled-full', timingMode: 'fixed', ignitionAdv: 22, afrMode: 'fixed' });
   state.coolant = 90; state.iat = 25; state.afr = engine.stoichAFR * 0.95;
   const egrVal = egrRate(3500, 1.6), kWithEgr = cylTraceAt(3500, 1.6, 22).I;
   out.egr = { egrVal, kNoEgr, kWithEgr };
@@ -63,7 +63,7 @@ const r = await page.evaluate(() => {
   // 4. Inertial wear limits (piston speed > 25 m/s, rotary apex-seal speed) & unified ROD_RATIO
   const prevWear = wearEnabled;
   wearEnabled = true;
-  load('2.0 Turbo I4', { stroke_mm: 100, redline: 9000, valveMat: 'titanium', spring: 'race' });
+  load('2.0 Turbo Hot-Hatch I4', { stroke_mm: 100, redline: 9000, valveMat: 'titanium', valveSpring: 'race' });
   state.firing = true; state.blown = false; state.engineHealth = 1;
   state.rpm = 8400; state.map = 0.8; state.throttle = 0.4; state.coolant = 90; state.oil = 95;
   state.knockRisk = 0; state.preIgn = 0; state.cylPmax = 40; state.turboOverspeed = false; state.turboSurge = false;
@@ -84,7 +84,7 @@ const r = await page.evaluate(() => {
   out.mech = { rodRatio: ROD_RATIO, rodStroke: ROD_STROKE, pistonWear, rx8Stock, rx8Over };
 
   // 5. Turbo surge line & standstill intercooler heat-soak
-  load('VW EA888 2.0 TSI (Golf GTI)');
+  load('VW EA888 2.0 TSI (Golf GTI Mk7)');
   state.iat = 25;
   state.icFaceV = null; const epsMoving = icEffAt(0.15), iatMoving = effIAT(2.0, 5000);
   state.icFaceV = IC_FACE_V_IDLE; const epsIdle = icEffAt(0.15), iatIdle = effIAT(2.0, 5000);
@@ -97,7 +97,7 @@ const r = await page.evaluate(() => {
   };
 
   // 6. Nitrous fuel enrichment, cylinder pressure, EGT & realistic thermal efficiency
-  load('2.0 Turbo I4', { intake: 'na', boost_bar: 0, nitrous: 'large' });
+  load('2.0 Turbo Hot-Hatch I4', { intake: 'na', boost_bar: 0, nitrous: 'large' });
   state.firing = true; state.blown = false; state.rpm = 5500; state.throttle = 1; state.map = 1.0;
   state.coolant = 90; state.oil = 95; state.iat = 25; state.nitrousCharge = 1.0; state.burnFrac = 1;
   state.nitrousActive = false; updateEnginePhysics();
@@ -108,7 +108,7 @@ const r = await page.evaluate(() => {
   out.nitrous = { nOff, nOn };
 
   // 7. Extreme AFR mixture misfire & OBD P0300
-  load('VW EA888 2.0 TSI (Golf GTI)', { afrMode: 'fixed' });
+  load('VW EA888 2.0 TSI (Golf GTI Mk7)', { afrMode: 'fixed' });
   state.firing = true; state.blown = false; state.rpm = 3000; state.map = 0.8; state.fuelCut = false;
   state.afr = engine.stoichAFR * 1.00; const misStoich = obdMisfire(), tqStoich = sparkMixture(1.0);
   state.afr = engine.stoichAFR * 0.65; const misRich = obdMisfire(), tqRich = sparkMixture(0.65), p300Rich = !!obdConditions().P0300;
@@ -116,7 +116,7 @@ const r = await page.evaluate(() => {
   out.afr = { misStoich, tqStoich, misRich, tqRich, p300Rich, misLean, tqLean, p300Lean };
 
   // 8. Stock presets stay healthy
-  const samples = ['Mazda BP-Z3 1.8 (MX-5 NB)', 'VW EA888 2.0 TSI (Golf GTI)', 'VW EA288 2.0 TDI (Golf 150)', 'Mazda 13B-MSP Renesis (RX-8)'];
+  const samples = ['Mazda B6-ZE (MX-5 NA)', 'VW EA888 2.0 TSI (Golf GTI Mk7)', 'VW EA288 2.0 TDI (Golf 150)', 'Mazda 13B-MSP Renesis (RX-8)'];
   out.presets = samples.map(name => {
     load(name);
     return { name, hp: engine.score.peakHP, pMax: engine.peakPmax, lim: cylPmaxLimit() };
@@ -132,8 +132,8 @@ if (!(r.bore.burnLarge > r.bore.burnSmall && r.bore.kLargeBore > r.bore.kSmallBo
   fails.push('Bore-size burn/knock scaling failed: ' + JSON.stringify(r.bore));
 if (!(r.egr.egrVal > 0.15 && r.egr.kWithEgr < r.egr.kNoEgr * 0.85))
   fails.push('Cooled EGR failed to reduce end-gas knock: ' + JSON.stringify(r.egr));
-if (r.mech.rodRatio !== 3.4 || r.mech.rodStroke !== 1.7)
-  fails.push('ROD_RATIO not unified at 3.4: ' + JSON.stringify(r.mech));
+if (r.mech.rodRatio !== 3.2 || r.mech.rodStroke !== 1.6)
+  fails.push('ROD_RATIO not unified at 3.2: ' + JSON.stringify(r.mech));
 if (r.mech.pistonWear.cause !== 'PISTON SPEED' || !(r.mech.pistonWear.health < 1))
   fails.push('Piston speed > 25 m/s did not cause PISTON SPEED wear: ' + JSON.stringify(r.mech.pistonWear));
 if (r.mech.rx8Stock.cause === 'APEX SEAL')

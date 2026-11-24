@@ -598,8 +598,8 @@ function turbineThroatAt(rpm,map,T){
 // it. A phaser ADVANCES the whole lobe, so it moves IVC by its full authority — not half of it, which
 // is what subtracting it from duration did.
 // Connecting-rod to crank-radius ratio L/r (Heywood §2.2: typical passenger-car engines sit at 3.0-3.5;
-// L/S = 1.7 -> L/r = 3.4). Shared by intakeFill, trappedFraction, and pistonVol in engine-physics.js.
-const ROD_RATIO=3.4, ROD_STROKE=ROD_RATIO/2;
+// L/r = 3.2 -> L/S = 1.6, matching engine-view.js). Shared by intakeFill, trappedFraction, and pistonVol.
+const ROD_RATIO=3.2, ROD_STROKE=ROD_RATIO/2;
 const VVT_AUTHORITY=45;   // crank degrees an intake cam phaser can advance the cam
 function pistonX(thetaDeg,r,l){
   const t=thetaDeg*Math.PI/180;
