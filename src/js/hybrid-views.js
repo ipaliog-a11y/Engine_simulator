@@ -67,7 +67,7 @@ function drawHybridLever(H){
 function hybBsfcMap(){
   const e=engine,hy=e.hy;
   if(hy._bsfc&&hy._bsfc.score===e.score)return hy._bsfc;
-  const NR=40,NT=30,r0=Math.max(800,e.idleRpmEff||700),r1=e.redline,T1=e.score.peakTQ*1.08,g=new Float32Array(NR*NT);
+  const NR=40,NT=30,r0=Math.max(800,e.idleRpmEff||700),r1=e.redline,T1=Math.max(10,e.score.peakTQ*1.08),g=new Float32Array(NR*NT);
   let best={b:Infinity};
   for(let i=0;i<NR;i++){
     const rpm=r0+(r1-r0)*i/(NR-1),w=rpm*Math.PI/30,Tf=hybEngTq(rpm);
@@ -82,7 +82,7 @@ function hybBsfcMap(){
 }
 // The map's colour for a BSFC: the best deep blue, through green and yellow, to red at 1.6 times it.
 function bsfcColour(b,best){
-  if(!isFinite(b))return [14,14,22];
+  if(!isFinite(b)||!isFinite(best)||!(best>0))return [14,14,22];
   const t=clamp((b/best-1)/0.6,0,1),stops=[[30,60,170],[30,150,160],[60,200,90],[230,210,60],[230,90,50],[150,30,40]];
   const x=t*(stops.length-1),k=Math.min(stops.length-2,Math.floor(x)),f=x-k,a=stops[k],b2=stops[k+1];
   return [0,1,2].map(i=>Math.round(a[i]+(b2[i]-a[i])*f));
@@ -106,11 +106,12 @@ function drawHybridMap(H){
   O.P.forEach((P,i)=>{const rpm=O.ne[i],T=P/(rpm*Math.PI/30);if(rpm<M.r0||T>M.T1)return;first?c.moveTo(X(rpm)*S,Y(T)*S):c.lineTo(X(rpm)*S,Y(T)*S);first=false;});
   c.stroke();c.setLineDash([]);
   // the best point, and the axes
-  c.fillStyle='#ffffff';c.beginPath();c.arc(X(M.best.rpm)*S,Y(M.best.T)*S,2*S,0,Math.PI*2);c.fill();
+  if(isFinite(M.best.b)){c.fillStyle='#ffffff';c.beginPath();c.arc(X(M.best.rpm)*S,Y(M.best.T)*S,2*S,0,Math.PI*2);c.fill();}
   c.font=F(4.5);c.fillStyle='#888';c.textAlign='center';c.textBaseline='top';
   for(let r=Math.ceil(M.r0/1000)*1000;r<=M.r1;r+=1000)c.fillText(r/1000+'k',X(r)*S,(yBot+2)*S);
   c.textAlign='right';c.textBaseline='middle';
-  for(let T=0;T<=M.T1;T+=50)c.fillText(T,(x0-3)*S,Y(T)*S);
+  const tStep=M.T1>800?250:M.T1>400?100:M.T1>150?50:25;
+  for(let T=0;T<=M.T1;T+=tStep)c.fillText(T,(x0-3)*S,Y(T)*S);
   // the trail and the point the controller holds the engine at now
   H.trail.forEach((p,i)=>{if(!p||p.T<=0)return;const a=(i+1)/H.trail.length;c.fillStyle='rgba(255,255,255,'+(0.15+0.5*a).toFixed(2)+')';c.fillRect(X(p.rpm)*S-1*S,Y(Math.min(p.T,M.T1))*S-1*S,2*S,2*S);});
   if(H.engOn&&state.rpm>e.idleRpmEff*0.5&&H.Te>0){
@@ -120,5 +121,5 @@ function drawHybridMap(H){
     c.fillText((state.bsfc<900?Math.round(state.bsfc):'---')+' g/kWh',x+(x>(x0+x1)/2*S?-6:6)*S,y-4*S);
   }
   c.font=F(5);c.fillStyle='#888';c.textAlign='left';c.textBaseline='alphabetic';
-  c.fillText('BSFC • '+tr('best')+' '+Math.round(M.best.b)+' g/kWh • '+(H.engOn?Math.round(state.rpm)+' rpm '+Math.round(H.Te)+' Nm':tr('ENGINE OFF')),6*S,(Hh/S-4)*S);
+  c.fillText('BSFC • '+tr('best')+' '+(isFinite(M.best.b)?Math.round(M.best.b)+' g/kWh':'---')+' • '+(H.engOn?Math.round(state.rpm)+' rpm '+Math.round(H.Te)+' Nm':tr('ENGINE OFF')),6*S,(Hh/S-4)*S);
 }

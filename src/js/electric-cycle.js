@@ -95,7 +95,7 @@ function evCycle(e,v){
     if(F>0)T=F*r/(fd*eff);
     else if(F<0&&rpm>=500)T=-Math.min(-F*r*eff/fd,regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]);   // the rest is the friction brakes'
     const L=T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0;
-    const P=T*w+L,d=packDraw(e.pack,C.soc,P,C.tPack),Pb=P+(d?d.heat:0)+C.auxW;
+    const P=T*w+L,d=packDrawClamped(e.pack,C.soc,P,C.tPack),Pb=P+d.heat+C.auxW;
     E+=Pb;lost+=L;if(T<0)back-=T*w;
   }
   const km=x/1000,whkm=E/3600/km,usable=e.pack.kWh*(EV_RACE.socStart-EV_RACE.socFloor);

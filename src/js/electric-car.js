@@ -122,7 +122,7 @@ function evLapHeat(e,prof){
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
-    const d=packDraw(b,0.5,P,tb.b)||{heat:0,I:0};   // at the pack's temperature (build 346)
+    const d=packDrawClamped(b,0.5,P,tb.b);   // at the pack's temperature (build 346)
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}

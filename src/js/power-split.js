@@ -27,12 +27,15 @@ const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='s
 // power over the torque) and the current the torque. maxRpm, if given, its own top speed.
 function hybMachineFrom(mg2,T1,P1,V,maxRpm){
   const s=Object.assign({},mg2.s,maxRpm?{maxRpm}:{}),T2=motorMaxTorque(mg2,100,V,60);
+  if(!(T2>0)||!(T1>0)||!(P1>0))return motorBuild(s);
   let k2=mg2.nMax;for(let r=100;r<=mg2.nMax;r+=100)if(motorMaxTorque(mg2,r,V,60)<T2*0.999){k2=r;break;}
-  const knee1=P1/T1*30/Math.PI,stack=Math.max(5,s.stackL*k2/knee1);
-  let amps=s.invAmps*(T1/T2)/(stack/s.stackL),m=null;
+  const knee1=P1/T1*30/Math.PI,stack=clamp(s.stackL*k2/Math.max(1,knee1),5,1000),maxA=Math.max(s.invAmps*10,5000);
+  let amps=clamp(s.invAmps*(T1/T2)/(stack/s.stackL),1,maxA),m=null;
   for(let it=0;it<4;it++){   // saturation bends torque from current: settle the current on the torque
     m=motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
-    amps*=T1/Math.max(1,motorMaxTorque(m,100,V,60));
+    const t=motorMaxTorque(m,100,V,60);
+    if(!(t>0))break;
+    amps=clamp(amps*(T1/t),1,maxA);
   }
   return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
 }

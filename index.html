@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 444</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 445</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -12743,8 +12743,9 @@ function magnetCircuit(g){
   const r=SLOT_OPEN/gap,kc=ts/(ts-r*r/(5+r)*gap),gp=kc*gap;
   const alpha=Math.min(1,magW),Am=magW*tau*MAG_AX*L,Ag=alpha*tau*L,leak=FE_JS*BRIDGE_W*Lfe;
   const yokeF=(By,tauY)=>{let F=0;for(let i=0;i<12;i++)F+=steelH(By*Math.sin(Math.PI*(i+0.5)/24));return F*tauY/2/12;};
-  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=Bg*ts/(0.95*st.wt),By=Bg*Ag/(2*st.hy*Lfe);
-    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*st.wt)-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
+  const at=Bg=>{const st=statorFrom(Bg,Bg*Ag,ts,h,Lfe,B_TOOTH,B_YOKE),Bt=st.wt>0?Bg*ts/(0.95*st.wt):0,By=st.hy>0?Bg*Ag/(2*st.hy*Lfe):0;
+    return {Bt,By,st,F:Bg*gp/MU0+toothH(Bt,ts/(0.95*Math.max(1e-6,st.wt))-1)*st.hSlot+yokeF(By,Math.PI*(OD-st.hy)/poles)};};
+  if(Am*Br<=leak){const x=at(0);return {Bflat:0,B1:0,Bt:0,By:0,kc,st:x.st};}
   let lo=0,hi=Br*Am/Ag;
   for(let k=0;k<40;k++){const Bg=(lo+hi)/2,Hm=-at(Bg).F/magT;
     if((Am*(Br+MU0*mur*Hm)-leak)/Ag>Bg)lo=Bg;else hi=Bg;}
@@ -12772,26 +12773,27 @@ const toothH=(Ba,k)=>steelH(toothB(Ba,k));
 // torque T = 3/2 p (psi_d i_q - psi_q i_d), and the peak flux densities in the teeth, the yoke and the gap.
 const DQ_SLICES=36, DQ_N=13, DQ_KBR=0.8;
 function dqSetup(m){
-  const st=m.circ.st,ts=Math.PI*m.Ds/m.slots,kT=ts/(0.95*st.wt),gp=m.circ.kc*GAP,NB=150,BM=3.2,FB=new Float64Array(NB+1);
+  const st=m.circ.st,ts=Math.PI*m.Ds/m.slots,wt=Math.max(1e-4,st.wt),hy=Math.max(1e-4,st.hy),kT=ts/(0.95*wt),gp=m.circ.kc*GAP,NB=150,BM=3.2,FB=new Float64Array(NB+1);
   for(let i=0;i<=NB;i++){const B=i*BM/NB;FB[i]=B*gp/MU0+toothH(B*kT,kT-1)*st.hSlot;}
   const n=DQ_SLICES,tau=Math.PI*m.D/m.poles,cos=[],sin=[],face=[],dep=[],half=Math.min(1,m.magW)*tau/2;
   for(let i=0;i<n;i++){const th=-Math.PI/2+(i+0.5)*Math.PI/n,x=th/Math.PI*tau;cos.push(Math.cos(th));sin.push(Math.sin(th));
     face.push(Math.abs(x)<half);dep.push(POLE_EDGE+Math.max(0,half-Math.abs(x))*Math.tan(V_PHI));}
   const Am=Math.min(1,m.magW)*tau*MAG_AX*m.L;
   // Pyrhonen 2014, 4.2: a slot's leakage inductance, (4m/Q) mu0 l N^2 lambda, lambda = h/(3b) for a slot full of copper
-  const slotW=Math.PI*(m.Ds+st.hSlot)/m.slots-st.wt,q=m.slots/(3*m.poles),lw=m.mlt/2-m.L;
+  const slotW=Math.PI*(m.Ds+st.hSlot)/m.slots-wt,q=m.slots/(3*m.poles),lw=m.mlt/2-m.L;
   const Ls=12/m.slots*MU0*m.N*m.N*(m.L*st.hSlot/(3*Math.max(1e-4,slotW))+q*lw*LAMBDA_W);
-  return {FB,NB,BM,kT,gp,hSlot:st.hSlot,cos,sin,face,wL:m.L*tau/n,dy:Math.PI*(m.OD-st.hy)/m.poles/n,hy:st.hy,Lfe:m.Lfe,
-    Am,leak:FE_JS*BRIDGE_W*m.Lfe,magT:m.magT,mur:m.mag.mur,Br:m.mag.Br,fPerA:3*Math.SQRT2*KW_WIND*m.N/(Math.PI*m.p),
+  return {FB,NB,BM,kT,gp,hSlot:st.hSlot,cos,sin,face,wL:m.L*tau/n,dy:Math.PI*(m.OD-hy)/m.poles/n,hy,Lfe:m.Lfe,
+    zeroFlux:!(m.circ.B1>0),Am,leak:FE_JS*BRIDGE_W*m.Lfe,magT:m.magT,mur:m.mag.mur,Br:m.mag.Br,fPerA:3*Math.SQRT2*KW_WIND*m.N/(Math.PI*m.p),
     psiPerB:KW_WIND*m.N*2/Math.PI*tau*m.Lfe,Ls,dep,dx:tau/n,B:new Float64Array(n),Uy:new Float64Array(n),Hy:new Float64Array(n)};
 }
 function dqBinv(c,F){   // a slice's gap field (T) for the MMF across its gap and tooth (A)
   const a=Math.abs(F),FB=c.FB;let B;
-  if(a>=FB[c.NB])B=c.BM+(a-FB[c.NB])*(c.BM/c.NB)/(FB[c.NB]-FB[c.NB-1]);
-  else{let lo=0,hi=c.NB;while(hi-lo>1){const k=(lo+hi)>>1;if(FB[k]<=a)lo=k;else hi=k;}B=(lo+(a-FB[lo])/(FB[hi]-FB[lo]))*c.BM/c.NB;}
+  if(a>=FB[c.NB]){const dF=FB[c.NB]-FB[c.NB-1];B=dF>0?c.BM+(a-FB[c.NB])*(c.BM/c.NB)/dF:c.BM;}
+  else{let lo=0,hi=c.NB;while(hi-lo>1){const k=(lo+hi)>>1;if(FB[k]<=a)lo=k;else hi=k;}const dF=FB[hi]-FB[lo];B=(lo+(dF>0?(a-FB[lo])/dF:0))*c.BM/c.NB;}
   return F<0?-B:B;
 }
 function dqSolve(c,Fd,Fq,kBr){
+  if(c.zeroFlux||!(c.hy>0&&c.Lfe>0))return {b1d:0,b1q:0,Bt:0,By:0,Bg2:0};
   const n=DQ_SLICES,B=c.B,Uy=c.Uy,Hy=c.Hy,Br=kBr*c.Br,Um=Br*c.magT/(MU0*c.mur),X=Um+Math.abs(Fd)+Math.abs(Fq);
   Uy.fill(0);let Ur=0,dU=0,ByMax=0;
   // the pole piece as two halves, each one potential: the trailing half dU/2 above the pole's, the leading half below
@@ -12930,7 +12932,7 @@ function dqVolt(m,q,Id,Iq,we,R){
 // The tooth and yoke for a peak gap field Bpk (T) and a pole's flux phi (Wb), at the design densities; neither may take
 // more than 80% of the slot pitch or of the radial band, so an over-fluxed design saturates rather than losing its slots.
 function statorFrom(Bpk,phi,ts,h,Lfe,bT,bY){
-  const wt=Math.min(0.8*ts,Bpk*ts/(0.95*bT)), hy=Math.min(0.8*h,phi/(2*Lfe*bY));
+  const wt=Math.min(0.8*ts,Math.max(1e-4,Bpk*ts/(0.95*bT))), hy=Math.min(0.8*h,Math.max(1e-4,phi/(2*Lfe*bY)));
   return {wt,hy,hSlot:h-hy};
 }
 // How the rotor holds its magnets in, which sets the surface speed it survives (m/s): steel bridges in the lamination
@@ -13114,7 +13116,7 @@ function copperAC(m,rpm,tW){
   return M+((layers*layers-1)/3)*D;
 }
 // The torque at a current (A rms), at the best angle (MTPA), with the magnets where psi = motorPsi(m, t) puts them.
-const tMagOf=(m,psi)=>m.mag.alpha?20+(psi/m.psi20-1)/m.mag.alpha:60;
+const tMagOf=(m,psi)=>m.mag.alpha&&m.psi20?20+(psi/m.psi20-1)/m.mag.alpha:60;
 function motorTorqueAtI(m,I,psi){
   if(m.im)return imTorque(m,I);
   return dqMtpa(m,Math.min(I,m.Imax),tMagOf(m,psi)).T;
@@ -13122,10 +13124,11 @@ function motorTorqueAtI(m,I,psi){
 // The knee (mechanical rad/s). A magnet motor: where the MTPA point at full current meets the inverter's voltage, solved
 // on v_d and v_q (a quadratic in the speed). An induction motor: its back-EMF with the drop at full current.
 function motorBaseW(m,Vdc,psi){
-  if(m.im)return Vdc/Math.sqrt(6)*Math.SQRT2/(m.vDrop*m.p*psi);
+  if(m.im)return m.vDrop*m.p*psi>0?Vdc/Math.sqrt(6)*Math.SQRT2/(m.vDrop*m.p*psi):0;
   const tMag=tMagOf(m,psi),o=dqMtpa(m,m.Imax,tMag),Id=-m.Imax*Math.sin(o.g),Iq=m.Imax*Math.cos(o.g),q=dqAt(m,Id,Iq,tMag);
   const R=motorR(m,tMag),id=Math.SQRT2*Id,iq=Math.SQRT2*Iq,pd=q.pd+m.dqc.Ls*id,pq=q.pq+m.dqc.Ls*iq,V=Vdc/Math.sqrt(3);
   const A=pd*pd+pq*pq,B=2*(R*iq*pd-R*id*pq),C=R*R*(id*id+iq*iq)-V*V;
+  if(!(A>0))return 0;
   return Math.max(0,(-B+Math.sqrt(Math.max(0,B*B-4*A*C)))/(2*A))/m.p;
 }
 // The most torque at a shaft speed (Nm), for the bus voltage and the magnets' temperature. A magnet motor: the MTPA
@@ -13174,8 +13177,8 @@ function motorTopRpm(m,Vdc){
 // Torque per amp falls as the electric loading (A/m of bore) rises: the leakage paths saturate. A magnet motor's is
 // solved (dqSolve, build 302); an induction motor's is still the one point the Model 3 gave before then (8.5% at
 // 145.7 kA/m, scaled with the loading's square), in its own register entry (MOTOR.imCage).
-const IM_SAT_K=0.085, IM_SAT_A=145.7e3;
-const imSat=(m,I)=>1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2;
+const IM_SAT_K=0.085, IM_SAT_A=145.7e3, IM_SAT_MIN=0.15;
+const imSat=(m,I)=>Math.max(IM_SAT_MIN,1-IM_SAT_K*(6*m.N*I/(Math.PI*m.D)/IM_SAT_A)**2);
 function imTorque(m,I){
   const Iq=Math.sqrt(Math.max(0,I*I-m.ImR*m.ImR));
   return 1.5*m.p*m.psi20*Math.SQRT2*Iq*imSat(m,I);
@@ -13184,7 +13187,7 @@ function imTorque(m,I){
 // the knee the field is weakened as wb/w; below the rated torque current the controller lowers the field until Im = Iq.
 function imCurrents(m,T,rpm,Vdc){
   const wb=motorBaseW(m,Vdc,m.psi20),w=rpm*Math.PI/30,k=1.5*m.p*Math.SQRT2;
-  if(!(Math.abs(T)>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
+  if(!(Math.abs(T)>0)||!(m.psi20>0))return {fl:0,Im:0,Iq:0,I:0};   // no torque asked: no field
   let fl=w>wb?wb/w:1,Im=m.ImR*fl,Iq=Math.abs(T)/(k*m.psi20*fl);
   if(Iq<Im){Im=Iq=Math.sqrt(Math.abs(T)*m.ImR/(k*m.psi20));fl=Im/m.ImR;}
   for(let j=0;j<3;j++)Iq=Math.abs(T)/(k*m.psi20*fl*imSat(m,Math.hypot(Im,Iq)));
@@ -13411,12 +13414,13 @@ const chemAvailable=(c,year)=>(CHEM[c]||CHEM.nca).from<=(year||2020);
 // The pack a design describes. s: {chem, series (cells in series), kWh, year}.
 function packBuild(s){
   const c=CHEM[s.chem]||CHEM.nca, year=s.year||2020;
-  const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=s.series*vCell;
-  const Ah=s.kWh*1000/Vnom, R=s.series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
+  const series=Math.max(1,s.series||1), kWh=Math.max(0.1,s.kWh||0.1);
+  const vCell=c.ocv.reduce((a,b)=>a+b,0)/c.ocv.length, Vnom=series*vCell;
+  const Ah=kWh*1000/Vnom, R=series*c.rAh/Ah*1.1;                // +10%: busbars, contactors, fuse
   const ctp=s.chem==='lfp'&&year>=2020;
-  const mass=s.kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
-  const cost=Math.round(s.kWh*atYear(c.cost,year));
-  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*s.kWh*1000,Ah,R,kWh:s.kWh,mass,cost,series:s.series,vMin:s.series*c.vMin,iMax:c.cMax*Ah};
+  const mass=kWh*1000/atYear(c.whkg,year)/(ctp?PACK_FACTOR_CTP:atYear(PACK_FACTOR,year));
+  const cost=Math.round(kWh*atYear(c.cost,year));
+  return {s,chem:c,year,Vnom,pChargeMax:c.cCharge*kWh*1000,Ah,R,kWh,mass,cost,series,vMin:series*c.vMin,iMax:c.cMax*Ah};
 }
 // Resistance against temperature (stage 3; split in build 232). b.R is the 25 °C value the rest of the drive uses.
 // A cell's resistance is two kinds. The ohmic part (electrolyte, current collectors, tabs, and here the pack's busbars)
@@ -13457,6 +13461,14 @@ function packDraw(b,soc,P,tC){
   const I=(V0-Math.sqrt(disc))/(2*R),V=V0-I*R;
   if(P>0&&(V<b.vMin||I>b.iMax))return null;
   return {V,I,heat:I*I*R};
+}
+// Like packDraw, but clamps discharge overload to the pack's max-power current so thermal/energy callers never drop heat to 0.
+function packDrawClamped(b,soc,P,tC){
+  const d=packDraw(b,soc,P,tC);
+  if(d||!(P>0))return d||{V:packOcv(b,soc),I:0,heat:0};
+  const R=packR(b,tC),V0=packOcv(b,soc);
+  const I=Math.max(0,Math.min(b.iMax,(V0-b.vMin)/R,V0/(2*R)));
+  return {V:V0-I*R,I,heat:I*I*R};
 }
 // The pack's temperature (build 180): one lumped node, the cells' heat capacity (~1000 J/kgK) over the pack's mass, a
 // liquid cooling plate taking ~2 W/K per kWh to coolant at 30 C. The battery management system cuts the power it allows
@@ -32392,8 +32404,8 @@ function scoreMotor(e){
   }
   // a drive held to the pack's power is flat on top: its peak is where the plateau starts (within 0.1%), not whichever
   // point of it rounding happens to favour
-  peakHPrpm=(pts.find(p=>p.hp>=0.999*peakHP)||{rpm:peakHPrpm}).rpm;
-  let lo=rMax,hi=0;pts.forEach(p=>{if(p.hp>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  peakHPrpm=peakHP>0?(pts.find(p=>p.hp>=0.999*peakHP)||{rpm:peakHPrpm}).rpm:0;
+  let lo=rMax,hi=0;if(peakHP>0)pts.forEach(p=>{if(p.hp>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   let best={e:0,rpm:0,T:0};
   for(let r=500;r<=rMax;r+=250)for(const f of [0.15,0.25,0.4,0.6,0.8,1]){
     const p=pts[Math.min(pts.length-1,Math.round(r/100)-1)],T=p.T*f;if(!(T>1))continue;
@@ -32406,7 +32418,7 @@ function scoreMotor(e){
   // nil, so they are reported but not scored.
   const kWkg=peakHP*0.7457/m.mass;
   const sPower=clamp((kWkg-2)/4,0,1)*100,sBand=clamp((hi-lo)/(rMax*0.75),0,1)*100,sEff=clamp((best.e*100-93)/5,0,1)*100;
-  const sCont=clamp(cont/(peakHP*0.7457)/0.6,0,1)*100,sHold=clamp((hold-10)/110,0,1)*100;
+  const sCont=peakHP>0?clamp(cont/(peakHP*0.7457)/0.6,0,1)*100:0,sHold=clamp((hold-10)/110,0,1)*100;
   const overall=Math.round(0.30*sPower+0.15*sBand+0.20*sEff+0.20*sCont+0.15*sHold);
   const grade=overall>=88?'S':overall>=76?'A':overall>=62?'B':overall>=46?'C':overall>=30?'D':'F';
   const reliability=clamp(Math.round(100-Math.max(0,60-sCont)*0.5-(m.mag.Tmax<160?8:0)),0,100);
@@ -32421,8 +32433,8 @@ function scoreMotor(e){
 function motorContinuousKW(e,V){
   const m=e.motor,rpm=Math.min(e.redline,1.5*motorBaseW(m,V,motorPsi(m,60))*30/Math.PI),w=rpm*Math.PI/30;
   const Tmax=motorMaxTorque(m,rpm,V,60),ok=T=>{const s=motorSteadyTemps(m,T,rpm,V);return s.w<=150&&s.r<=m.mag.Tmax-20;};
-  if(!ok(1))return 0;
-  let lo=1,hi=Tmax;if(ok(hi))return hi*w/1000;
+  if(!(Tmax>0)||!ok(Math.min(1,Tmax)))return 0;
+  let lo=Math.min(1,Tmax),hi=Tmax;if(ok(hi))return hi*w/1000;
   for(let k=0;k<24;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
   return lo*w/1000;
 }
@@ -32450,7 +32462,7 @@ function stepMotorBench(dt){
   st.evAsked=Treq;
   st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
-  const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
+  const d=packDrawClamped(b,st.soc,Math.max(0,Pb));
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
   st.battI=d.I;st.battKW=d.V*d.I/1000;st.systemVoltage=d.V;
   st.evLoss=L;st.battHeat=d.heat;st.battSag=Voc-d.V;   // for the bench's readouts (build 285): the losses as the model splits them, and the pack's
@@ -32481,10 +32493,10 @@ function stepMotorWear(dt){
 // an engine's.
 function motorOperatingPoint(kind){
   const s=engine.score;
-  if(kind==='power')return {rpm:s.peakHPrpm,throttle:1,lambda:1,tq:s.peakHP*745.7/(s.peakHPrpm*Math.PI/30),expect:s.peakKW+' kW'};
+  if(kind==='power'){const r=s.peakHPrpm>0?s.peakHPrpm:Math.min(engine.redline,1000);return {rpm:r,throttle:1,lambda:1,tq:s.peakHPrpm>0?s.peakHP*745.7/(s.peakHPrpm*Math.PI/30):0,expect:s.peakKW+' kW'};}
   if(kind==='torque'){const r=Math.max(500,Math.round(s.knee*0.5/100)*100);return {rpm:r,throttle:1,lambda:1,tq:s.peakTQ,expect:s.peakTQ+' Nm'};}
-  const b=s.bestEff,full=driveMaxTorque(engine,b.rpm,motorRatedV(engine),{w:90,c:80,r:70},0.5);
-  return {rpm:b.rpm,throttle:clamp(b.T/Math.max(1,full),0.05,1),lambda:1,tq:b.T,expect:(b.e*100).toFixed(1)+'% at '+Math.round(b.T*b.rpm*Math.PI/30/1000)+' kW'};
+  const b=s.bestEff,r=b.rpm>0?b.rpm:Math.min(engine.redline,1000),full=driveMaxTorque(engine,r,motorRatedV(engine),{w:90,c:80,r:70},0.5);
+  return {rpm:r,throttle:clamp(b.T/Math.max(1,full),0.05,1),lambda:1,tq:b.T,expect:(b.e*100).toFixed(1)+'% at '+Math.round(b.T*r*Math.PI/30/1000)+' kW'};
 }
 
 // ---- the dyno ----
@@ -32865,7 +32877,7 @@ function evLapHeat(e,prof){
     const rpm=prof.rpm[i],now=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b),T=prof.tq[i]*now,dt=prof.dt[i],w=rpm*Math.PI/30;
     const L=motorLosses(m,Math.abs(T),rpm,V,t);
     const P=T*w+L.total;                         // battery power: drawing (+), or taking back (-) less the losses
-    const d=packDraw(b,0.5,P,tb.b)||{heat:0,I:0};   // at the pack's temperature (build 346)
+    const d=packDrawClamped(b,0.5,P,tb.b);   // at the pack's temperature (build 346)
     motorHeatStep(m,t,L,dt);packHeatStep(b,tb,d.heat,dt);
     if(lap===1){share[i]=motorDerate(e,t)*packDerate(tb.b)*evPackGain(e,rpm,tb.b);tW[i]=t.w;tR[i]=t.r;tB[i]=tb.b;
       if(P>0)driveJ+=P*dt;else regenJ-=P*dt;}
@@ -32950,8 +32962,8 @@ function evRaceModel(key,line,grips){
     const O=L.evOp,fr=new Float32Array(n),fh=new Float32Array(n);
     for(let i=0;i<n;i++){
       const rpm=Math.max(1,O.rpm[i]),T=O.tq[i],P=T*rpm*Math.PI/30+motorLosses(e.motor,Math.abs(T),rpm,V,cool).total;
-      const d=packDraw(e.pack,0.5,P);
-      fh[i]=(d?d.heat:0)/3600;fr[i]=P/3600+fh[i];
+      const d=packDrawClamped(e.pack,0.5,P);
+      fh[i]=d.heat/3600;fr[i]=P/3600+fh[i];
     }
     return {v:Float32Array.from(L.v),fr,fh,tq:Float32Array.from(O.tq),lap:L.lap};
   };
@@ -33001,7 +33013,7 @@ function evRaceManage(M,c,left,mode){
 // controller (the winding's and the magnets') allow less. The controller cuts the current, so the torque; taken here as
 // the same share of the power.
 function evRaceFFNow(M,c){
-  const X=M.ev,want=evRaceCap(c.evFF),bms=evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef;   // low charge: build 196
+  const X=M.ev,want=evRaceCap(c.evFF),bms=X.pRef>0?evBmsPower(X.pack,evRaceSoc(M,c.fuelKg),c.evT.b)*packDerate(c.evT.b)/X.pRef:0;   // low charge: build 196
   const cap=Math.min(want,bms,motorDerate(X,c.evT));
   if(cap<want-0.01)c.evCut=true;
   return evRaceFF(cap);
@@ -33023,7 +33035,7 @@ function evRaceHeatStep(M,c,r,dt,save){
   // the grid's price carries the cells' heat at 25 °C and half charge (fh); the cells make it at the pack's temperature
   // (build 346) and charge, from the power at their terminals, and the difference is spent from the pack (build 373)
   const X=M.ev,t=c.evT,k=r*r*save,h0=(c._fh||0)*3600*k,P=c._fr*3600*k-h0;
-  const d=packDraw(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d?d.heat:0;
+  const d=packDrawClamped(X.pack,evRaceSoc(M,c.fuelKg),P,t.b),heat=d.heat;
   packHeatStep(X.pack,t,heat,dt);
   const dE=(heat-h0)*dt/3.6e6;c.fuelKg-=dE;c.fuelUsed+=dE;
   const rpm=clamp(c.v*X.k,1,X.rl),T=c._tq*r;
@@ -33197,7 +33209,7 @@ function evCycle(e,v){
     if(F>0)T=F*r/(fd*eff);
     else if(F<0&&rpm>=500)T=-Math.min(-F*r*eff/fd,regen[Math.min(regen.length-1,Math.floor((rpm-500)/250))]);   // the rest is the friction brakes'
     const L=T||rpm>0?motorLosses(e.motor,T,Math.max(rpm,1),V,temp).total:0;
-    const P=T*w+L,d=packDraw(e.pack,C.soc,P,C.tPack),Pb=P+(d?d.heat:0)+C.auxW;
+    const P=T*w+L,d=packDrawClamped(e.pack,C.soc,P,C.tPack),Pb=P+d.heat+C.auxW;
     E+=Pb;lost+=L;if(T<0)back-=T*w;
   }
   const km=x/1000,whkm=E/3600/km,usable=e.pack.kWh*(EV_RACE.socStart-EV_RACE.socFloor);
@@ -33303,8 +33315,8 @@ function buildHybrid(e){
     const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,statorOD:e.evFrontOD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
       retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
-    const Pr=pk(motor),Pf=pk(fm);
-    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Pf/(Pr+Pf)};e.hy.shareR=Pr/(Pr+Pf);
+    const Pr=pk(motor),Pf=pk(fm),Ptot=Pr+Pf;
+    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Ptot>0?Pf/Ptot:0.5};e.hy.shareR=Ptot>0?Pr/Ptot:0.5;
     e.hy.mass+=Math.round(fm.mass+8);e.hy.cost+=fm.cost+500;
   }
   return e.hy;
@@ -33541,12 +33553,15 @@ const isDirectHybrid=()=>isHybrid()&&(engine.hy.mode==='ps'||engine.hy.mode==='s
 // power over the torque) and the current the torque. maxRpm, if given, its own top speed.
 function hybMachineFrom(mg2,T1,P1,V,maxRpm){
   const s=Object.assign({},mg2.s,maxRpm?{maxRpm}:{}),T2=motorMaxTorque(mg2,100,V,60);
+  if(!(T2>0)||!(T1>0)||!(P1>0))return motorBuild(s);
   let k2=mg2.nMax;for(let r=100;r<=mg2.nMax;r+=100)if(motorMaxTorque(mg2,r,V,60)<T2*0.999){k2=r;break;}
-  const knee1=P1/T1*30/Math.PI,stack=Math.max(5,s.stackL*k2/knee1);
-  let amps=s.invAmps*(T1/T2)/(stack/s.stackL),m=null;
+  const knee1=P1/T1*30/Math.PI,stack=clamp(s.stackL*k2/Math.max(1,knee1),5,1000),maxA=Math.max(s.invAmps*10,5000);
+  let amps=clamp(s.invAmps*(T1/T2)/(stack/s.stackL),1,maxA),m=null;
   for(let it=0;it<4;it++){   // saturation bends torque from current: settle the current on the torque
     m=motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
-    amps*=T1/Math.max(1,motorMaxTorque(m,100,V,60));
+    const t=motorMaxTorque(m,100,V,60);
+    if(!(t>0))break;
+    amps=clamp(amps*(T1/t),1,maxA);
   }
   return motorBuild(Object.assign({},s,{stackL:stack,invAmps:amps}));
 }
@@ -34197,7 +34212,7 @@ function drawHybridLever(H){
 function hybBsfcMap(){
   const e=engine,hy=e.hy;
   if(hy._bsfc&&hy._bsfc.score===e.score)return hy._bsfc;
-  const NR=40,NT=30,r0=Math.max(800,e.idleRpmEff||700),r1=e.redline,T1=e.score.peakTQ*1.08,g=new Float32Array(NR*NT);
+  const NR=40,NT=30,r0=Math.max(800,e.idleRpmEff||700),r1=e.redline,T1=Math.max(10,e.score.peakTQ*1.08),g=new Float32Array(NR*NT);
   let best={b:Infinity};
   for(let i=0;i<NR;i++){
     const rpm=r0+(r1-r0)*i/(NR-1),w=rpm*Math.PI/30,Tf=hybEngTq(rpm);
@@ -34212,7 +34227,7 @@ function hybBsfcMap(){
 }
 // The map's colour for a BSFC: the best deep blue, through green and yellow, to red at 1.6 times it.
 function bsfcColour(b,best){
-  if(!isFinite(b))return [14,14,22];
+  if(!isFinite(b)||!isFinite(best)||!(best>0))return [14,14,22];
   const t=clamp((b/best-1)/0.6,0,1),stops=[[30,60,170],[30,150,160],[60,200,90],[230,210,60],[230,90,50],[150,30,40]];
   const x=t*(stops.length-1),k=Math.min(stops.length-2,Math.floor(x)),f=x-k,a=stops[k],b2=stops[k+1];
   return [0,1,2].map(i=>Math.round(a[i]+(b2[i]-a[i])*f));
@@ -34236,11 +34251,12 @@ function drawHybridMap(H){
   O.P.forEach((P,i)=>{const rpm=O.ne[i],T=P/(rpm*Math.PI/30);if(rpm<M.r0||T>M.T1)return;first?c.moveTo(X(rpm)*S,Y(T)*S):c.lineTo(X(rpm)*S,Y(T)*S);first=false;});
   c.stroke();c.setLineDash([]);
   // the best point, and the axes
-  c.fillStyle='#ffffff';c.beginPath();c.arc(X(M.best.rpm)*S,Y(M.best.T)*S,2*S,0,Math.PI*2);c.fill();
+  if(isFinite(M.best.b)){c.fillStyle='#ffffff';c.beginPath();c.arc(X(M.best.rpm)*S,Y(M.best.T)*S,2*S,0,Math.PI*2);c.fill();}
   c.font=F(4.5);c.fillStyle='#888';c.textAlign='center';c.textBaseline='top';
   for(let r=Math.ceil(M.r0/1000)*1000;r<=M.r1;r+=1000)c.fillText(r/1000+'k',X(r)*S,(yBot+2)*S);
   c.textAlign='right';c.textBaseline='middle';
-  for(let T=0;T<=M.T1;T+=50)c.fillText(T,(x0-3)*S,Y(T)*S);
+  const tStep=M.T1>800?250:M.T1>400?100:M.T1>150?50:25;
+  for(let T=0;T<=M.T1;T+=tStep)c.fillText(T,(x0-3)*S,Y(T)*S);
   // the trail and the point the controller holds the engine at now
   H.trail.forEach((p,i)=>{if(!p||p.T<=0)return;const a=(i+1)/H.trail.length;c.fillStyle='rgba(255,255,255,'+(0.15+0.5*a).toFixed(2)+')';c.fillRect(X(p.rpm)*S-1*S,Y(Math.min(p.T,M.T1))*S-1*S,2*S,2*S);});
   if(H.engOn&&state.rpm>e.idleRpmEff*0.5&&H.Te>0){
@@ -34250,7 +34266,7 @@ function drawHybridMap(H){
     c.fillText((state.bsfc<900?Math.round(state.bsfc):'---')+' g/kWh',x+(x>(x0+x1)/2*S?-6:6)*S,y-4*S);
   }
   c.font=F(5);c.fillStyle='#888';c.textAlign='left';c.textBaseline='alphabetic';
-  c.fillText('BSFC • '+tr('best')+' '+Math.round(M.best.b)+' g/kWh • '+(H.engOn?Math.round(state.rpm)+' rpm '+Math.round(H.Te)+' Nm':tr('ENGINE OFF')),6*S,(Hh/S-4)*S);
+  c.fillText('BSFC • '+tr('best')+' '+(isFinite(M.best.b)?Math.round(M.best.b)+' g/kWh':'---')+' • '+(H.engOn?Math.round(state.rpm)+' rpm '+Math.round(H.Te)+' Nm':tr('ENGINE OFF')),6*S,(Hh/S-4)*S);
 }
 // ====== FUEL CYCLE: an engine's consumption over the WLTP cycle (build 187, step 3.2a of plans/hybrid-electric/) ======
 // The WLTC class 3b trace (src/js/electric-cycle.js) driven second by second with an engine, as the electric car's is
@@ -37100,8 +37116,8 @@ const HYB_ENGINE_PRESETS=[
   // front axle through its own reduction (declutched past its top speed), and a 6.8 kWh pack of 312 cells: 652 kW and 1280
   // Nm together (Porsche). Neither motor's torque, nor the front's reduction, is published. Its fit's drive is the
   // axle the PDK turns, the rear (build 279); the front motor makes the car all-wheel drive.
-  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},unsure:['silencer'],
-   unsure:['stator','compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
+  {cat:'Hybrid',name:'Porsche 4.6 V8 + P2 + front motor (918 Spyder)',real:{hp:599.4,hpRpm:8700,tq:540,tqRpm:6700,motorKW:115,frontKW:95,sysKW:652,sysNm:1280},
+   unsure:['silencer','stator','compression','cam','motor torques','front reduction'],engine:{type:'petrol4',radiator:'large',oilCooler:true,cylinders:8,layout:'v',bore_mm:95,stroke_mm:81,compression:13.0,redline:9150,intake:'na',
     injector:'direct',vvt:true,cam:'race',valves:4,valveMat:'titanium',valveSpring:'race',octane:98,airFilter:'perf',exhaust:'race',silencer:'absorptive',cat:'stock',intakeSys:'efi',runner:'variable',
     hyMode:'p2',hyDeploy:'full',hyPlug:true,hyTune:{rpm:4000,map:Array(20).fill(100),regen:'high',lps:true,evKmh:0,evKw:0,socLo:15,socT:20,socHi:95},
     evMotorType:'pm',evRotorD:150,evStatorOD:226,evStack:80,evPoles:8,evTurns:30,evMagnet:'ndfeb',evRetention:'bridges',evCooling:'jacket',evMaxRpm:16000,

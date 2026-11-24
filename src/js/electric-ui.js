@@ -174,8 +174,8 @@ function scoreMotor(e){
   }
   // a drive held to the pack's power is flat on top: its peak is where the plateau starts (within 0.1%), not whichever
   // point of it rounding happens to favour
-  peakHPrpm=(pts.find(p=>p.hp>=0.999*peakHP)||{rpm:peakHPrpm}).rpm;
-  let lo=rMax,hi=0;pts.forEach(p=>{if(p.hp>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
+  peakHPrpm=peakHP>0?(pts.find(p=>p.hp>=0.999*peakHP)||{rpm:peakHPrpm}).rpm:0;
+  let lo=rMax,hi=0;if(peakHP>0)pts.forEach(p=>{if(p.hp>=0.8*peakHP){lo=Math.min(lo,p.rpm);hi=Math.max(hi,p.rpm);}});
   let best={e:0,rpm:0,T:0};
   for(let r=500;r<=rMax;r+=250)for(const f of [0.15,0.25,0.4,0.6,0.8,1]){
     const p=pts[Math.min(pts.length-1,Math.round(r/100)-1)],T=p.T*f;if(!(T>1))continue;
@@ -188,7 +188,7 @@ function scoreMotor(e){
   // nil, so they are reported but not scored.
   const kWkg=peakHP*0.7457/m.mass;
   const sPower=clamp((kWkg-2)/4,0,1)*100,sBand=clamp((hi-lo)/(rMax*0.75),0,1)*100,sEff=clamp((best.e*100-93)/5,0,1)*100;
-  const sCont=clamp(cont/(peakHP*0.7457)/0.6,0,1)*100,sHold=clamp((hold-10)/110,0,1)*100;
+  const sCont=peakHP>0?clamp(cont/(peakHP*0.7457)/0.6,0,1)*100:0,sHold=clamp((hold-10)/110,0,1)*100;
   const overall=Math.round(0.30*sPower+0.15*sBand+0.20*sEff+0.20*sCont+0.15*sHold);
   const grade=overall>=88?'S':overall>=76?'A':overall>=62?'B':overall>=46?'C':overall>=30?'D':'F';
   const reliability=clamp(Math.round(100-Math.max(0,60-sCont)*0.5-(m.mag.Tmax<160?8:0)),0,100);
@@ -203,8 +203,8 @@ function scoreMotor(e){
 function motorContinuousKW(e,V){
   const m=e.motor,rpm=Math.min(e.redline,1.5*motorBaseW(m,V,motorPsi(m,60))*30/Math.PI),w=rpm*Math.PI/30;
   const Tmax=motorMaxTorque(m,rpm,V,60),ok=T=>{const s=motorSteadyTemps(m,T,rpm,V);return s.w<=150&&s.r<=m.mag.Tmax-20;};
-  if(!ok(1))return 0;
-  let lo=1,hi=Tmax;if(ok(hi))return hi*w/1000;
+  if(!(Tmax>0)||!ok(Math.min(1,Tmax)))return 0;
+  let lo=Math.min(1,Tmax),hi=Tmax;if(ok(hi))return hi*w/1000;
   for(let k=0;k<24;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
   return lo*w/1000;
 }
@@ -232,7 +232,7 @@ function stepMotorBench(dt){
   st.evAsked=Treq;
   st.evLimit=Treq-T<Math.max(0.5,Treq*0.005)?'':st.soc<EV_BMS.limp?'limp':evBmsShare(st.soc)<1?'lowsoc':motorDerate(e,st.mT)<0.999?'thermal':'battery';
   const L=motorLosses(m,T,st.rpm,Vdc,st.mT),w=st.rpm*Math.PI/30,Pb=T*w+L.total;
-  const d=packDraw(b,st.soc,Math.max(0,Pb))||{V:b.vMin,I:0,heat:0};
+  const d=packDrawClamped(b,st.soc,Math.max(0,Pb));
   st.soc=Math.max(0,st.soc-d.I*dt/(b.Ah*3600));
   st.battI=d.I;st.battKW=d.V*d.I/1000;st.systemVoltage=d.V;
   st.evLoss=L;st.battHeat=d.heat;st.battSag=Voc-d.V;   // for the bench's readouts (build 285): the losses as the model splits them, and the pack's
@@ -263,10 +263,10 @@ function stepMotorWear(dt){
 // an engine's.
 function motorOperatingPoint(kind){
   const s=engine.score;
-  if(kind==='power')return {rpm:s.peakHPrpm,throttle:1,lambda:1,tq:s.peakHP*745.7/(s.peakHPrpm*Math.PI/30),expect:s.peakKW+' kW'};
+  if(kind==='power'){const r=s.peakHPrpm>0?s.peakHPrpm:Math.min(engine.redline,1000);return {rpm:r,throttle:1,lambda:1,tq:s.peakHPrpm>0?s.peakHP*745.7/(s.peakHPrpm*Math.PI/30):0,expect:s.peakKW+' kW'};}
   if(kind==='torque'){const r=Math.max(500,Math.round(s.knee*0.5/100)*100);return {rpm:r,throttle:1,lambda:1,tq:s.peakTQ,expect:s.peakTQ+' Nm'};}
-  const b=s.bestEff,full=driveMaxTorque(engine,b.rpm,motorRatedV(engine),{w:90,c:80,r:70},0.5);
-  return {rpm:b.rpm,throttle:clamp(b.T/Math.max(1,full),0.05,1),lambda:1,tq:b.T,expect:(b.e*100).toFixed(1)+'% at '+Math.round(b.T*b.rpm*Math.PI/30/1000)+' kW'};
+  const b=s.bestEff,r=b.rpm>0?b.rpm:Math.min(engine.redline,1000),full=driveMaxTorque(engine,r,motorRatedV(engine),{w:90,c:80,r:70},0.5);
+  return {rpm:r,throttle:clamp(b.T/Math.max(1,full),0.05,1),lambda:1,tq:b.T,expect:(b.e*100).toFixed(1)+'% at '+Math.round(b.T*r*Math.PI/30/1000)+' kW'};
 }
 
 // ---- the dyno ----

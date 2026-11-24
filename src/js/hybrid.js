@@ -91,8 +91,8 @@ function buildHybrid(e){
     const fm=motorBuild({type:e.evFront,rotorD:e.evFrontD,statorOD:e.evFrontOD,stackL:e.evFrontStack,poles:e.evFrontPoles,turns:e.evFrontTurns,magnet:e.evMagnet,magT:e.evMagT,magW:e.evMagW/100,
       retention:e.evRetention,cooling:e.evCooling,lamination:e.evLamination,wire:e.evWire,conductor:e.evConductor,inverter:e.evInverter,invAmps:e.evFrontAmps,maxRpm:e.evMaxRpm});
     const V=hybBusV(e.hy),pk=m=>{let P=0;for(let r=200;r<=m.nMax;r+=200)P=Math.max(P,motorMaxTorque(m,r,V,60)*r*Math.PI/30);return P;};
-    const Pr=pk(motor),Pf=pk(fm);
-    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Pf/(Pr+Pf)};e.hy.shareR=Pr/(Pr+Pf);
+    const Pr=pk(motor),Pf=pk(fm),Ptot=Pr+Pf;
+    e.hy.front={motor:fm,fd:e.evFrontFd>0?e.evFrontFd:0,shareF:Ptot>0?Pf/Ptot:0.5};e.hy.shareR=Ptot>0?Pr/Ptot:0.5;
     e.hy.mass+=Math.round(fm.mass+8);e.hy.cost+=fm.cost+500;
   }
   return e.hy;
