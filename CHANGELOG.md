@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 448)
+
+- Passed actual starting wetness (`cfg.weather`) and rain compound into `racePractice()` (`src/js/race.js`) so wet/damp pit strategy computes tyre life and lap times on wet asphalt rather than dry `w = 0`.
+- Included `cfg.minStops` in `racePlan()` (`sMin = Math.max(sFuel, sTyre, sMand)`) so AI cars schedule mandatory stops instead of taking +30 s penalties, and added opportunistic VSC pit stops in `raceCross()` when inside the planned pit window.
+- Kept a reduced aerodynamic slipstream/dirty-air wake active alongside `RACE.spray` in wet weather (`w > 0.2`), and floored ICE race fuel burn at `M.idleGs` (matching `COMBUSTION.fuelRate`) so slow traffic does not drop fuel burn to zero.
+- Filtered out `init: 'kick'` plans for clutchless EVs (`car.ev`) in `driftPlans()` and stopped `driftDriver()` from sending `clutch: 1` for EVs (`src/js/drift-run.js`).
+- Extended `mooseCoastPedals()` to neutralize regen for P2 hybrids (`car.el != null`) as well as EVs/power-split/series, and preserved the sign of `s.rollV` relative to tipping direction (`-tip.side * s.rollV`) on 2-wheel lift onset (`src/js/moose-run.js`).
+- Added a 2-wheel-lift rigid-body tip-over check (`ROLLOVER`, NHTSA SSF) to `skidRun()` (`src/js/skidpad-run.js`) so high-CG vehicles cannot hold steady-state lateral g above their Static Stability Factor.
+- Added `tests/test270.mjs` covering all of the above.
+
 ### Supercharger adiabatic efficiency and diesel/ported peak cylinder pressure (build 447)
 
 - Added blower-type adiabatic efficiency `scAdiabaticEff(scType, pr, rpmFrac)` (`src/js/engine-constants-boost.js`) for Roots (Heywood §6.8.2 Eq. 6.36 backflow law with clearance roll-off above PR 2.0), twin-screw (internal-compression peak around PR 2.0), and centrifugal (speed- and PR-dependent radial wheel map), wired into `deriveCharge()` (`src/js/engine-build.js`) and `compOutletT()` (`src/js/engine-view.js`) so superchargers no longer fall back to the turbo wheel map.

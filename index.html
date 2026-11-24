@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 447</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 448</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -17778,12 +17778,15 @@ function raceCarModel(entry,key,opts){
     const frNom=prof[top+1].fr;
     let fpl=0;for(let i=0;i<n;i++){const j=(i+1)%n;fpl+=frNom[i]*line[i].ds3/Math.max(2,(nom.v[i]+nom.v[j])/2);}
     if(EV)fpl=EV.ev.epl[0]*1000;   // an electric car's: at full power
+    // Idle fuel flow (g/s), matching COMBUSTION.fuelRate (Heywood / EPA ~0.3-0.6 L/h per L displacement); 0 for EV.
+    const carb=!EV&&!(INTAKE_SYS[engine.intakeSys]||INTAKE_SYS.efi).di&&/^carb|sidedraft/.test(engine.intakeSys);
+    const idleGs=EV?0:0.12*(engine.displacement_L||2)*(carb?2.5:1);
     const M={name:entry.name,key,n,line:line.map(q=>({x:q.x,y:q.y})),cum,L3:cum[n],kap,sinT,lim,prof,grips,
       vRest:Float32Array.from(rest.v),vNom,vApex,tF:Float32Array.from(nom.replay.tF),fadeProf:Float32Array.from(nom.replay.fade),
       ebProf:Float32Array.from(nom.replay.eb||[]),frProf:Float32Array.from(nom.replay.frB||[]),
       brakeOnset:nom.brakeOnset,brakeTh:vehicle.brakeTh,
       brakeCar:{mass:vehicle.mass,brakeFrontShare:vehicle.brakeFrontShare||0.7,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,mu:vehicle.mu},
-      lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,
+      lapNom:nom.lap,qual,fuelPerLapKg:fpl/1000,idleGs,
       tankL,tankKg,fuelRho:fuel.density,fuelLabel:fuel.label,
       mass:vehicle.mass,fWt:vehicle.fWt,cg:vehicle.cg,wb:vehicle.wb,track:vehicle.track,drive:vehicle.drive,
       clA:vehicle.clA,cdA:vehicle.cdA,aeroBal:vehicle.aeroBal,crr:vehicle.crr,muRef:vehicle.muRef,tyreCold:vehicle.tyrePart?Math.min(vehicle.tyrePart.front_kPa,vehicle.tyrePart.rear_kPa):undefined,mu0:tt.mu,
@@ -17928,12 +17931,16 @@ function raceTyreCallPays(M,cur,next,w,left){
   const gc=raceTyreScore(M,cur,w),gn=raceTyreScore(M,raceCompound(next),w);
   return gn>gc&&(raceLapAtGrip(M,gc)-raceLapAtGrip(M,gn))*left>M.pitLoss+RACE.tyreChange;
 }
+function raceStartWet(kind){
+  return kind==='wet'||kind==='drying'?RACE.wetFull:kind==='damp'?0.4*RACE.wetFull:0;
+}
 // A solo run of the car on its own pace, no traffic and no driver error, for the strategy: how many laps a
 // set of tyres lasts to the wear limit, with the lap time at each age, in the conditions at the start.
-function racePractice(M,cfg,maxLaps,mode,ff0,hx){
-  const air=cfg.air!=null?cfg.air:RACE.air,w=0;
+function racePractice(M,cfg,maxLaps,mode,ff0,hx,ty0){
+  const air=cfg.air!=null?cfg.air:RACE.air,w=raceStartWet(cfg.weather);
   const env={air,track:raceTrackTemp(air,w),w};
-  const ty=M.tyre,T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
+  const ty=ty0||(w>0?raceCompound(raceBestCompound(M,w)):M.tyre);
+  const T=[0,0,0,0].fill(cfg.warmers&&ty.key!=='eco'?RACE.warmers:air),W=[0,0,0,0],laps=[];
   const ff=ff0!=null?ff0:0.5,sv=mode==='save'?0.99:1;let life=null;
   M.massNow=M.ev?M.mass:M.mass-M.tankKg*0.5;
   for(let lap=0;lap<maxLaps;lap++){
@@ -17949,10 +17956,10 @@ function racePractice(M,cfg,maxLaps,mode,ff0,hx){
     if(life==null&&Math.max(...W)>=RACE.wearLimit)life=lap+1;
     if(life!=null&&lap>=life+1)break;
   }
-  return {laps,life:life||Infinity};
+  return {laps,life:life||Infinity,w,tyre:ty.key};
 }
 // The stops, chosen once at the start (build 137; per car, build 141). cc.stops is 'auto' (the fewest the
-// fuel and the tyres allow, or one or two more if the time fresher tyres win back pays for the pit lane),
+// fuel, tyres and mandatory minStops allow, or one or two more if fresher tyres pay for the pit lane),
 // a number of stops, or 'none'. Fuel saving burns ~10% less a lap.
 // An electric car (build 181) cannot charge in the pit lane: it starts full, stops only for tyres, and its energy manager
 // chooses the power that lasts the distance (evRacePlanFF).
@@ -17964,15 +17971,18 @@ function racePlan(M,cfg,cc){
   const fpl=ev?ev.fpl:fplH*1.03*(cc.mode==='save'?0.9:1);
   const want=cc.stops==null?(cfg.strategy==='none'?'none':'auto'):cc.stops;
   if(want==='none')return Object.assign({stops:[],startKg:M.tankKg,est:null,fpl,want,hyX:hx},ev?{evFF:ev.ff}:{});
-  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx);
+  const w0=raceStartWet(cfg.weather);
+  const tyKey=!cc.start||cc.start==='auto'?raceBestCompound(M,w0):cc.start==='own'?M.tyre.key:cc.start;
+  const pr=racePractice(M,cfg,Math.min(N,200),cc.mode,ev?ev.ff:undefined,hx,raceCompound(tyKey));
   const lapAt=age=>{const L=pr.laps;return L.length?L[Math.min(L.length-1,age)].t:M.lapNom;};
   const lifeLaps=pr.life===Infinity?Infinity:Math.max(1,Math.floor(pr.life));
   const sFuel=ev?0:Math.max(0,Math.ceil(N*fpl/(M.tankKg*0.97)-1e-9)-1);
   const sTyre=lifeLaps===Infinity?0:Math.max(0,Math.ceil(N/lifeLaps)-1);
+  const sMand=Math.min(Math.max(0,N-1),Math.max(0,Math.round(cfg.minStops||0)));
   const stintsOf=s=>{const a=[];for(let k=0;k<=s;k++)a.push(Math.round((k+1)*N/(s+1))-Math.round(k*N/(s+1)));return a;};
   let best=null;
   if(want==='auto'){
-    const sMin=Math.max(sFuel,sTyre);
+    const sMin=Math.max(sFuel,sTyre,sMand);
     for(let s=sMin;s<=sMin+2&&s<N;s++){
       const stints=stintsOf(s);
       if(!ev&&stints.some(x=>x*fpl>M.tankKg*0.97))continue;
@@ -17983,7 +17993,7 @@ function racePlan(M,cfg,cc){
   }else{
     const s=clamp(Math.round(+want)||0,0,Math.max(0,N-1));best={s,stints:stintsOf(s),est:null};
   }
-  if(!best){const s=Math.max(sFuel,sTyre);best={s,stints:stintsOf(s),est:null};}
+  if(!best){const s=Math.max(sFuel,sTyre,sMand);best={s,stints:stintsOf(s),est:null};}
   const stops=[];let acc=0;for(let k=0;k<best.stints.length-1;k++){acc+=best.stints[k];stops.push(acc);}
   return Object.assign({stops,stints:best.stints,startKg:ev?M.tankKg:Math.min(M.tankKg,(best.stints[0]+1)*fpl),est:best.est,life:lifeLaps,fpl,want,hyX:hx},
     ev?{evFF:ev.ff}:{});
@@ -18125,10 +18135,14 @@ function raceStepOnce(R){
     const ah=c._ahead;
     if(ah){
       // the tow and the dirty air, from the two cars' lengths and this car's own drag, power and downforce; in the
-      // wet, the spray (a rule)
+      // wet, drivers offset slightly out of the densest spray plume so the wake is reduced, alongside the spray rule
       const x=(c._gap-(c.M.len+ah.M.len)/2)/ah.M.len;
-      if(w>0.2){if(c._gap<Math.max(10,c.v))vt*=RACE.spray;}
-      else vt*=raceWake(c.M,c.v,lim,x);
+      const wk=raceWake(c.M,c.v,lim,x);
+      if(w>0.2){
+        const wetK=1-0.4*clamp((w-0.2)/(RACE.wetFull-0.2),0,1);
+        vt*=1+(wk-1)*wetK;
+        if(c._gap<Math.max(10,c.v))vt*=RACE.spray;
+      }else vt*=wk;
     }
     c._vt=vt;c._lim=lim;
   }
@@ -18201,7 +18215,8 @@ function raceStepOnce(R){
       brakeHeatStep(c.BT,M.brakeTh,mech-eb,c.v,dt,M.brakeCar,mech>0.3&&M.frProf&&M.frProf.length?M.frProf[c.i]:undefined);
     }
     const r=clamp(c.v/Math.max(1,c._pv),0,1.05);
-    const burn=c._fr*r*r*(c.cc.mode==='save'?0.9:1)*dt/1000;
+    const frStep=Math.max(M.idleGs||0,c._fr*r*r*(c.cc.mode==='save'?0.9:1));
+    const burn=frStep*dt/1000;
     c.fuelKg-=burn;c.fuelUsed+=burn;
     if(M.ev)evRaceHeatStep(M,c,r,dt,c.cc.mode==='save'?0.9:1);
     if(M.hy)hybRaceSpend(M,c,c.v*dt);
@@ -18331,14 +18346,22 @@ function raceCross(R,c){
   }
   const weather=tyre!==c.ty.key;
   const planned=c.plan.stops.includes(c.lapsDone);
-  const need=planned&&!noStops||(!noStops&&!M.ev&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
+  const nextIdx0=c.plan.stops.findIndex(l=>l>c.lapsDone);
+  const nextStop=nextIdx0>=0?c.plan.stops[nextIdx0]:null;
+  const afterNext=nextIdx0>=0&&c.plan.stops[nextIdx0+1]!=null?c.plan.stops[nextIdx0+1]:totLaps;
+  // Under VSC, track pace is cut to vscPace (~60%), so pitting loses far less time against rivals.
+  // Take an upcoming planned stop early when inside the pit window and the remaining stint fits in the tank.
+  const vscPit=!noStops&&!!R.vsc&&c.lapsDone>=1&&nextStop!=null&&left>=1
+    &&(nextStop-c.lapsDone)<=Math.max(3,Math.ceil(totLaps*0.25))
+    &&(M.ev||(afterNext-c.lapsDone)*fpl<=M.tankKg*0.97);
+  const need=planned&&!noStops||vscPit||(!noStops&&!M.ev&&c.fuelKg<fpl*1.05&&left>0)||(!noStops&&Math.max(...c.W)>0.95&&left>2)||weather;
   if(need){
     if(!weather&&left>0&&raceBestCompound(M,w)!==tyre&&c.cc.wetCall!=='stay')tyre=raceBestCompound(M,w);
     // an unplanned stop takes the place of a planned one coming up soon
     const nextIdx=c.plan.stops.findIndex(l=>l>c.lapsDone);
     if(!planned&&nextIdx>=0){
       const prev=c.lapsDone,next=c.plan.stops[nextIdx],after=c.plan.stops[nextIdx+1]!=null?c.plan.stops[nextIdx+1]:totLaps;
-      if(next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
+      if(vscPit||next-prev<(after-prev)*0.4)c.plan.stops.splice(nextIdx,1);
     }
     const nx=c.plan.stops.find(l=>l>c.lapsDone),stint=Math.min(left,(nx!=null?nx:totLaps)-c.lapsDone);
     const want=Math.min(M.tankKg,(stint+1)*fpl),add=M.ev?0:Math.max(0,want-c.fuelKg);   // no charging in the pit lane
@@ -18346,7 +18369,7 @@ function raceCross(R,c){
     c.state='pit';c.pit={t:M.pitLoss+service,fuelKg:add,service,tyre};c.v=0;c.stopsDone++;c.passing=-1;c.wantFor=0;
     if(c.laps.length)c.laps[c.laps.length-1].pit=true;
     c.stints.push({tyre,from:c.lapsDone+1});
-    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,lane:M.pitLoss,tyre,why:weather?'weather':planned?'plan':'need'});
+    raceEvent(R,c,'pit',{fuelL:add/M.fuelRho,service,lane:M.pitLoss,tyre,why:weather?'weather':planned?'plan':vscPit?'vsc':'need'});
   }
 }
 // Run the race to the flag (or for a slice of wall time when budgetMs is given, so a page can keep
@@ -35447,14 +35470,14 @@ function mooseConeHit(car,s,D,G){
   }
   return false;
 }
-// After entry: ICE lifts (engine braking). EV throttle=0 is full regen — far stronger than ICE overrun — so
-// Model Y / 3 / Plaid stopped before the exit (~x 40–55) and still scored clear (exit cones never reached).
-// Coast = thr that zeros motor torque: T = thr·wot − (1−thr)·ov = 0.
+// After entry: ICE lifts (engine braking). EV and hybrid (P2 / power-split / series) throttle=0 applies full regen —
+// far stronger than ICE overrun — scrubbing speed before the exit. Coast = thr that zeros drive/regen torque:
+// T = thr·wot − (1−thr)·ov = 0.
 function mooseCoastPedals(car,s,u,D){
   if(s.x+car.a+D.ovF<=0)return;
   u.brake=0;
-  if(!car.ev){u.throttle=0;return;}
-  const T0=driveEngine(car,0,s.rpm,null,s.soc),T1=driveEngine(car,1,s.rpm,null,s.soc);
+  if(!car.ev&&car.el==null){u.throttle=0;return;}
+  const T0=driveEngine(car,0,s.rpm,s.boost,s.soc),T1=driveEngine(car,1,s.rpm,s.boost,s.soc);
   u.throttle=T1>T0?Math.max(0,Math.min(1,-T0/(T1-T0))):0;
 }
 // One pass at entry speed vk (km/h). Returns {ok,ay,beta,line,outcome,...} (and optional samples for a later replay).
@@ -35497,10 +35520,11 @@ function mooseRun(car,D,vk,shape,sample,quick){
     o.beta=Math.max(o.beta,Math.abs(Math.atan2(s.vy,Math.max(1,s.vx)))*180/Math.PI);
     if(mooseConeHit(car,s,D,G)){o.ok=false;if(!o.cone){o.cone=true;o.coneX=s.x;o.coneY=s.y;}}}
     // two-wheel lift and the rigid tip about the outer tyres. +ay is to the left: a left turn loads the right (outer)
-    // side and lifts the left wheels, so the outward acceleration is −side·ay with side −1 for the left wheels up
+    // side and lifts the left wheels, so the outward acceleration is −side·ay and outward roll rate is −side·rollV
+    // with side −1 for the left wheels up (rolling back toward level has −side·rollV < 0 and settles instead of tipping)
     const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
     if(judge&&(leftUp||rightUp)){o.lift2+=dt;o.liftSide=leftUp?-1:1;}
-    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=Math.abs(s.rollV||0);}
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=-tip.side*(s.rollV||0);}
     if(tip.phi>0){
       const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
       const z=tH*sn+h*c,dd=tH*c-h*sn;
@@ -35743,16 +35767,17 @@ function driftDriver(car,s,C,d,plan){
   const vGrip=Math.sqrt(car.mu*DRIVE_G*C.R);
   if(v>1.12*vGrip&&absB<0.65*absT)thr*=Math.max(0.2,1-0.30*(v-1.12*vGrip));
   // Clutch kick (build 359): pedal down, full throttle, rev up for plan.kick steps, then dump.
+  // Direct-drive EVs have no friction clutch to kick or disengage.
   let clutch=null;const kKey=z==='c1'?'kick1':'kick2';
-  if(!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
+  if(!car.ev&&!d[pastKey]&&d[kKey]>0&&absB<0.55*absT&&s.we<0.88*car.redline*Math.PI/30){clutch=1;thr=1;d[kKey]--;d.kicking=true;}
   else if(d.kicking){clutch=0;d.kicking=false;}
-  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down and lever up until β reaches 72% of target
+  // Handbrake (RWD & electronic-clutch AWD, build 382/440): clutch down (ICE only) and lever up until β reaches 72% of target
   // (once per corner, while speed > 5 m/s), then drop lever, close clutch, and hold the slide on power.
   let hb=0;const hbKey=z==='c1'?'hb1':'hb2';
   if(plan.init==='handbrake'&&!d[hbKey]){
-    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){clutch=0;d.hbing=false;}}
-    else{hb=1;thr=0;clutch=1;d.hbing=true;}
-  }else if(d.hbing){clutch=0;d.hbing=false;}
+    if(absB>=0.72*absT||v<5){d[hbKey]=true;if(d.hbing){if(!car.ev)clutch=0;d.hbing=false;}}
+    else{hb=1;thr=0;if(!car.ev)clutch=1;d.hbing=true;}
+  }else if(d.hbing){if(!car.ev)clutch=0;d.hbing=false;}
   const u={steer:st,throttle:Math.max(0,Math.min(1,thr)),brake:0,gear:(clutch!=null||hb)?s.gear:null};
   if(clutch!=null)u.clutch=clutch;
   if(hb)u.handbrake=hb;
@@ -35781,7 +35806,7 @@ function driftRun(car,plan,sample,D){
   s.vx=plan.v;s.w=s.w.map(()=>plan.v/car.r);
   // A single-speed car (an EV) has no second gear: until build 379 it was put in gear 2 and never drove (STALL).
   s.gear=Math.min(plan.gear||2,car.ratios.length);s.we=plan.v/car.r*car.ratios[s.gear-1]*car.fd;
-  const k0=gripOnly?0:(plan.kick|0);
+  const k0=gripOnly||car.ev?0:(plan.kick|0);
   const d={i:0,kick1:k0,kick2:k0,pull:plan.pull||2.2,seen1:false,seen2:false};
   let len=0;for(let k=1;k<C.line.length;k++)len+=Math.hypot(C.line[k].x-C.line[k-1].x,C.line[k].y-C.line[k-1].y);
   const tMax=3*len/plan.v;let slowT=0;   // three times the course at entry speed, or 2 s near standstill: STALL
@@ -35826,11 +35851,12 @@ function driftRun(car,plan,sample,D){
   return o;
 }
 // The plans for the driver settings: a fixed entry speed replaces the searched ones; a method keeps its own plans.
-// FWD: no kick, and one target β for power and flick; handbrake keeps all three. AWD: no handbrake (falls back to power).
+// FWD: no kick, and one target β for power and flick; handbrake keeps all three. EV: no clutch kick. AWD: no handbrake unless electronic-clutch.
 function driftCanAwdHb(car){return car.drive==='awd'&&!car.ev&&car.centre&&(car.centre.dc||car.centre.type==='lock');}
 function driftPlans(car,entryKmh,method){
   let P=DRIFT_PLANS;
-  if(car.drive==='fwd'&&method==='kick')method='power';   // no kick on a FWD grip path
+  if((car.drive==='fwd'||car.ev)&&method==='kick')method='power';   // no clutch kick on FWD grip path or clutchless EV
+  if(car.ev)P=P.filter(p=>p.init!=='kick');
   if(car.drive==='awd'&&!driftCanAwdHb(car)){if(method==='handbrake')method='power';P=P.filter(p=>p.init!=='handbrake');}
   if(method&&method!=='auto')P=P.filter(p=>p.init===method);
   if(entryKmh>0)P=P.filter(p=>p.v===DRIFT_PLANS[0].v).map(p=>Object.assign({},p,{v:entryKmh/3.6}));
@@ -35883,16 +35909,17 @@ function simulateDriftChallenge(){
 //
 // One run at speed v: the car starts on the circle at v with the yaw rate v/R, settles for one lap, and is judged on
 // the next. Outcomes (worst first):
-//   SPIN   body slip β over 25°, or heading more than 90° off the circle
-//   WIDE   the CG more than SKID_TOL outside the circle (pushed wide: understeer at the limit)
-//   TIGHT  the CG more than SKID_TOL inside it (the tail stepped out and tucked the nose in)
-//   SLOW   on the line, but the judged lap not finished in time
-//   HOLD   none of these: the car holds the circle at its own steady speed
+//   ROLLOVER  both wheels on one side lift (Fz = 0) and the rigid body tips past its outer tyres (NHTSA SSF = t/2h)
+//   SPIN      body slip β over 25°, or heading more than 90° off the circle
+//   WIDE      the CG more than SKID_TOL outside the circle (pushed wide: understeer at the limit)
+//   TIGHT     the CG more than SKID_TOL inside it (the tail stepped out and tucked the nose in)
+//   SLOW      on the line, but the judged lap not finished in time
+//   HOLD      none of these: the car holds the circle at its own steady speed
 // driveDriver's speed loop is proportional (1/s), so the car settles a little under v, short by the tyres' cornering
 // drag; v only drives the search. The score is the judged lap's own time, as on a real pad.
 // SKID_TOL (1 m either side) is this game's lane, not a standard: the magazines' drivers keep to a painted circle.
 const SKID_D=60.96,SKID_R=SKID_D/2,SKID_TOL=1;
-const SKID_RANK={HOLD:0,SLOW:1,TIGHT:2,WIDE:3,SPIN:4};
+const SKID_RANK={HOLD:0,SLOW:1,TIGHT:2,WIDE:3,SPIN:4,ROLLOVER:5};
 function skidLine(R,v){
   const N=Math.round(2*Math.PI*R/0.5),line=[];
   for(let k=0;k<N;k++){const a=-Math.PI/2+2*Math.PI*k/N;line.push({x:R*Math.cos(a),y:R+R*Math.sin(a),v,grade:0,kv:0});}
@@ -35904,9 +35931,11 @@ function skidRun(car,v,sample){
   s.vx=v;s.yaw=v/R;s.w=s.w.map(()=>v/car.r);
   for(let k=car.ratios.length;k>=1;k--){s.gear=k;if(v/car.r*car.ratios[k-1]*car.fd*30/Math.PI>=2500)break;}
   s.we=v/car.r*car.ratios[s.gear-1]*car.fd;
-  const o={v,eMax:0,eMin:0,betaMax:0,ayMean:0,lapT:0,vMean:0,steer:0,samples:sample?[]:null,line,R};
+  const o={v,eMax:0,eMin:0,betaMax:0,ayMean:0,lapT:0,vMean:0,steer:0,lift2:0,tipMax:0,rolled:false,samples:sample?[]:null,line,R};
+  const h=car.h,tH=(car.tF+car.tR)/4,Io=car.rollI+car.m*(h*h+tH*tH);
+  const tip={phi:0,phiV:0,side:0};
   const dt=0.005,tMax=4*2*Math.PI*R/Math.max(3,v)+5;
-  let ang=0,pa=-Math.PI/2,judging=false,tJ=0,ayS=0,vS=0,stS=0,n=0,nextT=0,spin=false;
+  let ang=0,pa=-Math.PI/2,judging=false,tJ=0,ayS=0,vS=0,stS=0,n=0,nextT=0,spin=false,rolled=false;
   while(s.t<tMax){
     const u=driveDriver(car,s,line,d);
     stepCar(car,s,u,dt);
@@ -35914,6 +35943,18 @@ function skidRun(car,v,sample){
     const beta=Math.atan2(s.vy,Math.max(0.5,s.vx));
     let dh=s.psi-(a+Math.PI/2);dh=Number.isFinite(dh)?dh-2*Math.PI*Math.round(dh/(2*Math.PI)):0;
     if(Math.abs(beta)>25*Math.PI/180||Math.abs(dh)>Math.PI/2){spin=true;}
+    // Two-wheel lift and rigid-body tip-over about the outer contact patches (NHTSA SSF, matching moose-run.js).
+    const leftUp=s.Fz[0]<=0&&s.Fz[2]<=0,rightUp=s.Fz[1]<=0&&s.Fz[3]<=0;
+    if(judging&&(leftUp||rightUp))o.lift2+=dt;
+    if(tip.phi<=0&&(leftUp||rightUp)){tip.side=leftUp?-1:1;tip.phi=1e-6;tip.phiV=-tip.side*(s.rollV||0);}
+    if(tip.phi>0){
+      const aOut=Math.max(0,-tip.side*s.ayF),c=Math.cos(tip.phi),sn=Math.sin(tip.phi);
+      const z=tH*sn+h*c,dd=tH*c-h*sn;
+      tip.phiV+=dt*car.m*(aOut*z-g*dd)/Io;tip.phi+=dt*tip.phiV;
+      if(tip.phi<=0){tip.phi=0;tip.phiV=0;}
+      o.tipMax=Math.max(o.tipMax,tip.phi);
+      if(tH*Math.cos(tip.phi)-h*Math.sin(tip.phi)<=0)rolled=true;
+    }
     if(!judging&&ang>=2*Math.PI){judging=true;tJ=s.t;}
     if(judging){
       const e=R-Math.hypot(s.x,s.y-R);   // + inside the circle
@@ -35927,10 +35968,11 @@ function skidRun(car,v,sample){
       if(ang>=4*Math.PI){o.lapT=s.t-tJ;break;}
       if(!sample&&(o.eMin<-SKID_TOL||o.eMax>SKID_TOL))break;
     }
-    if(spin)break;
+    if(spin||rolled)break;
   }
+  o.rolled=rolled;
   o.ayMean=n?ayS/n/g:0;o.vMean=n?vS/n:0;o.steer=n?stS/n:0;
-  o.outcome=spin?'SPIN':!o.lapT&&!(o.eMin<-SKID_TOL||o.eMax>SKID_TOL)?'SLOW'
+  o.outcome=rolled?'ROLLOVER':spin?'SPIN':!o.lapT&&!(o.eMin<-SKID_TOL||o.eMax>SKID_TOL)?'SLOW'
     :o.eMin<-SKID_TOL?'WIDE':o.eMax>SKID_TOL?'TIGHT':'HOLD';
   o.ok=o.outcome==='HOLD';
   // the magazines' figure: the judged lap's time at the circle's radius
@@ -35956,6 +35998,7 @@ function simulateSkidpadChallenge(){
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
   return{ok:true,kind:'skidpad',outcome:R.outcome,speedKmh:R.vMean*3.6,targetKmh:v*3.6,gLap:R.gLap,ayMean:R.ayMean,lapT:R.lapT,
     betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
+    lift2:R.lift2,tipMax:R.tipMax,ssf:(car.tF+car.tR)/4/car.h,
     radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
 }
 // ====== SPIRAL SKID PAD AND FIGURE 8 (build 399) ======
