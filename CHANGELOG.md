@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 449)
+
+- Clamped per-wheel and per-axle normal loads to `[0, N]` on wheel lift in `axleLatCap` (`src/js/tyres-brakes-driveline.js`), `simulateBraking`, and `simulateAccelRun` (`src/js/vehicle-accel.js`) so stoppies, wheelies, and inside-wheel lift conserve total vertical load instead of creating phantom normal force above `Wtot`.
+- Kept solid-axle roll center height at `min(rTire, cg * 0.75)` (`src/js/vehicle-accel.js`, Milliken & Milliken RCVD ch. 17) so low-CG solid-axle builds retain a positive roll moment arm and non-zero roll gradient while stock-height solid-axle cars keep `rc = rTire`.
+- Bounded cornering speed ceilings in `simulateLapCore` (`src/js/racing-line-lap.js`) and `ecoMinTime` (`src/js/eco-run.js`) by the four tyres' ETRTO load rating `Nmax`, preventing extreme-downforce featherweight builds from jumping to `VMAX` in corners while straights remain unaffected.
+- Updated `ecoFuelRule`, `ecoFuelKg`, `ecoCostTable`, and `ecoDP` (`src/js/eco-run.js`) to compute reflected engine rotational inertia `meff` from the active gear rather than 1st gear at all speeds, and updated `ecoMinTime` braking to include aero downforce (`N/m`) and `TYRE_MU_X` without applying straight-line `dCorner` differential scrub.
+- Added `tests/test269.mjs` covering all four fixes.
+
 ### Race wet/mandatory-stop strategy and EV/hybrid challenge physics (build 448)
 
 - Passed actual starting wetness (`cfg.weather`) and rain compound into `racePractice()` (`src/js/race.js`) so wet/damp pit strategy computes tyre life and lap times on wet asphalt rather than dry `w = 0`.
