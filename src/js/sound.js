@@ -58,16 +58,17 @@ class Gas{
   T(){return this.n?this.E/(2.5*this.n*GR):0;}
   m(){return AIR_M*this.n;}
   epm(){return this.n?this.E/this.n:0;}
-  c(){if(!this.n||!this.E)return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
+  c(){if(!(this.n>0)||!(this.E>0))return 0;return Math.sqrt(this.P()*1.4/(this.m()/this.V));}
   bke(){const m=this.m();if(!m)return 0;const vx=this.px/m;return 0.5*m*vx*vx;}
   dyn(dx){
-    if(!this.n||!this.E)return 0;
+    if(!(this.n>0)||!(this.E>0))return 0;
     const v=dx*this.px/this.m();if(v<=0)return 0;
-    const P=this.P(),x=1+0.2*v*v/(P*1.4/(this.m()/this.V));
+    const P=this.P(),c2=P*1.4/(this.m()/this.V);if(!(c2>0))return 0;
+    const x=1+0.2*v*v/c2;
     return P*(Math.sqrt(x*x*x*x*x*x*x)-1);
   }
   setV(V){this.E-=(V-this.V)*this.P();if(this.E<0)this.E=0;this.V=V;}
-  lose(dn,e){this.E-=e*dn;this.n-=dn;if(this.n<0)this.n=0;}
+  lose(dn,e){this.E-=e*dn;if(this.E<0)this.E=0;this.n-=dn;if(this.n<0)this.n=0;}
   gain(dn,e,fr=1){const n0=this.n;this.E+=dn*e;this.n+=dn;if(this.n>0)this.fr=(n0*this.fr+dn*fr)/this.n;}
   dissipate(){
     const m=this.m();if(!m||!this.px)return;
@@ -84,10 +85,11 @@ class Gas{
     this.E-=0.5*m*(v1*v1-v0*v0);if(this.E<0)this.E=0;
   }
   static rate(k,P0,P1,T0,T1,lim,choke){
-    if(!k)return 0;
+    if(!(k>0))return 0;
     let dir,T,p0,pT;
     if(P0>P1){dir=1;T=T0;p0=P0;pT=P1;}else{dir=-1;T=T1;p0=P1;pT=P0;}
-    const pr=pT/p0;let f;
+    if(!(p0>0)||!(T>0))return 0;
+    const pr=gclamp(pT/p0,0,1);let f;
     if(pr<=lim)f=choke/Math.sqrt(GR*T);
     else{const s=Math.pow(pr,1/1.4);f=Math.sqrt(Math.max(7*s*(s-pr),0)/(GR*T));}
     return f*dir*p0*k;
@@ -755,58 +757,64 @@ const SOUND_LEVEL=0.15;
 //             so a closed throttle above idle feeds a charge too thin to burn; with the pipe still hot
 //             from the pull, it lights there. Injection cuts the fuel (DFCO) and stays quiet. Anti-lag
 //             does it on purpose, and keeps the pipe hot itself.
+const setParam=(p,v,t,tau)=>{if(p&&Number.isFinite(t))p.setTargetAtTime(Number.isFinite(v)?v:0,t,tau);};
 function soundDrive(dt,s=state){
-  const e=engine,lam=s.afr/(e.stoichAFR||14.7);
+  const e=engine,stoich=e.stoichAFR||14.7,afr=Number.isFinite(s.afr)&&s.afr>0?s.afr:stoich,lam=afr/stoich;
+  const rpm=Number.isFinite(s.rpm)?s.rpm:0,map=Number.isFinite(s.map)?s.map:0.3,thr=Number.isFinite(s.throttle)?s.throttle:0;
+  const boost=Number.isFinite(s.boostActual)?s.boostActual:0,rl=Math.max(1,e.redline||1),idle=Number.isFinite(e.idleRpmEff)?e.idleRpmEff:800;
+  const step=Number.isFinite(dt)&&dt>=0?dt:0;
   // a diesel has no throttle plate: whatever the live manifold reads, it traps atmosphere plus boost
-  const trapped=e.ci?1+Math.max(0,s.boostActual||0):s.map;
+  const trapped=e.ci?1+Math.max(0,boost):map;
   const strength=s.blown?0:trapped*(s.fuelCut?0.12:0.12+0.88*Math.min(1,1/Math.max(0.5,lam)));
   // exhaust heat: rises with load over about a second, and is gone a second and a half after it. It
   // has to be above what an idle or a fuelled overrun keeps up on its own (~0.35) for anything to pop.
-  Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-dt/(strength>Sound.hot?0.8:1.5)));
-  const lope=(e.lumpiness||0)*clamp(1-(s.rpm-e.idleRpmEff)/2600,0.12,1)*clamp((1.05-s.map)/0.6,0.15,1);
-  const overrun=s.throttle<0.03&&s.rpm>e.idleRpmEff+150&&s.rpm<e.redline;
+  if(!Number.isFinite(Sound.hot))Sound.hot=0;
+  Sound.hot+=(Math.min(1,strength)-Sound.hot)*(1-Math.exp(-step/(strength>Sound.hot?0.8:1.5)));
+  const lope=(e.lumpiness||0)*clamp(1-(rpm-idle)/2600,0.12,1)*clamp((1.05-map)/0.6,0.15,1);
+  const overrun=thr<0.03&&rpm>idle+150&&rpm<rl;
   let crackle=0;
-  if(overrun&&!e.canDFCO)crackle=0.35*clamp((s.rpm-e.idleRpmEff)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
+  if(overrun&&!e.canDFCO)crackle=0.35*clamp((rpm-idle)/3000,0.2,1)*clamp((Sound.hot-0.4)/0.4,0,1);
   // anti-lag: on a lift it keeps the fuel and fires late, so the charge burns on in the manifold and the
   // turbine: bangs, with crackle between them
   let bang=0;
-  if(overrun&&e.antilag&&s.rpm>2500){crackle=Math.max(crackle,0.15);bang=0.3;}
+  if(overrun&&e.antilag&&rpm>2500){crackle=Math.max(crackle,0.15);bang=0.3;}
   // compressor whine
   let whineF=0,whineA=0;
   if(e.intake==='turbo'&&e.shaftJ){
-    const n=Math.sqrt(2*Math.max(0,s.shaftE||0)/e.shaftJ)*60/(2*Math.PI);
+    const n=Math.sqrt(2*Math.max(0,Number.isFinite(s.shaftE)?s.shaftE:0)/e.shaftJ)*60/(2*Math.PI);
     whineF=n/60*COMP_BLADES;
     // the pressure rise goes with tip speed squared; a closed throttle unloads the wheel
     // anti-lag keeps the wheel working on a lift
-    whineA=TURBO_WHINE.level*turboSoundScale(e)*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(s.throttle>0.1||e.antilag?1:0.4);
+    whineA=TURBO_WHINE.level*turboSoundScale(e)*Math.pow(clamp(n/(e.shaftMax||1),0,1),2)*(thr>0.1||e.antilag?1:0.4);
     // the ducting, filter and bonnet lining soak up the top end: near full speed the blade pass is
     // past 10 kHz, and heard straight it is a squeal rather than a whistle
     whineA/=1+Math.pow(whineF/TURBO_WHINE.roll,2);
   }else if(e.intake==='supercharger'){
     const sc=SC_SOUND[e.scType]||SC_SOUND.roots;
-    whineF=s.rpm*sc.drive/60*sc.passes;
-    const bf=clamp(s.boostActual/Math.max(0.05,e.boost_bar),0,1);
+    whineF=rpm*sc.drive/60*sc.passes;
+    const bf=clamp(boost/Math.max(0.05,e.boost_bar||0.05),0,1);
     // a Roots or a screw moves air from idle but only compresses (and so only whines hard) on boost, its
     // bypass open the rest of the time; a centrifugal's whistle goes with its impeller speed squared
-    whineA=e.scType==='centrifugal'?sc.level*Math.pow(clamp(s.rpm/e.redline,0,1),2)*(0.3+0.7*bf):sc.level*(0.08+0.92*bf*bf);
+    whineA=e.scType==='centrifugal'?sc.level*Math.pow(clamp(rpm/rl,0,1),2)*(0.3+0.7*bf):sc.level*(0.08+0.92*bf*bf);
     whineA/=1+Math.pow(whineF/sc.roll,2);
   }
   // induction roar: volumetric flow goes with manifold pressure x rpm
   const forced=e.intake!=='na';
-  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(s.map*s.rpm/e.redline,0,1.5)*0.15;
+  const intake=(INTAKE_LEVEL[e.airFilter]??0.5)*(forced?0.4:1)*clamp(map*rpm/rl,0,1.5)*0.15;
   // knock: a diesel's ignition delay is longest cold and at light load, where the injected fuel
   // waits longest and then all goes at once; a petrol engine past its knock limit detonates on
   // more of its cycles the further past it is
   let knockProb=0,knockAmp=0;
   // How hard it rings is how much fuel goes up at once: for a diesel that is the fuel injected during the
   // delay, which is not the load; for a detonating petrol charge it is the end gas, which is.
-  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-s.coolant)/50,1,2)*clamp(1.3-strength,0.3,1);}
-  else{knockProb=clamp((s.knockRisk-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
+  const cool=Number.isFinite(s.coolant)?s.coolant:90,kr=Number.isFinite(s.knockRisk)?s.knockRisk:0;
+  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1);}
+  else{knockProb=clamp((kr-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
   // blow-off: the charge pipe holds the boost the compressor made while the throttle was open; when the
   // throttle shuts on it, however gently, the valve vents it, once (a diesel has no throttle to shut)
   let bov=null;
   if(e.intake==='turbo'&&!e.ci){
-    if(s.throttle>=0.1)Sound.chargeP=Math.max(0,s.boostActual||0);
+    if(thr>=0.1)Sound.chargeP=Math.max(0,boost);
     else if(Sound.chargeP>0.15){bov={amp:0.25*Math.min(1.5,Sound.chargeP)*turboSoundScale(e)};Sound.chargeP=0;}
   }
   if(s.blown)return {strength:0,lope:0,crackle:0,bang:0,whineF,whineA:0,intake:0,knockProb:0,knockAmp:0,bov:null};
@@ -915,9 +923,9 @@ function updateScreech(t){
   const vs=screechSlide();
   if(!vs&&!Sound.screechGain)return;
   if(!Sound.screechGain)initScreech();
-  const k=clamp(vs/SCREECH_REF_MS,0,1);
-  Sound.screechGain.gain.setTargetAtTime(SCREECH_LEVEL*k,t,0.03);
-  Sound.screechBp.forEach((bp,i)=>bp.frequency.setTargetAtTime(SCREECH_F[i]*(1+0.15*k),t,0.05));
+  const k=clamp((Number.isFinite(vs)?vs:0)/SCREECH_REF_MS,0,1);
+  setParam(Sound.screechGain.gain,SCREECH_LEVEL*k,t,0.03);
+  Sound.screechBp.forEach((bp,i)=>setParam(bp.frequency,SCREECH_F[i]*(1+0.15*k),t,0.05));
 }
 // What the worklet needs from a build: when in the cycle each cylinder fires, and into which bank.
 // Banks split as the LIVE bank draws them: cylinders 1..ceil(n/2) are bank A.
@@ -965,10 +973,11 @@ function motorSoundConfig(e){
 // A torque shared between the groups as the controller shares it to lose least: an induction front motor carries nothing
 // until the rear group runs short (its field would cost more than it gives), then each group its share of the peak.
 function motorTorqueSplit(c,T){
-  if(c.groups.length<2)return [T,0];
+  const T0=Number.isFinite(T)?T:0;
+  if(!c||!c.groups||c.groups.length<2||!(c.Tpk>0))return [T0,0];
   const [r,f]=c.groups;
-  if(f.im&&Math.abs(T)<=0.6*r.Tpk)return [T,0];
-  return [T*r.Tpk/c.Tpk,T*f.Tpk/c.Tpk];
+  if(f.im&&Math.abs(T0)<=0.6*r.Tpk)return [T0,0];
+  return [T0*r.Tpk/c.Tpk,T0*f.Tpk/c.Tpk];
 }
 // What the drive is doing now, or null when there is nothing to hear: the dyno's electric car or a hybrid's motor (the
 // bench), or the lap replay (the shaft power it recorded over the motor's speed; on a lift the drive's own braking, eb, is
@@ -978,18 +987,18 @@ function motorSoundState(c){
   const e=engine;
   if(soundSource()===state){   // where the engine's sound is heard from the bench
     if(state.ignOn===false)return null;   // the car switched off (POWER OFF): no current, nothing to hear (build 306)
-    if(isElectric())return {rpm:state.rpm,T:state.blown?0:state.torque};
-    if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:hybBench.n,T:hybBench.Tm||0};
+    if(isElectric())return {rpm:Number.isFinite(state.rpm)?state.rpm:0,T:state.blown?0:(Number.isFinite(state.torque)?state.torque:0)};
+    if(e.hy&&typeof hybBench!=='undefined'&&hybBench)return {rpm:Number.isFinite(hybBench.n)?hybBench.n:0,T:Number.isFinite(hybBench.Tm)?hybBench.Tm:0};
     return null;
   }
   if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing){
-    const st=replayAt(lapResult,lapReplay.t),w=Math.max(1,st.rpm)*Math.PI/30;
+    const st=replayAt(lapResult,lapReplay.t),rpm=Number.isFinite(st.rpm)?st.rpm:0,w=Math.max(1,rpm)*Math.PI/30;
     if(isElectric()){
       const R=lapResult.replay,eb=R.eb&&st.i!=null?R.eb[st.i]:0;
       const T=st.pwr>0?st.pwr/w:-(eb*vehicle.mass*vehicle.rTire/Math.max(1,vehicle.finalDrive*(vehicle.ratios?vehicle.ratios[0]:1)));
-      return {rpm:st.rpm,T};
+      return {rpm,T:Number.isFinite(T)?T:0};
     }
-    if(e.hy&&lapResult.hy&&st.i!=null)return {rpm:st.rpm,T:(lapResult.hy.pm[st.i]||0)/w};
+    if(e.hy&&lapResult.hy&&st.i!=null){const T=(lapResult.hy.pm[st.i]||0)/w;return {rpm,T:Number.isFinite(T)?T:0};}
   }
   return null;
 }
@@ -999,12 +1008,12 @@ function updateMotorSound(t){
   const key=isElectric()||e.hy?JSON.stringify([buildRev,e.hyMode,vehicle&&vehicle.finalDrive]):'';
   if(key!==Sound.motorKey){Sound.motorKey=key;Sound.motorCfg=key?motorSoundConfig(e):null;if(Sound.motorCfg)Sound.motor.port.postMessage(Sound.motorCfg);}
   const c=Sound.motorCfg,st=Sound.on?motorSoundState(c):null;
-  if(!st){p.get('level').setTargetAtTime(0,t,0.05);return;}
+  if(!st){setParam(p.get('level'),0,t,0.05);return;}
   const [t0,t1]=motorTorqueSplit(c,st.T);
-  p.get('rpm').setTargetAtTime(Math.max(0,st.rpm),t,0.03);
-  p.get('tq0').setTargetAtTime(t0,t,0.05);p.get('tq1').setTargetAtTime(t1,t,0.05);
-  p.get('mod').setTargetAtTime(Math.min(1,Math.max(0,st.rpm)/Math.max(1,c.knee)),t,0.05);
-  p.get('level').setTargetAtTime(MOTOR_SOUND_LEVEL,t,0.08);
+  setParam(p.get('rpm'),Math.max(0,st.rpm),t,0.03);
+  setParam(p.get('tq0'),t0,t,0.05);setParam(p.get('tq1'),t1,t,0.05);
+  setParam(p.get('mod'),Math.min(1,Math.max(0,st.rpm)/Math.max(1,c.knee)),t,0.05);
+  setParam(p.get('level'),MOTOR_SOUND_LEVEL,t,0.08);
 }
 // The motor's chain: the worklet -> its level -> a limiter, beside the engine's.
 function initMotorChain(){
@@ -1187,9 +1196,9 @@ function updateSound(){
   engineSound(src);
 }
 function engineSound(src){
-  const t=Sound.ctx.currentTime,s=src||state;
+  const t=Sound.ctx.currentTime,s=src||state,rpm=Number.isFinite(s.rpm)?s.rpm:0;
   // Rotaries sit bright & smooth, diesels dark & clattery; the note opens up with revs.
-  const bright=(440+s.rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
+  const bright=(440+rpm*0.15+engine.cylinders*8)*(engine.type==='rotary'?1.5:engine.ci?0.6:1.0);
   if(Sound.node){
     const d=soundDrive(Math.min(0.1,t-(Sound.lastT||t)),s);Sound.lastT=t;
     const size=clamp(Math.sqrt((engine.dispCyl_L||0.45)/0.45),0.6,1.5);   // a pulse's energy scales with its cylinder
@@ -1198,21 +1207,21 @@ function engineSound(src){
       engine.runnerL,engine.runnerD_mm,engine.bore_mm,engine.chargeVol].join('|');
     if(key!==Sound.cfgKey){Sound.cfgKey=key;Sound.cfg=soundConfig(engine);Sound.node.port.postMessage(Sound.cfg);}
     const p=Sound.node.parameters;
-    p.get('rpm').setTargetAtTime(s.rpm,t,0.05);
-    p.get('bright').setTargetAtTime(bright,t,0.05);
-    p.get('level').setTargetAtTime(!src||s.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
+    setParam(p.get('rpm'),rpm,t,0.05);
+    setParam(p.get('bright'),bright,t,0.05);
+    setParam(p.get('level'),!src||s.blown?0:SOUND_LEVEL*size*SOUND_PULSE_GAIN,t,0.08);
     // GAS model: the gas simulation makes the exhaust; the pulse node keeps only its other voices
     const gas=soundModelIsGas()&&Sound.gas;
-    p.get('strength').setTargetAtTime(gas?0:exhaustStrength(engine,s,d.strength),t,0.012);    // quick, so the limiter's cut is heard
+    setParam(p.get('strength'),gas?0:exhaustStrength(engine,s,d.strength),t,0.012);    // quick, so the limiter's cut is heard
     if(Sound.gas)updateGasSound(gas&&src&&!s.blown,s,t,size,d.strength);
-    p.get('lope').setTargetAtTime(d.lope,t,0.08);
-    p.get('crackle').setTargetAtTime(d.crackle,t,0.03);
-    p.get('whineF').setTargetAtTime(d.whineF,t,0.03);
-    p.get('whineA').setTargetAtTime(d.whineA,t,0.06);
-    p.get('bang').setTargetAtTime(d.bang,t,0.03);
-    p.get('intake').setTargetAtTime(d.intake,t,0.05);
-    p.get('knockProb').setTargetAtTime(d.knockProb,t,0.05);
-    p.get('knockAmp').setTargetAtTime(d.knockAmp,t,0.05);
+    setParam(p.get('lope'),d.lope,t,0.08);
+    setParam(p.get('crackle'),d.crackle,t,0.03);
+    setParam(p.get('whineF'),d.whineF,t,0.03);
+    setParam(p.get('whineA'),d.whineA,t,0.06);
+    setParam(p.get('bang'),d.bang,t,0.03);
+    setParam(p.get('intake'),d.intake,t,0.05);
+    setParam(p.get('knockProb'),d.knockProb,t,0.05);
+    setParam(p.get('knockAmp'),d.knockAmp,t,0.05);
     if(d.bov)Sound.node.port.postMessage({bov:{amp:d.bov.amp,tau:Sound.cfg.bovTau}});
     return;
   }
@@ -1221,14 +1230,14 @@ function engineSound(src){
   // Firing frequency: 4-stroke fires once per cylinder every 2 revs; a 2-stroke and a rotary
   // make a power event every rev, so they fire twice as often (higher, busier note).
   const perRev=(engine.strokeDiv===2*Math.PI)?1:0.5;
-  const fire=engine.cylinders*(s.rpm/60)*perRev;
-  Sound.osc.frequency.setTargetAtTime(fire,t,0.05);
-  Sound.sub.frequency.setTargetAtTime(fire/2,t,0.05);
-  Sound.filter.frequency.setTargetAtTime(bright,t,0.05);
-  Sound.gain.gain.setTargetAtTime(loud,t,0.08);
-  Sound.lfo.frequency.setTargetAtTime(Math.max(4,s.rpm/60),t,0.05);
-  const depth=(engine.lumpiness||0)*loud*clamp(1-(s.rpm-engine.idleRpmEff)/2600,0.12,1);
-  Sound.lfoGain.gain.setTargetAtTime(depth,t,0.08);
+  const fire=engine.cylinders*(rpm/60)*perRev;
+  setParam(Sound.osc.frequency,fire,t,0.05);
+  setParam(Sound.sub.frequency,fire/2,t,0.05);
+  setParam(Sound.filter.frequency,bright,t,0.05);
+  setParam(Sound.gain.gain,loud,t,0.08);
+  setParam(Sound.lfo.frequency,Math.max(4,rpm/60),t,0.05);
+  const depth=(engine.lumpiness||0)*loud*clamp(1-(rpm-engine.idleRpmEff)/2600,0.12,1);
+  setParam(Sound.lfoGain.gain,depth,t,0.08);
 }
 // The gas model's operating point, from the same state soundDrive reads: the trapped charge (a diesel's is
 // atmosphere plus boost, whatever its manifold reads), the fuel cut, the mixture, VVT cam advance, and a
@@ -1251,34 +1260,35 @@ function updateGasSound(live,s,t,size,strength){
       }
       setGasIR(chain.ir);
       // the recorded responses are of open-ish systems, so the silencer, the cat and a turbine are a low-pass on top
-      Sound.gasLp.frequency.setTargetAtTime(chain.lpHz,t,0.1);
-      Sound.gasGain.gain.setTargetAtTime(chain.gain,t,0.1);
+      setParam(Sound.gasLp.frequency,chain.lpHz,t,0.1);
+      setParam(Sound.gasGain.gain,chain.gain,t,0.1);
     }
-    const rf=clamp(s.rpm/Math.max(1,e.redline),0,1);
-    g.get('rpm').setTargetAtTime(s.rpm,t,0.05);
-    g.get('map').setTargetAtTime(101325*(e.ci?1+Math.max(0,s.boostActual||0):Math.max(0.1,s.map)),t,0.03);
-    g.get('fuel').setTargetAtTime(s.fuelCut?0:1,t,0.01);
-    g.get('lambda').setTargetAtTime(clamp(s.afr/(e.stoichAFR||14.7),0.6,6),t,0.05);
+    const rpm=Number.isFinite(s.rpm)?s.rpm:0,stoich=e.stoichAFR||14.7,afr=Number.isFinite(s.afr)&&s.afr>0?s.afr:stoich;
+    const rf=clamp(rpm/Math.max(1,e.redline||1),0,1);
+    setParam(g.get('rpm'),rpm,t,0.05);
+    setParam(g.get('map'),101325*(e.ci?1+Math.max(0,Number.isFinite(s.boostActual)?s.boostActual:0):Math.max(0.1,Number.isFinite(s.map)?s.map:0.3)),t,0.03);
+    setParam(g.get('fuel'),s.fuelCut?0:1,t,0.01);
+    setParam(g.get('lambda'),clamp(afr/stoich,0.6,6),t,0.05);
     const tm=gasTiming(e,rf);
-    g.get('spark').setTargetAtTime(tm.spark,t,0.1);
-    g.get('burn').setTargetAtTime(tm.burn,t,0.1);
-    g.get('camAdv').setTargetAtTime(typeof camAdvAt==='function'?camAdvAt(s.rpm):0,t,0.08);
+    setParam(g.get('spark'),tm.spark,t,0.1);
+    setParam(g.get('burn'),tm.burn,t,0.1);
+    setParam(g.get('camAdv'),typeof camAdvAt==='function'?camAdvAt(rpm):0,t,0.08);
   }
   // The worklet levels the gas model's own swings away (it is ~300x quieter at idle than flat out, and not
   // on any one power law), and the loudness is set here instead, on the pulse synth's law: soundDrive's
   // pulse strength (trapped charge x fuelling, so a lean diesel idle is light load) to GAS_LOUD_LAW. The
   // floor is a few percent of the build's flat-out signal, so a fuel cut stays near-silent.
-  g.get('level').setTargetAtTime(live&&Sound.gasF?gasLevel(size,exhaustStrength(e,s,strength))/Sound.gasF:0,t,0.04);
-  g.get('floor').setTargetAtTime(GAS_FLOOR*(Sound.gasRef||1),t,0.1);
+  setParam(g.get('level'),live&&Sound.gasF?gasLevel(size,exhaustStrength(e,s,strength))/Sound.gasF:0,t,0.04);
+  setParam(g.get('floor'),GAS_FLOOR*(Sound.gasRef||1),t,0.1);
 }
 function setSound(on){
   Sound.on=on;
   if(on){initSound();if(Sound.ctx&&Sound.ctx.state==='suspended')Sound.ctx.resume();}
-  else if(Sound.node){Sound.node.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.gas)Sound.gas.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.motor)Sound.motor.parameters.get('level').setTargetAtTime(0,Sound.ctx.currentTime,0.05);
-    if(Sound.screechGain)Sound.screechGain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);}
-  else if(Sound.gain)Sound.gain.gain.setTargetAtTime(0,Sound.ctx.currentTime,0.05);
+  else if(Sound.node){const t=Sound.ctx.currentTime;setParam(Sound.node.parameters.get('level'),0,t,0.05);
+    if(Sound.gas)setParam(Sound.gas.parameters.get('level'),0,t,0.05);
+    if(Sound.motor)setParam(Sound.motor.parameters.get('level'),0,t,0.05);
+    if(Sound.screechGain)setParam(Sound.screechGain.gain,0,t,0.05);}
+  else if(Sound.gain)setParam(Sound.gain.gain,0,Sound.ctx.currentTime,0.05);
   const btn=document.getElementById('btnSound');
   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);btn.textContent=tr(on?'SOUND ON':'SOUND OFF');
 }

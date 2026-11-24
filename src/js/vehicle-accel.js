@@ -111,7 +111,7 @@ function buildVehicle(){
   FD.fWtCar=vehicle.fWt;   // the factory's split with this engine in it: what the CHASSIS NUMBERS card shows
   if(D)vehicle.fWt=D.fWt;  // a designed split is the car's own, as built with this engine
   // the ballast at its place along the car (its front axle's share) and its height: the mass-weighted mean of the two
-  if(bk>0){vehicle.fWt=(vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass;vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
+  if(bk>0){vehicle.fWt=clamp((vehicle.fWt*m0+bk*vehicle.ballastPos)/vehicle.mass,0.15,0.85);vehicle.cg=(vehicle.cg*m0+bk*vehicle.ballastH)/vehicle.mass;}
   if(vehicle.tyrePart)vehicle.crr*=tyrePressCrr(vehicle);   // the designed pressures, the axles by their load (build 313)
   syncDimsForm();
   // Brakes: the deceleration the hydraulics can command (m/s2, before fade). After the weight split, the wheelbase and
@@ -240,17 +240,17 @@ function simulateBraking(v0,T0){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
     let fF,fR;
-    if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.min(g[0],cF);fR=Math.min(g[1],cR);aL=(fF+fR)/m;}}
+    if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.max(0,Math.min(g[0],cF));fR=Math.max(0,Math.min(g[1],cR));aL=(fF+fR)/m;}}
     else{   // the most front force (m/s2) at which neither axle is past its grip: a bisection, as locking is monotonic
-      const ok=xf=>{const xr=Math.min(valve(xf),cR/m),g=grip(xf+xr,dn);return xf*m<=g[0]+1e-6&&xr*m<=g[1]+1e-6;};
+      const ok=xf=>{const xr=Math.max(0,Math.min(valve(xf),cR/m)),g=grip(xf+xr,dn);return xf*m<=g[0]+1e-6&&xr*m<=g[1]+1e-6;};
       let lo=0,hi=cF/m;if(ok(hi))lo=hi;else for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
-      fF=lo*m;fR=Math.min(valve(lo),cR/m)*m;aL=(fF+fR)/m;}
+      fF=Math.max(0,lo*m);fR=Math.max(0,Math.min(valve(lo),cR/m)*m);aL=(fF+fR)/m;}
     const rise=Math.min(1,t/BRAKE_RISE_S),mech=aL*rise;   // rising to it over the pressure build-up time
     const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
     brakeHeatStep(st,th,mech,v,dt,undefined,aL>0?fF/(fF+fR):undefined);   // the work, into each axle's rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
   }
-  return {dist:x,time:t,tF:st.F,tR:st.R};
+  return {dist:x,time:t,tF:st.F,tR:st.R,timedOut:v>0.15};
 }
 // A road car's knee-point proportioning valve: the rear brake (m/s2) at a front brake xf (m/s2). Limpert (Brake Design and
 // Safety, 3rd ed., SAE 2011, ch. 7) and Breuer & Bill (Brake Technology Handbook, SAE 2008, ch. on brake-force
@@ -262,8 +262,8 @@ function simulateBraking(v0,T0){
 // at 0.4 g (ours, from that minimax: no maker's knee is cited). Past 0.8 g the second line carries on; it never falls.
 function brakeValveRear(fWt,hL){
   const X=z=>z*(fWt+z*hL)*G,Y=z=>z*(1-fWt-z*hL)*G,zk=R13H_Z/2;
-  const xk=X(zk),yk=Y(zk),s=Math.max(0,(Y(R13H_Z)-yk)/Math.max(1e-6,X(R13H_Z)-xk));
-  return xf=>xf<=xk?yk*xf/xk:yk+s*(xf-xk);
+  const xk=X(zk),yk=Math.max(0,Y(zk)),yEnd=Math.max(0,Y(R13H_Z)),s=Math.max(0,(yEnd-yk)/Math.max(1e-6,X(R13H_Z)-xk));
+  return xf=>Math.max(0,xk>1e-6&&xf<=xk?yk*xf/xk:yk+s*Math.max(0,xf-xk));
 }
 // A best-power torque curve (Nm vs rpm) so performance reflects the engine's DESIGN potential,
 // independent of the live driving state. Every live variable that feeds torque — mixture,
@@ -581,8 +581,7 @@ function simulateAccelRun(){
       if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
     }
   }
-  const vRedline=rl*TWO_PI*r/60/(ratios[ratios.length-1]*fd);
-  const vFree=vTop||vRedline;
+  const vFree=vTop;
   // The governor caps what the car could otherwise hold; it cannot add speed the car does not have.
   const governed=vGov>0&&vFree>vGov, topSpeed=(governed?vGov:vFree)*3.6;
   Object.assign(state,svLive);

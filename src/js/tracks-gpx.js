@@ -179,6 +179,7 @@ if(typeof window!=='undefined'&&window.REAL_TRACKS)Object.assign(TRACKS,window.R
 function simulateAccel(){const r=simulateAccelRun();return r&&detachResult(r);}
 function catmullClosed(cp,step){
   const n=cp.length,dense=[];
+  if(n<2)return cp.slice();
   const lerp=(a,b,ta,tb,t)=>{const w=(tb-ta)>1e-9?(t-ta)/(tb-ta):0;return {x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w};};
   for(let i=0;i<n;i++){
     const p0=cp[(i-1+n)%n],p1=cp[i],p2=cp[(i+1)%n],p3=cp[(i+2)%n];
@@ -199,7 +200,7 @@ function catmullClosed(cp,step){
   let k=0;
   for(let j=0;j<N;j++){
     const want=j*total/N;
-    while(cum[k+1]<want)k++;
+    while(k<cum.length-2&&cum[k+1]<want)k++;
     const a=dense[k],b=dense[(k+1)%m],seg=cum[k+1]-cum[k],w=seg>1e-9?(want-cum[k])/seg:0;
     out.push({x:a.x+(b.x-a.x)*w,y:a.y+(b.y-a.y)*w,z:(a.z||0)+((b.z||0)-(a.z||0))*w});
   }
@@ -212,17 +213,34 @@ function catmullClosed(cp,step){
 // GPS jitter otherwise reads as curvature and invents corners that aren't there.
 // Nothing about a road's shape is ours to ship — this imports the user's own file at runtime and
 // stores it only in their browser.
+const GPX_MAX_PTS=4000;
 function parseGPX(text){
-  const out=[];
-  const re=/<(?:trkpt|rtept|wpt)[^>]*?lat="([-\d.]+)"[^>]*?lon="([-\d.]+)"[^>]*?>([\s\S]*?)<\/(?:trkpt|rtept|wpt)>/g;
+  const src=String(text||''),out=[];
+  const re=/<(trkpt|rtept|wpt)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1>)/g;
   let m;
-  while((m=re.exec(text))){
-    const ele=/<ele>([-\d.]+)<\/ele>/.exec(m[3]);
-    out.push({lat:parseFloat(m[1]),lon:parseFloat(m[2]),ele:ele?parseFloat(ele[1]):0});
+  while((m=re.exec(src))){
+    const la=/\blat\s*=\s*["']([-+\d.eE]+)["']/.exec(m[2]),lo=/\blon\s*=\s*["']([-+\d.eE]+)["']/.exec(m[2]);
+    if(!la||!lo)continue;
+    const lat=+la[1],lon=+lo[1];
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)continue;
+    const em=m[3]&&/<ele>\s*([-+\d.eE]+)\s*<\/ele>/.exec(m[3]);
+    const ev=em?+em[1]:NaN;
+    out.push({lat,lon,ele:Number.isFinite(ev)?ev:null});
   }
-  if(!out.length){   // self-closing points carry no elevation
-    const re2=/<(?:trkpt|rtept|wpt)[^>]*?lat="([-\d.]+)"[^>]*?lon="([-\d.]+)"[^>]*?\/>/g;
-    while((m=re2.exec(text)))out.push({lat:parseFloat(m[1]),lon:parseFloat(m[2]),ele:0});
+  // Interpolate missing <ele> tags from neighbouring valid fixes; if none carry elevation, default to 0.
+  let first=-1;
+  for(let i=0;i<out.length;i++)if(out[i].ele!=null){first=i;break;}
+  if(first<0){for(const p of out)p.ele=0;}
+  else{
+    for(let i=0;i<first;i++)out[i].ele=out[first].ele;
+    let prev=first;
+    for(let i=first+1;i<out.length;i++){
+      if(out[i].ele!=null){
+        if(i>prev+1){const a=out[prev].ele,b=out[i].ele,span=i-prev;for(let j=prev+1;j<i;j++)out[j].ele=a+(b-a)*(j-prev)/span;}
+        prev=i;
+      }
+    }
+    for(let i=prev+1;i<out.length;i++)out[i].ele=out[prev].ele;
   }
   return out;
 }
@@ -241,6 +259,7 @@ function gpxToTrack(text,opts){
   let pts=raw.map(p=>({x:(p.lon-lon0)*kx,y:-(p.lat-lat0)*ky,z:p.ele}));
   // Drop consecutive duplicates, which break the spline.
   pts=pts.filter((p,i)=>i===0||Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y)>0.5);
+  if(pts.length<2)throw new Error('trace is stationary');
   // Resample the closed loop at a uniform step. The trace usually doesn't quite close, so the
   // last leg back to the start is included and bridged.
   const step=opts.step||22;
@@ -250,7 +269,8 @@ function gpxToTrack(text,opts){
     const d=Math.hypot(b.x-a.x,b.y-a.y);
     seg.push(d);total+=d;
   }
-  const nOut=Math.max(24,Math.round(total/step));
+  if(!(total>=10))throw new Error('trace is too short');
+  const nOut=clamp(Math.round(total/step),24,GPX_MAX_PTS);
   const outPts=[];
   let idx=0,carry=0;
   for(let k=0;k<nOut;k++){
@@ -269,9 +289,14 @@ function gpxToTrack(text,opts){
       outPts[i].x=(a.x+2*b.x+c.x)/4;outPts[i].y=(a.y+2*b.y+c.y)/4;outPts[i].z=(a.z+2*b.z+c.z)/4;
     }
   }
+  // Circular moving-average on elevation (like user-road.js) so metre-scale GPS vertical jitter does not read as steep grades.
+  if(passes>0&&n>=5){
+    const zs=outPts.map(p=>p.z);
+    for(let i=0;i<n;i++){let sum=0;for(let d=-2;d<=2;d++)sum+=zs[(i+d+n)%n];outPts[i].z=sum/5;}
+  }
   // Re-origin so coordinates are positive, matching the hand-built circuits.
-  const minX=Math.min(...outPts.map(p=>p.x)),minY=Math.min(...outPts.map(p=>p.y));
-  const zMin=Math.min(...outPts.map(p=>p.z));
+  let minX=Infinity,minY=Infinity,zMin=Infinity;
+  for(const p of outPts){if(p.x<minX)minX=p.x;if(p.y<minY)minY=p.y;if(p.z<zMin)zMin=p.z;}
   outPts.forEach(p=>{p.x=+(p.x-minX).toFixed(2);p.y=+(p.y-minY).toFixed(2);p.z=+(p.z-zMin).toFixed(2);});
   const gap=Math.hypot(pts[0].x-pts[pts.length-1].x,pts[0].y-pts[pts.length-1].y);
   return {
@@ -389,10 +414,11 @@ function buildTrack(key){
   for(let i=0;i<n;i++){p[i].w=W0*mul[i]/mAvg;p[i].hw=p[i].w/2;wMin=Math.min(wMin,p[i].w);wMax=Math.max(wMax,p[i].w);}
   // Corner count comes from the same detector the report uses, so the two never disagree.
   let corners=0;
-  const xs=p.map(q=>q.x),ys=p.map(q=>q.y);
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const q of p){if(q.x<minX)minX=q.x;if(q.x>maxX)maxX=q.x;if(q.y<minY)minY=q.y;if(q.y>maxY)maxY=q.y;}
   const T={key,label:def.label,blurb:def.blurb,names:def.names||[],pts:p,length:s,corners,width:W0,
     wMin,wMax,wLabel:(wMax-wMin<0.4?Math.round(W0)+' m':Math.round(wMin)+'–'+Math.round(wMax)+' m'),
-    minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+    minX,maxX,minY,maxY};
   T.line=optimiseLine(T);       // minimum curvature over the whole width: the map's reference line and corner count
   T.corners=detectCorners(T.line).length;
   trackCache[key]=T;return T;

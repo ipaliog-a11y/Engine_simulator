@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Vehicle, suspension, GPX, and audio crash/NaN guards (build 443)
+
+- Clamped `vehicle.fWt` after ballast to `[0.15, 0.85]` and floored `brakeValveRear` and `simulateBraking` axle brake forces at `>= 0` (`src/js/vehicle-accel.js`), preventing extreme front ballast from producing negative rear brake force or cooling rear rotors below ambient. Removed the `vRedline` fallback when drag exceeds drive force at every speed (reporting `0` instead), and returned `timedOut: v > 0.15` from `simulateBraking` when hitting the 25 s cap.
+- Added div-by-zero and sign guards in `driveSineDwell` (`1 + Kus*v^2 >= 0.1`), `stepCar` (`dt <= 0`), `vcdDrawAids` (`xm <= 0`), `fitGearbox` (`< 3` gears), `hybridCycle` (`km === 0` / `tT === 0`), and `gwNice` / `drawGearForce` (`fMax <= 0`).
+- Guarded zero-damping resonance (`cb = cr = 0`) in `scFreq` and capped `yMax` in `drawSuspFreq` (`src/js/susp-window.js`) so the tick loop cannot hang on `Infinity` or `NaN`.
+- Replaced unbounded `while (dh > Math.PI)` / `while (da > Math.PI)` angle-wrapping loops in `src/js/drift-run.js` and `src/js/skidpad-run.js` with finite-checked modular wrapping.
+- Hardened GPX track import (`src/js/tracks-gpx.js`): `parseGPX` now accepts `lon`-before-`lat` and single quotes, validates finite lat/lon bounds, and interpolates missing `<ele>` tags; `gpxToTrack` rejects stationary/short traces, smooths elevation, caps resampled output at `4000` points, and replaces spread `Math.min/max` calls with loops; `catmullClosed` bounds `k < cum.length - 2`.
+- Guarded WebAudio `setTargetAtTime` calls (`setParam`), `soundDrive` (non-finite AFR/RPM/MAP and `e.redline`), `motorTorqueSplit` (`Tpk <= 0`), `motorSoundState`, and worklet `Gas.c`/`Gas.dyn`/`Gas.rate` (`E <= 0`, `T <= 0`) in `src/js/sound.js`.
+- Added regression test `tests/test266.mjs`.
+
 ### ICE NaN guards, live-state isolation, and cache/reset fixes (build 442)
 
 - Floored net dyno `torque`/`powerKW`/`powerHP` at `>= 0` after subtracting `electricalDragTorque(rpm)` in `calcAtRpm()` (`src/js/engine-physics.js`) and guarded `peakTQ === 0` / `peakHP === 0` in `scoreEngine()` (`src/js/share-scoring.js`), fixing negative dyno torque and `NaN` scores on small engines with heavy alternators.
