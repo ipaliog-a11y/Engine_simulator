@@ -139,7 +139,7 @@ function hybFrontTq(hy,rpm){
 const HYB_FRONT_EFF=0.97;
 function hybFrontSetup(v){
   const hy=engine.hy,f=hy&&hy.front,rm=hy&&hy.roadMotor;
-  if(!f&&!rm){v.frontFd=0;v.frontTab=null;return;}
+  if(!f&&!rm){if(!v.ev)v.frontFd=0;v.frontTab=null;return;}
   if(hy.mode==='p4')v.drive='awd';   // P4 electric axle makes the car through-the-road AWD
   const c=hybCurves();let P=0;c.eng.forEach((q,i)=>{P=Math.max(P,(q.tq+c.mot[i])*q.rpm*Math.PI/30);});
   const tab=Array(261).fill(0);

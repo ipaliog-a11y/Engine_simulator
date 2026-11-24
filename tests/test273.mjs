@@ -36,7 +36,7 @@ const r = await page.evaluate(() => {
   const pkLiq = packBuild({ chem: 'nca', series: 96, kWh: 20, year: 2020, cooling: 'liquid', ambT: 25 });
   const pkAir = packBuild({ chem: 'nca', series: 96, kWh: 20, year: 2020, cooling: 'air_passive', ambT: 25 });
   const tLiq = { b: 35 }, tAir = { b: 35 };
-  for (let i = 0; i < 600; i++) { packHeatStep(pkLiq, tLiq, 4000, 1); packHeatStep(pkAir, tAir, 4000, 1); }
+  for (let i = 0; i < 1800; i++) { packHeatStep(pkLiq, tLiq, 4000, 1); packHeatStep(pkAir, tAir, 4000, 1); }
   load(EV_ENGINE_PRESETS[0], { evPackCool: 'liquid', evAmbT: -5 });
   const coldStartT = state.tB.b;
   out.pack = { gain25, gainCold, liqEnd: tLiq.b, airEnd: tAir.b, coldStartT };
