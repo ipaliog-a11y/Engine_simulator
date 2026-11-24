@@ -18,13 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 446)
+### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 447)
 
 - Clamped per-wheel and per-axle normal loads to `[0, N]` on wheel lift in `axleLatCap` (`src/js/tyres-brakes-driveline.js`), `simulateBraking`, and `simulateAccelRun` (`src/js/vehicle-accel.js`) so stoppies, wheelies, and inside-wheel lift conserve total vertical load instead of creating phantom normal force above `Wtot`.
 - Kept solid-axle roll center height at `min(rTire, cg * 0.75)` (`src/js/vehicle-accel.js`, Milliken & Milliken RCVD ch. 17) so low-CG solid-axle builds retain a positive roll moment arm and non-zero roll gradient while stock-height solid-axle cars keep `rc = rTire`.
 - Bounded cornering speed ceilings in `simulateLapCore` (`src/js/racing-line-lap.js`) and `ecoMinTime` (`src/js/eco-run.js`) by the four tyres' ETRTO load rating `Nmax`, preventing extreme-downforce featherweight builds from jumping to `VMAX` in corners while straights remain unaffected.
 - Updated `ecoFuelRule`, `ecoFuelKg`, `ecoCostTable`, and `ecoDP` (`src/js/eco-run.js`) to compute reflected engine rotational inertia `meff` from the active gear rather than 1st gear at all speeds, and updated `ecoMinTime` braking to include aero downforce (`N/m`) and `TYRE_MU_X` without applying straight-line `dCorner` differential scrub.
 - Added `tests/test269.mjs` covering all four fixes.
+
+### EV and hybrid thermal, regen, and P2 cranking parity (build 446)
+
+- Added `packChargePower` (`src/js/electric.js`) to cap regenerative charging by cell upper voltage (`vMax`) and temperature-derated charge C-rate, and updated `packDraw` / `packDrawClamped` to reject/clamp charging past `vMax`; wired `packChargePower` into `evRegenTable` (`src/js/electric-car.js`) and `hybRegenTable` (`src/js/hybrid.js`), and integrated live SOC across the lap in `evLapHeat`.
+- Added pack thermal tracking (`state.tB`) with live hot-pack derating and negative regen torque testing on the EV LIVE bench (`src/js/electric-ui.js`).
+- Fixed the P2 hybrid full-throttle engine-start cranking deadlock and wired live motor/pack thermal derating into the hybrid bench (`src/js/hybrid-bench.js`).
+- Added hybrid lap (`hybLapHeat` in `src/js/hybrid.js`) and race (`hybRaceHeatStep` in `src/js/hybrid-race.js`) motor and pack thermal stepping and derating under sustained high-C draw.
+- Distinguished aluminium vs. copper rotor cage resistivity and mass in induction motors, added magnet eddy-current loss to NdFeB `rotorIronLoss` (`src/js/electric.js`), and applied 97% bidirectional DC-DC boost converter efficiency (`psBoostEta`, ORNL/TM-2010/253) when boosting pack voltage in power-split hybrids (`src/js/power-split.js`, `src/js/hybrid.js`).
+- Added `tests/test271.mjs` covering regen tapering, EV/hybrid bench thermal and regen, P2 cranking, hybrid lap/race thermal derating, and IM/PM/power-split refinements.
 
 ### EV and hybrid NaN guards and race pack-overload fix (build 445)
 
