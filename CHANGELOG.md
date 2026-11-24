@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Driving sim tyre/brake/converter parity and lap aids integration (build 450)
+
+- Added per-wheel tread temperature (`s.tyreT`), wear (`s.tyreW`), smoke intensity (`s.smoke`), wet grip scaling (`car.wet`), and lateral camber grip loss (`latCamberF`, Milliken & Milliken RCVD ch. 2) to `driveTyre` and `stepCar` (`src/js/drive-model.js`), initialized warm and dry by default to preserve existing dry-test baselines.
+- Wired per-wheel rotor temperature (`s.brakeT`) and thermal fade (Limpert ch. 3), knee-point proportioning valve (`brakeValveRear`, Limpert ch. 7 / UN ECE R13-H) when `abs === false`, and reverse gear (`s.gear === -1`) into `stepCar`.
+- Modelled hydrodynamic automatic torque converter slip and torque multiplication below stall (`GEARBOX.auto.stall` / `.mult`, Bosch Automotive Handbook; Gillespie ch. 2) in `stepCar` instead of stepping automatics as a dry clutch.
+- Wired `vehicle.aids.abs` (knee-point proportioning when off), `tc`, `esp`, and `centreCoupling(vehicle)` (`awdTractionCap`, Milliken & Milliken RCVD ch. 18) into `simulateLapCore` (`src/js/racing-line-lap.js`) and `simulateAccelRun` (`src/js/vehicle-accel.js`), added bicycle-model slip-angle understeer/oversteer (`Kus * ay`) to the lap steering trace, and added optional `wet` grip scaling to `simulateBraking`.
+
 ### Wheel-lift load conservation, solid-axle roll, aero ceiling, and eco-run fixes (build 449)
 
 - Clamped per-wheel and per-axle normal loads to `[0, N]` on wheel lift in `axleLatCap` (`src/js/tyres-brakes-driveline.js`), `simulateBraking`, and `simulateAccelRun` (`src/js/vehicle-accel.js`) so stoppies, wheelies, and inside-wheel lift conserve total vertical load instead of creating phantom normal force above `Wtot`.

@@ -51,10 +51,43 @@
 //             the charge, the charge by what they draw and return. See driveElectric.
 //
 //   Wheels up and down  each wheel on its tyre and its spring, the tyre's load its own deflection (phase G6). See THE WHEELS.
-// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, a power-split's engine speed, the motor's
-// and the pack's heat.
+// NOT YET (named, so nobody rediscovers them): a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
+// Tyre tread thermal, wear and smoke constants (aligned with TYRE_RACE in race.js; Pacejka ch. 3 slip work):
+//   H0, H1: convective cooling W/(m²·K) = H0 + H1 v^0.8; hWet: water cooling at wet=1; hTrack: road conduction.
+//   cold/hot: quadratic grip drop outside [tOpt ± tWin], floored at gMin (0.72).
+//   smokeT0/smokeSpan: rubber vaporisation smoke onset ~105 °C, full opacity +45 °C above onset (probable).
+const DRIVE_TYRE_THERM={H0:12,H1:7,hWet:150,hTrack:10,cp:4500,roll:0.8,cold:0.03,hot:0.12,gMin:0.72,
+  wearK:8e-8,wearHot:3,wLin:0.06,wCliff:1.2,wKnee:0.7,smokeT0:105,smokeSpan:45};
+// Brake rotor air properties at ~150 °C film temperature (Limpert, Brake Design and Safety, ch. 3; matches BRAKE_AIR).
+const DRIVE_BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
+function driveTyreTempGrip(T,car){
+  const tOpt=car.tyreTopt!=null?car.tyreTopt:78,tWin=car.tyreTwin||32,x=(T-tOpt)/tWin,H=DRIVE_TYRE_THERM;
+  return Math.max(H.gMin,Math.min(1,1-(x<0?H.cold:H.hot)*x*x));
+}
+function driveTyreWearGrip(w){
+  const H=DRIVE_TYRE_THERM,k=Math.max(0,w-H.wKnee);
+  return Math.max(0.6,Math.min(1,1-H.wLin*w-H.wCliff*k*k));
+}
+function driveRotorCooling(T,disc,th,vCar){
+  const amb=th.amb!=null?th.amb:25,A=DRIVE_BRAKE_AIR,dT=T-amb,v=Math.max(1,vCar);
+  const Re=v*disc.D/A.nu,h=(Re>2.4e5?0.04*Math.pow(Re,0.8):0.70*Math.pow(Re,0.55))*A.k/disc.D;
+  const Tk=T+273.15,Ta=amb+273.15;
+  let q=h*disc.Aout*dT+th.eps*5.67e-8*disc.Aout*(Tk*Tk*Tk*Tk-Ta*Ta*Ta*Ta);
+  if(disc.vented){
+    const rpm=vCar/th.rTire*60/(2*Math.PI),uPump=disc.pump*rpm,uDuct=disc.duct*vCar/Math.max(1e-6,disc.Aflow);
+    const u=Math.max(0.1,Math.hypot(uPump,uDuct)),Rd=u*disc.dh/A.nu;
+    const hv=Math.max(0.076*rpm,0.023*(1+Math.pow(disc.dh/disc.l,0.67))*Math.pow(Rd,0.8)*Math.pow(A.pr,0.33)*A.k/disc.dh);
+    const mcp=A.rho*u*disc.Aflow*A.cp;
+    q+=mcp*dT*(1-Math.exp(-hv*disc.Avane/mcp));
+  }
+  return q;
+}
+function driveBrakeFade(T,th){
+  if(!th)return 1;
+  return 1-th.maxFade*Math.max(0,Math.min(1,(T-th.onset)/th.span));
+}
 // THE DRIVER AIDS AS A TUNE (build 281). These are a calibration, as the fuel map is: the numbers an engineer sets on
 // the car, and here the player's to change (vehicle.aids overrides any of them). The defaults are the values stepCar
 // used before they had names, and for stability control what the car's own data gives.
@@ -205,26 +238,42 @@ function driveCar(){
   // springs per ay, the full roll (with the tyres' give), and compliance steer by each
   // wheel's share of the side force, m (b, a) / (2 L) per unit ay
   const Ktoe=(toe.rsF*body.rrAyF+toe.rsR*body.rrAyR+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
+  const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,twMm=v.tireWidth||225;
+  const bth=v.brakeTh||brakeThermal(v),copyD=d=>({D:d.D,m:d.m,Aout:d.Aout,vented:!!d.vented,duct:d.duct||0,l:d.l||0,dh:d.dh||0,pump:d.pump||0,Avane:d.Avane||0,Aflow:d.Aflow||0});
+  // Knee-point proportioning valve parameters (Limpert ch. 7 / UN ECE R13-H; matches brakeValveRear in vehicle-accel.js)
+  const fWtV=v.fWt||0.55,hLV=v.cg/Math.max(0.5,L),zk=R13H_Z/2,Xv=z=>z*(fWtV+z*hLV)*DRIVE_G,Yv=z=>z*(1-fWtV-z*hLV)*DRIVE_G;
+  const vxk=Xv(zk),vyk=Math.max(0,Yv(zk)),vyEnd=Math.max(0,Yv(R13H_Z));
+  const brakeValve={xk:vxk,yk:vyk,slope:Math.max(0,(vyEnd-vyk)/Math.max(1e-6,Xv(R13H_Z)-vxk))};
+  // Hydrodynamic torque converter parameters (GEARBOX.auto; Bosch Automotive Handbook): stall rpm, multiplication ratio, capacity factor K = T_stall / w_stall^2
+  const gb=v.gb||GEARBOX[v.gearbox]||GEARBOX.manual,idleR=pt.idleRpm()||0;
+  const tcStall=v.gearbox==='auto'&&gb.stall>0?Math.max(idleR,Math.min(rl*0.85,gb.stall)):0;
+  const tcMult=tcStall>0&&gb.mult>1?gb.mult:1;
+  const rpmArr=curve.map(p=>p.rpm),tqArr=curve.map(p=>p.tq);
+  const tcK=tcStall>0?Math.max(50,driveLerp(rpmArr,tqArr,tcStall))/Math.pow(tcStall*Math.PI/30,2):0;
   return {
     aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
-    r:v.rTire,tw:(v.tireWidth||225)/1000,Iw:(v.wheelI||2)/4,
+    r:v.rTire,tw:twMm/1000,Iw:(v.wheelI||2)/4,
     mu:muR,muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    tyreTopt:tt.tOpt||78,tyreTwin:tt.tWin||32,tyreWear:tt.wear||1,tyreArea:0.25+twMm/1000,tyreC:DRIVE_TYRE_THERM.cp*twMm/225,
+    wet:0,airT:22,camLoss:CAMBER_LOSS,camBest:CAMBER_BEST,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     ...body,
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df,v.body&&v.body.name),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df,v.body&&v.body.name),ratios:(v.ratios||[1]).slice(),revRatio:-((v.ratios&&v.ratios[0])||3.5),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    gearbox:v.gearbox||'manual',tcStall,tcMult,tcK,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
-    rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
+    rpm:rpmArr,tq:tqArr,ov:pt.overrunTable(rl),idle:idleR,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
     fireRpm:FIRE_RPM,fireTurns:1/(engine.chargesPerRev||0.5),starterT0:v.ev?0:starterStallTorque(),starterFree:STARTER_FREE_RPM,   // stalling and starting, as on the bench
     // where the engine is held to pull away flat out: the speed the 0-100 solver found quickest of its five tries,
     // as a launch control is set (build 276). Until then it was the torque peak, no higher than 60% of the redline,
     // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
     launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
-    brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
+    brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,brakeValve,
+    brakeTh:{onset:bth.onset,span:FADE_SPAN,maxFade:FADE_MAX,cp:bth.cp,eps:bth.eps,amb:BRAKE_AMBIENT,rTire:bth.rTire,f:copyD(bth.front),r:copyD(bth.rear)},
     // The lever brake (build 382): rear wheels only, outside the ABS (a cable to the rear calipers or a drum-in-hat).
     // Its force at the road (N, both wheels): the rear service brake's, as if the lever reached its full line force
     // (PROBABLE: no maker publishes a lever-brake torque), and never under the floor UN ECE R13-H (parking brake) and FMVSS 135 S7.12
@@ -240,8 +289,10 @@ function driveCar(){
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
+  const t0=car.tyreTopt!=null?car.tyreTopt:78,b0=car.brakeTh&&car.brakeTh.amb!=null?car.brakeTh.amb:25;
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],yawRef:0,espOver:false,espF:1,clF:1,pull:false,firing:true,
+    tyreT:[t0,t0,t0,t0],tyreW:[0,0,0,0],smoke:[0,0,0,0],brakeT:[b0,b0,b0,b0],
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0,handTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -413,8 +464,9 @@ function driveShaft(tb,s,rpm,thr,h){
 // for the 1.2 s the 0-100 solver holds it there (its brake-boost). driveState() is the car at rest at idle.
 function driveLaunch(car){
   const s=driveState(car);if(car.ev)return s;
-  s.we=car.launchRpm*Math.PI/30;s.rpm=car.launchRpm;
-  if(car.turbo)for(let i=0;i<1200;i++)driveShaft(car.turbo,s,car.launchRpm,1,0.001);
+  const lr=car.tcStall>0?car.tcStall:car.launchRpm;
+  s.we=lr*Math.PI/30;s.rpm=lr;
+  if(car.turbo)for(let i=0;i<1200;i++)driveShaft(car.turbo,s,lr,1,0.001);
   return s;
 }
 function driveLerp(xs,ys,x){
@@ -434,12 +486,8 @@ function driveLerp(xs,ys,x){
 //          and like the slip it builds over the relaxation length as the wheel rolls (none at rest).
 //          The brush model has no carcass, and no measured camber stiffness for a radial road tyre was found to set it
 //          against: PROBABLE. About 0.11 of C on a road tyre (a 0.1 m, R 0.31 m).
-// Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
-// outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
-// left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
-// car's own grip, and the camber's own aligning moment. Tried again with the yaw-rate ESP (small-physics step 6): by
-// each wheel's own lean the 911 GT3 left the line (15 m, 68 deg); by each axle's outside wheel, as the lap has it,
-// 11.8 m and 41 deg, the Model 3 9.5 m and 38 deg, the Civic 7.9 m, against OFF_KNOWN's 4.8 m. Named until after v1.0.
+//   grip   lateral grip loss off CAMBER_BEST (-1.5 deg) at CAMBER_LOSS (1.5%/deg, Milliken & Milliken RCVD ch. 2;
+//          matches latCamberF in tyres-brakes-driveline.js), applied to lateral muY only (longitudinal muX untouched).
 //   heave  (small-physics step 3) each wheel's own travel on the body moves its camber too, not only the axle's roll: the same
 //          swing arm, 1/fvsa a metre of travel (2 rec / t), the top inwards in bump, so heave and pitch camber the
 //          wheels as well (Reimpell, The Automotive Chassis, ch. 3, camber change over travel: PROBABLE as the roll's
@@ -465,11 +513,18 @@ function driveToe(v){const k=n=>v[n]!=null?v[n]:DRIVE_TOE[n],kN=Math.PI/180/1000
 // A wheel's contact half length (m): the tyre as a circle of radius r pressed flat by Fz/kt (see DRIVE_CASTER).
 function drivePatch(r,kt,Fz){if(!(kt>0))return 0;const d=Math.min(r,Math.max(0,Fz)/kt);return Math.sqrt(Math.max(0,2*r*d-d*d));}
 // One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), tg, its
-// camber's equivalent slip (tan, as relaxed: see THE CAMBER), and gq, the grip of what it stands on (THE SURFACE; 1 without).
+// camber's equivalent slip (tan, as relaxed: see THE CAMBER), gq, the combined surface/thermal/wear grip multiplier
+// (1 without), and gam, the wheel's lean to the left (rad) for lateral camber grip loss (matches latCamberF).
 // Returns [Fl, Ft, s, dFl/dkappa]: s is the share of the grip in use (1 = sliding all over the contact patch).
-function driveTyre(car,Fz,kappa,alpha,front,tg,gq){
+function driveTyre(car,Fz,kappa,alpha,front,tg,gq,gam){
   if(!(Fz>1))return [0,0,0,0];
-  const ref=front?car.FzRefF:car.FzRef,muY=(gq==null?1:gq)*(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
+  const ref=front?car.FzRefF:car.FzRef,muBase=(gq==null?1:gq)*(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muBase;
+  let camF=1;
+  if(gam!=null&&car.camLoss){
+    const dir=Math.abs(alpha)>1e-3?Math.sign(alpha):0,camDeg=dir?-dir*gam*180/Math.PI:-Math.abs(gam)*180/Math.PI;
+    camF=Math.max(0.7,1-car.camLoss*Math.abs(camDeg-(car.camBest!=null?car.camBest:-1.5)));
+  }
+  const muY=muBase*camF;
   const xz=Fz/ref,Ca=car.cc*Fz*(car.ccP2+1)/(car.ccP2+xz*xz),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
   const ty=Math.tan(alpha)+(tg||0);
   const sx=Ck*kappa/(3*muX*Fz),sy=Ca*ty/(3*muY*Fz),s=Math.hypot(sx,sy);
@@ -660,23 +715,27 @@ function stepCar(car,s,u,dt){
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,sl=rd.soil,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const wet=Math.max(0,Math.min(1,car.wet||0)),gWet=1-wet*(1-DRIVE_SURFACE.wet),airT=car.airT!=null?car.airT:22;
+  const tArea=car.tyreArea||0.475,tCap=car.tyreC||DRIVE_TYRE_THERM.cp,tOpt=car.tyreTopt!=null?car.tyreTopt:78,tWin=car.tyreTwin||32,tWk=car.tyreWear||1;
+  if(!s.tyreT){s.tyreT=[tOpt,tOpt,tOpt,tOpt];s.tyreW=[0,0,0,0];s.smoke=[0,0,0,0];}
+  if(!s.brakeT){const b0=car.brakeTh&&car.brakeTh.amb!=null?car.brakeTh.amb:25;s.brakeT=[b0,b0,b0,b0];}
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
-    // ---- gearbox
-    const top=car.ratios.length;
+    // ---- gearbox (supports reverse gear s.gear === -1)
+    const top=car.ratios.length,revR=car.revRatio!=null?car.revRatio:-car.ratios[0];
     if(s.shiftT>0){s.shiftT-=h;
       // with an automatic clutch the driver matches the revs for the gear coming (a blip going down), so the clutch
       // takes up without a jolt through the driven tyres
-      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0)s.we=Math.max(car.idle*Math.PI/30,wMean()*car.ratios[s.gear-1]*car.fd);}
-    if(u.gear!=null){const gq=Math.max(0,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
+      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear!==0){const gr0=s.gear>0?car.ratios[Math.min(top,s.gear)-1]:revR;s.we=Math.max(car.idle*Math.PI/30,wMean()*gr0*car.fd);}}
+    if(u.gear!=null){const gq=Math.max(-1,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
     else if(!car.ev&&s.shiftT<=0&&s.gear>0){
       const rpmNow=wMean()*car.ratios[s.gear-1]*car.fd*30/Math.PI;      // the speed the wheels give the engine in this gear
       if(rpmNow>0.97*car.redline&&s.gear<top){s.gear++;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<0.42*car.redline&&rpmNow*car.ratios[s.gear-2]/car.ratios[s.gear-1]<0.85*car.redline&&thr<0.99){s.gear--;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<Math.max(car.idle*1.15,0.22*car.redline)){s.gear--;s.shiftT=car.shiftTime;}
     }
-    const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
+    const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:s.gear===-1?revR*car.fd:0;
     // ---- loads
     // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
     // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
@@ -689,6 +748,7 @@ function stepCar(car,s,u,dt){
     // ---- tyres
     let FX=0,FY=0,MZ=0,MK=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
     if(!s.toe){s.toe=[0,0,0,0];s.Fyw=[0,0,0,0];}
+    const Gair=tArea*(DRIVE_TYRE_THERM.H0+DRIVE_TYRE_THERM.H1*Math.pow(Math.max(0,v),0.8)+DRIVE_TYRE_THERM.hWet*wet),Gtrk=tArea*DRIVE_TYRE_THERM.hTrack;
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
       // the axle's mean travel on the body (heave and pitch), and the wheel's side, right +1 (THE CAMBER, THE TOE)
@@ -701,11 +761,22 @@ function stepCar(car,s,u,dt){
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
-      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0;
-      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF:car.recR)*((front?s.rr[0]:s.rr[1])+sd*2*cm/tw);
+      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0,gam=null;
+      if(car.camF!=null){gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF:car.recR)*((front?s.rr[0]:s.rr[1])+sd*2*cm/tw);
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
-      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gr?gr[i]:1);
+      const gq=(gr?gr[i]:1)*gWet*driveTyreTempGrip(s.tyreT[i],car)*driveTyreWearGrip(s.tyreW[i]);
+      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gq,gam);
+      // Tread thermal, wear, and smoke (Pacejka ch. 3 sliding work, Blok ~50% rubber heat partition)
+      const vSx=s.w[i]*car.r-vl,vSlip=Math.hypot(vSx,vt);
+      const pSlip=0.5*Math.min(1,T[2])*(Math.abs(T[0]*vSx)+Math.abs(T[1]*vt));
+      const pRoll=DRIVE_TYRE_THERM.roll*driveRollF(car,Fz[i],sl&&sl[i])*Math.abs(vl);
+      s.tyreT[i]=Math.max(airT,s.tyreT[i]+(pSlip+pRoll-(Gair+Gtrk)*(s.tyreT[i]-airT))*h/tCap);
+      const over=Math.max(0,(s.tyreT[i]-tOpt-tWin)/tWin);
+      s.tyreW[i]=Math.min(1,s.tyreW[i]+DRIVE_TYRE_THERM.wearK*tWk*pSlip*(1+DRIVE_TYRE_THERM.wearHot*over)*h);
+      const tSm=Math.max(0,Math.min(1,(s.tyreT[i]-DRIVE_TYRE_THERM.smokeT0)/DRIVE_TYRE_THERM.smokeSpan));
+      const pSm=Math.max(0,Math.min(1,(pSlip-4000)/16000));
+      s.smoke[i]=(1-wet)*(T[2]>0.8?Math.min(1,vSlip/4)*Math.max(tSm,0.5*pSm):0);
       Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];s.Fyw[i]=T[1];
       const fx=T[0]*cw-T[1]*sw,fy=T[0]*sw+T[1]*cw;
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
@@ -718,10 +789,10 @@ function stepCar(car,s,u,dt){
     const wd=wMean();
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
     // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
-    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,s.kappa[i]);
+    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,ratio<0?-s.kappa[i]:s.kappa[i]);
     const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
     const A=car.aids,holdTc=Math.max(-30,Math.min(8,A.tcGain*(1-worst/(car.slipOpt*A.tcSlip))));
-    const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
+    const pulling=!car.ev&&u.clutch==null&&(s.gear===1||s.gear===-1)&&s.shiftT<=0&&!(car.tcStall>0)&&s.we-wd*ratio>1;   // the clutch is still slipping from rest
     if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+holdTc*h));thr*=s.tcF;}else s.tcF=1;
     // ---- stability control: one wheel's brake for the yaw moment the car is short of or has too much of (DRIVE_AIDS)
     const eT=s.esp;eT[0]=eT[1]=eT[2]=eT[3]=0;
@@ -729,7 +800,7 @@ function stepCar(car,s,u,dt){
       if(s.vx>A.espVmin){
         // the grip is the tyres' own on what is under them or, where the car is already turning harder (downforce, a
         // banked dip), what it has shown. On a lower grip the brush tyre peaks at a smaller angle, tan by the grip.
-        const gF=gr?(gr[0]+gr[1])/2:1,gB=gr?(gr[2]+gr[3])/2:1,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
+        const gF=(gr?(gr[0]+gr[1])/2:1)*gWet,gB=(gr?(gr[2]+gr[3])/2:1)*gWet,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
         const lim=Math.max(car.mu*gz*(gF+gB)/2,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
         const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
@@ -752,7 +823,7 @@ function stepCar(car,s,u,dt){
     }else s.espF=1;
     // a P2 hybrid's engine stops and starts (build 288)
     const p2=car.el&&car.el.stop&&!car.ev;
-    if(p2)driveStartStop(car,s,Math.max(0,Math.min(1,u.throttle||0)),Math.max(0,wd)*ratio*30/Math.PI,v,h);
+    if(p2)driveStartStop(car,s,Math.max(0,Math.min(1,u.throttle||0)),Math.max(0,wd*ratio)*30/Math.PI,v,h);
     const rpm=s.we*30/Math.PI;
     // An engine turning too slowly to fire stalls: then it is only its own drag, until the starter (u.starter) or
     // the wheels through the clutch (a bump start) turn it fast enough again.
@@ -768,20 +839,33 @@ function stepCar(car,s,u,dt){
     if(car.el&&car.el.front){const F=car.el.front.F;vf=Math.max(0,(s.w[0]+s.w[1])/2*car.r);const q=vf/0.5,a=Math.min(F.length-2,Math.floor(q));
       const full=F[a]+(F[a+1]-F[a])*(q-a),E=car.el.front,NT=E.loss.length/F.length;
       Ff=thr*driveShares(car.el,s.soc)[0]*drivePack(car.el,s.soc,full*vf/E.eff,E.loss[a*NT+NT-1],E.share)*full;}
-    if(car.ev){const rm=Math.max(0,wd)*ratio*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd)*ratio;
+    if(car.ev){const rm=Math.max(0,wd*ratio)*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd*ratio);
       if(car.el)driveCharge(car,s,thr,rm,Ff,vf,h);}
     else if(!s.eng){                                                       // the engine stopped, its clutch open
-      const rm=Math.max(0,wd)*ratio*30/Math.PI,T=ratio===0||s.shiftT>0?0:driveMotorOnly(car,thr,rm,s.soc);
-      s.we=Math.abs(wd)*ratio;s.clF=1;s.pull=false;Tw=T*ratio*car.eff;
+      const rm=Math.max(0,wd*ratio)*30/Math.PI,T=ratio===0||s.shiftT>0?0:driveMotorOnly(car,thr,rm,s.soc);
+      s.we=Math.abs(wd*ratio);s.clF=1;s.pull=false;Tw=T*ratio*car.eff;
       driveCharge(car,s,thr,rm,Ff,vf,h,T);}
-    else{
-      // The clutch. A pedal if the driver gives one; otherwise a driver's two feet pulling away: the left feeds the
-      // clutch in no faster than the tyres can take, the right holds the engine at the speed the pedal asks (idle off
-      // it, the launch speed flat out) until the wheels have caught up and the clutch locks.
+    else if(car.gearbox==='auto'&&car.tcStall>0&&car.tcK>0&&(ratio===0||s.shiftT>0||wd*ratio<car.tcStall*Math.PI/30||s.gear===-1)){
+      // Hydrodynamic torque converter below stall/lockup (Bosch Automotive Handbook; Gillespie ch. 2):
+      // Impeller absorbs Tp = tcK * (wp^2 - wt^2); stator multiplies positive torque by TR(SR) from tcMult at stall to 1 at coupling (SR=0.85).
+      let Tp=0,Tturb=0;
+      if(ratio!==0&&s.shiftT<=0){
+        const wp=Math.max(0,s.we),wtP=Math.max(0,wd*ratio),sr=wp>1?Math.min(1.2,wtP/wp):0;
+        Tp=car.tcK*(wp*wp-wtP*wtP);
+        const tr=sr<0.85?1+(car.tcMult-1)*(1-sr/0.85):1;
+        Tturb=Tp>0?Tp*tr:Tp;
+      }
+      s.we=Math.max(0,s.we+h*(Te-Tp)/car.Ie);
+      Tw=Tturb*ratio*car.eff;s.clF=1;s.pull=false;
+      if(car.el)driveCharge(car,s,s.firing&&s.shiftT<=0?thr:0,rpm,Ff,vf,h);
+    }else{
+      // The clutch (or locked torque converter above stall). A pedal if the driver gives one; otherwise a driver's two
+      // feet pulling away: the left feeds the clutch in no faster than the tyres can take, the right holds the engine
+      // at the speed the pedal asks (idle off it, the launch speed flat out) until the wheels have caught up and it locks.
       const auto=u.clutch==null,slip=s.we-wd*ratio,pedal=Math.max(0,Math.min(1,u.throttle||0));
       let cap=ratio===0||s.shiftT>0?0:car.clutchCap*(auto?1:1-Math.max(0,Math.min(1,u.clutch)));
-      if(auto&&cap>0&&slip>1&&(s.gear===1||wd*ratio<car.idle*Math.PI/30)){
-        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost,s.soc));
+      if(auto&&cap>0&&slip>1&&!(car.tcStall>0)&&(s.gear===1||s.gear===-1||wd*ratio<car.idle*Math.PI/30)){
+        const wT=(car.idle+((s.gear===1||s.gear===-1)?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost,s.soc));
         if(!s.pull){s.pull=true;s.clF=0.1;}                                   // the bite point, then in
         s.clF=Math.max(0.05,Math.min(1,s.clF+hold*h));
         cap*=s.clF;
@@ -816,9 +900,21 @@ function stepCar(car,s,u,dt){
       if(!(ax===0?car.liveF:car.liveR))Tbd[i]=Tbd[j]=Td;
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
-        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
-        const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        const lockSlip=s.vx>=0?s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]:s.kappa[q]>car.slipOpt*car.aids.absSlip[ax];
+        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((lockSlip&&vl>2&&(brake>0||s.esp[q]>0))?-car.aids.absRel:car.aids.absApp)*h));}
+        const fade=driveBrakeFade(s.brakeT[q],car.brakeTh);
+        const cap=car.brakeF*share/2*car.r*fade;
+        let pedalTb=brake*cap;
+        if(!car.abs&&ax===1&&car.brakeValve){
+          // Non-ABS knee-point proportioning valve (Limpert ch. 7 / UN ECE R13-H)
+          const xf=brake*car.brakeF*car.brakeFront/car.m,bv=car.brakeValve;
+          const xr=Math.max(0,bv.xk>1e-6&&xf<=bv.xk?bv.yk*xf/bv.xk:bv.yk+bv.slope*Math.max(0,xf-bv.xk));
+          pedalTb=Math.min(cap,xr*car.m/2*car.r*fade);
+        }
+        let Tb=Math.min(cap,pedalTb+s.esp[q])*(car.abs?s.abs[q]:1);        // the pedal's and the stability control's
         if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
+        if(car.brakeTh){const disc=ax===0?car.brakeTh.f:car.brakeTh.r,Pb=Tb*Math.abs(s.w[q]);
+          s.brakeT[q]+=(0.9*Pb-driveRotorCooling(s.brakeT[q],disc,car.brakeTh,v))*h/(disc.m*car.brakeTh.cp);}
         const roll=driveRollF(car,Fz[q],sl&&sl[q])*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
