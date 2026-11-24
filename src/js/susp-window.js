@@ -59,15 +59,19 @@ function scModes(w){
 }
 // The response at f (Hz) to a road wave of amplitude 1, with a linear damper c at the wheel: the body's and the wheel's
 // movement (amplitude ratios) and the tyre's load swing (N per m of road).
+const SC_GAIN_CAP=50;
 function scFreq(w,c,f){
   const om=2*Math.PI*f,o2=om*om;
   // ms Zs'' = ks (Zu - Zs) + c (Zu' - Zs');  mu Zu'' = -ks (Zu - Zs) - c (Zu' - Zs') + kt (Zr - Zu)
   // as  a Zs + b Zu = 0,  b Zs + d Zu = kt Zr  with complex a, b, d
   const a=[w.ks-w.ms*o2,om*c],b=[-w.ks,-om*c],d=[w.ks+w.kt-w.mu*o2,om*c];
-  const mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]],div=(x,y)=>{const n=y[0]*y[0]+y[1]*y[1];return [(x[0]*y[0]+x[1]*y[1])/n,(x[1]*y[0]-x[0]*y[1])/n];};
-  const ad=mul(a,d),bb=mul(b,b),det=[ad[0]-bb[0],ad[1]-bb[1]];
-  const zu=div([a[0]*w.kt,a[1]*w.kt],det),zs=div(mul([-b[0],-b[1]],zu),a);
-  return {body:Math.hypot(zs[0],zs[1]),wheel:Math.hypot(zu[0],zu[1]),load:w.kt*Math.hypot(1-zu[0],zu[1])};
+  const mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]];
+  const ad=mul(a,d),bb=mul(b,b),det=[ad[0]-bb[0],ad[1]-bb[1]],detN=det[0]*det[0]+det[1]*det[1];
+  const divDet=x=>detN>1e-12?[(x[0]*det[0]+x[1]*det[1])/detN,(x[1]*det[0]-x[0]*det[1])/detN]:[SC_GAIN_CAP,0];
+  const zu=divDet([a[0]*w.kt,a[1]*w.kt]),zs=divDet([-b[0]*w.kt,-b[1]*w.kt]);
+  const body=Math.min(SC_GAIN_CAP,Math.hypot(zs[0],zs[1])),wheel=Math.min(SC_GAIN_CAP,Math.hypot(zu[0],zu[1]));
+  return {body:isFinite(body)?body:SC_GAIN_CAP,wheel:isFinite(wheel)?wheel:SC_GAIN_CAP,
+    load:w.kt*(isFinite(zu[0])&&isFinite(zu[1])?Math.min(SC_GAIN_CAP,Math.hypot(1-zu[0],zu[1])):SC_GAIN_CAP)};
 }
 // The quarter car in time over a road zr(t) (m), from rest at its static height. Positions are measured from there,
 // upward. Returns the samples kept and what the run did: the tyre's least and greatest load, and the time it spent in
@@ -183,7 +187,10 @@ function renderSuspWin(){
 }
 function drawSuspFreq(){
   const C=gwCanvas('susFreq');if(!C||!sc.r)return;const {g,W,H}=C,r=sc.r;
-  const yMax=Math.max(1.5,Math.ceil(Math.max(...r.body,...r.wheel)*2)/2);
+  let peak=0;
+  for(let i=0;i<r.body.length;i++)if(isFinite(r.body[i])&&r.body[i]>peak)peak=r.body[i];
+  for(let i=0;i<r.wheel.length;i++)if(isFinite(r.wheel[i])&&r.wheel[i]>peak)peak=r.wheel[i];
+  const yMax=Math.min(SC_GAIN_CAP,Math.max(1.5,Math.ceil(peak*2)/2));
   const x0=40,x1=W-10,y0=H-26,y1=16,lf0=Math.log(SC_FMIN),lf1=Math.log(SC_FMAX);
   const px=f=>x0+(x1-x0)*(Math.log(f)-lf0)/(lf1-lf0),py=a=>y0-(y0-y1)*a/yMax;
   g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
@@ -205,8 +212,9 @@ function drawSuspFreq(){
 }
 function drawSuspStep(){
   const C=gwCanvas('susStep');if(!C||!sc.r)return;const {g,W,H}=C,s=sc.r.sim;
-  const mm=a=>a*1000,all=[...s.zs,...s.zu,...s.zr].map(mm);
-  let lo=Math.min(0,...all),hi=Math.max(0,...all);if(hi-lo<1){hi+=0.5;lo-=0.5;}
+  const mm=a=>a*1000;
+  let lo=0,hi=0;for(const arr of [s.zs,s.zu,s.zr])for(const v of arr){const m=mm(v);if(isFinite(m)){if(m<lo)lo=m;if(m>hi)hi=m;}}
+  if(hi-lo<1){hi+=0.5;lo-=0.5;}
   const st=gwNice(hi-lo,5);lo=Math.floor(lo/st)*st;hi=Math.ceil(hi/st)*st;
   const x0=40,x1=W-10,y0=H-26,y1=16,px=t=>x0+(x1-x0)*t/SC_T,py=v=>y0-(y0-y1)*(v-lo)/(hi-lo);
   g.lineWidth=1;g.strokeStyle='#1e1e2c';g.fillStyle='#667';g.textAlign='center';
