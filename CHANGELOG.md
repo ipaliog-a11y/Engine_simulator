@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### ICE knock sensitivity, mechanical/turbo limits, and nitrous accounting (build 451)
+
+- Wired coolant-coupled wall temperature (`wallTempK = 360 + clamp(coolant, 50, 140)`, anchored at 450 K at 90 °C; Heywood §12.4), cooled EGR charge dilution (`egrRate`), and bore-scaled SI flame-travel burn duration (`siBurnDeg = 50 * (bore / 82.55)^0.35`, ASTM CFR 3.25-in reference; Heywood §9.3) into `endGasTraceAt()` (`src/js/engine-physics.js`) and `wallTrace()` (`src/js/gas-dynamics.js`), with coolant/nitrous keys added to `_knockCache` and isolated in build-time tables.
+- Added live inertial wear in `stepWear()` above `PISTON_SPEED_LIMIT` (25 m/s, Heywood §2.2) and rotary apex-seal sliding speed `APEX_SPEED_LIMIT` (36 m/s, Yamamoto/Mazda), and unified `ROD_RATIO = 3.2` (`ROD_STROKE = 1.6`) across `gas-dynamics.js` and `engine-physics.js`.
+- Added centrifugal compressor surge-line detection (`compSurgeFlowFrac` / `isCompSurge`, Watson & Janota ch. 3) and shaft overspeed tracking (`TIP_LIMIT = 520 m/s`) in `advanceShaft()` / `stepBoost()` / `stepWear()`, added standstill/low-speed intercooler face velocity (`IC_FACE_V_IDLE = 2.0 m/s`, `icFaceVel()`) while keeping nominal `IC_FACE_V = 11 m/s` on dyno sweeps, and updated stale `previewTurbo()` shaft-inertia text in `src/js/parts.js`.
+- Accounted for active nitrous fuel enrichment (`nitrousFuelKgS()`) in `meteredFuelKgS()` and `computeEmissions()`, and added nitrous cylinder heat release and exhaust temperature rise to `endGasTraceAt()`, `ciPortedPmax()`, and `exhaustGasT()`.
+- Added homogeneous SI flammability misfire roll-off (`mixtureMisfireFrac()`, `lambda < 0.72` or `lambda > 1.20`; Heywood §9.4.3) in `sparkMixture()` and wired it into `obdMisfire()` (`src/js/obd.js`) so extreme lean/rich mixtures flag `P0300`.
+- Added `tests/test272.mjs` covering all five areas.
+
 ### Driving sim tyre/brake/converter parity and lap aids integration (build 450)
 
 - Added per-wheel tread temperature (`s.tyreT`), wear (`s.tyreW`), smoke intensity (`s.smoke`), wet grip scaling (`car.wet`), and lateral camber grip loss (`latCamberF`, Milliken & Milliken RCVD ch. 2) to `driveTyre` and `stepCar` (`src/js/drive-model.js`), initialized warm and dry by default to preserve existing dry-test baselines.

@@ -201,21 +201,22 @@ function icChargeUA(P,m){
   return oc*hc*Ac;
 }
 // The cooling air's side of a louvred face W x H x D mm with fpi fins: its conductance (W/K) and the air's capacity rate.
-function icAirUA(W,H,D,fpi){
+function icAirUA(W,H,D,fpi,faceV){
+  const vFace=faceV>0?faceV:IC_FACE_V;
   const L=IC_LOUVER,w=W/1e3,h=H/1e3,d=D/1e3,mua=1.84e-5,rhoa=1.18,pr=Math.pow(IC_PR,-2/3);
-  const Fp=25.4/fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=IC_FACE_V/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
+  const Fp=25.4/fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=vFace/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
   const ja=Math.pow(ReL,-0.49)*Math.pow(L.th/90,0.27)*Math.pow(Fp/L.Lp,-0.14)*Math.pow(L.Fl/L.Lp,-0.29)*Math.pow(D/L.Lp,-0.23)
     *Math.pow(L.Ll/L.Lp,0.68)*Math.pow(L.Tp/L.Lp,-0.28)*Math.pow(L.df/L.Lp,-0.05);
   const ha=ja*rhoa*Vc*IC_CP*pr,Aa=w*h*d*(L.Fl/L.Tp)*(2e3/Fp+2e3/L.Fl),fa=(1/Fp)/(1/Fp+1/L.Fl);
   const oa=1-fa*(1-finEff(ha,200,L.df/1e3,L.Fl/2e3));
-  return {UA:oa*ha*Aa,C:rhoa*IC_FACE_V*w*h*IC_CP};
+  return {UA:oa*ha*Aa,C:rhoa*vFace*w*h*IC_CP};
 }
 // Cross-flow, both fluids unmixed (Incropera; Kays & London's chart): effectiveness from NTU and Cr = Cmin/Cmax.
 const xfEps=(NTU,Cr)=>1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1));
-function icEps(P,m){
+function icEps(P,m,faceV){
   if(!P||!P.w||!(m>0))return 0;
-  if(P.type==='water')return w2aLoop(P,m).cold;
-  const A=icAirUA(P.w,P.h,P.d,P.fpi);
+  if(P.type==='water')return w2aLoop(P,m,faceV).cold;
+  const A=icAirUA(P.w,P.h,P.d,P.fpi,faceV);
   const UA=1/(1/icChargeUA(P,m)+1/A.UA),Cc=m*IC_CP,Ca=A.C,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
   return xfEps(NTU,Cr)*Cmin/Cc;
 }
@@ -258,11 +259,11 @@ function w2aDuctUA(q,n,hi,wide,long){
 }
 // The loop at a charge flow m (kg/s): a and b (W/K), the coolant's and the charge's capacity rates, the share given
 // back cold and settled, the loop's heat capacity (J/K) and its time constant settling at this flow (s).
-function w2aLoop(P,m){
+function w2aLoop(P,m,faceV){
   const C=W2A_CL,q=P.pump_lpm/60000,Cw=C.rho*q*C.cp,Cc=m*IC_CP;
   const nC=P.h/W2A_PITCH,UA1=1/(1/icChargeUA(P,m)+1/w2aDuctUA(q,nC,W2A_TUBE.hw,P.w,P.d));
   const C1=Math.min(Cc,Cw),a=xfEps(UA1/C1,C1/Math.max(Cc,Cw))*C1;
-  const A=icAirUA(P.radW,P.radH,P.radD,P.fpi),nR=P.radH/IC_LOUVER.Tp;
+  const A=icAirUA(P.radW,P.radH,P.radD,P.fpi,faceV),nR=P.radH/IC_LOUVER.Tp;
   const UA2=1/(1/A.UA+1/w2aDuctUA(q,nR,W2A_RTUBE,P.radD,P.radW)),C2=Math.min(A.C,Cw),b=xfEps(UA2/C2,C2/Math.max(A.C,Cw))*C2;
   const mcp=P.loop_L/1e3*C.rho*C.cp+W2A_AL*(icGrossL(P)/1e3+P.radW*P.radH*P.radD/1e9)*2700*900;
   return {a,b,Cw,Cc,cold:a/Cc,steady:a/Cc/(1+a/b-a/Cw),mcp,tau:mcp/(a+b-a*b/Cw)};
@@ -1150,7 +1151,7 @@ function previewTurbo(){
       :tr('Housing A/R')+' '+fmt(r.ar,2)+': '+tr('throat')+' <b>'+fmt(r.throat,1)+' cm²</b> <span class="dim">('+tr('now')+' '+fmt(now.throat,1)+'; '+tr('a smaller throat spools sooner and chokes the top end')+')</span>');
     lines.push(tr('95% of the boost from')+' <b>'+(r.fullRpm?Math.round(r.fullRpm/100)*100+' rpm':tr('never'))+'</b> <span class="dim">('+tr('now')+' '
       +(now.fullRpm?Math.round(now.fullRpm/100)*100:tr('never'))+')</span>; '+tr('boost at peak power')+' '+fmt(r.boostPk,2)+' bar.');
-    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('from the compressor alone')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
+    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('compressor and turbine wheels')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
   }
   lines.push('<span class="dim">'+tr('How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.')+'</span>');
   pv('pbGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
