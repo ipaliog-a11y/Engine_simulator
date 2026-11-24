@@ -849,6 +849,26 @@ function centreCoupling(v){
   const o=Object.assign({},e);if(o.vcu){o.c=diffVcuRate(DIFF_VCU)*Math.pow(v.finalDrive||1,2);delete o.vcu;}
   return o;
 }
+// Maximum longitudinal drive force (N) an AWD centre coupling can put through front grip gF and rear grip gR
+// (Milliken & Milliken, RCVD ch. 18; Bosch Automotive Handbook, "All-wheel drive"):
+//   open: fixed f:(1-f) split -> min(gF/f, gR/(1-f));
+//   fric: bias f ± L -> min(gF+gR, gF/max(0,f-L), gR/max(0,1-f-L));
+//   lock: full sum, capped by secondary axle limit L when published (f===0 -> rear primary, f===1 -> front primary);
+//   visc: partial transfer (~0.35 locking share, probable).
+function awdTractionCap(cc,gF,gR){
+  const sum=gF+gR;if(!cc)return sum;
+  if(cc.type==='lock'){
+    if(!(cc.L>0))return sum;
+    const pri=cc.f===0?gR:cc.f===1?gF:Math.min(gF,gR);
+    return Math.min(sum,pri/Math.max(0.05,1-cc.L));
+  }
+  const L=cc.type==='open'?0:cc.type==='visc'?0.35:(cc.L||0);
+  const fMin=Math.max(0,cc.f-L),rMin=Math.max(0,1-cc.f-L);
+  let cap=sum;
+  if(fMin>1e-6)cap=Math.min(cap,gF/fMin);
+  if(rMin>1e-6)cap=Math.min(cap,gR/rMin);
+  return cap;
+}
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it

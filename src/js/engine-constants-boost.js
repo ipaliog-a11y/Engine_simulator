@@ -99,9 +99,9 @@ function tqLimitBoost(rpm){
 function buildTorqueLimit(){
   const e=engine;e.tqLimTable=null;
   if(!(e.tqLimit>0)||e.intake==='na'||!(e.maxBoost>0))return;
-  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
   const savedAfrMode=e.afrMode;e.afrMode='fixed';
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;state.icFaceV=null;
   state.afr=e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.88;
   const tb=[];
   for(let r=1000;r<=e.redline+199;r+=200){
@@ -132,8 +132,8 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
-  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;
   try{
     _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
     const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
@@ -211,6 +211,15 @@ const compIslandEff=(flowFrac,pr)=>{
   ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW*u)/(ISLAND_WF*u),2)
              -0.10*Math.pow(Math.max(0,pr-PR_ISLAND)/ISLAND_WP,2),0.35,ISLAND_PEAK);
 };
+// Centrifugal compressor surge line (Watson & Janota, Turbocharging the ICE, ch. 3; Garrett GT/GTX maps):
+// diffuser/inducer stall occurs below a minimum flow coefficient Q/(U*D^2), ~0.22 of choke flow at PR_ISLAND = 2.2
+// and scaling with tip speed U ~ sqrt(PR^0.2857 - 1). Only active under boost (PR > 1.15).
+const SURGE_FLOW_REF=0.22;
+function compSurgeFlowFrac(pr){
+  if(!(pr>1.15))return 0;
+  return SURGE_FLOW_REF*Math.sqrt((Math.pow(pr,0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1));
+}
+function isCompSurge(flowFrac,pr){return pr>1.15&&flowFrac<compSurgeFlowFrac(pr);}
 const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.

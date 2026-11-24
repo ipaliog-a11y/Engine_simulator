@@ -46,7 +46,19 @@ function liveMap(){return state.map;}
 // The intercooler's effectiveness at a charge flow: it rises as the flow falls, each kilogram meeting the same surface
 // for longer (build 136). Since build 256 it is the core's own, from its fins on both sides (icEps in src/js/parts.js);
 // it was the factory cores' quoted 0.62 and 0.82 at the redline flow at 1 bar, with an NTU law around it.
-function icEffAt(m){return icEps(icGeom(engine),m);}
+// Standstill / low-speed intercooler face velocity (m/s): at v = 0 without ram air, only
+// cooling-fan pull-through / convection (~2.0 m/s, SAE cooling-module pull-through) crosses an
+// air-to-air core, ramping linearly with road speed to freeway IC_FACE_V (11 m/s) by 25 m/s (90 km/h).
+// Dyno sweeps and build-time tables leave state.icFaceV null (nominal IC_FACE_V dyno fan airflow).
+const IC_FACE_V_IDLE=2.0;
+function icFaceVel(v_ms){
+  if(v_ms==null)return IC_FACE_V;
+  return clamp(IC_FACE_V_IDLE+(IC_FACE_V-IC_FACE_V_IDLE)*(Math.max(0,v_ms)/25),IC_FACE_V_IDLE,IC_FACE_V);
+}
+function icEffAt(m,faceV){
+  const v=faceV!=null?faceV:(state.icFaceV!=null?state.icFaceV:IC_FACE_V);
+  return icEps(icGeom(engine),m,v);
+}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -314,12 +326,24 @@ function updateFuelMapMarker(){
 // the new curve's own value at 0.86 and 1.0% over the old curve's — the one figure set that shifts.)
 const faEta=phi=>phi<=1?1+0.6*(1-phi)-0.4*(1-phi)*(1-phi):Math.max(0.3,1-0.71*(phi-1));
 const imepRel=lam=>{const phi=1/Math.max(0.3,lam);return phi*faEta(phi);};
+// Homogeneous SI flammability / misfire limits (Heywood §9.4.3; Bosch Automotive Handbook):
+// below lambda 0.72 (rich) or above 1.20 (lean) flame propagation breaks down into partial burns
+// and misfire, extinguishing ~0.15 lambda past either limit. Shared with obdMisfire().
+const MIX_RICH_LIM=0.72, MIX_LEAN_LIM=1.20, MIX_EXT_SPAN=0.15;
+function mixtureMisfireFrac(lam){
+  if(lam<MIX_RICH_LIM)return clamp((MIX_RICH_LIM-lam)/MIX_EXT_SPAN,0,1);
+  if(lam>MIX_LEAN_LIM)return clamp((lam-MIX_LEAN_LIM)/MIX_EXT_SPAN,0,1);
+  return 0;
+}
 // Work per unit of stoichiometric fuel energy, by mixture: phi x faEta(phi), with the two roll-offs a
-// real spark engine has at the extremes (rich misfire, lean-limit burn deterioration).
+// real spark engine has at the extremes (rich misfire, lean-limit burn deterioration) plus flammability
+// misfire roll-off outside [MIX_RICH_LIM, MIX_LEAN_LIM].
 function sparkMixture(lam){
   let f=imepRel(lam);
-  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: misfire
+  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: burn deteriorates
   if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean: burn deteriorates toward the lean limit
+  const mf=mixtureMisfireFrac(lam);
+  if(mf>0)f*=1-0.95*mf;                 // flammability misfire past lambda < 0.72 or > 1.20
   return Math.max(0.03,f);
 }
 // ---- A spark engine's torque, from the fuel it burns (build 95) ----
@@ -418,7 +442,7 @@ let _knockCache=null;
 // (rotaryLostWork's), the crank-slider's for everything else.
 function burnCycle(){
   return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
-                               :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
+                               :{vol:pistonVol,burn:siBurnDeg(engine),ca50:SI_CA50,bdc:-180};
 }
 // retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
 // burn sending a hotter exhaust (build 307).
@@ -429,8 +453,11 @@ function endGasTrace(rpm,map,ca50,retard){
 function endGasIntegral(rpm,map,ca50,retard){return endGasTrace(rpm,map,ca50,retard).I;}
 function endGasTraceAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
-  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
-  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
+  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,xEgr=egrRate(rpm,map);
+  // Cooled EGR dilutes the trapped charge by (1 - xEgr) (Heywood §9.3, §9.6), lowering bulk burn
+  // temperature and pressure and holding off end-gas autoignition.
+  let q=(1-xEgr)*(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
+  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(1-xEgr)*(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
   const Tex=egtAt(rpm,map),prev=e.boostNow;e.boostNow=map;
   const pExh=1+backPressureBar(rpm,Tex);e.boostNow=prev;
   const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
@@ -450,6 +477,13 @@ function endGasTraceAt(rpm,map,ca50){
     const mF=ve*Vd*pInt*1e5/(R*(effIAT(map,rpm)+273.15));
     th0=cyc.bdc+ivc;mTot=mF*(1+f*Tf/Tres);
   }
+  // Active nitrous adds chemical heat release per kg of trapped charge proportional to nitrousImep()/eta_i,
+  // raising peak cylinder pressure (cylPmax), end-gas temperature, knock integral, and pre-ignition risk.
+  const nImep=nitrousImep();
+  if(nImep>0&&mTot>0){
+    const etaN=REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+    q+=(nImep*1e5/Math.max(0.2,etaN))/(mTot/Vd);
+  }
   const V00=cyc.vol(th0,cr),v1=Vc*cr/mTot,p1=mTot*R*T1/(Vc*V00);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
   // the octane index: the reference fuel this fuel autoignites like, at this engine's T_comp15
@@ -458,9 +492,9 @@ function endGasTraceAt(rpm,map,ca50){
   const onF=DE_A*Math.pow(Math.max(50,OI)/100,DE_ON);
   // Below ~5 bar the delay is seconds (exp(3800/T) at the gas's few hundred kelvin), so the integral only counts
   // once compression has the pressure there; the trace still runs from IVC so the gas's state is right.
-  // Heat to the walls (build 132), at Woschni's flux and his 450 K wall, as wallTrace takes it: the bulk loses it, which
-  // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
-  // where the gas has longest.
+  // Heat to the walls (build 132), at Woschni's flux and coolant-coupled wall temp (anchored at 450 K at 90 °C):
+  // hotter coolant reduces wall heat loss and raises end-gas temperature and knock sensitivity.
+  const Tw=wallTempK(state.coolant);
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,TT),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
   let T=Math.max(50,T1),Tu=Math.max(50,T1),I=0,Ipre=0,V0=V00,x0=0,pPrev=Math.max(1,p1),pMax=pPrev;
@@ -470,13 +504,13 @@ function endGasTraceAt(rpm,map,ca50){
     const Vn=cyc.vol(th+d,cr),p=Math.max(1,R*T*cr/(v1*V0)),xn=xb(th+d),A=ends+4*Vc*V0/B;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
-    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv));pPrev=p;
+    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-Tw)*dt/(mTot*cv));pPrev=p;
     if(p>pRef){
       const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
       I+=dI;
       if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
     }
-    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv);
+    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-Tw)*dt/mTot)/cv);
     V0=Vn;x0=xn;
   }
   return {I,Ipre,pMax:pMax/1e5};
@@ -555,7 +589,9 @@ function ciPortedPmax(rpm,map,adv){
   const st=e.stoichAFR||(e.ci?14.5:14.7),lam=Math.max(0.5,curAFR(rpm,map)/st);
   const air=pInt*1e5/(287*Tchg)*ve;                               // kg trapped air per m³ swept
   const lhv=(e.fuelLHV||(e.ci?42.8:44))*1e6;
-  const qVol=air/(Math.max(1,lam)*st)*lhv/1e5;                    // burned fuel energy per m³ swept (bar)
+  const nImep=nitrousImep();
+  const etaN=e.ci?ETA_GROSS_CI*otto(cr)/otto(CR_REF_CI):REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+  const qVol=air/(Math.max(1,lam)*st)*lhv/1e5+(nImep>0?nImep/Math.max(0.2,etaN):0);   // burned fuel + nitrous energy per m³ swept (bar)
   if(e.ci){
     const vIvc=Math.max(1.5,pistonVol(-180+ivcAt(rpm),cr));       // V_ivc / V_c
     const p1=pInt*ve*(cr-1)/vIvc;                                 // trapped pressure at IVC (bar)
@@ -572,8 +608,8 @@ function cylTraceAt(rpm,map,adv){
   const e=engine;
   if(e.ci||e.ports)return {I:0,Ipre:0,pMax:ciPortedPmax(rpm,map,adv)};
   if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
-  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
-  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7),tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType+'|'+tc+'|'+nitrousImep();
   let tr=_knockCache.m.get(key);
   if(tr==null){
     tr=endGasTrace(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
@@ -592,8 +628,8 @@ function knockAt(rpm,map,adv){
 // Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
 function peakCylLoads(){
   const e=engine;
-  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
-  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;
   let pMax=0,preIgn=0;
   try{
     for(let r=1000;r<=e.redline;r+=400){
@@ -632,7 +668,8 @@ function activeAdvance(rpm,map){
   }
   // the same operating point is asked for several times per torque figure: remember the answer
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let adv=mbt;
   if(knockAt(rpm,map,mbt)>KNOCK_TARGET){
@@ -665,7 +702,8 @@ function ecuFuelsKnock(){
 function knockEnrichLambda(rpm,map,base){
   if(!ecuFuelsKnock()||!(base>LAMBDA_KNOCK_MIN))return base;
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   const over=(l,floor)=>{_lamTrial=l;try{return knockAt(rpm,map,floor?knockFloorAdv(rpm,map):mbtAdvance(rpm,map))>KNOCK_TARGET;}finally{_lamTrial=null;}};
   let lam=base;
@@ -692,7 +730,8 @@ function egtOverAt(rpm,map,l){
 function egtEnrichLambda(rpm,map,base){
   if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let lam=base;
   if(egtOverAt(rpm,map,base)){
@@ -978,9 +1017,8 @@ const BURN_T_CI=0.0025;     // s — DI diesel full-load burn, injection + mixin
 const SOC_CI=-6;            // crank degrees — start of combustion, held near TDC by peak pressure / NOx
 const WIEBE_A=5, WIEBE_M=2;
 const BURN_REF_RPM=2000;
-const ROD_RATIO=3.2;
-// Chamber volume in clearance volumes, against degrees after TDC. A piston follows the crank-slider;
-// a Wankel chamber goes TDC to BDC over 270 degrees of eccentric shaft, near-sinusoidally.
+// Chamber volume in clearance volumes, against degrees after TDC (ROD_RATIO unified in gas-dynamics.js).
+// A piston follows the crank-slider; a Wankel chamber goes TDC to BDC over 270 degrees of eccentric shaft, near-sinusoidally.
 const pistonVol=(th,cr)=>{const t=th*Math.PI/180,s=Math.sin(t);
   return 1+(cr-1)*((1-Math.cos(t))+ROD_RATIO-Math.sqrt(ROD_RATIO*ROD_RATIO-s*s))/2;};
 const wankelVol=(th,cr)=>1+(cr-1)*(1-Math.cos(Math.PI*clamp(th,-270,270)/270))/2;
@@ -1009,7 +1047,11 @@ function wiebePhasingEff(durDeg,socDeg,cr,volFn){
 // ATDC on a 13B peripheral port), so this is late phasing, not burning in the port.
 // Sources: Vorraro, Turner & Akehurst, SAE 2022-01-0591 (burn duration); hydrogen dual-spark Wankel
 // study, MBT at CA50 35-40 ATDC. Rotary CA50 taken mid-range, 37.5; burn 130.
-const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8;
+const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8, SI_BORE_REF=82.55;
+// SI flame-travel burn duration scales with bore (Heywood §9.3: flame travel distance ~ B/2 while
+// turbulent flame speed scales sublinearly with bore, giving ~B^0.35 crank-degree burn growth;
+// anchored at B = 82.55 mm = 3.25 in ASTM CFR reference knock cylinder = SI_BURN_DEG = 50 deg).
+const siBurnDeg=e=>SI_BURN_DEG*Math.pow(Math.max(40,e&&e.bore_mm||SI_BORE_REF)/SI_BORE_REF,0.35);
 const wiebeX50=()=>Math.pow(Math.log(2)/WIEBE_A,1/(WIEBE_M+1));   // fraction of the burn at 50% mass
 function rotaryLostWork(cr){
   const x50=wiebeX50();
@@ -1200,7 +1242,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
   const sub=Math.max(1,Math.ceil(dt/hMax));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
-  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,boostTarget(rpm));
+  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,boostTarget(rpm)), overspeed=false, surge=false;
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
   // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
   const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
@@ -1211,7 +1253,8 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // The compressor draws AMBIENT air. This passed the charge temperature after the compressor and the
     // intercooler as its inlet, so a build with no intercooler paid ~25% extra compressor work on every
     // spool — enough to hide the larger fill a front-mount core really costs.
-    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,T01,rpm);
+    const mAirStep=airFlowAt(rpm,1+b)*Math.max(0.08,th);
+    const r=shaftNetPower(n,mAirStep,T3,T01,rpm);
     const loss=shaftLossPower(n);
     // Boost is the pressure in the charge volume, so it is a STATE, not a readout of shaft speed. It
     // rises when the shaft supports more, and pays the fill energy below for the air that takes. It
@@ -1221,24 +1264,28 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     const bShaft=clamp(r.pr-1,0,boostTarget(rpm));
     let b2=bShaft;
     if(bShaft<b){
-      const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
+      const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,mAirStep);
       b2=bShaft+(b-bShaft)*Math.exp(-h*swallow/Math.max(1e-6,held));
     }
     const dB=Math.max(0,b2-b);
     const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
     // one shaft's share of it: the active turbos fill the volume together (build 290)
     const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
-    E=clamp(E+(r.net-loss)*h-fill,0,Emax);
+    const Enext=E+(r.net-loss)*h-fill;
+    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0)overspeed=true;
+    E=clamp(Enext,0,Emax);
     b=b2;
+    if(isCompSurge(compFlowFrac(rpm,mAirStep),1+b))surge=true;
   }
-  return{shaftE:E,boost:b};
+  return{shaftE:E,boost:b,overspeed,surge};
 }
 function stepBoost(dt){
-  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);return;}
+  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;return;}
   if(state.shaftE==null)state.shaftE=0;
   const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
                        state.throttle!=null?state.throttle:1,dt);
   state.shaftE=r.shaftE;state.boostActual=r.boost;
+  state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
 }
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
@@ -1389,6 +1436,10 @@ function stepElectrical(dt){
 // the valve stops following the cam and can meet the piston, so running past floatRpm wears the engine, from 0.004 a
 // second at the float speed and 0.01 more for each 10% past it. Those rates are game rules, like the others here.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
+// Wankel trochoid mean apex-seal sliding speed limit (m/s): Yamamoto, Rotary Engine (Mazda) / SAE
+// apex-seal lubrication & chatter limit ~36 m/s (2*pi*R*(rpm/3)/60 = 35.9 m/s at 9800 rpm on a 13B R=105 mm,
+// matching share-scoring.js's 9800 rpm rotary reliability threshold while keeping stock 9000 rpm RX-8 clean).
+const APEX_SPEED_LIMIT=36;
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
   if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
@@ -1402,6 +1453,14 @@ function stepWear(dt){
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
+  // Reciprocating inertial limit above PISTON_SPEED_LIMIT (25 m/s, Heywood §2.2) and Wankel apex-seal sliding limit.
+  if(engine.type==='rotary'){
+    const vApex=2*Math.PI*(engine.bore_mm/1000)*(state.rpm/3)/60;
+    add(vApex>APEX_SPEED_LIMIT?(vApex-APEX_SPEED_LIMIT)*0.012:0,'APEX SEAL');
+  }else{
+    const mps=2*(engine.stroke_mm/1000)*state.rpm/60;
+    add(mps>PISTON_SPEED_LIMIT?(mps-PISTON_SPEED_LIMIT)*0.012:0,'PISTON SPEED');
+  }
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
   // the smoke limit (Heywood ch.11 diesel PM order); was a dimensionless analyser index before build 257.
@@ -1409,6 +1468,8 @@ function stepWear(dt){
    if(engine.ci)add(ei>2.5?(ei-2.5)/8*0.020:0,'OVER-FUEL/EGT');}
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
   add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
+  add(state.turboOverspeed?0.025:0,'TURBO OVERSPEED');                           // compressor wheel hitting TIP_LIMIT (520 m/s)
+  add(state.turboSurge?0.008:0,'TURBO SURGE');                                   // compressor stall / thrust-bearing load
   add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
   w+=0.000006;   // baseline fatigue (negligible — hours of clean running)
   state.engineHealth=clamp(state.engineHealth-w*dt,0,1);
@@ -1464,7 +1525,7 @@ function computeEmissions(){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map));
   const afr=Math.max(3,curAFR(state.rpm,map));
-  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc;   // kg/s delivered
+  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);   // kg/s delivered (incl. nitrous fuel)
   const burn=metered/Math.max(1,engine.typeBsfc);                   // kg/s trapped / burned
   const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
   if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
@@ -1505,7 +1566,7 @@ function computeEmissions(){
   const adv=activeAdvance(state.rpm,map),mbt=mbtAdvance(state.rpm,map);
   const tempF=clamp(0.4+load*0.9+Math.max(0,engine.compression-9)*0.05
     +Math.max(0,effIAT(map,state.rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
-    +Math.max(0,state.coolant-90)*0.004,0.2,2.4);
+    +Math.max(0,state.coolant-90)*0.004+nitrousImep()*0.08,0.2,2.6);
   let noxIdx,pmIdx=0;
   if(engine.ci){
     const fuelling=clamp((1.7-lam)/1.0,0,1);
@@ -1579,11 +1640,22 @@ function updatePhysics(){
     updateEnginePhysics();
   }finally{o2Trim=1;}
 }
+// Extra fuel mass flow (kg/s) injected for an active nitrous shot: N2O supplies extra O2
+// (stoichiometric ~9.6:1 N2O:petrol; wet kits jet ~6.4:1 rich for knock safety), requiring
+// fuel proportional to extra indicated power P_ind = nitrousImep * 1e5 * Vd * (rpm/60) * chargesPerRev / eta_i.
+function nitrousFuelKgS(rpm){
+  const nImep=nitrousImep();
+  if(!(nImep>0)||!(rpm>0))return 0;
+  const e=engine,Vd=e.displacement_L/1000,cr=Math.max(1.5,e.compression);
+  const etaN=e.ci?ETA_GROSS_CI*otto(cr)/otto(CR_REF_CI):REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+  const pInd=nImep*1e5*Vd*(rpm/60)*e.chargesPerRev;
+  return pInd/(Math.max(0.15,etaN)*(e.fuelLHV||44)*1e6)/Math.max(0.5,e.meteringEff||1);
+}
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
-  return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
+  return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);
 }
 function updateEnginePhysics(){
   const map=liveMap();

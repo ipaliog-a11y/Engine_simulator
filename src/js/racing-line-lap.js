@@ -335,9 +335,17 @@ function simulateLapCore(key,opts){
   const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2;
   const df=vehicle.df||DIFF.open;
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
+  // Driver aids & AWD centre coupling (Bosch Automotive Handbook; Milliken & Milliken RCVD ch. 18):
+  const aids=vehicle.aids||{}, absOn=aids.abs!==false;
+  const tcOn=aids.tc!=null?!!aids.tc:vehicle.tc!==false;
+  const espOn=aids.esp!=null?!!aids.esp:tcOn;
+  const ccAwd=vehicle.drive==='awd'?centreCoupling(vehicle):null;
+  // Tight ESP slip-angle gate (espSlide < 1) caps lateral force on the brush curve 3s - 3s^2 + s^3 (Pacejka ch. 3)
+  const espS=espOn&&aids.espSlide!=null&&aids.espSlide<1?clamp(aids.espSlide,0.2,1):1;
+  const espGripF=espS<1?3*espS-3*espS*espS+espS*espS*espS:1;
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
-  // camber (latMuEff, build 109), less the diff's scrub.
-  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
+  // camber (latMuEff, build 109), less the diff's scrub and any tight ESP slip-angle gate.
+  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner*espGripF;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const airC=opts&&opts.air!=null?opts.air:null;
   const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
@@ -438,6 +446,7 @@ function simulateLapCore(key,opts){
   // under braking cost nothing.
   const fWt=vehicle.fWt||0.55,aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,fH=vehicle.brakeFrontShare||0.7;
   const engFront=vehicle.drive==='fwd'?1:vehicle.drive==='awd'?fWt:0;   // the engine's braking: the driven axle's share
+  const valve=absOn?null:brakeValveRear(fWt,hL);                       // knee-point proportioning valve when ABS is off (Limpert ch. 7)
   // The axles at point q, speed vv, slowing at a (m/s2, the tyres' share) while cornering at ay: their loads and the
   // grip each has left along the road. Build 157: each axle's own side force (the mass it carries times ay) against
   // its own lateral grip at the load the braking leaves it, so braking into a corner unloads the rear and it runs out
@@ -458,19 +467,29 @@ function simulateLapCore(key,opts){
     const N=loadAt(q,vi);
     const ayi=vi*vi/q.r;
     const cBF=vehicle.brakeDecelCap*fade*m*fH,cBR=vehicle.brakeDecelCap*fadeRr*m*(1-fH),eF=ea*m*engFront,eR=ea*m*(1-engFront);
-    // the load transfer follows the deceleration it makes: three rounds from the first guess, then one a round, carrying
-    // the deceleration found (the speed moves little between rounds)
-    for(let k=0;k<(it===0?3:1);k++){
-      const ax=axles(q,vi,aT,ayi);
-      aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
-      bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+    if(absOn){
+      // the load transfer follows the deceleration it makes: three rounds from the first guess, then one a round, carrying
+      // the deceleration found (the speed moves little between rounds)
+      for(let k=0;k<(it===0?3:1);k++){
+        const ax=axles(q,vi,aT,ayi);
+        aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+        bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+      }
+      // Build 157: with each axle's own lateral grip the rear can run out as braking moves load off it, so the rounds can
+      // end on a deceleration its own load transfer does not support. Step down to what that transfer gives until it
+      // does: with the rear out of grip, less braking also takes load off the front, so this takes a few steps, each
+      // smaller (the front's grip grows more slowly than the braking it carries).
+      for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+        if(!(aC<aT-1e-4))break;aT=aC;bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;}
+    }else{
+      // Non-ABS braking: knee-point proportioning valve (brakeValveRear) limits deceleration to the first axle that
+      // reaches its longitudinal grip (matching simulateBraking in vehicle-accel.js; UN ECE R13-H / Limpert ch. 7).
+      const ok=xf=>{const xr=Math.max(0,Math.min(valve(xf),cBR/m)),ax=axles(q,vi,xf+xr+(eF+eR)/m,ayi);
+        return xf*m+eF<=ax.gF+1e-6&&xr*m+eR<=ax.gR+1e-6;};
+      let lo=0,hi=cBF/m;if(ok(hi))lo=hi;else for(let k=0;k<16;k++){const mid=0.5*(lo+hi);if(ok(mid))lo=mid;else hi=mid;}
+      const xr=Math.max(0,Math.min(valve(lo),cBR/m));
+      aT=lo+xr+(eF+eR)/m;bfBound=lo>=cBF/m-1e-4&&xr>=cBR/m-1e-4;
     }
-    // Build 157: with each axle's own lateral grip the rear can run out as braking moves load off it, so the rounds can
-    // end on a deceleration its own load transfer does not support. Step down to what that transfer gives until it
-    // does: with the rear out of grip, less braking also takes load off the front, so this takes a few steps, each
-    // smaller (the front's grip grows more slowly than the braking it carries).
-    for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
-      if(!(aC<aT-1e-4))break;aT=aC;bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;}
     const aBrake=aT+(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
     cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
     const nv=Math.min(vi0,cap);
@@ -488,21 +507,34 @@ function simulateLapCore(key,opts){
     const tq=tqAt(clamp(rpm,idle,rl));
     return{gear:g,F:tq*tot*eff/rT+frontF(vi),tqFrac:tq*tot/axleTqMax};
   }
+  // Traction control slip factor: Pacejka tyreSlipMu at aids.tcSlip * TYRE_SLIP_OPT (1.0 at default tcSlip=1).
+  const tcSlipF=tcOn&&aids.tcSlip!=null?Math.max(0.4,tyreSlipMu(TYRE_SLIP_OPT*clamp(aids.tcSlip,0.2,2.5))):1;
   function accFrom(q,vi,boostShare=1,gear=-1){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
     // the share of the grip in use sideways: the car's (for the 'corner' call) and the driven axle's own, which is
     // what is left for the drive (build 157: a rear-driver's rears may be nearer their limit than the car is)
-    const B=latBalance(N,aLat,dn,0,vi,q),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
-    const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner),0,1);
+    const B=latBalance(N,aLat,dn,0,vi,q),aLatMax=B.mu*dCorner*espGripF*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner*espGripF),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner*espGripF),0,1);
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
-    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
+    let kk;
+    if(vehicle.drive==='awd'){
+      // AWD centre coupling (centreCoupling -> awdTractionCap): open/sport/lock split limits combined front/rear exit grip
+      const gFA=tyreMuX(B.Nf/2,vehicle.FzRefF)*B.Nf*roadGrip(roadSigma('F',vi)/Math.max(1,B.Nf/2))*Math.sqrt(Math.max(0,1-uFa*uFa));
+      const gRA=tyreMuX(B.Nr/2)*B.Nr*roadGrip(roadSigma('R',vi)/Math.max(1,B.Nr/2))*Math.sqrt(Math.max(0,1-uRa*uRa));
+      const awdG=awdTractionCap(ccAwd,gFA,gRA);
+      kk=(awdG/Math.max(1,N0))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?awdG*rT:0);
+    }else{
+      const sD=vehicle.drive==='fwd'?roadSigma('F',vi):roadSigma('R',vi);   // the driven tyres' load swing (build 216)
+      kk=tyreMuX(N0/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
+    }
+    // TC on: holds slip at tcSlip * TYRE_SLIP_OPT; TC off on corner exit (uD > 0.25): minor slip-overshoot loss on Pacejka falling branch (probable)
+    kk*=tcOn?tcSlipF:(uD>0.25?1-0.04*uD:1);
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
@@ -660,8 +692,14 @@ function simulateLapCore(key,opts){
     const ax=axles(p[i],v[i],Math.max(0,at),ay),eF=ea*m*engFront,eR=ea*m*(1-engFront);
     const Fb=Math.max(0,m*at-eF-eR);
     let bf=Fb*fH,br=Fb-bf;
-    if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
-    else if(br+eR>ax.gR){br=Math.max(0,ax.gR-eR);bf=Fb-br;}
+    if(absOn){
+      if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
+      else if(br+eR>ax.gR){br=Math.max(0,ax.gR-eR);bf=Fb-br;}
+    }else if(Fb>0){
+      // Non-ABS: split Fb along the knee-point proportioning valve (xf + valve(xf) = Fb/m)
+      let lo=0,hi=Fb/m;for(let k=0;k<12;k++){const mid=0.5*(lo+hi);if(mid+valve(mid)<=Fb/m)lo=mid;else hi=mid;}
+      bf=lo*m;br=Math.max(0,Fb-bf);
+    }
     return {useF:(bf+eF)/Math.max(1,ax.gF),useR:(br+eR)/Math.max(1,ax.gR),fr:Fb>0?bf/Fb:fH,gF:ax.gF,gR:ax.gR};
   }
   // Engine braking that the driven axle can carry at i: ABS can ease the brakes but not the engine, so a downshift
@@ -932,14 +970,19 @@ function simulateLapCore(key,opts){
   //           brake, as a share of what the brakes can command.
   //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
   //   rpm     from the gear the car is in
-  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map) from kinematic (Ackermann) steering, atan(wheelbase / r)
-  //           on the line's own radius (build 130). Geometry only: no slip angle, so no understeer or
-  //           oversteer correction. The HUD multiplies it by the steering ratio for the wheel in the hands.
+  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map): kinematic Ackermann atan(L/r)
+  //           plus steady-state slip-angle difference Kus * ay (Milliken & Milliken, RCVD ch. 6; Gillespie ch. 6),
+  //           where Kus = m (fWt/Cf - (1-fWt)/Cr) rad/(m/s²). Understeer adds lock; oversteer reduces lock.
+  //           The HUD multiplies it by the steering ratio for the wheel in the hands.
   //   pwr     crank power (W): the drive force the speed profile spends, times speed, back through the
   //           driveline's efficiency, and never more than the engine makes at full throttle at this rpm
   //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   const steerRaw=new Array(n),pwr=new Array(n),tgt=new Float64Array(n),wb=vehicle.wb||2.6;
+  const ccLap=vehicle.tyreCC||tyreCC(vehicle.tireType);
+  const cAx=(W,ref)=>2*ccLap*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/Math.max(1,ref),2));
+  const CaF=cAx(m*G*fWt,vehicle.FzRefF||vehicle.FzRef),CaR=cAx(m*G*(1-fWt),vehicle.FzRef);
+  const KusLap=m*(fWt/Math.max(1,CaF)-(1-fWt)/Math.max(1,CaR));   // rad / (m/s²)
   // each axle's share of its grip in use under braking (build 150), and the engine's alone on the driven axle
   const useF=new Float64Array(n),useR=new Float64Array(n),frB=new Float64Array(n).fill(fH);let engUseMax=0;
   {
@@ -956,8 +999,9 @@ function simulateLapCore(key,opts){
       else if(need>=0){tgt[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
       else{tgt[i]=0;brk[i]=clamp((-need/m-ebA[i])/Math.max(0.1,vehicle.brakeDecelCap),0,1);}   // the engine's braking is not the pedal's
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
-      gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
-      steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
+      const ayMag=v[i]*v[i]/Math.max(1,p[i].r),turnSgn=Math.sign(ax*by-ay*bx);
+      gLat[i]=turnSgn*ayMag/G;
+      steerRaw[i]=clamp(turnSgn*(Math.atan(wb/Math.max(1,p[i].r))+KusLap*ayMag),-0.6,0.6);
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       {const mc=mechAt(i);if(mc>0.3){const x=axleUse(i,mc,ebA[i]);useF[i]=x.useF;useR[i]=x.useR;frB[i]=x.fr;

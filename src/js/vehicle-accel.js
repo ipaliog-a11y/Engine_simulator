@@ -231,15 +231,17 @@ function buildVehicle(){
 // held at the lesser of its grip and its brakes, and the car stops with the sum. Without ABS the driver brakes to the
 // point where the first axle reaches its grip, through the road car's knee-point proportioning valve (brakeValveRear).
 // Until this build the stop pooled the four tyres' grip at a quarter of the load each, whatever the split.
-function simulateBraking(v0,T0){
+function simulateBraking(v0,T0,wet){
   const m=vehicle.mass,dt=0.005,th=vehicle.brakeTh;let v=v0,x=0,t=0,aL=0.8*G;
   const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
   const fH=vehicle.brakeFrontShare||0.7,hL=(vehicle.cg||0.5)/Math.max(0.5,vehicle.wb||2.6),fWt=vehicle.fWt||0.55;
   const aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,abs=!(vehicle.aids&&vehicle.aids.abs===false);
   const valve=abs?null:brakeValveRear(fWt,hL);
+  // Wet asphalt longitudinal grip scaling (Noon 1994: wet/dry asphalt 0.50/0.65, matching DRIVE_SURFACE.wet)
+  const wetF=1-clamp(wet||0,0,1)*(1-0.50/0.65);
   // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
   const grip=(a,dn)=>{const W=m*G+dn,Nf=clamp(m*G*fWt+dn*aeroF+m*a*hL,0,W),Nr=W-Nf;
-    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*Nf:0,Nr>0?tyreMuX(Nr/2)*Nr:0];};
+    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*wetF*Nf:0,Nr>0?tyreMuX(Nr/2)*wetF*Nr:0];};
   while(v>0.15&&t<25){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
@@ -417,7 +419,9 @@ function simulateAccelRun(){
   // the clip did; without it the driver holds that slip through the launch (build 155, below), and from the first
   // upshift the run is flat out: the engine's torque spins the tyres past the peak and the slip dynamics decide.
   // The launch rpm is the best of several (below).
-  const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
+  const tcOn=vehicle.aids&&vehicle.aids.tc!=null?!!vehicle.aids.tc:vehicle.tc!==false;
+  const ccAwd=vehicle.drive==='awd'?centreCoupling(vehicle):null;
+  const Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
   function run(launchRpm){
   let boostNow=grid.laggy?0:pt.maxBoost(), shaftE=0;
   // The shaft does not start from rest. A standing start is made with the engine already held at
@@ -495,15 +499,22 @@ function simulateAccelRun(){
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
-    let drivenN;
-    if(vehicle.drive==='awd')drivenN=Wtot;
-    else if(vehicle.drive==='rwd')drivenN=clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot);
-    else drivenN=clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
+    let drivenN,gripBase;
+    if(vehicle.drive==='awd'){
+      drivenN=Wtot;
+      const NfA=clamp(m*G*vehicle.fWt+down*(vehicle.aeroBal!=null?vehicle.aeroBal:0.5)-Math.max(0,transfer),0,Wtot),NrA=Wtot-NfA;
+      const gFA=NfA>0?tyreMuX(NfA/2,vehicle.FzRefF)*NfA:0,gRA=NrA>0?tyreMuX(NrA/2)*NrA:0;
+      gripBase=awdTractionCap(ccAwd,gFA,gRA);
+    }else{
+      drivenN=vehicle.drive==='rwd'?clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot)
+        :clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
+      gripBase=tyreMuX(drivenN/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*Math.max(0,drivenN);
+    }
     if(shiftT>0)shiftT-=dt;
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=gripBase*diffTractionAt(df,0,vehicle.cg,1,gripBase*r)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -514,7 +525,7 @@ function simulateAccelRun(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN);
+    const trac=gripBase*diffTractionAt(df,0,vehicle.cg,tqFrac,gripBase*r);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 450</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 452</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4826,9 +4826,12 @@ function exhaustGasT(load,rpm,lambda,retard){
   // is the extra work rich (grossEtaReleased). The products are taken at CP_EXH (PROBABLE: rich products carry more H2O
   // and H2, whose cp is higher, so this errs warm).
   const st=e.stoichAFR||14.7, afr=Math.max(6,st*Math.max(1,lam)), heat=(e.fuelLHV||44)*1e6*exhaustHeatFrac(rpm,lam,retard)*clamp(load,0.35,1.1);
-  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH);
+  // Active nitrous carries 36.4% O2 vs 23.2% in air (less inert N2 diluent) plus exothermic N2O
+  // decomposition (-1.86 MJ/kg), raising EGT ~35 K per bar of nitrous IMEP (wet-kit measurements).
+  const n2oDT=typeof nitrousImep==='function'?nitrousImep()*35:0;
+  if(!(lam<1))return 300+heat/((afr+1)*CP_EXH)+n2oDT;
   const supplied=1/(st*Math.max(0.5,lam)), excess=supplied-1/st;   // kg of fuel per kg of air, and the part not burned
-  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH);
+  return 300+(heat/st-(e.fuelHfg||350)*1e3*excess)/((1+supplied)*CP_EXH)+n2oDT;
 }
 // Share of the fuel's heat (the heat RELEASED: rich of stoich it is capped, see exhaustGasT) that
 // leaves through the exhaust port, at the mixture lam.
@@ -4950,7 +4953,7 @@ function wallTrace(e,rpm,map,egr=0){
   const g=1.30,R=287,cv=R/(g-1),cr=e.compression,B=e.bore_mm/1000,S=e.stroke_mm/1000,Sp=2*S*rpm/60;
   // egr: the share of the charge that is cooled exhaust (build 204), at the intake's temperature: the same fuel in more gas
   const lam=e.ci?LAMBDA_REF_CI:0.9, q=(1-egr)*(e.fuelLHV||43)*1e6/(Math.max(1,lam)*(e.stoichAFR||14.7));   // J per kg of charge, released
-  const burn=e.ci?6*rpm*BURN_T_CI:SI_BURN_DEG, soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*SI_BURN_DEG;
+  const burn=e.ci?6*rpm*BURN_T_CI:siBurnDeg(e), soc=e.ci?SOC_CI:SI_CA50-wiebeX50()*burn;
   const evo=360-e.camLSA-e.camDur/2, Vt=th=>pistonVol(th,cr), Vevo=Vt(evo);
   const T1=330,p1=map*1e5,v1=R*T1/p1, Vd=Math.PI/4*B*B*S, hc=S/(cr-1), V1=Vd*cr/(cr-1), m=p1*V1/(R*T1);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
@@ -4985,6 +4988,9 @@ function wallTrace(e,rpm,map,egr=0){
   return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
+// Cylinder wall temperature coupled to coolant (Heywood §12.4: gas-side liner/head sits ~90 K above
+// coolant at full load, anchored at 450 K when coolant = 90 °C so stock builds at 90 °C stay put).
+const wallTempK=coolantC=>360+clamp(coolantC!=null?coolantC:90,50,140);
 // Fuel that leaves unburned (HC, CO, H2), as a share of what is supplied up to stoichiometric: Heywood
 // fig. 3-9 puts a spark engine at 2-5% and a diesel near 2% when not rich. Midpoints. Rich of stoich the
 // release is already capped (exhaustGasT); this is what is lost even with oxygen to spare.
@@ -5352,7 +5358,9 @@ function turbineThroatAt(rpm,map,T){
 // understated low-rpm backflow on every engine, and the fitted VE bell's low side was covering for
 // it. A phaser ADVANCES the whole lobe, so it moves IVC by its full authority — not half of it, which
 // is what subtracting it from duration did.
-const ROD_STROKE=1.7;
+// Connecting-rod to crank-radius ratio L/r (Heywood §2.2: typical passenger-car engines sit at 3.0-3.5;
+// L/r = 3.2 -> L/S = 1.6, matching engine-view.js). Shared by intakeFill, trappedFraction, and pistonVol.
+const ROD_RATIO=3.2, ROD_STROKE=ROD_RATIO/2;
 const VVT_AUTHORITY=45;   // crank degrees an intake cam phaser can advance the cam
 function pistonX(thetaDeg,r,l){
   const t=thetaDeg*Math.PI/180;
@@ -8638,9 +8646,9 @@ function tqLimitBoost(rpm){
 function buildTorqueLimit(){
   const e=engine;e.tqLimTable=null;
   if(!(e.tqLimit>0)||e.intake==='na'||!(e.maxBoost>0))return;
-  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
   const savedAfrMode=e.afrMode;e.afrMode='fixed';
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;state.icFaceV=null;
   state.afr=e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.88;
   const tb=[];
   for(let r=1000;r<=e.redline+199;r+=200){
@@ -8671,8 +8679,8 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
-  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;
   try{
     _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
     const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};
@@ -8750,6 +8758,15 @@ const compIslandEff=(flowFrac,pr)=>{
   ISLAND_PEAK-0.22*Math.pow((clamp(flowFrac,0,2)-ISLAND_FLOW*u)/(ISLAND_WF*u),2)
              -0.10*Math.pow(Math.max(0,pr-PR_ISLAND)/ISLAND_WP,2),0.35,ISLAND_PEAK);
 };
+// Centrifugal compressor surge line (Watson & Janota, Turbocharging the ICE, ch. 3; Garrett GT/GTX maps):
+// diffuser/inducer stall occurs below a minimum flow coefficient Q/(U*D^2), ~0.22 of choke flow at PR_ISLAND = 2.2
+// and scaling with tip speed U ~ sqrt(PR^0.2857 - 1). Only active under boost (PR > 1.15).
+const SURGE_FLOW_REF=0.22;
+function compSurgeFlowFrac(pr){
+  if(!(pr>1.15))return 0;
+  return SURGE_FLOW_REF*Math.sqrt((Math.pow(pr,0.2857)-1)/(Math.pow(PR_ISLAND,0.2857)-1));
+}
+function isCompSurge(flowFrac,pr){return pr>1.15&&flowFrac<compSurgeFlowFrac(pr);}
 const TURBO_PR_REF=2.0;   // frames are characterised at 1.0 bar of boost
 // How strongly the spool point follows shaft speed. Calibrated (not guessed) so a small frame
 // keeps its early-spooling character at low boost and clearly gives it up at high boost.
@@ -10044,6 +10061,26 @@ function centreCoupling(v){
   const o=Object.assign({},e);if(o.vcu){o.c=diffVcuRate(DIFF_VCU)*Math.pow(v.finalDrive||1,2);delete o.vcu;}
   return o;
 }
+// Maximum longitudinal drive force (N) an AWD centre coupling can put through front grip gF and rear grip gR
+// (Milliken & Milliken, RCVD ch. 18; Bosch Automotive Handbook, "All-wheel drive"):
+//   open: fixed f:(1-f) split -> min(gF/f, gR/(1-f));
+//   fric: bias f ± L -> min(gF+gR, gF/max(0,f-L), gR/max(0,1-f-L));
+//   lock: full sum, capped by secondary axle limit L when published (f===0 -> rear primary, f===1 -> front primary);
+//   visc: partial transfer (~0.35 locking share, probable).
+function awdTractionCap(cc,gF,gR){
+  const sum=gF+gR;if(!cc)return sum;
+  if(cc.type==='lock'){
+    if(!(cc.L>0))return sum;
+    const pri=cc.f===0?gR:cc.f===1?gF:Math.min(gF,gR);
+    return Math.min(sum,pri/Math.max(0.05,1-cc.L));
+  }
+  const L=cc.type==='open'?0:cc.type==='visc'?0.35:(cc.L||0);
+  const fMin=Math.max(0,cc.f-L),rMin=Math.max(0,1-cc.f-L);
+  let cap=sum;
+  if(fMin>1e-6)cap=Math.min(cap,gF/fMin);
+  if(rMin>1e-6)cap=Math.min(cap,gR/rMin);
+  return cap;
+}
 // Cornering-only form, kept for the lap solver's readability.
 function lapDiffTraction(df,aLat,cgH){return diffTractionAt(df,aLat,cgH,1);}
 // Share of the ENGINE's weight on the front axle, from where it sits: a front-engined car carries it
@@ -10818,7 +10855,19 @@ function liveMap(){return state.map;}
 // The intercooler's effectiveness at a charge flow: it rises as the flow falls, each kilogram meeting the same surface
 // for longer (build 136). Since build 256 it is the core's own, from its fins on both sides (icEps in src/js/parts.js);
 // it was the factory cores' quoted 0.62 and 0.82 at the redline flow at 1 bar, with an NTU law around it.
-function icEffAt(m){return icEps(icGeom(engine),m);}
+// Standstill / low-speed intercooler face velocity (m/s): at v = 0 without ram air, only
+// cooling-fan pull-through / convection (~2.0 m/s, SAE cooling-module pull-through) crosses an
+// air-to-air core, ramping linearly with road speed to freeway IC_FACE_V (11 m/s) by 25 m/s (90 km/h).
+// Dyno sweeps and build-time tables leave state.icFaceV null (nominal IC_FACE_V dyno fan airflow).
+const IC_FACE_V_IDLE=2.0;
+function icFaceVel(v_ms){
+  if(v_ms==null)return IC_FACE_V;
+  return clamp(IC_FACE_V_IDLE+(IC_FACE_V-IC_FACE_V_IDLE)*(Math.max(0,v_ms)/25),IC_FACE_V_IDLE,IC_FACE_V);
+}
+function icEffAt(m,faceV){
+  const v=faceV!=null?faceV:(state.icFaceV!=null?state.icFaceV:IC_FACE_V);
+  return icEps(icGeom(engine),m,v);
+}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -11086,12 +11135,24 @@ function updateFuelMapMarker(){
 // the new curve's own value at 0.86 and 1.0% over the old curve's — the one figure set that shifts.)
 const faEta=phi=>phi<=1?1+0.6*(1-phi)-0.4*(1-phi)*(1-phi):Math.max(0.3,1-0.71*(phi-1));
 const imepRel=lam=>{const phi=1/Math.max(0.3,lam);return phi*faEta(phi);};
+// Homogeneous SI flammability / misfire limits (Heywood §9.4.3; Bosch Automotive Handbook):
+// below lambda 0.72 (rich) or above 1.20 (lean) flame propagation breaks down into partial burns
+// and misfire, extinguishing ~0.15 lambda past either limit. Shared with obdMisfire().
+const MIX_RICH_LIM=0.72, MIX_LEAN_LIM=1.20, MIX_EXT_SPAN=0.15;
+function mixtureMisfireFrac(lam){
+  if(lam<MIX_RICH_LIM)return clamp((MIX_RICH_LIM-lam)/MIX_EXT_SPAN,0,1);
+  if(lam>MIX_LEAN_LIM)return clamp((lam-MIX_LEAN_LIM)/MIX_EXT_SPAN,0,1);
+  return 0;
+}
 // Work per unit of stoichiometric fuel energy, by mixture: phi x faEta(phi), with the two roll-offs a
-// real spark engine has at the extremes (rich misfire, lean-limit burn deterioration).
+// real spark engine has at the extremes (rich misfire, lean-limit burn deterioration) plus flammability
+// misfire roll-off outside [MIX_RICH_LIM, MIX_LEAN_LIM].
 function sparkMixture(lam){
   let f=imepRel(lam);
-  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: misfire
+  if(lam<0.75)f*=0.85+0.6*(lam-0.68);   // very rich: burn deteriorates
   if(lam>1.12)f*=1.0-1.5*(lam-1.12);    // very lean: burn deteriorates toward the lean limit
+  const mf=mixtureMisfireFrac(lam);
+  if(mf>0)f*=1-0.95*mf;                 // flammability misfire past lambda < 0.72 or > 1.20
   return Math.max(0.03,f);
 }
 // ---- A spark engine's torque, from the fuel it burns (build 95) ----
@@ -11190,7 +11251,7 @@ let _knockCache=null;
 // (rotaryLostWork's), the crank-slider's for everything else.
 function burnCycle(){
   return engine.type==='rotary'?{vol:wankelVol,burn:ROTARY_BURN_DEG,ca50:ROTARY_CA50,bdc:-270}
-                               :{vol:pistonVol,burn:SI_BURN_DEG,ca50:SI_CA50,bdc:-180};
+                               :{vol:pistonVol,burn:siBurnDeg(engine),ca50:SI_CA50,bdc:-180};
 }
 // retard: the spark's degrees behind best-torque spark. The exhaust (residual and back pressure) is read at it, a later
 // burn sending a hotter exhaust (build 307).
@@ -11201,8 +11262,11 @@ function endGasTrace(rpm,map,ca50,retard){
 function endGasIntegral(rpm,map,ca50,retard){return endGasTrace(rpm,map,ca50,retard).I;}
 function endGasTraceAt(rpm,map,ca50){
   const e=engine,cr=Math.max(1.5,e.compression),R=287,g=1.30,cv=R/(g-1),k=(1.35-1)/1.35;
-  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,q=(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
-  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
+  const st=e.stoichAFR||14.7,lam=curAFR(rpm,map)/st,xEgr=egrRate(rpm,map);
+  // Cooled EGR dilutes the trapped charge by (1 - xEgr) (Heywood §9.3, §9.6), lowering bulk burn
+  // temperature and pressure and holding off end-gas autoignition.
+  let q=(1-xEgr)*(e.fuelLHV||44)*1e6/(Math.max(1,lam)*st);
+  const Tf=effIAT(map,rpm)+273.15-(e.injector==='direct'?(1-xEgr)*(HFG[e.fuel]||350e3)/(lam*st)/1005:0);
   const Tex=egtAt(rpm,map),prev=e.boostNow;e.boostNow=map;
   const pExh=1+backPressureBar(rpm,Tex);e.boostNow=prev;
   const pInt=Math.max(0.3,map),f=Math.min(0.5,residualFrac(pExh,pInt,cr));
@@ -11222,6 +11286,13 @@ function endGasTraceAt(rpm,map,ca50){
     const mF=ve*Vd*pInt*1e5/(R*(effIAT(map,rpm)+273.15));
     th0=cyc.bdc+ivc;mTot=mF*(1+f*Tf/Tres);
   }
+  // Active nitrous adds chemical heat release per kg of trapped charge proportional to nitrousImep()/eta_i,
+  // raising peak cylinder pressure (cylPmax), end-gas temperature, knock integral, and pre-ignition risk.
+  const nImep=nitrousImep();
+  if(nImep>0&&mTot>0){
+    const etaN=REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+    q+=(nImep*1e5/Math.max(0.2,etaN))/(mTot/Vd);
+  }
   const V00=cyc.vol(th0,cr),v1=Vc*cr/mTot,p1=mTot*R*T1/(Vc*V00);
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
   // the octane index: the reference fuel this fuel autoignites like, at this engine's T_comp15
@@ -11230,9 +11301,9 @@ function endGasTraceAt(rpm,map,ca50){
   const onF=DE_A*Math.pow(Math.max(50,OI)/100,DE_ON);
   // Below ~5 bar the delay is seconds (exp(3800/T) at the gas's few hundred kelvin), so the integral only counts
   // once compression has the pressure there; the trace still runs from IVC so the gas's state is right.
-  // Heat to the walls (build 132), at Woschni's flux and his 450 K wall, as wallTrace takes it: the bulk loses it, which
-  // lowers the pressure, and so does the end gas, which is the gas against the walls. It matters most at low speed,
-  // where the gas has longest.
+  // Heat to the walls (build 132), at Woschni's flux and coolant-coupled wall temp (anchored at 450 K at 90 °C):
+  // hotter coolant reduces wall heat loss and raises end-gas temperature and knock sensitivity.
+  const Tw=wallTempK(state.coolant);
   const ends=disc*(e.type==='rotary'?2:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const hW=(p,TT,w)=>WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,p/1000),0.8)*Math.pow(Math.max(1,TT),-0.55)*Math.pow(Math.max(1e-3,w),0.8);
   let T=Math.max(50,T1),Tu=Math.max(50,T1),I=0,Ipre=0,V0=V00,x0=0,pPrev=Math.max(1,p1),pMax=pPrev;
@@ -11242,13 +11313,13 @@ function endGasTraceAt(rpm,map,ca50){
     const Vn=cyc.vol(th+d,cr),p=Math.max(1,R*T*cr/(v1*V0)),xn=xb(th+d),A=ends+4*Vc*V0/B;
     if(p>pMax)pMax=p;
     const w=Math.max(0.1,2.28*Sp+(th>=soc?3.24e-3*Vd*T1/(p1*Vc*V00)*(p-p1*Math.pow(V00/V0,g)):0));
-    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-T_WALL)*dt/(mTot*cv));pPrev=p;
+    Tu=Math.max(50,Tu*Math.pow(p/pPrev,k)-hW(p,Tu,w)*A*(Tu-Tw)*dt/(mTot*cv));pPrev=p;
     if(p>pRef){
       const dI=c1*Math.pow(p/101325,DE_P)*Math.exp(-DE_T/Tu);
       I+=dI;
       if(th<soc)Ipre+=dI;   // compression-only autoignition before spark (pre-ignition): retarding spark cannot stop it
     }
-    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-T_WALL)*dt/mTot)/cv);
+    T=Math.max(50,T+(q*(xn-x0)-p*v1*(Vn-V0)/cr-hW(p,T,w)*A*(T-Tw)*dt/mTot)/cv);
     V0=Vn;x0=xn;
   }
   return {I,Ipre,pMax:pMax/1e5};
@@ -11327,7 +11398,9 @@ function ciPortedPmax(rpm,map,adv){
   const st=e.stoichAFR||(e.ci?14.5:14.7),lam=Math.max(0.5,curAFR(rpm,map)/st);
   const air=pInt*1e5/(287*Tchg)*ve;                               // kg trapped air per m³ swept
   const lhv=(e.fuelLHV||(e.ci?42.8:44))*1e6;
-  const qVol=air/(Math.max(1,lam)*st)*lhv/1e5;                    // burned fuel energy per m³ swept (bar)
+  const nImep=nitrousImep();
+  const etaN=e.ci?ETA_GROSS_CI*otto(cr)/otto(CR_REF_CI):REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+  const qVol=air/(Math.max(1,lam)*st)*lhv/1e5+(nImep>0?nImep/Math.max(0.2,etaN):0);   // burned fuel + nitrous energy per m³ swept (bar)
   if(e.ci){
     const vIvc=Math.max(1.5,pistonVol(-180+ivcAt(rpm),cr));       // V_ivc / V_c
     const p1=pInt*ve*(cr-1)/vIvc;                                 // trapped pressure at IVC (bar)
@@ -11344,8 +11417,8 @@ function cylTraceAt(rpm,map,adv){
   const e=engine;
   if(e.ci||e.ports)return {I:0,Ipre:0,pMax:ciPortedPmax(rpm,map,adv)};
   if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
-  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7);
-  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType;
+  const lam=curAFR(rpm,map)/(e.stoichAFR||14.7),tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType+'|'+tc+'|'+nitrousImep();
   let tr=_knockCache.m.get(key);
   if(tr==null){
     tr=endGasTrace(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
@@ -11364,8 +11437,8 @@ function knockAt(rpm,map,adv){
 // Worst peak cylinder pressure (bar) and pre-ignition integral across WOT, once per build.
 function peakCylLoads(){
   const e=engine;
-  const sv={iat:state.iat,afr:state.afr,nitrousActive:state.nitrousActive};
-  state.iat=25;state.afr=e.stoichAFR||14.7;state.nitrousActive=false;
+  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;
   let pMax=0,preIgn=0;
   try{
     for(let r=1000;r<=e.redline;r+=400){
@@ -11404,7 +11477,8 @@ function activeAdvance(rpm,map){
   }
   // the same operating point is asked for several times per torque figure: remember the answer
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let adv=mbt;
   if(knockAt(rpm,map,mbt)>KNOCK_TARGET){
@@ -11437,7 +11511,8 @@ function ecuFuelsKnock(){
 function knockEnrichLambda(rpm,map,base){
   if(!ecuFuelsKnock()||!(base>LAMBDA_KNOCK_MIN))return base;
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   const over=(l,floor)=>{_lamTrial=l;try{return knockAt(rpm,map,floor?knockFloorAdv(rpm,map):mbtAdvance(rpm,map))>KNOCK_TARGET;}finally{_lamTrial=null;}};
   let lam=base;
@@ -11464,7 +11539,8 @@ function egtOverAt(rpm,map,l){
 function egtEnrichLambda(rpm,map,base){
   if(!ecuGuardsTurbine()||!(base>LAMBDA_KNOCK_MIN))return base;
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
-  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+nitrousImep();
+  const tc=Math.round(state.coolant!=null?state.coolant:90);
+  const key='E|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let lam=base;
   if(egtOverAt(rpm,map,base)){
@@ -11750,9 +11826,8 @@ const BURN_T_CI=0.0025;     // s — DI diesel full-load burn, injection + mixin
 const SOC_CI=-6;            // crank degrees — start of combustion, held near TDC by peak pressure / NOx
 const WIEBE_A=5, WIEBE_M=2;
 const BURN_REF_RPM=2000;
-const ROD_RATIO=3.2;
-// Chamber volume in clearance volumes, against degrees after TDC. A piston follows the crank-slider;
-// a Wankel chamber goes TDC to BDC over 270 degrees of eccentric shaft, near-sinusoidally.
+// Chamber volume in clearance volumes, against degrees after TDC (ROD_RATIO unified in gas-dynamics.js).
+// A piston follows the crank-slider; a Wankel chamber goes TDC to BDC over 270 degrees of eccentric shaft, near-sinusoidally.
 const pistonVol=(th,cr)=>{const t=th*Math.PI/180,s=Math.sin(t);
   return 1+(cr-1)*((1-Math.cos(t))+ROD_RATIO-Math.sqrt(ROD_RATIO*ROD_RATIO-s*s))/2;};
 const wankelVol=(th,cr)=>1+(cr-1)*(1-Math.cos(Math.PI*clamp(th,-270,270)/270))/2;
@@ -11781,7 +11856,11 @@ function wiebePhasingEff(durDeg,socDeg,cr,volFn){
 // ATDC on a 13B peripheral port), so this is late phasing, not burning in the port.
 // Sources: Vorraro, Turner & Akehurst, SAE 2022-01-0591 (burn duration); hydrogen dual-spark Wankel
 // study, MBT at CA50 35-40 ATDC. Rotary CA50 taken mid-range, 37.5; burn 130.
-const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8;
+const ROTARY_BURN_DEG=130, ROTARY_CA50=37.5, SI_BURN_DEG=50, SI_CA50=8, SI_BORE_REF=82.55;
+// SI flame-travel burn duration scales with bore (Heywood §9.3: flame travel distance ~ B/2 while
+// turbulent flame speed scales sublinearly with bore, giving ~B^0.35 crank-degree burn growth;
+// anchored at B = 82.55 mm = 3.25 in ASTM CFR reference knock cylinder = SI_BURN_DEG = 50 deg).
+const siBurnDeg=e=>SI_BURN_DEG*Math.pow(Math.max(40,e&&e.bore_mm||SI_BORE_REF)/SI_BORE_REF,0.35);
 const wiebeX50=()=>Math.pow(Math.log(2)/WIEBE_A,1/(WIEBE_M+1));   // fraction of the burn at 50% mass
 function rotaryLostWork(cr){
   const x50=wiebeX50();
@@ -11972,7 +12051,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   const T3=exhaustGasT(clamp(th,0.3,1.1),rpm);
   const sub=Math.max(1,Math.ceil(dt/hMax));   // the shaft is faster than the vehicle; sub-step it
   const h=dt/sub;
-  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,boostTarget(rpm));
+  let E=clamp(shaftE,0,Emax), b=clamp(boostNow,0,boostTarget(rpm)), overspeed=false, surge=false;
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
   // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
   const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
@@ -11983,7 +12062,8 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // The compressor draws AMBIENT air. This passed the charge temperature after the compressor and the
     // intercooler as its inlet, so a build with no intercooler paid ~25% extra compressor work on every
     // spool — enough to hide the larger fill a front-mount core really costs.
-    const r=shaftNetPower(n,airFlowAt(rpm,1+b)*Math.max(0.08,th),T3,T01,rpm);
+    const mAirStep=airFlowAt(rpm,1+b)*Math.max(0.08,th);
+    const r=shaftNetPower(n,mAirStep,T3,T01,rpm);
     const loss=shaftLossPower(n);
     // Boost is the pressure in the charge volume, so it is a STATE, not a readout of shaft speed. It
     // rises when the shaft supports more, and pays the fill energy below for the air that takes. It
@@ -11993,24 +12073,28 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     const bShaft=clamp(r.pr-1,0,boostTarget(rpm));
     let b2=bShaft;
     if(bShaft<b){
-      const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,airFlowAt(rpm,1+b)*Math.max(0.08,th));
+      const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,mAirStep);
       b2=bShaft+(b-bShaft)*Math.exp(-h*swallow/Math.max(1e-6,held));
     }
     const dB=Math.max(0,b2-b);
     const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
     // one shaft's share of it: the active turbos fill the volume together (build 290)
     const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
-    E=clamp(E+(r.net-loss)*h-fill,0,Emax);
+    const Enext=E+(r.net-loss)*h-fill;
+    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0)overspeed=true;
+    E=clamp(Enext,0,Emax);
     b=b2;
+    if(isCompSurge(compFlowFrac(rpm,mAirStep),1+b))surge=true;
   }
-  return{shaftE:E,boost:b};
+  return{shaftE:E,boost:b,overspeed,surge};
 }
 function stepBoost(dt){
-  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);return;}
+  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;return;}
   if(state.shaftE==null)state.shaftE=0;
   const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
                        state.throttle!=null?state.throttle:1,dt);
   state.shaftE=r.shaftE;state.boostActual=r.boost;
+  state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
 }
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
@@ -12161,6 +12245,10 @@ function stepElectrical(dt){
 // the valve stops following the cam and can meet the piston, so running past floatRpm wears the engine, from 0.004 a
 // second at the float speed and 0.01 more for each 10% past it. Those rates are game rules, like the others here.
 function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
+// Wankel trochoid mean apex-seal sliding speed limit (m/s): Yamamoto, Rotary Engine (Mazda) / SAE
+// apex-seal lubrication & chatter limit ~36 m/s (2*pi*R*(rpm/3)/60 = 35.9 m/s at 9800 rpm on a 13B R=105 mm,
+// matching share-scoring.js's 9800 rpm rotary reliability threshold while keeping stock 9000 rpm RX-8 clean).
+const APEX_SPEED_LIMIT=36;
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
   if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
@@ -12174,6 +12262,14 @@ function stepWear(dt){
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
+  // Reciprocating inertial limit above PISTON_SPEED_LIMIT (25 m/s, Heywood §2.2) and Wankel apex-seal sliding limit.
+  if(engine.type==='rotary'){
+    const vApex=2*Math.PI*(engine.bore_mm/1000)*(state.rpm/3)/60;
+    add(vApex>APEX_SPEED_LIMIT?(vApex-APEX_SPEED_LIMIT)*0.012:0,'APEX SEAL');
+  }else{
+    const mps=2*(engine.stroke_mm/1000)*state.rpm/60;
+    add(mps>PISTON_SPEED_LIMIT?(mps-PISTON_SPEED_LIMIT)*0.012:0,'PISTON SPEED');
+  }
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
   // the smoke limit (Heywood ch.11 diesel PM order); was a dimensionless analyser index before build 257.
@@ -12181,6 +12277,8 @@ function stepWear(dt){
    if(engine.ci)add(ei>2.5?(ei-2.5)/8*0.020:0,'OVER-FUEL/EGT');}
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
   add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
+  add(state.turboOverspeed?0.025:0,'TURBO OVERSPEED');                           // compressor wheel hitting TIP_LIMIT (520 m/s)
+  add(state.turboSurge?0.008:0,'TURBO SURGE');                                   // compressor stall / thrust-bearing load
   add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
   w+=0.000006;   // baseline fatigue (negligible — hours of clean running)
   state.engineHealth=clamp(state.engineHealth-w*dt,0,1);
@@ -12236,7 +12334,7 @@ function computeEmissions(){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map));
   const afr=Math.max(3,curAFR(state.rpm,map));
-  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc;   // kg/s delivered
+  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);   // kg/s delivered (incl. nitrous fuel)
   const burn=metered/Math.max(1,engine.typeBsfc);                   // kg/s trapped / burned
   const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
   if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
@@ -12277,7 +12375,7 @@ function computeEmissions(){
   const adv=activeAdvance(state.rpm,map),mbt=mbtAdvance(state.rpm,map);
   const tempF=clamp(0.4+load*0.9+Math.max(0,engine.compression-9)*0.05
     +Math.max(0,effIAT(map,state.rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
-    +Math.max(0,state.coolant-90)*0.004,0.2,2.4);
+    +Math.max(0,state.coolant-90)*0.004+nitrousImep()*0.08,0.2,2.6);
   let noxIdx,pmIdx=0;
   if(engine.ci){
     const fuelling=clamp((1.7-lam)/1.0,0,1);
@@ -12351,11 +12449,22 @@ function updatePhysics(){
     updateEnginePhysics();
   }finally{o2Trim=1;}
 }
+// Extra fuel mass flow (kg/s) injected for an active nitrous shot: N2O supplies extra O2
+// (stoichiometric ~9.6:1 N2O:petrol; wet kits jet ~6.4:1 rich for knock safety), requiring
+// fuel proportional to extra indicated power P_ind = nitrousImep * 1e5 * Vd * (rpm/60) * chargesPerRev / eta_i.
+function nitrousFuelKgS(rpm){
+  const nImep=nitrousImep();
+  if(!(nImep>0)||!(rpm>0))return 0;
+  const e=engine,Vd=e.displacement_L/1000,cr=Math.max(1.5,e.compression);
+  const etaN=e.ci?ETA_GROSS_CI*otto(cr)/otto(CR_REF_CI):REAL_TO_FUELAIR*(1-Math.pow(cr,1-GAMMA_FA))*(e.typeImep||1);
+  const pInd=nImep*1e5*Vd*(rpm/60)*e.chargesPerRev;
+  return pInd/(Math.max(0.15,etaN)*(e.fuelLHV||44)*1e6)/Math.max(0.5,e.meteringEff||1);
+}
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
   const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
-  return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc;
+  return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);
 }
 function updateEnginePhysics(){
   const map=liveMap();
@@ -12416,7 +12525,7 @@ const OBD_CODES={
   P0217:{t:'Engine coolant over temperature', hold:2, why:'Coolant is above 112 °C, where the wear model starts charging OVERHEAT.'},
   P0171:{t:'System too lean (bank 1)',        hold:2, why:'λ above 1.05 under boost (the LEAN/BOOST wear condition), or the lambda sensor reads leaner than the ECU can hold.'},
   P0172:{t:'System too rich (bank 1)',        hold:2, why:'The lambda sensor reads richer than the ECU can hold at part load.'},
-  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), or the valves float.'},
+  P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), the valves float, or the mixture is past its flammability limit.'},
   P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
   P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
 };
@@ -12429,11 +12538,15 @@ function obdRunning(){
   if(isHybrid())return !!hybBenchState().engOn;
   return state.firing!==false&&!state.blown;
 }
-// The share of combustion events lost: spark (ignitionHealth) or a valve past float.
+// The share of combustion events lost: spark (ignitionHealth), valve float, or extreme lean/rich mixture misfire.
 function obdMisfire(){
   if(engine.ci)return 0;
   let m=1-ignitionHealth(state.rpm);
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)m=Math.max(m,OBD_MISFIRE);
+  if(typeof mixtureMisfireFrac==='function'){
+    const lam=state.afr/(engine.stoichAFR||14.7);
+    m=Math.max(m,mixtureMisfireFrac(lam));
+  }
   return m;
 }
 // Which conditions are present right now, by code.
@@ -14837,15 +14950,17 @@ function buildVehicle(){
 // held at the lesser of its grip and its brakes, and the car stops with the sum. Without ABS the driver brakes to the
 // point where the first axle reaches its grip, through the road car's knee-point proportioning valve (brakeValveRear).
 // Until this build the stop pooled the four tyres' grip at a quarter of the load each, whatever the split.
-function simulateBraking(v0,T0){
+function simulateBraking(v0,T0,wet){
   const m=vehicle.mass,dt=0.005,th=vehicle.brakeTh;let v=v0,x=0,t=0,aL=0.8*G;
   const st={F:T0!=null?T0:BRAKE_AMBIENT,R:T0!=null?T0:BRAKE_AMBIENT};   // a stop from cold unless told
   const fH=vehicle.brakeFrontShare||0.7,hL=(vehicle.cg||0.5)/Math.max(0.5,vehicle.wb||2.6),fWt=vehicle.fWt||0.55;
   const aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,abs=!(vehicle.aids&&vehicle.aids.abs===false);
   const valve=abs?null:brakeValveRear(fWt,hL);
+  // Wet asphalt longitudinal grip scaling (Noon 1994: wet/dry asphalt 0.50/0.65, matching DRIVE_SURFACE.wet)
+  const wetF=1-clamp(wet||0,0,1)*(1-0.50/0.65);
   // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
   const grip=(a,dn)=>{const W=m*G+dn,Nf=clamp(m*G*fWt+dn*aeroF+m*a*hL,0,W),Nr=W-Nf;
-    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*Nf:0,Nr>0?tyreMuX(Nr/2)*Nr:0];};
+    return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*wetF*Nf:0,Nr>0?tyreMuX(Nr/2)*wetF*Nr:0];};
   while(v>0.15&&t<25){
     const dn=0.5*AIR_RHO*vehicle.clA*v*v;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
@@ -15023,7 +15138,9 @@ function simulateAccelRun(){
   // the clip did; without it the driver holds that slip through the launch (build 155, below), and from the first
   // upshift the run is flat out: the engine's torque spins the tyres past the peak and the slip dynamics decide.
   // The launch rpm is the best of several (below).
-  const tcOn=vehicle.tc!==false, Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
+  const tcOn=vehicle.aids&&vehicle.aids.tc!=null?!!vehicle.aids.tc:vehicle.tc!==false;
+  const ccAwd=vehicle.drive==='awd'?centreCoupling(vehicle):null;
+  const Iw=vehicle.wheelI||0, Iwd=Iw*(vehicle.drive==='awd'?1:0.5), mv=m+(Iw-Iwd)/(r*r);
   function run(launchRpm){
   let boostNow=grid.laggy?0:pt.maxBoost(), shaftE=0;
   // The shaft does not start from rest. A standing start is made with the engine already held at
@@ -15101,15 +15218,22 @@ function simulateAccelRun(){
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
     const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
-    let drivenN;
-    if(vehicle.drive==='awd')drivenN=Wtot;
-    else if(vehicle.drive==='rwd')drivenN=clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot);
-    else drivenN=clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
+    let drivenN,gripBase;
+    if(vehicle.drive==='awd'){
+      drivenN=Wtot;
+      const NfA=clamp(m*G*vehicle.fWt+down*(vehicle.aeroBal!=null?vehicle.aeroBal:0.5)-Math.max(0,transfer),0,Wtot),NrA=Wtot-NfA;
+      const gFA=NfA>0?tyreMuX(NfA/2,vehicle.FzRefF)*NfA:0,gRA=NrA>0?tyreMuX(NrA/2)*NrA:0;
+      gripBase=awdTractionCap(ccAwd,gFA,gRA);
+    }else{
+      drivenN=vehicle.drive==='rwd'?clamp(m*G*(1-vehicle.fWt)+down*vehicle.drivenAero+Math.max(0,transfer),0,Wtot)
+        :clamp(m*G*vehicle.fWt+down*vehicle.drivenAero-Math.max(0,transfer),0,Wtot);
+      gripBase=tyreMuX(drivenN/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*Math.max(0,drivenN);
+    }
     if(shiftT>0)shiftT-=dt;
     if(!cutNow&&!overRev){
       const Teng=gridTorque(grid,engineRpm,boostNow)*tqMult;
       if(slipping){
-        const want=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,1,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN)*r/(totalRatio*eff);
+        const want=gripBase*diffTractionAt(df,0,vehicle.cg,1,gripBase*r)*r/(totalRatio*eff);
         const Tcl=Math.min(tqCap,Math.max(Teng,want));
         slipW=Math.max(rpm*TWO_PI/60,slipW+(Teng-Tcl)/Ie*dt);       // the flywheel pays the difference
         driveF=Tcl*totalRatio*eff/r;
@@ -15120,7 +15244,7 @@ function simulateAccelRun(){
     // diff is governed by the lighter-loaded wheel and throws the rest away, an LSD recovers
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
-    const trac=tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*diffTractionAt(df,0,vehicle.cg,tqFrac,tyreMuX(drivenN/(vehicle.drive==='awd'?4:2))*Math.max(0,drivenN)*r)*Math.max(0,drivenN);
+    const trac=gripBase*diffTractionAt(df,0,vehicle.cg,tqFrac,gripBase*r);
     const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
@@ -15254,10 +15378,43 @@ function simulateAccelRun(){
 //             the charge, the charge by what they draw and return. See driveElectric.
 //
 //   Wheels up and down  each wheel on its tyre and its spring, the tyre's load its own deflection (phase G6). See THE WHEELS.
-// NOT YET (named, so nobody rediscovers them): tyre and brake temperatures, a power-split's engine speed, the motor's
-// and the pack's heat.
+// NOT YET (named, so nobody rediscovers them): a power-split's engine speed, the motor's and the pack's heat.
 // ================================================================================================
 const DRIVE_G=9.81, DRIVE_RHO=1.20;
+// Tyre tread thermal, wear and smoke constants (aligned with TYRE_RACE in race.js; Pacejka ch. 3 slip work):
+//   H0, H1: convective cooling W/(m²·K) = H0 + H1 v^0.8; hWet: water cooling at wet=1; hTrack: road conduction.
+//   cold/hot: quadratic grip drop outside [tOpt ± tWin], floored at gMin (0.72).
+//   smokeT0/smokeSpan: rubber vaporisation smoke onset ~105 °C, full opacity +45 °C above onset (probable).
+const DRIVE_TYRE_THERM={H0:12,H1:7,hWet:150,hTrack:10,cp:4500,roll:0.8,cold:0.03,hot:0.12,gMin:0.72,
+  wearK:8e-8,wearHot:3,wLin:0.06,wCliff:1.2,wKnee:0.7,smokeT0:105,smokeSpan:45};
+// Brake rotor air properties at ~150 °C film temperature (Limpert, Brake Design and Safety, ch. 3; matches BRAKE_AIR).
+const DRIVE_BRAKE_AIR={k:0.034,nu:2.9e-5,pr:0.70,rho:0.83,cp:1015};
+function driveTyreTempGrip(T,car){
+  const tOpt=car.tyreTopt!=null?car.tyreTopt:78,tWin=car.tyreTwin||32,x=(T-tOpt)/tWin,H=DRIVE_TYRE_THERM;
+  return Math.max(H.gMin,Math.min(1,1-(x<0?H.cold:H.hot)*x*x));
+}
+function driveTyreWearGrip(w){
+  const H=DRIVE_TYRE_THERM,k=Math.max(0,w-H.wKnee);
+  return Math.max(0.6,Math.min(1,1-H.wLin*w-H.wCliff*k*k));
+}
+function driveRotorCooling(T,disc,th,vCar){
+  const amb=th.amb!=null?th.amb:25,A=DRIVE_BRAKE_AIR,dT=T-amb,v=Math.max(1,vCar);
+  const Re=v*disc.D/A.nu,h=(Re>2.4e5?0.04*Math.pow(Re,0.8):0.70*Math.pow(Re,0.55))*A.k/disc.D;
+  const Tk=T+273.15,Ta=amb+273.15;
+  let q=h*disc.Aout*dT+th.eps*5.67e-8*disc.Aout*(Tk*Tk*Tk*Tk-Ta*Ta*Ta*Ta);
+  if(disc.vented){
+    const rpm=vCar/th.rTire*60/(2*Math.PI),uPump=disc.pump*rpm,uDuct=disc.duct*vCar/Math.max(1e-6,disc.Aflow);
+    const u=Math.max(0.1,Math.hypot(uPump,uDuct)),Rd=u*disc.dh/A.nu;
+    const hv=Math.max(0.076*rpm,0.023*(1+Math.pow(disc.dh/disc.l,0.67))*Math.pow(Rd,0.8)*Math.pow(A.pr,0.33)*A.k/disc.dh);
+    const mcp=A.rho*u*disc.Aflow*A.cp;
+    q+=mcp*dT*(1-Math.exp(-hv*disc.Avane/mcp));
+  }
+  return q;
+}
+function driveBrakeFade(T,th){
+  if(!th)return 1;
+  return 1-th.maxFade*Math.max(0,Math.min(1,(T-th.onset)/th.span));
+}
 // THE DRIVER AIDS AS A TUNE (build 281). These are a calibration, as the fuel map is: the numbers an engineer sets on
 // the car, and here the player's to change (vehicle.aids overrides any of them). The defaults are the values stepCar
 // used before they had names, and for stability control what the car's own data gives.
@@ -15408,26 +15565,42 @@ function driveCar(){
   // springs per ay, the full roll (with the tyres' give), and compliance steer by each
   // wheel's share of the side force, m (b, a) / (2 L) per unit ay
   const Ktoe=(toe.rsF*body.rrAyF+toe.rsR*body.rrAyR+(toe.csF*b+toe.csR*a)*v.mass/(2*L))/L;
+  const tt=TIRE_TYPE[v.tireType]||TIRE_TYPE.sport,twMm=v.tireWidth||225;
+  const bth=v.brakeTh||brakeThermal(v),copyD=d=>({D:d.D,m:d.m,Aout:d.Aout,vented:!!d.vented,duct:d.duct||0,l:d.l||0,dh:d.dh||0,pump:d.pump||0,Avane:d.Avane||0,Aflow:d.Aflow||0});
+  // Knee-point proportioning valve parameters (Limpert ch. 7 / UN ECE R13-H; matches brakeValveRear in vehicle-accel.js)
+  const fWtV=v.fWt||0.55,hLV=v.cg/Math.max(0.5,L),zk=R13H_Z/2,Xv=z=>z*(fWtV+z*hLV)*DRIVE_G,Yv=z=>z*(1-fWtV-z*hLV)*DRIVE_G;
+  const vxk=Xv(zk),vyk=Math.max(0,Yv(zk)),vyEnd=Math.max(0,Yv(R13H_Z));
+  const brakeValve={xk:vxk,yk:vyk,slope:Math.max(0,(vyEnd-vyk)/Math.max(1e-6,Xv(R13H_Z)-vxk))};
+  // Hydrodynamic torque converter parameters (GEARBOX.auto; Bosch Automotive Handbook): stall rpm, multiplication ratio, capacity factor K = T_stall / w_stall^2
+  const gb=v.gb||GEARBOX[v.gearbox]||GEARBOX.manual,idleR=pt.idleRpm()||0;
+  const tcStall=v.gearbox==='auto'&&gb.stall>0?Math.max(idleR,Math.min(rl*0.85,gb.stall)):0;
+  const tcMult=tcStall>0&&gb.mult>1?gb.mult:1;
+  const rpmArr=curve.map(p=>p.rpm),tqArr=curve.map(p=>p.tq);
+  const tcK=tcStall>0?Math.max(50,driveLerp(rpmArr,tqArr,tcStall))/Math.pow(tcStall*Math.PI/30,2):0;
   return {
     aids,esp:!!aids.esp,Kus:Kus+Ktoe,CaF,CaR,...toe,pkF:Math.atan(3*tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef)/cc),
     turbo:grid&&grid.laggy?driveTurbo(pt,grid):null,el,
     name:v.chLabel||'',m:v.mass,Izz:v.mass*a*b,a,b,h:v.cg,tF:v.trackF||v.track,tR:v.trackR||v.track,
-    r:v.rTire,tw:(v.tireWidth||225)/1000,Iw:(v.wheelI||2)/4,
+    r:v.rTire,tw:twMm/1000,Iw:(v.wheelI||2)/4,
     mu:muR,muF:tyreMu(v.FzRefF||v.FzRef,v.FzRefF||v.FzRef),FzRef:v.FzRef,FzRefF:v.FzRefF||v.FzRef,
     loadSens:LOAD_SENS,muX:TYRE_MU_X,cc,ccP2:TYRE_CC_P2,slipOpt:TYRE_SLIP_OPT,slipC:TYRE_SLIP_C,relax:v.rTire,
+    tyreTopt:tt.tOpt||78,tyreTwin:tt.tWin||32,tyreWear:tt.wear||1,tyreArea:0.25+twMm/1000,tyreC:DRIVE_TYRE_THERM.cp*twMm/225,
+    wet:0,airT:22,camLoss:CAMBER_LOSS,camBest:CAMBER_BEST,
     cdA:v.cdA,clA:v.clA||0,aeroBal:v.aeroBal==null?0.5:v.aeroBal,crr:v.crr,
     lltdF:v.lltdF==null?v.fWt:v.lltdF,tauLoad:1/(2*Math.PI*ride),
     ...body,
-    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df,v.body&&v.body.name),ratios:(v.ratios||[1]).slice(),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    drive:el&&el.front?(v.driveMech==='fwd'?'fwd':'rwd'):v.drive,centre:v.drive==='awd'&&!(el&&el.front)?centreCoupling(v):null,diff:diffCoupling(v.df,v.body&&v.body.name),ratios:(v.ratios||[1]).slice(),revRatio:-((v.ratios&&v.ratios[0])||3.5),fd:v.finalDrive||1,eff:v.driveEff||0.9,
+    gearbox:v.gearbox||'manual',tcStall,tcMult,tcK,
     shiftTime:v.shiftCut||0,ev:!!v.ev||!!pt.direct,tc:!!aids.tc,abs:!!aids.abs,
-    rpm:curve.map(p=>p.rpm),tq:curve.map(p=>p.tq),ov:pt.overrunTable(rl),idle:pt.idleRpm()||0,redline:rl,
+    rpm:rpmArr,tq:tqArr,ov:pt.overrunTable(rl),idle:idleR,redline:rl,
     Ie:pt.inertia()||0.15,clutchCap:1.5*peak,
     fireRpm:FIRE_RPM,fireTurns:1/(engine.chargesPerRev||0.5),starterT0:v.ev?0:starterStallTorque(),starterFree:STARTER_FREE_RPM,   // stalling and starting, as on the bench
     // where the engine is held to pull away flat out: the speed the 0-100 solver found quickest of its five tries,
     // as a launch control is set (build 276). Until then it was the torque peak, no higher than 60% of the redline,
     // which left a turbo unlit on the line (the GT-R at 2400 rpm) and a powerful car short of flywheel.
     launchRpm:(()=>{const A=v.ev||pt.direct?null:simulateAccelRun();return A&&A.launchRpm>0?A.launchRpm:Math.min(curve.reduce((m,p)=>p.tq>m.tq?p:m,curve[0]).rpm,0.6*rl);})(),
-    brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,
+    brakeF:brakeForceCap(v),brakeFront:v.brakeFrontShare,brakeValve,
+    brakeTh:{onset:bth.onset,span:FADE_SPAN,maxFade:FADE_MAX,cp:bth.cp,eps:bth.eps,amb:BRAKE_AMBIENT,rTire:bth.rTire,f:copyD(bth.front),r:copyD(bth.rear)},
     // The lever brake (build 382): rear wheels only, outside the ABS (a cable to the rear calipers or a drum-in-hat).
     // Its force at the road (N, both wheels): the rear service brake's, as if the lever reached its full line force
     // (PROBABLE: no maker publishes a lever-brake torque), and never under the floor UN ECE R13-H (parking brake) and FMVSS 135 S7.12
@@ -15443,8 +15616,10 @@ function driveCar(){
 }
 // A car at rest, in neutral for a clutch car until the driver asks for a gear.
 function driveState(car){
+  const t0=car.tyreTopt!=null?car.tyreTopt:78,b0=car.brakeTh&&car.brakeTh.amb!=null?car.brakeTh.amb:25;
   return {soc:car.el?car.el.soc0:0,eng:true,engT:0,Pm:0,shE:0,boost:0,t:0,x:0,y:0,psi:0,vx:0,vy:0,yaw:0,w:[0,0,0,0],we:car.idle*Math.PI/30,gear:1,shiftT:0,
     axF:0,ayF:0,roll:0,rollV:0,pitch:0,pitchV:0,zu:[0,0,0,0],zuV:[0,0,0,0],heave:0,heaveV:0,rr:[0,0],al:[0,0,0,0],abs:[1,1,1,1],tcF:1,esp:[0,0,0,0],yawRef:0,espOver:false,espF:1,clF:1,pull:false,firing:true,
+    tyreT:[t0,t0,t0,t0],tyreW:[0,0,0,0],smoke:[0,0,0,0],brakeT:[b0,b0,b0,b0],
     ax:0,ay:0,Fz:[0,0,0,0],kappa:[0,0,0,0],alpha:[0,0,0,0],Fx:[0,0,0,0],Fy:[0,0,0,0],camber:[0,0,0,0],cg:[0,0,0,0],toe:[0,0,0,0],Fyw:[0,0,0,0],rpm:car.idle,speed:0,delta:0,steerTorque:0,handTorque:0};
 }
 // THE ELECTRIC SIDE AS PLAIN DATA (build 275): a hybrid's motor and pack, or an electric car's. null without one.
@@ -15616,8 +15791,9 @@ function driveShaft(tb,s,rpm,thr,h){
 // for the 1.2 s the 0-100 solver holds it there (its brake-boost). driveState() is the car at rest at idle.
 function driveLaunch(car){
   const s=driveState(car);if(car.ev)return s;
-  s.we=car.launchRpm*Math.PI/30;s.rpm=car.launchRpm;
-  if(car.turbo)for(let i=0;i<1200;i++)driveShaft(car.turbo,s,car.launchRpm,1,0.001);
+  const lr=car.tcStall>0?car.tcStall:car.launchRpm;
+  s.we=lr*Math.PI/30;s.rpm=lr;
+  if(car.turbo)for(let i=0;i<1200;i++)driveShaft(car.turbo,s,lr,1,0.001);
   return s;
 }
 function driveLerp(xs,ys,x){
@@ -15637,12 +15813,8 @@ function driveLerp(xs,ys,x){
 //          and like the slip it builds over the relaxation length as the wheel rolls (none at rest).
 //          The brush model has no carcass, and no measured camber stiffness for a radial road tyre was found to set it
 //          against: PROBABLE. About 0.11 of C on a road tyre (a 0.1 m, R 0.31 m).
-// Left out, named: the grip by camber. The lap's law (latCamberF: CAMBER_LOSS a degree off CAMBER_BEST, by the axle's
-// outside wheel) cost the stepped car 1-6% of its skidpad grip, and the test driver, who takes the lap's speeds, then
-// left the line by up to 7.8 m and slid the Model 3 to 31 degrees (test170); it waits for a driver that judges the
-// car's own grip, and the camber's own aligning moment. Tried again with the yaw-rate ESP (small-physics step 6): by
-// each wheel's own lean the 911 GT3 left the line (15 m, 68 deg); by each axle's outside wheel, as the lap has it,
-// 11.8 m and 41 deg, the Model 3 9.5 m and 38 deg, the Civic 7.9 m, against OFF_KNOWN's 4.8 m. Named until after v1.0.
+//   grip   lateral grip loss off CAMBER_BEST (-1.5 deg) at CAMBER_LOSS (1.5%/deg, Milliken & Milliken RCVD ch. 2;
+//          matches latCamberF in tyres-brakes-driveline.js), applied to lateral muY only (longitudinal muX untouched).
 //   heave  (small-physics step 3) each wheel's own travel on the body moves its camber too, not only the axle's roll: the same
 //          swing arm, 1/fvsa a metre of travel (2 rec / t), the top inwards in bump, so heave and pitch camber the
 //          wheels as well (Reimpell, The Automotive Chassis, ch. 3, camber change over travel: PROBABLE as the roll's
@@ -15668,11 +15840,18 @@ function driveToe(v){const k=n=>v[n]!=null?v[n]:DRIVE_TOE[n],kN=Math.PI/180/1000
 // A wheel's contact half length (m): the tyre as a circle of radius r pressed flat by Fz/kt (see DRIVE_CASTER).
 function drivePatch(r,kt,Fz){if(!(kt>0))return 0;const d=Math.min(r,Math.max(0,Fz)/kt);return Math.sqrt(Math.max(0,2*r*d-d*d));}
 // One tyre: the force along and across the wheel (N) for a load Fz, a slip ratio and a slip angle (rad), tg, its
-// camber's equivalent slip (tan, as relaxed: see THE CAMBER), and gq, the grip of what it stands on (THE SURFACE; 1 without).
+// camber's equivalent slip (tan, as relaxed: see THE CAMBER), gq, the combined surface/thermal/wear grip multiplier
+// (1 without), and gam, the wheel's lean to the left (rad) for lateral camber grip loss (matches latCamberF).
 // Returns [Fl, Ft, s, dFl/dkappa]: s is the share of the grip in use (1 = sliding all over the contact patch).
-function driveTyre(car,Fz,kappa,alpha,front,tg,gq){
+function driveTyre(car,Fz,kappa,alpha,front,tg,gq,gam){
   if(!(Fz>1))return [0,0,0,0];
-  const ref=front?car.FzRefF:car.FzRef,muY=(gq==null?1:gq)*(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muY;
+  const ref=front?car.FzRefF:car.FzRef,muBase=(gq==null?1:gq)*(front?car.muF:car.mu)*Math.pow(Math.max(200,Fz)/ref,-car.loadSens),muX=car.muX*muBase;
+  let camF=1;
+  if(gam!=null&&car.camLoss){
+    const dir=Math.abs(alpha)>1e-3?Math.sign(alpha):0,camDeg=dir?-dir*gam*180/Math.PI:-Math.abs(gam)*180/Math.PI;
+    camF=Math.max(0.7,1-car.camLoss*Math.abs(camDeg-(car.camBest!=null?car.camBest:-1.5)));
+  }
+  const muY=muBase*camF;
   const xz=Fz/ref,Ca=car.cc*Fz*(car.ccP2+1)/(car.ccP2+xz*xz),Ck=3*muX*Fz/car.slipOpt;                 // the longitudinal peak sits at slipOpt, as the launch has it
   const ty=Math.tan(alpha)+(tg||0);
   const sx=Ck*kappa/(3*muX*Fz),sy=Ca*ty/(3*muY*Fz),s=Math.hypot(sx,sy);
@@ -15863,23 +16042,27 @@ function stepCar(car,s,u,dt){
   const steer=Math.max(-1,Math.min(1,u.steer||0)),brake=Math.max(0,Math.min(1,u.brake||0)),hb=Math.max(0,Math.min(1,u.handbrake||0));
   let thr=Math.max(0,Math.min(1,u.throttle||0));
   const rd=u.road||{},sinT=rd.sinT||0,cosT=Math.sqrt(Math.max(0,1-sinT*sinT)),kv=rd.kv||0,zr=rd.z,gr=rd.grip,sl=rd.soil,W0F=car.m*g*car.b/L/2,W0R=car.m*g*car.a/L/2;
+  const wet=Math.max(0,Math.min(1,car.wet||0)),gWet=1-wet*(1-DRIVE_SURFACE.wet),airT=car.airT!=null?car.airT:22;
+  const tArea=car.tyreArea||0.475,tCap=car.tyreC||DRIVE_TYRE_THERM.cp,tOpt=car.tyreTopt!=null?car.tyreTopt:78,tWin=car.tyreTwin||32,tWk=car.tyreWear||1;
+  if(!s.tyreT){s.tyreT=[tOpt,tOpt,tOpt,tOpt];s.tyreW=[0,0,0,0];s.smoke=[0,0,0,0];}
+  if(!s.brakeT){const b0=car.brakeTh&&car.brakeTh.amb!=null?car.brakeTh.amb:25;s.brakeT=[b0,b0,b0,b0];}
   const sRate=(steer*car.steerLock-(s.delta||0))/dt;   // the hand wheel's rate this call, for the friction (DRIVE_ASSIST)
   for(let k=0;k<n;k++){
     const v=Math.hypot(s.vx,s.vy),delta=steer*car.steerLock;
-    // ---- gearbox
-    const top=car.ratios.length;
+    // ---- gearbox (supports reverse gear s.gear === -1)
+    const top=car.ratios.length,revR=car.revRatio!=null?car.revRatio:-car.ratios[0];
     if(s.shiftT>0){s.shiftT-=h;
       // with an automatic clutch the driver matches the revs for the gear coming (a blip going down), so the clutch
       // takes up without a jolt through the driven tyres
-      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear>0)s.we=Math.max(car.idle*Math.PI/30,wMean()*car.ratios[s.gear-1]*car.fd);}
-    if(u.gear!=null){const gq=Math.max(0,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
+      if(s.shiftT<=0&&u.clutch==null&&!car.ev&&s.gear!==0){const gr0=s.gear>0?car.ratios[Math.min(top,s.gear)-1]:revR;s.we=Math.max(car.idle*Math.PI/30,wMean()*gr0*car.fd);}}
+    if(u.gear!=null){const gq=Math.max(-1,Math.min(top,u.gear|0));if(gq!==s.gear){s.gear=gq;s.shiftT=car.shiftTime;}}
     else if(!car.ev&&s.shiftT<=0&&s.gear>0){
       const rpmNow=wMean()*car.ratios[s.gear-1]*car.fd*30/Math.PI;      // the speed the wheels give the engine in this gear
       if(rpmNow>0.97*car.redline&&s.gear<top){s.gear++;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<0.42*car.redline&&rpmNow*car.ratios[s.gear-2]/car.ratios[s.gear-1]<0.85*car.redline&&thr<0.99){s.gear--;s.shiftT=car.shiftTime;}
       else if(s.gear>1&&rpmNow<Math.max(car.idle*1.15,0.22*car.redline)){s.gear--;s.shiftT=car.shiftTime;}
     }
-    const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:0;
+    const ratio=s.gear>0?car.ratios[Math.min(top,s.gear)-1]*car.fd:s.gear===-1?revR*car.fd:0;
     // ---- loads
     // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
     // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
@@ -15892,6 +16075,7 @@ function stepCar(car,s,u,dt){
     // ---- tyres
     let FX=0,FY=0,MZ=0,MK=0;const dF=[0,0,0,0],Fl=[0,0,0,0];
     if(!s.toe){s.toe=[0,0,0,0];s.Fyw=[0,0,0,0];}
+    const Gair=tArea*(DRIVE_TYRE_THERM.H0+DRIVE_TYRE_THERM.H1*Math.pow(Math.max(0,v),0.8)+DRIVE_TYRE_THERM.hWet*wet),Gtrk=tArea*DRIVE_TYRE_THERM.hTrack;
     for(let i=0;i<4;i++){
       const front=i<2,vxw=s.vx-s.yaw*yw[i],vyw=s.vy+s.yaw*xw[i];
       // the axle's mean travel on the body (heave and pitch), and the wheel's side, right +1 (THE CAMBER, THE TOE)
@@ -15904,11 +16088,22 @@ function stepCar(car,s,u,dt){
       const kap=(s.w[i]*car.r-vl)/den,alp=-Math.atan2(vt,Math.max(Math.abs(vl),0.5));
       s.al[i]+=(alp-s.al[i])*Math.min(1,Math.abs(vl)*h/car.relax);          // the side force builds over the relaxation length
       // the wheel's lean to the left: static camber, its top towards the car's middle, and the roll less what is recovered
-      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0;
-      if(car.camF!=null){const gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF:car.recR)*((front?s.rr[0]:s.rr[1])+sd*2*cm/tw);
+      const ah=drivePatch(car.r,front?car.ktF:car.ktR,Fz[i]);let tg=0,gam=null;
+      if(car.camF!=null){gam=(i%2?-1:1)*(front?car.camF:car.camR)-s.roll+(front?car.recF:car.recR)*((front?s.rr[0]:s.rr[1])+sd*2*cm/tw);
         if(!s.cg){s.cg=[0,0,0,0];s.camber=[0,0,0,0];}s.camber[i]=gam;
         tg=s.cg[i]+=(ah/(3*car.r)*Math.sin(gam)-s.cg[i])*Math.min(1,Math.abs(vl)*h/car.relax);}   // its thrust builds as the slip does
-      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gr?gr[i]:1);
+      const gq=(gr?gr[i]:1)*gWet*driveTyreTempGrip(s.tyreT[i],car)*driveTyreWearGrip(s.tyreW[i]);
+      const T=driveTyre(car,Fz[i],kap,s.al[i],front,tg,gq,gam);
+      // Tread thermal, wear, and smoke (Pacejka ch. 3 sliding work, Blok ~50% rubber heat partition)
+      const vSx=s.w[i]*car.r-vl,vSlip=Math.hypot(vSx,vt);
+      const pSlip=0.5*Math.min(1,T[2])*(Math.abs(T[0]*vSx)+Math.abs(T[1]*vt));
+      const pRoll=DRIVE_TYRE_THERM.roll*driveRollF(car,Fz[i],sl&&sl[i])*Math.abs(vl);
+      s.tyreT[i]=Math.max(airT,s.tyreT[i]+(pSlip+pRoll-(Gair+Gtrk)*(s.tyreT[i]-airT))*h/tCap);
+      const over=Math.max(0,(s.tyreT[i]-tOpt-tWin)/tWin);
+      s.tyreW[i]=Math.min(1,s.tyreW[i]+DRIVE_TYRE_THERM.wearK*tWk*pSlip*(1+DRIVE_TYRE_THERM.wearHot*over)*h);
+      const tSm=Math.max(0,Math.min(1,(s.tyreT[i]-DRIVE_TYRE_THERM.smokeT0)/DRIVE_TYRE_THERM.smokeSpan));
+      const pSm=Math.max(0,Math.min(1,(pSlip-4000)/16000));
+      s.smoke[i]=(1-wet)*(T[2]>0.8?Math.min(1,vSlip/4)*Math.max(tSm,0.5*pSm):0);
       Fl[i]=T[0];dF[i]=T[3]*car.r/den;s.kappa[i]=kap;s.alpha[i]=s.al[i];s.Fyw[i]=T[1];
       const fx=T[0]*cw-T[1]*sw,fy=T[0]*sw+T[1]*cw;
       s.Fx[i]=fx;s.Fy[i]=fy;FX+=fx;FY+=fy;MZ+=xw[i]*fy-yw[i]*fx;
@@ -15921,10 +16116,10 @@ function stepCar(car,s,u,dt){
     const wd=wMean();
     // How far the driven tyres are past their peak, as a rate for whoever is holding them there (the ECU's traction
     // control on the throttle, or the driver's clutch foot pulling away): zero at the peak, closing fast beyond it.
-    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,s.kappa[i]);
+    let worst=0;for(let i=0;i<4;i++)if(drv[i]||(i<2&&car.el&&car.el.front))worst=Math.max(worst,ratio<0?-s.kappa[i]:s.kappa[i]);
     const hold=Math.max(-30,Math.min(8,12*(1-worst/car.slipOpt)));
     const A=car.aids,holdTc=Math.max(-30,Math.min(8,A.tcGain*(1-worst/(car.slipOpt*A.tcSlip))));
-    const pulling=!car.ev&&u.clutch==null&&s.gear===1&&s.shiftT<=0&&s.we-wd*car.ratios[0]*car.fd>1;   // the clutch is still slipping from rest
+    const pulling=!car.ev&&u.clutch==null&&(s.gear===1||s.gear===-1)&&s.shiftT<=0&&!(car.tcStall>0)&&s.we-wd*ratio>1;   // the clutch is still slipping from rest
     if(car.tc&&!pulling){s.tcF=Math.max(0.05,Math.min(1,s.tcF+holdTc*h));thr*=s.tcF;}else s.tcF=1;
     // ---- stability control: one wheel's brake for the yaw moment the car is short of or has too much of (DRIVE_AIDS)
     const eT=s.esp;eT[0]=eT[1]=eT[2]=eT[3]=0;
@@ -15932,7 +16127,7 @@ function stepCar(car,s,u,dt){
       if(s.vx>A.espVmin){
         // the grip is the tyres' own on what is under them or, where the car is already turning harder (downforce, a
         // banked dip), what it has shown. On a lower grip the brush tyre peaks at a smaller angle, tan by the grip.
-        const gF=gr?(gr[0]+gr[1])/2:1,gB=gr?(gr[2]+gr[3])/2:1,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
+        const gF=(gr?(gr[0]+gr[1])/2:1)*gWet,gB=(gr?(gr[2]+gr[3])/2:1)*gWet,pkF=gF<1?Math.atan(gF*Math.tan(car.pkF)):car.pkF,pkB=gB<1?Math.atan(gB*Math.tan(A.espBeta)):A.espBeta;
         const lim=Math.max(car.mu*gz*(gF+gB)/2,Math.abs(s.ayF))/s.vx,ref=Math.max(-lim,Math.min(lim,s.vx*delta/(L*Math.max(0.1,1+car.Kus*s.vx*s.vx))));
         // too little yaw counts only once the front tyres are past their peak, where more lock does nothing
         const sg=Math.sign(ref),ex=(ref-s.yaw)*sg-A.espBand;
@@ -15955,7 +16150,7 @@ function stepCar(car,s,u,dt){
     }else s.espF=1;
     // a P2 hybrid's engine stops and starts (build 288)
     const p2=car.el&&car.el.stop&&!car.ev;
-    if(p2)driveStartStop(car,s,Math.max(0,Math.min(1,u.throttle||0)),Math.max(0,wd)*ratio*30/Math.PI,v,h);
+    if(p2)driveStartStop(car,s,Math.max(0,Math.min(1,u.throttle||0)),Math.max(0,wd*ratio)*30/Math.PI,v,h);
     const rpm=s.we*30/Math.PI;
     // An engine turning too slowly to fire stalls: then it is only its own drag, until the starter (u.starter) or
     // the wheels through the clutch (a bump start) turn it fast enough again.
@@ -15971,20 +16166,33 @@ function stepCar(car,s,u,dt){
     if(car.el&&car.el.front){const F=car.el.front.F;vf=Math.max(0,(s.w[0]+s.w[1])/2*car.r);const q=vf/0.5,a=Math.min(F.length-2,Math.floor(q));
       const full=F[a]+(F[a+1]-F[a])*(q-a),E=car.el.front,NT=E.loss.length/F.length;
       Ff=thr*driveShares(car.el,s.soc)[0]*drivePack(car.el,s.soc,full*vf/E.eff,E.loss[a*NT+NT-1],E.share)*full;}
-    if(car.ev){const rm=Math.max(0,wd)*ratio*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd)*ratio;
+    if(car.ev){const rm=Math.max(0,wd*ratio)*30/Math.PI;Tw=driveEngine(car,thr,rm,null,s.soc)*ratio*car.eff;s.we=Math.abs(wd*ratio);
       if(car.el)driveCharge(car,s,thr,rm,Ff,vf,h);}
     else if(!s.eng){                                                       // the engine stopped, its clutch open
-      const rm=Math.max(0,wd)*ratio*30/Math.PI,T=ratio===0||s.shiftT>0?0:driveMotorOnly(car,thr,rm,s.soc);
-      s.we=Math.abs(wd)*ratio;s.clF=1;s.pull=false;Tw=T*ratio*car.eff;
+      const rm=Math.max(0,wd*ratio)*30/Math.PI,T=ratio===0||s.shiftT>0?0:driveMotorOnly(car,thr,rm,s.soc);
+      s.we=Math.abs(wd*ratio);s.clF=1;s.pull=false;Tw=T*ratio*car.eff;
       driveCharge(car,s,thr,rm,Ff,vf,h,T);}
-    else{
-      // The clutch. A pedal if the driver gives one; otherwise a driver's two feet pulling away: the left feeds the
-      // clutch in no faster than the tyres can take, the right holds the engine at the speed the pedal asks (idle off
-      // it, the launch speed flat out) until the wheels have caught up and the clutch locks.
+    else if(car.gearbox==='auto'&&car.tcStall>0&&car.tcK>0&&(ratio===0||s.shiftT>0||wd*ratio<car.tcStall*Math.PI/30||s.gear===-1)){
+      // Hydrodynamic torque converter below stall/lockup (Bosch Automotive Handbook; Gillespie ch. 2):
+      // Impeller absorbs Tp = tcK * (wp^2 - wt^2); stator multiplies positive torque by TR(SR) from tcMult at stall to 1 at coupling (SR=0.85).
+      let Tp=0,Tturb=0;
+      if(ratio!==0&&s.shiftT<=0){
+        const wp=Math.max(0,s.we),wtP=Math.max(0,wd*ratio),sr=wp>1?Math.min(1.2,wtP/wp):0;
+        Tp=car.tcK*(wp*wp-wtP*wtP);
+        const tr=sr<0.85?1+(car.tcMult-1)*(1-sr/0.85):1;
+        Tturb=Tp>0?Tp*tr:Tp;
+      }
+      s.we=Math.max(0,s.we+h*(Te-Tp)/car.Ie);
+      Tw=Tturb*ratio*car.eff;s.clF=1;s.pull=false;
+      if(car.el)driveCharge(car,s,s.firing&&s.shiftT<=0?thr:0,rpm,Ff,vf,h);
+    }else{
+      // The clutch (or locked torque converter above stall). A pedal if the driver gives one; otherwise a driver's two
+      // feet pulling away: the left feeds the clutch in no faster than the tyres can take, the right holds the engine
+      // at the speed the pedal asks (idle off it, the launch speed flat out) until the wheels have caught up and it locks.
       const auto=u.clutch==null,slip=s.we-wd*ratio,pedal=Math.max(0,Math.min(1,u.throttle||0));
       let cap=ratio===0||s.shiftT>0?0:car.clutchCap*(auto?1:1-Math.max(0,Math.min(1,u.clutch)));
-      if(auto&&cap>0&&slip>1&&(s.gear===1||wd*ratio<car.idle*Math.PI/30)){
-        const wT=(car.idle+(s.gear===1?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost,s.soc));
+      if(auto&&cap>0&&slip>1&&!(car.tcStall>0)&&(s.gear===1||s.gear===-1||wd*ratio<car.idle*Math.PI/30)){
+        const wT=(car.idle+((s.gear===1||s.gear===-1)?pedal*(car.launchRpm-car.idle):0))*Math.PI/30,avail=Math.max(0,driveEngine(car,thr,rpm,s.boost,s.soc));
         if(!s.pull){s.pull=true;s.clF=0.1;}                                   // the bite point, then in
         s.clF=Math.max(0.05,Math.min(1,s.clF+hold*h));
         cap*=s.clF;
@@ -16019,9 +16227,21 @@ function stepCar(car,s,u,dt){
       if(!(ax===0?car.liveF:car.liveR))Tbd[i]=Tbd[j]=Td;
       const share=ax===0?car.brakeFront:1-car.brakeFront;
       for(const [q,Tq] of [[i,Ti],[j,Tj]]){
-        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]&&vl>2)?-car.aids.absRel:car.aids.absApp)*h));}
-        const cap=car.brakeF*share/2*car.r;let Tb=Math.min(cap,brake*cap+s.esp[q])*(car.abs?s.abs[q]:1);   // the pedal's and the stability control's
+        const lockSlip=s.vx>=0?s.kappa[q]<-car.slipOpt*car.aids.absSlip[ax]:s.kappa[q]>car.slipOpt*car.aids.absSlip[ax];
+        if(car.abs){const vl=Math.abs(s.vx);s.abs[q]=Math.max(0.05,Math.min(1,s.abs[q]+((lockSlip&&vl>2&&(brake>0||s.esp[q]>0))?-car.aids.absRel:car.aids.absApp)*h));}
+        const fade=driveBrakeFade(s.brakeT[q],car.brakeTh);
+        const cap=car.brakeF*share/2*car.r*fade;
+        let pedalTb=brake*cap;
+        if(!car.abs&&ax===1&&car.brakeValve){
+          // Non-ABS knee-point proportioning valve (Limpert ch. 7 / UN ECE R13-H)
+          const xf=brake*car.brakeF*car.brakeFront/car.m,bv=car.brakeValve;
+          const xr=Math.max(0,bv.xk>1e-6&&xf<=bv.xk?bv.yk*xf/bv.xk:bv.yk+bv.slope*Math.max(0,xf-bv.xk));
+          pedalTb=Math.min(cap,xr*car.m/2*car.r*fade);
+        }
+        let Tb=Math.min(cap,pedalTb+s.esp[q])*(car.abs?s.abs[q]:1);        // the pedal's and the stability control's
         if(hb>0&&ax===1)Tb+=hb*car.hbCap/2*car.r;                         // the lever's, which the ABS does not ease
+        if(car.brakeTh){const disc=ax===0?car.brakeTh.f:car.brakeTh.r,Pb=Tb*Math.abs(s.w[q]);
+          s.brakeT[q]+=(0.9*Pb-driveRotorCooling(s.brakeT[q],disc,car.brakeTh,v))*h/(disc.m*car.brakeTh.cp);}
         const roll=driveRollF(car,Fz[q],sl&&sl[q])*car.r*Math.tanh(s.w[q]*car.r/0.5);
         const Iq=car.Iw+h*car.r*dF[q];                                      // the tyre's own stiffness taken implicitly
         let wq=s.w[q]+h*(Tq-Fl[q]*car.r-roll)/Iq;
@@ -16853,9 +17073,17 @@ function simulateLapCore(key,opts){
   const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2;
   const df=vehicle.df||DIFF.open;
   const dCorner=df.corner!=null?df.corner:1;   // locking the diff scrubs lateral grip
+  // Driver aids & AWD centre coupling (Bosch Automotive Handbook; Milliken & Milliken RCVD ch. 18):
+  const aids=vehicle.aids||{}, absOn=aids.abs!==false;
+  const tcOn=aids.tc!=null?!!aids.tc:vehicle.tc!==false;
+  const espOn=aids.esp!=null?!!aids.esp:tcOn;
+  const ccAwd=vehicle.drive==='awd'?centreCoupling(vehicle):null;
+  // Tight ESP slip-angle gate (espSlide < 1) caps lateral force on the brush curve 3s - 3s^2 + s^3 (Pacejka ch. 3)
+  const espS=espOn&&aids.espSlide!=null&&aids.espSlide<1?clamp(aids.espSlide,0.2,1):1;
+  const espGripF=espS<1?3*espS-3*espS*espS+espS*espS*espS:1;
   // Lateral grip at a normal load and lateral acceleration: the tyres under load transfer and roll
-  // camber (latMuEff, build 109), less the diff's scrub.
-  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;   // vv: the speed, for the downforce's share of N and the road's bumps
+  // camber (latMuEff, build 109), less the diff's scrub and any tight ESP slip-angle gate.
+  const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner*espGripF;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const airC=opts&&opts.air!=null?opts.air:null;
   const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
@@ -16956,6 +17184,7 @@ function simulateLapCore(key,opts){
   // under braking cost nothing.
   const fWt=vehicle.fWt||0.55,aeroF=vehicle.aeroBal!=null?vehicle.aeroBal:0.5,fH=vehicle.brakeFrontShare||0.7;
   const engFront=vehicle.drive==='fwd'?1:vehicle.drive==='awd'?fWt:0;   // the engine's braking: the driven axle's share
+  const valve=absOn?null:brakeValveRear(fWt,hL);                       // knee-point proportioning valve when ABS is off (Limpert ch. 7)
   // The axles at point q, speed vv, slowing at a (m/s2, the tyres' share) while cornering at ay: their loads and the
   // grip each has left along the road. Build 157: each axle's own side force (the mass it carries times ay) against
   // its own lateral grip at the load the braking leaves it, so braking into a corner unloads the rear and it runs out
@@ -16976,19 +17205,29 @@ function simulateLapCore(key,opts){
     const N=loadAt(q,vi);
     const ayi=vi*vi/q.r;
     const cBF=vehicle.brakeDecelCap*fade*m*fH,cBR=vehicle.brakeDecelCap*fadeRr*m*(1-fH),eF=ea*m*engFront,eR=ea*m*(1-engFront);
-    // the load transfer follows the deceleration it makes: three rounds from the first guess, then one a round, carrying
-    // the deceleration found (the speed moves little between rounds)
-    for(let k=0;k<(it===0?3:1);k++){
-      const ax=axles(q,vi,aT,ayi);
-      aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
-      bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+    if(absOn){
+      // the load transfer follows the deceleration it makes: three rounds from the first guess, then one a round, carrying
+      // the deceleration found (the speed moves little between rounds)
+      for(let k=0;k<(it===0?3:1);k++){
+        const ax=axles(q,vi,aT,ayi);
+        aT=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+        bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;
+      }
+      // Build 157: with each axle's own lateral grip the rear can run out as braking moves load off it, so the rounds can
+      // end on a deceleration its own load transfer does not support. Step down to what that transfer gives until it
+      // does: with the rear out of grip, less braking also takes load off the front, so this takes a few steps, each
+      // smaller (the front's grip grows more slowly than the braking it carries).
+      for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
+        if(!(aC<aT-1e-4))break;aT=aC;bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;}
+    }else{
+      // Non-ABS braking: knee-point proportioning valve (brakeValveRear) limits deceleration to the first axle that
+      // reaches its longitudinal grip (matching simulateBraking in vehicle-accel.js; UN ECE R13-H / Limpert ch. 7).
+      const ok=xf=>{const xr=Math.max(0,Math.min(valve(xf),cBR/m)),ax=axles(q,vi,xf+xr+(eF+eR)/m,ayi);
+        return xf*m+eF<=ax.gF+1e-6&&xr*m+eR<=ax.gR+1e-6;};
+      let lo=0,hi=cBF/m;if(ok(hi))lo=hi;else for(let k=0;k<16;k++){const mid=0.5*(lo+hi);if(ok(mid))lo=mid;else hi=mid;}
+      const xr=Math.max(0,Math.min(valve(lo),cBR/m));
+      aT=lo+xr+(eF+eR)/m;bfBound=lo>=cBF/m-1e-4&&xr>=cBR/m-1e-4;
     }
-    // Build 157: with each axle's own lateral grip the rear can run out as braking moves load off it, so the rounds can
-    // end on a deceleration its own load transfer does not support. Step down to what that transfer gives until it
-    // does: with the rear out of grip, less braking also takes load off the front, so this takes a few steps, each
-    // smaller (the front's grip grows more slowly than the braking it carries).
-    for(let k=0;k<8;k++){const ax=axles(q,vi,aT,ayi),aC=(Math.min(ax.gF,cBF+eF)+Math.min(ax.gR,cBR+eR))/m;
-      if(!(aC<aT-1e-4))break;aT=aC;bfBound=cBF+eF<ax.gF||cBR+eR<ax.gR;}
     const aBrake=aT+(drag(vi)+corneringDrag(m,ayi,N))/m+G*q.sinT;
     cap=Math.sqrt(Math.max(0,vNext*vNext+2*Math.max(0.1,aBrake)*q.ds3));
     const nv=Math.min(vi0,cap);
@@ -17006,21 +17245,34 @@ function simulateLapCore(key,opts){
     const tq=tqAt(clamp(rpm,idle,rl));
     return{gear:g,F:tq*tot*eff/rT+frontF(vi),tqFrac:tq*tot/axleTqMax};
   }
+  // Traction control slip factor: Pacejka tyreSlipMu at aids.tcSlip * TYRE_SLIP_OPT (1.0 at default tcSlip=1).
+  const tcSlipF=tcOn&&aids.tcSlip!=null?Math.max(0.4,tyreSlipMu(TYRE_SLIP_OPT*clamp(aids.tcSlip,0.2,2.5))):1;
   function accFrom(q,vi,boostShare=1,gear=-1){
     const N=loadAt(q,vi),dn=down(vi);
     const N0=(N-dn)*vehicle.drivenWt+dn*vehicle.drivenAero;
     const aLat=vi*vi/q.r;
     // the share of the grip in use sideways: the car's (for the 'corner' call) and the driven axle's own, which is
     // what is left for the drive (build 157: a rear-driver's rears may be nearer their limit than the car is)
-    const B=latBalance(N,aLat,dn,0,vi,q),aLatMax=B.mu*dCorner*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
-    const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner),0,1);
+    const B=latBalance(N,aLat,dn,0,vi,q),aLatMax=B.mu*dCorner*espGripF*N/m,u=clamp(aLat/Math.max(0.1,aLatMax),0,1);
+    const uFa=clamp(m*aLat*vehicle.fWt/Math.max(1,B.capF*dCorner*espGripF),0,1),uRa=clamp(m*aLat*(1-vehicle.fWt)/Math.max(1,B.capR*dCorner*espGripF),0,1);
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
-    const nD=vehicle.drive==='awd'?4:2,sD=vehicle.drive==='fwd'?roadSigma('F',vi):vehicle.drive==='rwd'?roadSigma('R',vi):(roadSigma('F',vi)+roadSigma('R',vi))/2;   // the driven tyres' load swing (build 216)
-    const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/nD))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
+    let kk;
+    if(vehicle.drive==='awd'){
+      // AWD centre coupling (centreCoupling -> awdTractionCap): open/sport/lock split limits combined front/rear exit grip
+      const gFA=tyreMuX(B.Nf/2,vehicle.FzRefF)*B.Nf*roadGrip(roadSigma('F',vi)/Math.max(1,B.Nf/2))*Math.sqrt(Math.max(0,1-uFa*uFa));
+      const gRA=tyreMuX(B.Nr/2)*B.Nr*roadGrip(roadSigma('R',vi)/Math.max(1,B.Nr/2))*Math.sqrt(Math.max(0,1-uRa*uRa));
+      const awdG=awdTractionCap(ccAwd,gFA,gRA);
+      kk=(awdG/Math.max(1,N0))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?awdG*rT:0);
+    }else{
+      const sD=vehicle.drive==='fwd'?roadSigma('F',vi):roadSigma('R',vi);   // the driven tyres' load swing (build 216)
+      kk=tyreMuX(N0/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*roadGrip(sD/Math.max(1,N0/2))*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,df.part?tyreMuX(N0/2,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*N0*rT:0)*Math.sqrt(Math.max(0,1-uD*uD));
+    }
+    // TC on: holds slip at tcSlip * TYRE_SLIP_OPT; TC off on corner exit (uD > 0.25): minor slip-overshoot loss on Pacejka falling branch (probable)
+    kk*=tcOn?tcSlipF:(uD>0.25?1-0.04*uD:1);
     // On power the drive force also spins up the engine and wheels (vehicleMassEff, build 106): a = (F -
     // m R) / mE. On grip the tyres are slipping, the surplus only spins the wheels, and the car gets the
     // tyre's force over its own mass, with the load transfer following that acceleration:
@@ -17178,8 +17430,14 @@ function simulateLapCore(key,opts){
     const ax=axles(p[i],v[i],Math.max(0,at),ay),eF=ea*m*engFront,eR=ea*m*(1-engFront);
     const Fb=Math.max(0,m*at-eF-eR);
     let bf=Fb*fH,br=Fb-bf;
-    if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
-    else if(br+eR>ax.gR){br=Math.max(0,ax.gR-eR);bf=Fb-br;}
+    if(absOn){
+      if(bf+eF>ax.gF){bf=Math.max(0,ax.gF-eF);br=Fb-bf;}
+      else if(br+eR>ax.gR){br=Math.max(0,ax.gR-eR);bf=Fb-br;}
+    }else if(Fb>0){
+      // Non-ABS: split Fb along the knee-point proportioning valve (xf + valve(xf) = Fb/m)
+      let lo=0,hi=Fb/m;for(let k=0;k<12;k++){const mid=0.5*(lo+hi);if(mid+valve(mid)<=Fb/m)lo=mid;else hi=mid;}
+      bf=lo*m;br=Math.max(0,Fb-bf);
+    }
     return {useF:(bf+eF)/Math.max(1,ax.gF),useR:(br+eR)/Math.max(1,ax.gR),fr:Fb>0?bf/Fb:fH,gF:ax.gF,gR:ax.gR};
   }
   // Engine braking that the driven axle can carry at i: ABS can ease the brakes but not the engine, so a downshift
@@ -17450,14 +17708,19 @@ function simulateLapCore(key,opts){
   //           brake, as a share of what the brakes can command.
   //   g       lateral v^2/r, signed by which way the line turns; longitudinal from the speed change
   //   rpm     from the gear the car is in
-  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map) from kinematic (Ackermann) steering, atan(wheelbase / r)
-  //           on the line's own radius (build 130). Geometry only: no slip angle, so no understeer or
-  //           oversteer correction. The HUD multiplies it by the steering ratio for the wheel in the hands.
+  //   steer   the front wheels' angle (rad, + = right, i.e. clockwise on the map): kinematic Ackermann atan(L/r)
+  //           plus steady-state slip-angle difference Kus * ay (Milliken & Milliken, RCVD ch. 6; Gillespie ch. 6),
+  //           where Kus = m (fWt/Cf - (1-fWt)/Cr) rad/(m/s²). Understeer adds lock; oversteer reduces lock.
+  //           The HUD multiplies it by the steering ratio for the wheel in the hands.
   //   pwr     crank power (W): the drive force the speed profile spends, times speed, back through the
   //           driveline's efficiency, and never more than the engine makes at full throttle at this rpm
   //           (with the boost the shaft has built). Zero coasting, braking and mid-shift.
   const tAt=new Array(n),thr=new Array(n),brk=new Array(n),gLat=new Array(n),gLong=new Array(n),rpmAt=new Array(n),mapAt=new Array(n);
   const steerRaw=new Array(n),pwr=new Array(n),tgt=new Float64Array(n),wb=vehicle.wb||2.6;
+  const ccLap=vehicle.tyreCC||tyreCC(vehicle.tireType);
+  const cAx=(W,ref)=>2*ccLap*(W/2)*(TYRE_CC_P2+1)/(TYRE_CC_P2+Math.pow(W/2/Math.max(1,ref),2));
+  const CaF=cAx(m*G*fWt,vehicle.FzRefF||vehicle.FzRef),CaR=cAx(m*G*(1-fWt),vehicle.FzRef);
+  const KusLap=m*(fWt/Math.max(1,CaF)-(1-fWt)/Math.max(1,CaR));   // rad / (m/s²)
   // each axle's share of its grip in use under braking (build 150), and the engine's alone on the driven axle
   const useF=new Float64Array(n),useR=new Float64Array(n),frB=new Float64Array(n).fill(fH);let engUseMax=0;
   {
@@ -17474,8 +17737,9 @@ function simulateLapCore(key,opts){
       else if(need>=0){tgt[i]=clamp(need/Math.max(1,(holdAt[i]>=0?inGear(v[i],holdAt[i]):bestGear(v[i])).F*(boostShare?boostShare[i]:1)),0,1);brk[i]=0;}
       else{tgt[i]=0;brk[i]=clamp((-need/m-ebA[i])/Math.max(0.1,vehicle.brakeDecelCap),0,1);}   // the engine's braking is not the pedal's
       const ax=p[i].x-p[h].x,ay=p[i].y-p[h].y,bx=p[j].x-p[i].x,by=p[j].y-p[i].y;
-      gLat[i]=Math.sign(ax*by-ay*bx)*v[i]*v[i]/Math.max(1,p[i].r)/G;
-      steerRaw[i]=Math.sign(ax*by-ay*bx)*Math.atan(wb/Math.max(1,p[i].r));
+      const ayMag=v[i]*v[i]/Math.max(1,p[i].r),turnSgn=Math.sign(ax*by-ay*bx);
+      gLat[i]=turnSgn*ayMag/G;
+      steerRaw[i]=clamp(turnSgn*(Math.atan(wb/Math.max(1,p[i].r))+KusLap*ayMag),-0.6,0.6);
       gLong[i]=aL[i]/G;
       rpmAt[i]=clamp(v[i]*ratios[gears[i]]*fd/rT*60/TWO_PI,idle,rl);
       {const mc=mechAt(i);if(mc>0.3){const x=axleUse(i,mc,ebA[i]);useF[i]=x.useF;useR[i]=x.useR;frB[i]=x.fr;
@@ -30456,21 +30720,22 @@ function icChargeUA(P,m){
   return oc*hc*Ac;
 }
 // The cooling air's side of a louvred face W x H x D mm with fpi fins: its conductance (W/K) and the air's capacity rate.
-function icAirUA(W,H,D,fpi){
+function icAirUA(W,H,D,fpi,faceV){
+  const vFace=faceV>0?faceV:IC_FACE_V;
   const L=IC_LOUVER,w=W/1e3,h=H/1e3,d=D/1e3,mua=1.84e-5,rhoa=1.18,pr=Math.pow(IC_PR,-2/3);
-  const Fp=25.4/fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=IC_FACE_V/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
+  const Fp=25.4/fpi,sa=(L.Fl/L.Tp)*(1-L.df/Fp),Vc=vFace/sa,ReL=rhoa*Vc*L.Lp/1e3/mua;
   const ja=Math.pow(ReL,-0.49)*Math.pow(L.th/90,0.27)*Math.pow(Fp/L.Lp,-0.14)*Math.pow(L.Fl/L.Lp,-0.29)*Math.pow(D/L.Lp,-0.23)
     *Math.pow(L.Ll/L.Lp,0.68)*Math.pow(L.Tp/L.Lp,-0.28)*Math.pow(L.df/L.Lp,-0.05);
   const ha=ja*rhoa*Vc*IC_CP*pr,Aa=w*h*d*(L.Fl/L.Tp)*(2e3/Fp+2e3/L.Fl),fa=(1/Fp)/(1/Fp+1/L.Fl);
   const oa=1-fa*(1-finEff(ha,200,L.df/1e3,L.Fl/2e3));
-  return {UA:oa*ha*Aa,C:rhoa*IC_FACE_V*w*h*IC_CP};
+  return {UA:oa*ha*Aa,C:rhoa*vFace*w*h*IC_CP};
 }
 // Cross-flow, both fluids unmixed (Incropera; Kays & London's chart): effectiveness from NTU and Cr = Cmin/Cmax.
 const xfEps=(NTU,Cr)=>1-Math.exp(Math.pow(NTU,0.22)/Cr*(Math.exp(-Cr*Math.pow(NTU,0.78))-1));
-function icEps(P,m){
+function icEps(P,m,faceV){
   if(!P||!P.w||!(m>0))return 0;
-  if(P.type==='water')return w2aLoop(P,m).cold;
-  const A=icAirUA(P.w,P.h,P.d,P.fpi);
+  if(P.type==='water')return w2aLoop(P,m,faceV).cold;
+  const A=icAirUA(P.w,P.h,P.d,P.fpi,faceV);
   const UA=1/(1/icChargeUA(P,m)+1/A.UA),Cc=m*IC_CP,Ca=A.C,Cmin=Math.min(Cc,Ca),Cr=Cmin/Math.max(Cc,Ca),NTU=UA/Cmin;
   return xfEps(NTU,Cr)*Cmin/Cc;
 }
@@ -30513,11 +30778,11 @@ function w2aDuctUA(q,n,hi,wide,long){
 }
 // The loop at a charge flow m (kg/s): a and b (W/K), the coolant's and the charge's capacity rates, the share given
 // back cold and settled, the loop's heat capacity (J/K) and its time constant settling at this flow (s).
-function w2aLoop(P,m){
+function w2aLoop(P,m,faceV){
   const C=W2A_CL,q=P.pump_lpm/60000,Cw=C.rho*q*C.cp,Cc=m*IC_CP;
   const nC=P.h/W2A_PITCH,UA1=1/(1/icChargeUA(P,m)+1/w2aDuctUA(q,nC,W2A_TUBE.hw,P.w,P.d));
   const C1=Math.min(Cc,Cw),a=xfEps(UA1/C1,C1/Math.max(Cc,Cw))*C1;
-  const A=icAirUA(P.radW,P.radH,P.radD,P.fpi),nR=P.radH/IC_LOUVER.Tp;
+  const A=icAirUA(P.radW,P.radH,P.radD,P.fpi,faceV),nR=P.radH/IC_LOUVER.Tp;
   const UA2=1/(1/A.UA+1/w2aDuctUA(q,nR,W2A_RTUBE,P.radD,P.radW)),C2=Math.min(A.C,Cw),b=xfEps(UA2/C2,C2/Math.max(A.C,Cw))*C2;
   const mcp=P.loop_L/1e3*C.rho*C.cp+W2A_AL*(icGrossL(P)/1e3+P.radW*P.radH*P.radD/1e9)*2700*900;
   return {a,b,Cw,Cc,cold:a/Cc,steady:a/Cc/(1+a/b-a/Cw),mcp,tau:mcp/(a+b-a*b/Cw)};
@@ -31405,7 +31670,7 @@ function previewTurbo(){
       :tr('Housing A/R')+' '+fmt(r.ar,2)+': '+tr('throat')+' <b>'+fmt(r.throat,1)+' cm²</b> <span class="dim">('+tr('now')+' '+fmt(now.throat,1)+'; '+tr('a smaller throat spools sooner and chokes the top end')+')</span>');
     lines.push(tr('95% of the boost from')+' <b>'+(r.fullRpm?Math.round(r.fullRpm/100)*100+' rpm':tr('never'))+'</b> <span class="dim">('+tr('now')+' '
       +(now.fullRpm?Math.round(now.fullRpm/100)*100:tr('never'))+')</span>; '+tr('boost at peak power')+' '+fmt(r.boostPk,2)+' bar.');
-    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('from the compressor alone')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
+    lines.push(tr('Shaft inertia')+' '+fmt(r.J*1e7,0)+' g·cm² <span class="dim">('+tr('compressor and turbine wheels')+')</span>; '+tr('the compressor wheel lets go at')+' '+Math.round(r.nMax/1000)+'k rpm.');
   }
   lines.push('<span class="dim">'+tr('How many turbos, the VGT, the boost and the wastegate stay on the ENGINE tab.')+'</span>');
   pv('pbGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
@@ -38403,7 +38668,7 @@ function icdCompute(){
     const e=engine,s=e.score,am=e.afrMode;
     // the curve: the scorecard's own sweep (a warm, healthy engine at its best-power mixture), so it meets its peaks
     e.afrMode='fixed';
-    Object.assign(state,{iat:25,coolant:90,oil:100,engineHealth:1,blown:false,elecLoad:0.3,afr:e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.86});
+    Object.assign(state,{iat:25,coolant:90,oil:100,engineHealth:1,blown:false,elecLoad:0.3,icFaceV:null,afr:e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.86});
     const pts=[];for(let r=1000;r<=e.redline;r+=100){const q=calcAtRpm(r);pts.push({x:r,a:q.powerHP,b:q.torque});}
     e.afrMode=am;
     return {hp:s.peakHP,hpRpm:s.peakHPrpm,tq:s.peakTQ,tqRpm:s.peakTQrpm,disp:e.displacement_L,overall:s.overall,grade:s.grade,rel:s.reliability,
