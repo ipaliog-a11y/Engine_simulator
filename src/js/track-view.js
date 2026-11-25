@@ -154,18 +154,21 @@ function drawReplayHud(L,st,W,y0){
   ctx.fillStyle='#99a';ctx.font='7px '+PS;ctx.fillText(Math.round(st.rpm)+' rpm',x0+48,y0+46);
   // rev bar to the redline
   const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
-  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
-  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
-  drawShiftLights(x0+10,y0+64,st.rpm,engine.redline);
-  if((st.tF||0)>450||(st.tR||0)>450){ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+64,8,8);}
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+52,96,5);
+  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+52,96*rf,5);
+  drawShiftLights(x0+10,y0+60,st.rpm,engine.redline);
+  if((st.tF||0)>450||(st.tR||0)>450){
+    ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+15,7,7);
+    ctx.font='6px '+PS;ctx.fillText(tr('HOT BRK'),x0+130,y0+22);
+  }
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
-  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+84);
+  bar('THR',st.thr,'#00ff88',y0+72);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+86);
   ctx.fillStyle='#667';ctx.font='6px '+PS;
-  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
+  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+107);
   if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
-    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
+    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+123);}
   drawGMeter(st,x0+146,y0+86,30,y0+128);
   // engine power now, as a bar against the peak
   const pw=powerReadout(st,L);

@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Canvas/HUD layout fixes, challenge replay controls, and GPX track deletion (build 458)
+
+- Fixed canvas and HUD layout glitches: shifted the logged-pull legend below wrapped challenge verdicts in `drawDyno` (`src/js/dyno-ui.js`), spaced shift lights away from the `THR` bar and relocated the labeled hot-brake indicator clear of the G-meter in `drawReplayHud` (`src/js/track-view.js`), removed stray fixed-coordinate debug rectangles and switched OHV vs OHC cutaway selection to `e.valvetrain` in `src/js/engine-view.js`, and added the red `wheel in air` entry to the suspension step legend (`src/js/susp-window.js`).
+- Fixed `src/js/track-scene-v2.js`: paused particle spawning and integration while track/race replay is paused, switched `fillRibbon` to `'nonzero'` so figure-8 / self-crossing GPX tracks do not punch holes at intersections, and kept 3D props and night grading consistent on the 20-tile overview fallback.
+- Added Play/Pause (`#btnChalPlay`) and time scrub (`#chalReplayScrub`) controls for dynamic challenge replays, fixed EV tachometer redline (`engine.motor.nMax`) and added a handbrake bar in `drawDriftHud`, distinguished `no-clear`/`no-hold`/`no-run` verdicts from `"This challenge is not ready yet."`, updated stale Moose (48 lines) and Drift AWD handbrake copy (`src/js/chal-view.js`), and surfaced `r.err` tooltips on failed ranking rows (`src/js/chal-rank.js`).
+- Added a `DELETE GPX TRACK` button (`#btnDeleteGpx`) in `#trackSetup` to remove user-imported GPX circuits from `TRACKS` and `localStorage` (`pes.tracks`) (`src/js/fullscreen-track.js`, `src/shell.html`).
+- Added `tests/test281.mjs` covering challenge replay controls, failure verdicts, ranking error tooltips, EV drift tach redline, wheel-in-air legend, valvetrain cutaway, GPX deletion, and paused particles.
+
 ### EV and hybrid bench telemetry, garage detail, and designer UI parity (build 457)
 
 - **EV LIVE bench & dyno (`src/js/electric-ui.js`):** Added a live pack temperature (`state.tB`) bar with thermal warning (`>= 50 °C`) on the bench canvas and `#readout`, scaled the rotor/magnet temperature bar ceiling dynamically from `m.mag.Tmax` (`rotorTempBarMax`, so Ferrite's 250 °C limit is not clipped at 200 °C), labelled induction motors `IM MOTOR` / `IM ` instead of hardcoded `PM MOTOR` / `PM `, and clamped the EV dyno `KNEE` marker inside chart bounds (skipping off-chart draw when `s.knee > redline`).

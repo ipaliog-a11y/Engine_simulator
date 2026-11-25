@@ -181,7 +181,8 @@ function renderSuspWin(){
     '<span><i class="d" style="border-color:#556"></i>'+esc(tr('the two natural frequencies'))+'</span>';
   el('susTS').textContent=tr('OVER A STEP IN THE ROAD (mm)');
   el('susLegS').innerHTML='<span><i style="border-color:'+SC_COL.body+'"></i>'+esc(tr('body'))+'</span><span><i style="border-color:'+SC_COL.wheel+'"></i>'+esc(tr('wheel'))+'</span>'+
-    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>';
+    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>'+
+    '<span><i style="border-color:'+SC_COL.load+'"></i>'+esc(tr('wheel in air'))+'</span>';
   el('susNote').textContent=tr('A calculator: it starts from the car\'s own corner, the quarter car the lap runs on, and nothing changed here goes back to the car. The rates are taken at the wheel through the motion ratio squared. A road wave meets the mean of the bound and rebound damping; the step uses each in its own direction, and the tyre cannot pull on the road. Bump stops, preload and the damper\'s blow-off are left out.');
   drawSuspFreq();drawSuspStep();
 }

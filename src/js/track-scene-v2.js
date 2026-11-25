@@ -570,7 +570,7 @@
           ctx.lineTo(toX(p.x - p.nx * hw), toY(p.y - p.ny * hw));
         }
         ctx.closePath();
-        ctx.fill('evenodd');
+        ctx.fill('nonzero');
         ctx.restore();
       };
       const strokeCenterline = (widthM, style, dash) => {
@@ -722,44 +722,46 @@
   }
 
   /** Step & draw batched tire smoke and wet spray (1 path per kind). */
-  function _stepAndDrawBatchedParticles(ctx, cam, cars) {
+  function _stepAndDrawBatchedParticles(ctx, cam, cars, paused) {
     const wx = _getWX();
     const wet = wx ? (wx.wet || 0) : 0;
-    if (cars && _particles.length < 280) {
-      for (let i = 0; i < cars.length; i++) {
-        const car = cars[i];
-        const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
-        if (wet > 0.12 && Math.random() < 0.32) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.9,
-            y: car.y - Math.sin(car.hd) * 1.9,
-            vx: -Math.cos(car.hd) * 3.2,
-            vy: -Math.sin(car.hd) * 3.2,
-            life: 0,
-            max: 0.36,
-            kind: 'spray',
-          });
-        } else if (brk > 0.55 && Math.random() < 0.35) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.8,
-            y: car.y - Math.sin(car.hd) * 1.8,
-            vx: (Math.random() - 0.5) * 1.2,
-            vy: (Math.random() - 0.5) * 1.2,
-            life: 0,
-            max: 0.45,
-            kind: 'smoke',
-          });
+    if (!paused) {
+      if (cars && _particles.length < 280) {
+        for (let i = 0; i < cars.length; i++) {
+          const car = cars[i];
+          const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
+          if (wet > 0.12 && Math.random() < 0.32) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.9,
+              y: car.y - Math.sin(car.hd) * 1.9,
+              vx: -Math.cos(car.hd) * 3.2,
+              vy: -Math.sin(car.hd) * 3.2,
+              life: 0,
+              max: 0.36,
+              kind: 'spray',
+            });
+          } else if (brk > 0.55 && Math.random() < 0.35) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.8,
+              y: car.y - Math.sin(car.hd) * 1.8,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: (Math.random() - 0.5) * 1.2,
+              life: 0,
+              max: 0.45,
+              kind: 'smoke',
+            });
+          }
         }
       }
-    }
 
-    const dt = 1 / 60;
-    for (let i = _particles.length - 1; i >= 0; i--) {
-      const p = _particles[i];
-      p.life += dt;
-      if (p.life >= p.max) { _particles.splice(i, 1); continue; }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
+      const dt = 1 / 60;
+      for (let i = _particles.length - 1; i >= 0; i--) {
+        const p = _particles[i];
+        p.life += dt;
+        if (p.life >= p.max) { _particles.splice(i, 1); continue; }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+      }
     }
 
     if (_particles.length === 0) return;
@@ -850,7 +852,7 @@
       if (pr.sx < -90 || pr.sx > cam.W + 90 || pr.sy < -90 || pr.sy > cam.H + 90) continue;
       drawList.push({ sy: pr.sy, kind: 'car', car: cars[i], pr });
     }
-    if (paintedTiles) {
+    if (_modeBEnabled) {
       for (let i = 0; i < _sceneProps.length; i++) {
         const prop = _sceneProps[i];
         const pr = _project(cam, prop.x, prop.y, 0);
@@ -925,12 +927,15 @@
       }
     }
 
-    // 5. Batched smoke & wet spray particles
-    _stepAndDrawBatchedParticles(g, cam, cars);
+    // 5. Batched smoke & wet spray particles (frozen while replay/race is paused)
+    const paused = opts.paused != null ? !!opts.paused :
+      (typeof vizMode !== 'undefined' && vizMode === 'track' && typeof lapReplay !== 'undefined' && !lapReplay.playing) ||
+      (typeof vizMode !== 'undefined' && vizMode === 'race' && typeof raceUI !== 'undefined' && (!raceUI.playing || !!raceUI.scrubbing));
+    _stepAndDrawBatchedParticles(g, cam, cars, paused);
 
     // 6. Time-of-day atmospheric grading + additive night prop glow
     g.setTransform(_base);
-    if (paintedTiles && tod === 'night') {
+    if (tod === 'night') {
       g.fillStyle = 'rgba(6, 10, 24, 0.20)';
       g.fillRect(0, 0, cam.W, cam.H);
     } else if (tod === 'sunset') {
@@ -964,6 +969,8 @@
       tileHits: _tileHits,
       tileMisses: _tileMisses,
       propsPlaced: _sceneProps.length,
+      particles: _particles.length,
+      particle0: _particles.length ? { x: _particles[0].x, y: _particles[0].y, life: _particles[0].life } : null,
     };
   };
   window.sceneSetModeB = function (on) {

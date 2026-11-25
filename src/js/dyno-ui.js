@@ -290,6 +290,7 @@ function drawDyno(){
     (lapNow!=null?'  •  '+tr('LAP')+' '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):'');
   ctx.fillText(costTxt,gX+4,iy+28);
   const ch=CHALLENGES.find(c=>c.id===activeChallenge);
+  let legY=iy+41;
   if(ch&&ch.id!=='free'){
     const ev=evalChallenge(ch,m);
     ctx.fillStyle=ev.pass?C.green:C.red;
@@ -298,11 +299,12 @@ function drawDyno(){
     const verdict=(ev.pass?'✓ ':'✗ ')+chName(ch).toLocaleUpperCase(currentLang)+' — '+trIn('dyno',ev.pass?'PASSED':'NOT MET');
     const fits=ctx.measureText(costTxt).width+ctx.measureText(verdict).width+24<=gW;
     ctx.textAlign='right';ctx.fillText(verdict,gX+gW,fits?iy+28:iy+41);ctx.textAlign='left';
+    if(!fits)legY=iy+54;
   }
   ctx.font='6px "Press Start 2P"';
   if(dynoPulls.length){
-    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
-  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
+    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,legY);});
+  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,legY);}
 }
 // Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
 // placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
