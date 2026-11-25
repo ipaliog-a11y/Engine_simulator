@@ -19,7 +19,8 @@ const OBD_CODES={
   P0330:{t:'Cylinder over-pressure',          hold:1, why:'Peak cylinder pressure exceeds the structural ceiling (130 bar SI / 200 bar CI).'},
   P0196:{t:'Engine oil temperature over limit',hold:2, why:'Oil sump temperature is above 151 °C (OIL_WEAR_C), where oil film breakdown begins.'},
   P0524:{t:'Engine oil pressure too low',     hold:2, why:'Oil gallery pressure is below 0.8 bar while the engine runs.'},
-  P0234:{t:'Turbocharger overboost / ECU boost cut',hold:1, why:'ECU knock limiter is pulling boost down to hold knock at the limit.'}
+  P0234:{t:'Turbocharger overboost / ECU boost cut',hold:1, why:'ECU knock limiter is pulling boost down to hold knock at the limit.'},
+  P0299:{t:'Turbocharger underboost / cartridge failed',hold:1, why:'Turbocharger cartridge failed from sustained overspeed (>520 m/s tip speed) or compressor surge; boost collapsed to atmosphere.'}
 };
 const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
 const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
@@ -57,6 +58,7 @@ function obdConditions(){
   if(state.oil>OIL_WEAR_C)on.P0196=1;
   if(state.oilP!=null&&isFinite(state.oilP)&&state.rpm>400&&state.oilP<0.8)on.P0524=1;
   if(engine.intake==='turbo'&&typeof knockBoostCutInfo==='function'&&knockBoostCutInfo()&&(state.boostActual||0)>0.1)on.P0234=1;
+  if(engine.intake==='turbo'&&state.turboBlown)on.P0299=1;
   return on;
 }
 // ---- The lambda sensor (build 337) ----

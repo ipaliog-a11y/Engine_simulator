@@ -125,10 +125,18 @@ function diagnoseEngine(){
     add('err','blown',tr('ENGINE BLOWN'),
       tr('The bench reports a failure')+' ('+tr(state.wearCause||'FAILURE')+').',
       tr('Rebuild with BUILD & DYNO, then fix the cause (knock, heat, float, lean boost).'));
+  else if(state.turboBlown)
+    add('err','turboBlown',tr('TURBO FAILED'),
+      tr('The turbocharger cartridge failed')+' ('+tr(state.turboWearCause||'TURBO OVERSPEED')+').',
+      tr('Rebuild with BUILD & DYNO, then fit a larger turbo or ease boost/rpm.'));
   else if(state.wearCause)
     add('err','wear',tr('DAMAGE IN PROGRESS'),
       tr('Health is falling from')+' '+tr(state.wearCause)+'.',
       tr('Back off load and rpm; fix the cause before another pull.'));
+  else if(state.turboWearCause)
+    add('err','turboWear',tr('TURBO DAMAGE IN PROGRESS'),
+      tr('Turbo health is falling from')+' '+tr(state.turboWearCause)+'.',
+      tr('Ease boost or rpm, or fit a larger compressor wheel.'));
   else if(state.coolant>115)
     add('warn','hot',tr('OVERHEAT ON THE BENCH'),
       tr('Coolant is at {t} °C.').replace('{t}',Math.round(state.coolant)),
@@ -184,7 +192,7 @@ function renderDynoResult(force){
   const box=document.getElementById('dynoResult');
   if(!box||box.hidden||!engine.score)return;
   const data=getDynoData();
-  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang+'|'+Math.round(state.coolant)+'|'+Math.round(state.oil)+'|'+state.systemVoltage.toFixed(1)+'|'+(state.blown?1:0)+'|'+(state.wearCause||'');
+  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang+'|'+Math.round(state.coolant)+'|'+Math.round(state.oil)+'|'+state.systemVoltage.toFixed(1)+'|'+(state.blown?1:0)+'|'+(state.wearCause||'')+'|'+(state.turboBlown?1:0)+'|'+(state.turboWearCause||'');
   if(!force&&key===dynoResultKey)return;
   dynoResultKey=key;
   const s=engine.score, kW=hp=>hp*0.7457, lbft=nm=>nm*0.73756;
@@ -411,6 +419,17 @@ function updateUI(){
         oilPEl.className='stat'+(run&&state.rpm>400&&state.oilP<0.8?' danger':run&&state.oilP<1.5?' warning':'');
       }
     }
+    const tbEl=document.getElementById('statTurbo');
+    if(tbEl){
+      const hasTb=engine.intake==='turbo';
+      tbEl.style.display=hasTb?'':'none';
+      if(hasTb){
+        const th=Math.round((state.turboHealth!=null?state.turboHealth:1)*100);
+        tbEl.querySelector('.value').textContent=state.turboBlown?tr('FAILED'):th;
+        tbEl.querySelector('.unit').textContent=state.turboBlown?'':'%';
+        tbEl.className='stat'+(state.turboBlown||th<30?' danger':(th<70?' warning':''));
+      }
+    }
   }
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
   // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
@@ -453,6 +472,8 @@ function updateUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}
   else if(state.blown){status.textContent=tr('ENGINE FAILURE')+' ('+tr(state.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err'}
   else if(state.wearCause){status.textContent=tr('DAMAGE')+': '+tr(state.wearCause)+' — '+tr('HEALTH')+' '+hp+'% '+tr('FALLING');status.className='status-bar err'}
+  else if(state.turboBlown){status.textContent=tr('TURBO FAILED')+' ('+tr(state.turboWearCause||'TURBO OVERSPEED')+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err'}
+  else if(state.turboWearCause){const thp=Math.round((state.turboHealth!=null?state.turboHealth:1)*100);status.textContent=tr('TURBO DAMAGE')+': '+tr(state.turboWearCause)+' — '+tr('TURBO')+' '+thp+'% '+tr('FALLING');status.className='status-bar err'}
   else if((state.preIgn||0)>=1.0){status.textContent=tr('PRE-IGNITION — LOWER COMPRESSION, BOOST OR ADD OCTANE');status.className='status-bar err'}
   else if((state.cylPmax||0)>(typeof cylPmaxLimit==='function'?cylPmaxLimit():130)){status.textContent=tr('PEAK CYLINDER PRESSURE EXCEEDED');status.className='status-bar err'}
   else if(state.knockRisk>70){status.textContent=tr('DETONATION RISK — RETARDING SPARK / POWER CUT');status.className='status-bar err'}

@@ -31,9 +31,9 @@ function clearPulls(){dynoPulls=[];flash(tr('DYNO PULLS CLEARED'));}
 // The mean piston speed past which revs count against reliability (build 219; see the reliability index below).
 const PISTON_SPEED_LIMIT=25;   // m/s
 function scoreEngine(){
-  const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,tCat:state.tCat,eh:state.engineHealth,bl:state.blown,el:state.elecLoad,map:state.map,rpm:state.rpm};
+  const sv={afr:state.afr,iat:state.iat,coolant:state.coolant,oil:state.oil,tCat:state.tCat,eh:state.engineHealth,bl:state.blown,tb:state.turboBlown,el:state.elecLoad,map:state.map,rpm:state.rpm};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // score against the explicit sweep AFRs, independent of the ECU map
-  state.iat=25;state.coolant=90;state.oil=100;state.tCat=450;state.engineHealth=1;state.blown=false;state.elecLoad=0.3;
+  state.iat=25;state.coolant=90;state.oil=100;state.tCat=450;state.engineHealth=1;state.blown=false;state.turboBlown=false;state.elecLoad=0.3;
   const rMax=engine.redline;
   // best-power WOT sweep → peaks, powerband, low-end torque. Diesel makes peak power lean,
   // at the smoke limit (SMOKE_LAMBDA_CI); spark engines peak rich (λ≈0.86).
@@ -70,7 +70,7 @@ function scoreEngine(){
   }
   const emissions=Math.round(emSum/emN);
   engine.afrMode=savedAfrMode;
-  Object.assign(state,{afr:sv.afr,iat:sv.iat,coolant:sv.coolant,oil:sv.oil,tCat:sv.tCat,engineHealth:sv.eh,blown:sv.bl,elecLoad:sv.el,map:sv.map,rpm:sv.rpm});
+  Object.assign(state,{afr:sv.afr,iat:sv.iat,coolant:sv.coolant,oil:sv.oil,tCat:sv.tCat,engineHealth:sv.eh,blown:sv.bl,turboBlown:sv.tb,elecLoad:sv.el,map:sv.map,rpm:sv.rpm});
   computeEmissions();   // restore live emissions readout at the real operating point
 
   const hpPerL=peakHP/engine.displacement_L,nmPerL=peakTQ/engine.displacement_L;
