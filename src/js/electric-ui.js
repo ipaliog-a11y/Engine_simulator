@@ -129,7 +129,7 @@ function buildElectric(){
   // a fresh drive on a charged pack
   const tc=e.motor.cool.tCool;
   state.mT={w:tc,c:tc,r:tc,inv:tc};state.tB={b:packStartT(e.pack)};state.soc=0.9;state.battI=0;state.battKW=0;state.regenCmd=0;
-  state.engineHealth=1;state.blown=false;state.wearCause='';state.boostActual=0;state.nitrousActive=false;
+  state.engineHealth=1;state.blown=false;state.wearCause='';state.turboHealth=1;state.turboBlown=false;state.turboWearCause='';state.boostActual=0;state.nitrousActive=false;
   state.map=1;state.rpm=clamp(state.rpm,0,e.redline);
   buildRev++;dynoCache=null;
   setLiveLabels(true);

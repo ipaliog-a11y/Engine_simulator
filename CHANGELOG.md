@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Turbo as a breakable part (build 467)
+
+- **Independent turbo cartridge health**: sustained compressor overspeed past `TIP_LIMIT` (520 m/s) or compressor surge now degrades `state.turboHealth` (`TURBO OVERSPEED` / `TURBO SURGE`) independently of `state.engineHealth`.
+- **Failure & recovery**: when `turboHealth` hits 0, `state.turboBlown` trips, `boostActual` / `boostAvail()` collapse to 0 (atmospheric) while the engine block stays intact, OBD logs `P0299`, and the LIVE bench (`#statTurbo`, `#status`) and Dyno diagnostics report `TURBO FAILED` until `BUILD & DYNO` or `RESET`.
+- **README & test**: updated the turbo failure known limit in `README.md`, and added `tests/test288.mjs` (`test288`, `test272`, `test277` pass).
+
 ### Engine balance, NVH smoothness & optional balance shaft (build 466)
 
 - **Derived primary & secondary balance (`computeEngineBalance`, `deriveBalance`)**: computes 1st- and 2nd-order shaking

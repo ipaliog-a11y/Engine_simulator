@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 466
+# PIXEL POWERTRAIN v0.8 build 467
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -1037,12 +1037,12 @@ documented in the GUIDE at the point where it matters:
   intake pressure ~1.1, where real petrol turbos run ~1.5-2), so matching to back-pressure would spool them
   earlier still; and VGT rings are the size class's, not the engine's (test49's diesel step). See
   `tests/proto/README.md`.
-- **A turbo only fails by wearing out the engine.** Since build 451 a compressor wheel at its tip-speed limit
-  (520 m/s) is flagged, and the ENGINE bench charges it as wear (`TURBO OVERSPEED`, surge too) until the engine
-  blows. The turbo is not a part of its own that breaks: on the lap and dyno sweeps the limit is still only a
-  *cap*, so a grossly over-flowed frame runs steadily at an expansion ratio that would have destroyed it — a 2.0
-  four at 2.5 bar on a small frame reaches 7.4 bar of exhaust manifold pressure and simply becomes gutless, where
-  the real outcome is a scrapped cartridge.
+- **A turbo fails as a cartridge on the bench, not on a lap or dyno sweep.** Sustained overspeed past the
+  520 m/s compressor tip-speed limit or compressor surge degrades `turboHealth` independently of the engine
+  block until the cartridge fails (`TURBO FAILED`, OBD `P0299`), collapsing boost to atmosphere while leaving
+  the engine block intact (rebuilt by `BUILD & DYNO` or `RESET`). On the lap and dyno sweeps the limit is
+  still only a *cap*, so a grossly over-flowed frame runs steadily at an expansion ratio that would have
+  destroyed it.
 - **A TRACK lap is a single best-case hot lap** — no tyre wear, no fuel burn, no traffic, no driver error, the
   brakes after one preparation lap. The RACE tab adds those, as rules where they are rules (above).
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
