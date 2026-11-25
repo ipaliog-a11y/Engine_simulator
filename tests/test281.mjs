@@ -1,4 +1,4 @@
-// WHY THIS EXISTS (build 457): Canvas/HUD layout fixes, challenge replay controls, EV drift tach,
+// WHY THIS EXISTS (build 458): Canvas/HUD layout fixes, challenge replay controls, EV drift tach,
 // challenge error verdicts/tooltips, GPX track deletion, wheel-in-air legend, valvetrain cutaway, and paused particles.
 // What must hold:
 //   · Dynamic challenge replays show #btnChalPlay and #chalReplayScrub, toggle pause/play, and scrub chalReplay.t;
