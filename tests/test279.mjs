@@ -123,6 +123,7 @@ const r = await page.evaluate(() => {
   syncDesignEnable();
 
   // 7. Engine Designer readouts: turboLoad, spool RPM, compEff, peak EGT
+  g('edBoost').value = '1.0';
   buildEngine();
   const icdRes = icdCompute();
   const slow = ICD.cfg.slowText(icdRes);

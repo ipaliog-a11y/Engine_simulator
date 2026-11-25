@@ -316,9 +316,15 @@ function bindControls(){
   // the race page's own ⛶: its stage resizes going in and out of full screen
   document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();if(trackPage.open)sizeTrackStage();});
 
-  for(const id of['edIntake','edFuel','edTiming','edIntakeSys','edCyl','edLayout','edBore','edTurboSize','edTaperRpm','edHyDeploy']){
+  for(const id of['edIntake','edFuel','edTiming','edIntakeSys','edCyl','edLayout','edTurboSize','edTaperRpm','edHyDeploy']){
     const el=document.getElementById(id);if(el)el.addEventListener('change',syncDesignEnable);
   }
+  {const bEl=document.getElementById('edBore');if(bEl)bEl.addEventListener('change',()=>{
+    if(document.getElementById('edType').value==='rotary'){
+      const eEl=document.getElementById('edEcc'),m=Math.max(8,Math.floor((+bEl.value||105)/5));
+      eEl.max=m;if(+eEl.value>m)eEl.value=m;
+    }
+  });}
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
     if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'||v==='mhev'||v==='p3'||v==='p4'))
