@@ -1398,6 +1398,15 @@ function starterAmps(rpm){
   const T=starterTorque(rpm),v=11.4+1.6*state.batterySOC;
   return T>0?T*Math.max(rpm,STARTER_FREE_RPM/2)*Math.PI/30/(STARTER_EFF*v):0;   // at a stall it still draws its half-speed current
 }
+// Warm start-stop restart mechanical crank work (J) to recharge the 12 V AGM battery via the alternator.
+// Derived from the 12 V starter above: P_mech = (0.5 kW/L SI, 1.0 kW/L CI), eta_starter = STARTER_EFF (0.6),
+// warm restart crank time 0.5 s (Bosch Start-Stop spec: 0.4-0.6 s), alternator efficiency 0.55
+// (electricalDragTorque), and AGM battery charge acceptance efficiency 0.90.
+const START_STOP_CRANK_S=0.5, START_STOP_WARM_C=50, ALT_EFF=0.55, AGM_CHG_EFF=0.90;
+function starterCrankMechJ(e){
+  const kw=(e.ci?1.0:0.5)*e.displacement_L;
+  return (kw*1000/STARTER_EFF)*START_STOP_CRANK_S/(ALT_EFF*AGM_CHG_EFF);
+}
 function engineStart(){state.ignOn=true;if(!state.firing)state.crank=STARTER_SECONDS;}
 function engineOff(){state.ignOn=false;state.crank=0;}
 // Integrate the dynamic engine: spool → manifold fill → net torque → RPM via inertia.

@@ -183,20 +183,21 @@ function ecoFuelRule(){
     const rpmE=Math.max(rpm,rpmMin);out.push({g,tot,rpm,rpmE,w:rpmE*Math.PI/30,Tm:Tmax(rpmE)});}return out;};
   // {gs (g/s), rpm, g (1-based), F} at mean speed vm (m/s) and wheel force F (N); when a and Ie are given,
   // each candidate gear adds its own reflected rotational inertia Ie*(tot/r)^2*a (as fuel-cycle.js).
-  const at=(vm,F,gears,a,Ie)=>{
+  const at=(vm,F,gears,a,Ie,auxExtra)=>{
     gears=gears||gearsAt(vm);
     let gs=null,rpm=0,g=0,Fb=F;
+    const aux=C.auxW+(auxExtra||0);
     for(const q of gears){
       const Fq=a?F+Ie*(q.tot/r)**2*a:F;
       let x;
       if(Fq<=0)x=q.rpmE>C.cutRpm&&ovAt(q.rpm)*q.tot/r<=-Fq?0:M.idleGs;
-      else{const T=Fq*vm/eff/q.w+C.auxW/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
+      else{const T=Fq*vm/eff/q.w+aux/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
       if(gs==null||x<gs){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
     if(gs==null)for(const q of gears){
       const Fq=a?F+Ie*(q.tot/r)**2*a:F;
       if(!(Fq>0))continue;
-      const T=Fq*vm/eff/q.w+C.auxW/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
+      const T=Fq*vm/eff/q.w+aux/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
       if(isFinite(x)&&(gs==null||x<gs)){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
     return{gs,rpm,g,F:Fb};
@@ -209,13 +210,18 @@ function ecoFuelKg(line,v,stats){
   if(isElectric())return null;
   const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,e=engine;
   const X=ecoFuelRule(),mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15,rho=envAirRho(),vW=envWind();
-  let fuel=0,rpmT=0,tDrive=0,topG=0;
+  const ssOn=!!(e.startStop&&!e.dcdc);
+  let fuel=0,rpmT=0,tDrive=0,topG=0,ssOff=false,crankDebtJ=0;
   for(let i=0;i<n-1;i++){
     const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
+    if(ssOn&&v0<0.1&&v1<0.1){ssOff=true;continue;}
+    if(ssOff){ssOff=false;crankDebtJ+=starterCrankMechJ(e);}
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
     const va=Math.max(0,vm+vW),dn=0.5*rho*(vehicle.clA||0)*va*va;
     const F0=mBase*a+0.5*rho*vehicle.cdA*va*va+crrAt(vehicle.crr,vm)*(m*G*p[i].cosT+dn)+m*G*p[i].sinT;
-    const q=X.at(vm,F0,null,a,Ie),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    const pChg=crankDebtJ>0&&F0>0?Math.min(crankDebtJ/dt,1000):0;
+    const q=X.at(vm,F0,null,a,Ie,pChg),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    if(pChg>0&&q.F>0)crankDebtJ=Math.max(0,crankDebtJ-pChg*dt);
     fuel+=gs*dt;
     if(q.F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
   }

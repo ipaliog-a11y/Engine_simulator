@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Engine balance, NVH smoothness & optional balance shaft (build 465)
+### Engine balance, NVH smoothness & optional balance shaft (build 466)
 
 - **Derived primary & secondary balance (`computeEngineBalance`, `deriveBalance`)**: computes 1st- and 2nd-order shaking
   forces ($F_1, F_2$) and rocking couples ($M_1, M_2$) from layout (`inline`, `v`, `boxer`), cylinder count, crankpin
@@ -31,6 +31,15 @@ they are accurate about *what* shipped but not about the day it shipped.
   balanced layouts. Fitting it cancels the dominant unbalanced force/couple (I4 $F_2 \to 0$, smoothness 73 → 100/100) at
   a derived bearing/drive friction cost (`mechFrictionMEP`: +0.058 bar at 5000 rpm on 1.6 I4), +2.5–4.5 kg mass, and
   +$350–$550 cost. Plan E11 in `plans/engine-systems.md`.
+
+### Start-stop for non-hybrid cars (build 465)
+
+- **START-STOP** opt-in on Cooling & Electrical (`NO` / `YES (12 V AGM)`), defaulting to `NO` so existing engines and
+  presets are unchanged; disabled on hybrids (which already stop via the traction pack).
+- **WLTP & Eco Run**: shuts the engine off at standstill once warm (`Tc >= 50 °C`), cutting idle fuel and emissions to
+  zero, and recharges the derived 12 V starter crank energy (0.5 kW/L SI, 1.0 kW/L CI, 60% starter efficiency, 0.5 s
+  Bosch warm crank, 55% alternator, 90% AGM acceptance) on the next driving seconds. Adds +6 kg and $350 when fitted.
+  Plan E4 in `plans/engine-systems.md`.
 
 ### Cylinder deactivation on HEAD & VALVES (build 464)
 

@@ -41,6 +41,7 @@ function computeCost(){
   if(engine.oilCooler)c+=500;
   // a hybrid's DC-DC converter in place of the alternator (build 246), priced as the 120 A alternator for want of a source
   c+=engine.dcdc?250:({'60':150,'120':250,'180':450}[engine.alternator]||0);
+  if(engine.startStop&&!engine.dcdc)c+=350;   // 12 V AGM battery + reinforced starter
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }
 // A lap time for scoring, cached on the engine + vehicle build so it isn't re-solved on every
