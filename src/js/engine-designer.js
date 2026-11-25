@@ -102,6 +102,8 @@ const ICD_FIELDS={
     trade:'It changes the sound only for now; its own back-pressure is not modelled yet.'},
   edCat:{guide:'emissions',what:'The catalytic converter.',
     trade:'A catalyst cleans the exhaust, for some back-pressure. Without one the engine breathes a little better and its emissions are dirty.'},
+  edPartFilter:{adv:true,guide:'emissions',what:'Wall-flow cordierite / SiC particulate filter (DPF on diesel, GPF on petrol) that traps soot in the exhaust.',
+    trade:'Cuts tailpipe PM by >95%, but accumulated soot raises exhaust back-pressure (Darcy flow) until burned off at ~550–600 °C.'},
   edFuel:{guide:'fuels',what:'What the engine burns.',
     trade:'Race gas, E85 and methanol resist knock far better than pump gas, so they allow more compression or boost. E85 and methanol carry less energy per kg, so the engine burns more of them.'},
   edOctane:{guide:'fuels',what:"Pump gas's octane rating (RON).",
@@ -140,7 +142,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
-  edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
+  edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edPartFilter:'partFilter',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edRailPress:'railPress',edPilotSplit:'pilotSplit',edGlowPlugs:'glowPlugs',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator',edStartStop:'startStop'};
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
@@ -203,7 +205,7 @@ function icdSummary(c,r){
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
-    case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
+    case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat')+' · '+o('edPartFilter');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming')+
       (g('edRailPress')!=='stock'?' · '+g('edRailPress')+' bar CR':'')+(g('edPilotSplit')==='yes'?' · '+tr('pilot split'):'')+(g('edGlowPlugs')==='yes'?' · '+tr('glow plugs'):'');
     case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));

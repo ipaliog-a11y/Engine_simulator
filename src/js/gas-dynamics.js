@@ -538,8 +538,24 @@ function twoStrokePipeGain(rpm,e=engine,T){
   const bw=0.18+0.6*(e.exhSigma??0.12);                      // sharper powerband for equal/race cones, broader for sport
   return 0.28*q*Math.exp(-Math.pow((ratio-1)/bw,2))-0.08*q*Math.exp(-Math.pow((ratio-0.55)/0.20,2));
 }
+// Particulate filter (DPF / GPF): Darcy flow through porous wall-flow cordierite/SiC substrate
+// and accumulated soot cake (Konstandopoulos et al., SAE 2000-01-1016; Majewski & Khair, SAE 2006).
+// Filter volume V_pf = 1.5*Vd (DPF, CI) or 0.8*Vd (GPF, SI); 200 cpsi wall thickness w_s = 0.30 mm,
+// specific filtration area alpha = 1200 m^2/m^3, clean wall permeability k_w = 2.5e-13 m^2,
+// soot cake packing density rho_soot = 80 kg/m^3, soot cake permeability k_soot = 0.8e-14 m^2.
+function partFilterDpPa(m3sTotal,T_K,e){
+  if(!e||!e.partFilter||!(m3sTotal>0))return 0;
+  const vPfM3=(e.ci?1.5:0.8)*(e.displacement_L||1.6)*1e-3;
+  const mu=1.82e-5*Math.pow(Math.max(250,T_K)/293,0.7);   // exhaust dynamic viscosity, Pa*s (Heywood §4.7)
+  const rWall=3e-4/(1200*2.5e-13);                        // clean wall specific resistance, 1.0e6 m^-2
+  const sootG=(typeof state!=='undefined'&&state&&state.pfSootG>0)?state.pfSootG:0;
+  const sootGL=sootG/(vPfM3*1000);                        // g soot per litre of filter volume
+  const rSoot=sootGL/(80*1200*1200*0.8e-14);              // soot cake resistance, ~1.09e6 * sootGL m^-2
+  return mu*(m3sTotal/vPfM3)*(rWall+rSoot);
+}
 // Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
-// after the collector, plus the cat as a porous plug and the silencer's chamber/baffle restriction.
+// after the collector, plus the cat as a porous plug, the silencer's chamber/baffle restriction,
+// and any wall-flow particulate filter (DPF/GPF).
 // Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
 function backPressureBar(rpm,T){
   const e=engine;
@@ -549,10 +565,11 @@ function backPressureBar(rpm,T){
   const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
+  const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
              +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
              +e.catRestrict*0.5*rho*vS*vS*350
-             +silPa)/1e5;
+             +silPa+pfPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
   // sits upstream of all of it and restricts far harder, so manifold pressure is set there and the
   // pipe is a small addition downstream of it. Modelling only the pipe left every turbo engine in

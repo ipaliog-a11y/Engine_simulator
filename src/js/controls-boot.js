@@ -45,7 +45,7 @@ function bindControls(){
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{
     state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
-    state.engineHealth=1.0;state.blown=false;state.wearCause='';state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';obdReset();
+    state.engineHealth=1.0;state.blown=false;state.wearCause='';state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;obdReset();
     state.coolant=90;state.oil=100;state.tCat=450;state.batterySOC=1.0;
     state.nitrousCharge=1.0;state.nitrousActive=false;state.wmCharge=1.0;
     const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}
@@ -415,6 +415,7 @@ function loop(now){
   o2LoopStep(dt);
   o2Loop.live=true;try{updatePhysics();}finally{o2Loop.live=false;}   // only the live bench feels the loop
   stepWear(dt);
+  stepPartFilter(dt);
   obdStep(dt);
   if(dynoSweep&&engine){
     dynoSweep.t+=dt;
