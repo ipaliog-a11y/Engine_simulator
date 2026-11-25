@@ -1518,12 +1518,26 @@ const APEX_SPEED_LIMIT=36;
 // SAE 2003-01-0725 Vogel equation for SAE 10W-30 anchored at 100 °C): positive-displacement pump flow (~N) against
 // laminar journal-bearing clearance leakage (~P / mu(T)), clamped by a spring-loaded pressure relief valve (~4.8–5.2 bar).
 // 2-strokes use premix/total-loss crankcase lubrication (no pressurized oil gallery).
-function oilPressureBar(rpm,oilTempC,e=engine){
+// Wet-sump oil pickup starvation under sustained lateral g: oil surface tilt tan(theta) = |ay|/g.
+// For a typical baffled street wet-sump pan (pickup submergence h0 ~ 95 mm, pickup-to-baffle half-span b ~ 90 mm),
+// the free surface reaches the pickup at tan(theta) = h0/b ~ 1.05 g. Sustained cornering drains the baffled pocket
+// (tau ~ 1.2 s; refill ~ 0.4 s) and drops gallery pressure; a dry sump is immune.
+const WET_SUMP_G_THRESH=1.05;
+function stepSumpStarve(starve,latG,dt,e=engine){
+  if(!e||e.drySump||e.type==='twostroke')return 0;
+  const ay=Math.abs(latG||0);
+  const target=ay>WET_SUMP_G_THRESH?clamp((ay-WET_SUMP_G_THRESH)/0.35,0,1):0;
+  const tau=target>starve?1.2:0.4;
+  return clamp(starve+(target-starve)*(1-Math.exp(-dt/tau)),0,1);
+}
+function oilPressureBar(rpm,oilTempC,e=engine,starve=0){
   if(!(rpm>0)||(e&&e.type==='twostroke'))return 0;
   const T=clamp(oilTempC!=null?oilTempC:100,-20,220);
   const muRel=Math.exp(1050/(T+110)-1050/210);                   // Vogel SAE 10W-30 relative viscosity (1.0 at 100 °C)
   const pRelief=(e&&(e.redline>=7500||e.ci))?5.2:4.8;            // relief valve cracking/regulation pressure (bar)
-  return Math.min(pRelief,0.0018*muRel*rpm);
+  const pBase=Math.min(pRelief,0.0018*muRel*rpm);
+  const s=(e&&e.drySump)?0:clamp(starve,0,1);
+  return pBase*(1-0.85*s);
 }
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -1555,10 +1569,11 @@ function stepWear(dt){
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   // Low oil pressure under load: hydrodynamic bearing starvation (Bosch Automotive Handbook: ~0.6 bar floor + 0.35 bar/1000 rpm, capped at 3.0 bar).
-  {const oilP=oilPressureBar(state.rpm,state.oil,engine);state.oilP=oilP;
+  {state.sumpStarve=stepSumpStarve(state.sumpStarve||0,state.latG||0,dt,engine);
+   const oilP=oilPressureBar(state.rpm,state.oil,engine,state.sumpStarve);state.oilP=oilP;
    if(engine.type!=='twostroke'&&state.firing!==false&&state.rpm>=FIRE_RPM){
      const oilMin=Math.min(3.0,0.6+0.35*(state.rpm/1000));
-     if(oilP<oilMin&&(state.powerHP>10||state.bmep>1.5||oilP<0.55))add((oilMin-oilP)/Math.max(0.5,oilMin)*0.045,'LOW OIL PRESSURE');
+     if(oilP<oilMin&&(state.powerHP>10||state.bmep>1.5||oilP<0.55))add((oilMin-oilP)/Math.max(0.5,oilMin)*0.045,state.sumpStarve>0.1?'OIL STARVATION':'LOW OIL PRESSURE');
    }}
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   // Reciprocating inertial limit above PISTON_SPEED_LIMIT (25 m/s, Heywood §2.2) and Wankel apex-seal sliding limit.
@@ -1835,7 +1850,7 @@ function meteredFuelKgS(map){
 }
 function updateEnginePhysics(){
   const map=liveMap();
-  state.oilP=oilPressureBar(state.rpm,state.oil,engine);
+  state.oilP=oilPressureBar(state.rpm,state.oil,engine,state.sumpStarve||0);
   withCiLoad(state.throttle,()=>{
     // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
     // readout, fuel flow, emissions and wear all reflect the mapped value.

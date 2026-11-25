@@ -7,6 +7,7 @@ function computeCost(){
   c+={petrol4:0,diesel:2500,twostroke:-400,rotary:1200}[engine.type]||0;  // cycle-specific build cost
   c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
   if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
+  if(engine.drySump&&engine.type!=='twostroke')c+=2200;          // billet 3-stage scavenge pump, external tank & AN lines
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -193,7 +194,7 @@ function updateDesignSummary(){
     '<br>'+tr('Exhaust')+' <b>'+(engine.exhaustPart?esc(engine.exhaustPart.name):trOpt(engine.exhaust.toUpperCase()))+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
     '<br>'+tr('Fuel')+' <b>'+tr(FUELS[engine.fuel].label)+'</b> ('+(engine.ci?'CI':engine.effOctane+' '+tr('oct'))+', '+engine.stoichAFR.toFixed(1)+':1 '+tr('stoich')+(engine.chargeCool?', −'+engine.chargeCool+'°C '+tr('charge'):'')+')'+
     sparkLine+
-    '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
+    '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+(engine.drySump?' • <b>'+tr('DRY SUMP')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
     elecLine+note+(engine.hy?hybSummaryLine(engine):'')+   // the hybrid system (build 186)
     scoreLine(engine.score);
 }

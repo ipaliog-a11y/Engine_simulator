@@ -18,11 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Particulate filter (DPF / GPF) with Darcy back-pressure & regeneration (build 468)
+### Particulate filter (DPF / GPF) with Darcy back-pressure & regeneration (build 469)
 
 - **Opt-in `PARTICULATE FILTER` on EXHAUST**: defaults to `NONE` (`partFilter: false`) so existing engines and presets are unchanged; fitting `DPF / GPF` adds wall-flow substrate mass (`2.0 + 1.5·Vd` kg) and cost ($800 CI / $450 SI). Plan E10 in `plans/engine-systems.md`.
 - **Trapping & Darcy-flow back-pressure**: cuts tailpipe PM by 96% (`PF_TRAP_EFF`, Majewski & Khair 2006) and accumulates `state.pfSootG`; `partFilterDpPa()` in `backPressureBar()` models porous wall and soot-cake Darcy flow (Konstandopoulos et al., SAE 2000-01-1016).
 - **Passive & active regeneration**: soot oxidizes via Arrhenius kinetics around 550–600 °C (Stanmore et al. 2001); reaching 6 g/L triggers active regen (`state.pfRegen`, `#statPF` `REGEN` indicator, +8% post-injection fuel penalty until 0.5 g/L). Added `tests/test290.mjs`.
+
+### Wet vs dry sump lubrication & lateral-g oil starvation (build 468)
+
+- **Wet-sump pickup starvation (`stepSumpStarve`, `oilPressureBar`, `stepWear`, `lapSumpReport`)**: oil surface tilt
+  $\tan\theta = |a_y|/g$ uncovers a baffled street wet-sump pickup above `WET_SUMP_G_THRESH` ($1.05\text{ g}$,
+  $h_0/b \approx 95/90\text{ mm}$). Sustained cornering ($\tau_{\text{drain}} = 1.2\text{ s}$) drops gallery oil
+  pressure and charges `OIL STARVATION` bearing wear.
+- **Optional `LUBRICATION` (`WET SUMP (STOCK)` vs `DRY SUMP`) on BLOCK**: defaults to wet sump (0 g dyno,
+  straight-line, and preset numbers unchanged); disabled on 2-strokes. Dry sump eliminates lateral-g starvation at a
+  derived scavenge-pump drag ($P = \dot{V}\cdot\Delta p/\eta$, $3.0 + 1.5\,(N/6000)\text{ kPa}$ FMEP), $+8\text{ kg}$
+  mass, and $+\$2,200$ build cost.
+- **Checks**: added `tests/test289.mjs` (`289` and `276` pass).
 
 ### Turbo as a breakable part (build 467)
 
