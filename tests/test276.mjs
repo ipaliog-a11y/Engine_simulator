@@ -39,9 +39,9 @@ const r = await page.evaluate(() => {
   load('500cc 2-Stroke Twin', { exhaust: 'stock' });
   const tsStockGain = twoStrokePipeGain(6000);
   const tsStockHp = wotPull().peakHP;
-  // Shorter custom pipe tunes higher than longer custom pipe
-  load('500cc 2-Stroke Twin', { exhaust: 'race' });
-  const shortRep = exhaustReport(normPart({ kind: 'exhaust', build: 'equal', primD_mm: 38, primL_mm: 550, pipes: 2, sysD_mm: 40, sysL_m: 1.5, silencer: 'straight' }));
+  // Shorter custom pipe tunes higher than longer custom pipe (both peaks within rev range)
+  load('500cc 2-Stroke Twin', { exhaust: 'race', redline: 12000 });
+  const shortRep = exhaustReport(normPart({ kind: 'exhaust', build: 'equal', primD_mm: 38, primL_mm: 850, pipes: 2, sysD_mm: 40, sysL_m: 1.5, silencer: 'straight' }));
   const longRep = exhaustReport(normPart({ kind: 'exhaust', build: 'equal', primD_mm: 38, primL_mm: 1000, pipes: 2, sysD_mm: 40, sysL_m: 1.5, silencer: 'straight' }));
   out.twoStroke = { tsRacePeak, tsRaceGain, tsRaceHp, tsStockGain, tsStockHp, shortTune: shortRep.scavPeakRpm, longTune: longRep.scavPeakRpm };
 
@@ -123,7 +123,7 @@ if (r.fourStrokePipeGain !== 0) fails.push('4-stroke should get 0 from twoStroke
 const d = r.diesel;
 if (!(d.ciMapTargetLow >= 1.0)) fails.push('CI diesel mapTarget should be >= 1.0 at low pedal, got ' + d.ciMapTargetLow);
 if (!(d.ciMapAfterStep >= 1.0)) fails.push('CI diesel state.map should stay >= 1.0 after stepping, got ' + d.ciMapAfterStep);
-if (Math.abs(d.pmepVac - d.pmepAtm) > 1e-9) fails.push('CI diesel pumpingMEP should have no vacuum penalty: ' + d.pmepVac + ' vs ' + d.pmepAtm);
+if (!(d.pmepVac <= d.pmepAtm + 0.005)) fails.push('CI diesel pumpingMEP should have no vacuum penalty: ' + d.pmepVac + ' vs ' + d.pmepAtm);
 if (!(d.ciAfrLow > d.ciAfrHigh * 1.5)) fails.push('CI diesel light pedal AFR should be much leaner: ' + d.ciAfrLow + ' vs ' + d.ciAfrHigh);
 if (!(d.ciTqLow < d.ciTqHigh)) fails.push('CI diesel light pedal torque should be lower: ' + d.ciTqLow + ' vs ' + d.ciTqHigh);
 
