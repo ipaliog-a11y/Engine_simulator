@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The v1.0 scoreboard, measured (build 474)
+
+- **No physics change**: the fingerprint is identical (5331 values). New read-only `tools/scoreboard.mjs` loads all
+  100 factory cars as a player would and compares them with their presets' published figures. The table, the causes
+  and a close / fix / rule proposal per known gap are in `plans/v1-scoreboard.md`, for the owner to rule on.
+- **Mean error**: power 6.5% (16 of 97 cars over 10%), torque 6.4% (19 over), 0–100 9.1% (32 of 100 over), top speed
+  5.1% (10 of 72 ungoverned over). Mass is an input and matches exactly. In all, 66 cars miss by more than 10% on at
+  least one figure.
+- **Boosted low-rpm torque (G4 step 1)**: 16.5% mean over 46 engines. RS3 −48% and 1.0 EcoBoost −44% at their makers'
+  plateau start, about where they were before build 425; 14 engines are over 20% short, 18 over 10%. This feeds G2.
+- **Found, held by no test**: the rotaries read −29% (RX-7) and −44% (RX-8) on power, as they have since build 99 (the
+  fitted IMEP factor). The kei cars and the 370Z run past governors the data does not mark. The R34 is rated at its
+  280 PS agreement figure.
+- **Known gaps**: the Dino has left `RATING_KNOWN`'s band and the Supra has left `T100_KNOWN`'s; both can close.
+  **test145 and test170 fail on `main`**. test145 fails from build 451 (free-revving engines trip wear limits). test170 fails from build 441, and since builds 449–462 the stepped car leaves the line. Nothing was fixed here; see the proposal.
+- Left open: lap times (no preset carries a published one) and per-car moose figures. Both need a data build.
+
 ### Crank torsional limit (build 473)
 
 - **Derived crank first torsional natural frequency (`computeCrankTorsional`, `deriveTorsional`)**: computes crank-throw torsional stiffness $K$ (Carter / BICERA equivalent-length formula using steel $G = 79.3\text{ GPa}$ and empirical journal-to-bore ratios $D_m = 0.65 B$, $D_p = 0.56 B$ from `friction.js`), throw inertia $J$ (crankpin, webs, conrod rotating end, and $\frac{1}{2} m_\text{rec} r^2$ per Taylor vol. 2 ch. 9), and Holzer fixed-free first torsional mode $f_{n1}$ (`crankTorsionalHz`), checked against 4-stroke ($k = 0.5, 1, 1.5, \dots$) and 2-stroke ($k = 1, 2, \dots$) firing-order harmonics in the operating rev range. Plan E12 in `plans/engine-systems.md`.
