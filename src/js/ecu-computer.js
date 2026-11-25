@@ -61,7 +61,11 @@ const ECU_SIG={
   ice:[['rpm','ENGINE SPEED','rpm',0,200,()=>state.rpm],['map','MANIFOLD PRESSURE','bar',2,0.1,()=>state.map||1],
     ['lam','LAMBDA','',2,0.05,()=>engine.stoichAFR?state.afr/engine.stoichAFR:1],['knock','KNOCK RISK','%',0,10,()=>state.knockRisk],
     ['o2','O2 SENSOR','mV',0,50,()=>o2SensorMv(ecuLam())],['thr','THROTTLE','%',0,5,()=>state.throttle*100],
-    ['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW],['clt','COOLANT','°C',0,5,()=>state.coolant]],
+    ['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW],['clt','COOLANT','°C',0,5,()=>state.coolant],
+    ['cylPmax','PEAK PMAX','bar',0,10,()=>state.cylPmax||0],['preIgn','PRE-IGNITION','',2,0.2,()=>state.preIgn||0],
+    ['egt','EGT','°C',0,50,()=>state.powerHP>1&&!state.fuelCut?egtAt(state.rpm,state.map||1)-273.15:state.coolant],
+    ['oil','OIL TEMP','°C',0,5,()=>state.oil||0],['oilP','OIL PRESS','bar',1,0.5,()=>state.oilP!=null&&isFinite(state.oilP)?state.oilP:0],
+    ['boostActual','BOOST','bar',2,0.1,()=>state.boostActual||0]],
   ev:[['v','PACK VOLTAGE','V',0,10,()=>state.systemVoltage],['a','PACK CURRENT','A',0,10,()=>state.battI],
     ['wind','WINDING TEMP','°C',0,5,()=>state.mT?state.mT.w:0],['soc','CHARGE','%',0,2,()=>(state.soc||0)*100],
     ['rpm','MOTOR SPEED','rpm',0,200,()=>state.rpm],['tq','TORQUE','Nm',0,10,()=>state.torque],['kw','POWER','kW',0,5,()=>state.powerKW]]};
@@ -169,9 +173,18 @@ function ecuLeds(){
   set('ecuLedLink',state.firing||state.ignOn);
   set('ecuLedLoop',engine.afrMode==='auto'&&state.coolant>70);
   set('ecuLedKnock',state.knockRisk>40);
-  let base=state.afr;
-  try{base=mappedAFR(state.rpm,state.map);}catch(e){}
-  set('ecuLedEgt',engine.intake==='turbo'&&state.afr<base-0.2);
+  let egtOn=false;
+  if(engine.intake==='turbo'&&!engine.ci){
+    try{
+      if(engine.afrMode==='auto'&&!fuelMapCustom){
+        const pre=knockEnrichLambda(state.rpm,state.map,baseFuelLambda(state.rpm,state.map));
+        egtOn=egtEnrichLambda(state.rpm,state.map,pre)<pre*0.99;
+      }else{
+        egtOn=state.afr<mappedAFR(state.rpm,state.map)-0.2;
+      }
+    }catch(e){}
+  }
+  set('ecuLedEgt',egtOn);
   const mil=typeof obdLamp==='function'?obdLamp():'';
   set('ecuLedMil',mil==='on'||mil==='flash');
 }
@@ -179,10 +192,20 @@ function ecuRenderDiag(){
   const box=document.getElementById('ecuDiag');if(!box)return;
   const d=typeof diagnoseEngine==='function'?diagnoseEngine():{findings:[]};
   let h='';
-  (d.findings||[]).forEach(f=>{h+='<p class="ecu-find"><b>'+f.title+'</b><br>'+f.detail+'</p>';});
+  (d.findings||[]).forEach(f=>{h+='<p class="ecu-find"><b>'+esc(f.title)+'</b><br>'+esc(f.detail)+'</p>';});
   const keys=typeof obd!=='undefined'&&obd.codes?Object.keys(obd.codes):[];
-  if(!keys.length)h+='<p>'+tr('No codes stored.')+'</p>';
-  keys.forEach(k=>{h+='<p class="ecu-find"><b>'+k+'</b> <button type="button" data-ff="'+k+'">'+tr('REPRODUCE FREEZE FRAME')+'</button></p>';});
+  const st={pending:tr('PENDING'),confirmed:tr('CONFIRMED'),history:tr('HISTORY')};
+  if(!keys.length)h+='<p>'+esc(tr('No codes stored.'))+'</p>';
+  keys.forEach(k=>{
+    const c=obd.codes[k],cd=typeof OBD_CODES!=='undefined'&&OBD_CODES[k],f=c&&c.ff;
+    const title=cd?' '+esc(tr(cd.t)):'';
+    const status=c&&c.status?' • '+(st[c.status]||c.status.toUpperCase()):'';
+    const ff=f?'<br><span class="obd-ff">'+esc(tr('FREEZE FRAME'))+': '+f.rpm+' rpm • MAP '+f.map+' bar • '+tr('coolant')+' '+f.coolant+' °C • λ '+f.lam+
+      (f.boost?' • '+tr('boost')+' '+f.boost+' bar':'')+
+      (f.pMax?' • Pmax '+f.pMax+' bar':'')+
+      (f.oilP!=null?' • '+tr('oil')+' '+f.oilP+' bar':'')+'</span>':'';
+    h+='<p class="ecu-find"><b>'+esc(k)+'</b>'+title+status+ff+'<br><button type="button" data-ff="'+esc(k)+'">'+esc(tr('REPRODUCE FREEZE FRAME'))+'</button></p>';
+  });
   box.innerHTML=h;
 }
 function ecuReproduce(k){

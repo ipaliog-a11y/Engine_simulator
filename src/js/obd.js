@@ -14,7 +14,12 @@ const OBD_CODES={
   P0172:{t:'System too rich (bank 1)',        hold:2, why:'The lambda sensor reads richer than the ECU can hold at part load.'},
   P0300:{t:'Random/multiple cylinder misfire detected',hold:1, why:'The spark cannot fire every cycle (weak voltage past the dwell limit), the valves float, or the mixture is past its flammability limit.'},
   P0420:{t:'Catalyst system efficiency below threshold (bank 1)',hold:10, why:'A warm engine with no working catalyst converts almost nothing.'},
-  P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'}
+  P0562:{t:'System voltage low',              hold:5, why:'The 12 V side is below 11.6 V while the engine runs.'},
+  P0326:{t:'Pre-ignition detected',           hold:1, why:'Mixture autoignites before spark (I >= 1.0) — retarding ignition timing cannot stop it.'},
+  P0330:{t:'Cylinder over-pressure',          hold:1, why:'Peak cylinder pressure exceeds the structural ceiling (130 bar SI / 200 bar CI).'},
+  P0196:{t:'Engine oil temperature over limit',hold:2, why:'Oil sump temperature is above 151 °C (OIL_WEAR_C), where oil film breakdown begins.'},
+  P0524:{t:'Engine oil pressure too low',     hold:2, why:'Oil gallery pressure is below 0.8 bar while the engine runs.'},
+  P0234:{t:'Turbocharger overboost / ECU boost cut',hold:1, why:'ECU knock limiter is pulling boost down to hold knock at the limit.'}
 };
 const OBD_MISFIRE=0.02, OBD_MISFIRE_CAT=0.10;   // misfire share that sets P0300, and that flashes the MIL (game rules)
 const OBD_CLEAN_CYCLES=3, OBD_MIN_RUN=20;       // clean cycles to put the MIL out; seconds a run needs to count as one
@@ -47,6 +52,11 @@ function obdConditions(){
   if(obdMisfire()>OBD_MISFIRE)on.P0300=1;
   if(!engine.ci&&(engine.catConv||0)<0.5&&state.coolant>=70)on.P0420=1;
   if(!engine.dcdc&&state.systemVoltage<11.6)on.P0562=1;
+  if(!engine.ci&&(state.preIgn||0)>=1.0)on.P0326=1;
+  if((state.cylPmax||0)>(typeof cylPmaxLimit==='function'?cylPmaxLimit():130))on.P0330=1;
+  if(state.oil>OIL_WEAR_C)on.P0196=1;
+  if(state.oilP!=null&&isFinite(state.oilP)&&state.rpm>400&&state.oilP<0.8)on.P0524=1;
+  if(engine.intake==='turbo'&&typeof knockBoostCutInfo==='function'&&knockBoostCutInfo()&&(state.boostActual||0)>0.1)on.P0234=1;
   return on;
 }
 // ---- The lambda sensor (build 337) ----
@@ -210,9 +220,12 @@ function obdStep(dt){
   if(obd.flash&&obd.codes.P0300)obd.codes.P0300.status='confirmed';   // catalyst-damaging misfire: lit at once
 }
 function obdFreezeFrame(){
-  return {rpm:Math.round(state.rpm),load:Math.round(state.load*100),map:+state.map.toFixed(2),
-    coolant:Math.round(state.coolant),lam:+(state.afr/(engine.stoichAFR||14.7)).toFixed(2),
-    boost:+(state.boostActual||0).toFixed(2),volt:+state.systemVoltage.toFixed(1)};
+  const ff={rpm:Math.round(state.rpm),load:Math.round(state.load*100),map:+state.map.toFixed(2),
+    coolant:Math.round(state.coolant),oil:Math.round(state.oil),lam:+(state.afr/(engine.stoichAFR||14.7)).toFixed(2),
+    boost:+(state.boostActual||0).toFixed(2),volt:+state.systemVoltage.toFixed(1),
+    pMax:Math.round(state.cylPmax||0),preIgn:+(state.preIgn||0).toFixed(2)};
+  if(state.oilP!=null&&isFinite(state.oilP))ff.oilP=+state.oilP.toFixed(1);
+  return ff;
 }
 // 'flash', 'on' (a confirmed code), 'pending' (only a scan tool would see it on a real car), or ''.
 function obdLamp(){
@@ -235,7 +248,8 @@ function renderObd(){
     const c=obd.codes[k],d=OBD_CODES[k],f=c.ff;
     h+='<div class="obd-code obd-'+c.status+'"><b>'+k+'</b> '+esc(tr(d.t))+' • '+st[c.status]+'<br>'+esc(tr(d.why))
       +'<br><span class="obd-ff">'+esc(tr('FREEZE FRAME'))+': '+f.rpm+' rpm • '+tr('load')+' '+f.load+'% • MAP '+f.map+' bar • '
-      +tr('coolant')+' '+f.coolant+' °C • λ '+f.lam+' • '+tr('boost')+' '+f.boost+' bar • '+f.volt+' V</span></div>';
+      +tr('coolant')+' '+f.coolant+' °C • λ '+f.lam+' • '+tr('boost')+' '+f.boost+' bar • '+f.volt+' V'
+      +(f.pMax?' • Pmax '+f.pMax+' bar':'')+(f.oilP!=null?' • '+tr('oil')+' '+f.oilP+' bar':'')+'</span></div>';
   });
   h+='<div class="btn-row"><button type="button" id="btnObdClear">'+esc(tr('CLEAR CODES'))+'</button></div>';
   box.innerHTML=h;

@@ -18,13 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 455)
+### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 456)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).
 - Added axle suspension bump-stop downforce capping and `aeroBottomed` flagging (`aeroDownforce`, `aeroBumpCapF/R = 2 * ks * bump`; Milliken & Milliken RCVD ch. 16) in `src/js/tyres-brakes-driveline.js`, `src/js/vehicle-accel.js`, `src/js/racing-line-lap.js`, and `src/js/eco-run.js`.
 - Added global ISO 2533 International Standard Atmosphere altitude/barometric pressure (`ENV`, `pAmbBar`, `pAmbAtm`, `airRho`, anchored at `alt_m = 0, tempC = 20 °C -> 1.20 kg/m³`) and headwind (`envWind`) across `engine-constants-boost.js`, `vehicle-spec.js`, `vehicle-accel.js`, `drive-model.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Included aerodynamic downforce (`N = m*G*cosT + F_df`) in rolling resistance across `vehicle-spec.js`, `vehicle-accel.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Added `tests/test275.mjs` covering post-stall wing drag/lift, dynamic ride-height/pitch aero, suspension bottoming, ISA altitude & headwind scaling, and downforce rolling resistance.
+
+### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 455)
+
+- **LIVE bench & Dyno result (`src/shell.html`, `src/js/dyno-ui.js`):** Added live `PEAK PMAX` (bar), `PRE-IGNITION` integral, and conditional `OIL PRESSURE` tiles plus status-bar warnings and `#lampOilP` activation; added `state.blown` and `state.wearCause` to `renderDynoResult()`'s memo key so `#dynoDiag` never goes stale.
+- **OBD & ECU Computer (`src/js/obd.js`, `src/js/ecu-computer.js`):** Added fault codes `P0326` (pre-ignition), `P0330` (cylinder over-pressure), `P0196` (oil over-temp), `P0524` (low oil pressure), and `P0234` (ECU boost cut) with `pMax`/`preIgn`/`oil`/`oilP` freeze-frame fields; updated `ecuRenderDiag()` to show code titles, statuses, and freeze frames; fixed `#ecuLedEgt` in AUTO mode by comparing `egtEnrichLambda()` against pre-EGT base lambda; added `cylPmax`, `preIgn`, `egt`, `oil`, `oilP`, and `boostActual` scope channels.
+- **Guided Build (`src/js/guided-build.js`):** Added Build 441 (`icdPreIgn`, `icdPmaxOver`) and EV (`evdCompute` battery/rim/frequency) limits to `gwLimit()` and `gfLimit()`.
+- **Reports (`src/js/reports.js`, `src/js/electric-ui.js`):** Included custom `engine.icPart` in `reportSpecRows()`, rendered `diagnoseEngine()` findings on Dyno PNG/PDF sheets, added Build 436 track conditions (`weather`, `air`, `tyre`) to Hot Lap reports, fixed EV specs in `lapVehicleRows()`, and implemented full EV Dyno PNG/PDF export.
 
 ### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 454)
 

@@ -317,9 +317,12 @@ function gwNear(c,dir){
 function gwLimit(kind,r){
   if(kind==='ice'){
     if(icdFloatShort(r))return tr('meets valve float at {f} rpm').replace('{f}',dcFmt(Math.round(r.float/100)*100));
+    if(typeof icdPreIgn==='function'&&icdPreIgn(r))return tr('pre-ignition before spark');
+    if(typeof icdPmaxOver==='function'&&icdPmaxOver(r))return tr('cylinder pressure ({p} bar) exceeds {l} bar').replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));
     if(icdKnockOver(r))return tr('knocks past its limit');
   }else if(kind==='ev'){
     if(r.nTip<Math.min(r.maxRpm||Infinity,r.nFreq)-1)return tr('the rotor rim stops the motor at {n} rpm').replace('{n}',dcFmt(Math.round(r.nTip/100)*100));
+    if(r.nFreq<Math.min(r.maxRpm||Infinity,r.nTip)-1)return tr('inverter frequency stops the motor at {n} rpm').replace('{n}',dcFmt(Math.round(r.nFreq/100)*100));
     if(r.pk<r.pkM*0.99)return tr('the battery sets the peak');
   }else{
     if(vcdTyresShort(r))return tr('past the tyres\' speed rating');
@@ -384,7 +387,9 @@ const GF_ROWS=[['hp','PEAK POWER',' hp',0,1],['tq','TORQUE',' Nm',0,1],['t100','
 // (the VEHICLE card), in that card's own verdict; '' if none is lit.
 function gfLimit(){
   const ri=typeof icdCompute==='function'?icdCompute():null;
-  if(ri&&(icdKnockOver(ri)||icdFloatShort(ri)))return ICD.cfg.limits(ri).verdict;
+  if(ri&&(icdKnockOver(ri)||icdFloatShort(ri)||(typeof icdPreIgn==='function'&&icdPreIgn(ri))||(typeof icdPmaxOver==='function'&&icdPmaxOver(ri))))return ICD.cfg.limits(ri).verdict;
+  const re=typeof evdCompute==='function'?evdCompute():null;
+  if(re&&(re.pk<re.pkM*0.99||re.nTip<Math.min(re.maxRpm||Infinity,re.nFreq)-1||re.nFreq<Math.min(re.maxRpm||Infinity,re.nTip)-1))return EVD.cfg.limits(re).verdict;
   const rc=vehicle?vcdCompute():null;
   if(rc&&(vcdTyresShort(rc)||vcdGripBound(rc)))return VCD.cfg.limits(rc).verdict;
   return '';
