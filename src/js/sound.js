@@ -852,17 +852,48 @@ function trackSoundState(st){
     coolant:90,knockRisk:0,blown:false};   // a direct hybrid's running engine is fuelled
 }
 // Where the sound comes from: the dyno runs the live engine on its brake, the track tab plays the lap
-// back (and is quiet while the replay is paused), and every other tab is quiet.
-function soundSource(){
-  if(vizMode==='dyno')return state;
-  if(vizMode==='track'&&trackUI.phase==='live'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
-  const d=driftSoundSample();   // the powerslide replay (build 362): its recorded revs and throttle, on the steady manifold
-  if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
+// back (and is quiet while the replay is paused), challenges (drift/skidpad/spiral/fig8) play their
+// recorded drive replay, and the race tab follows the focused car; every other tab is quiet.
+function challengeSoundSample(){
+  const R=typeof chalResult!=='undefined'?chalResult:null;
+  if(vizMode!=='challenges'||typeof chalUI==='undefined'||chalUI.phase!=='live'||!R||!R.ok)return null;
+  if(R.kind==='drift'||R.kind==='skidpad'||R.kind==='spiral'||R.kind==='fig8')return driftSampleAt(R,chalMooseNow());
   return null;
 }
 function driftSoundSample(){
   const R=typeof chalResult!=='undefined'?chalResult:null;
-  return vizMode==='challenges'&&chalUI.phase==='live'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+  return vizMode==='challenges'&&typeof chalUI!=='undefined'&&chalUI.phase==='live'&&R&&R.kind==='drift'&&R.ok?driftSampleAt(R,chalMooseNow()):null;
+}
+function raceFocusCar(){
+  if(vizMode!=='race'||typeof raceUI==='undefined'||!raceUI.run||raceUI.phase!=='live'||!raceUI.playing)return null;
+  const R=raceUI.run,S=raceStandings(R,raceUI.t);
+  const x=(raceUI.follow>=0?S.find(q=>q.c.id===raceUI.follow):null)||S[0];
+  if(!x||x.dnf||x.s.flag===1||!(x.s.v>0.2))return null;
+  return {R,x,c:x.c,M:x.c.M,s:x.s};
+}
+function raceSoundState(rf){
+  const v=rf.s.v,dv=rf.s.dv||0;
+  const rl=engine.redline||7000,idle=engine.idleRpmEff||900;
+  let rpm=idle+(rl-idle)*clamp(v/60,0,1);
+  if(vehicle&&vehicle.ratios&&vehicle.ratios.length&&vehicle.rTire>0&&vehicle.finalDrive>0){
+    const w=v/vehicle.rTire*vehicle.finalDrive*30/Math.PI;
+    rpm=clamp(w*vehicle.ratios[vehicle.ratios.length-1],idle,rl);
+    for(let g=0;g<vehicle.ratios.length;g++){
+      const r=w*vehicle.ratios[g];
+      if(r<=rl*0.96){rpm=clamp(r,idle,rl);break;}
+    }
+  }
+  const thr=dv>0.3?clamp(0.45+dv/8,0.45,1):dv<-1.5?0:0.25;
+  return trackSoundState({rpm,thr,map:steadyMapAt(rpm,thr)});
+}
+function soundSource(){
+  if(vizMode==='dyno')return state;
+  if(vizMode==='track'&&trackUI.phase==='live'&&lapResult&&lapResult.replay&&lapReplay.playing)return trackSoundState(replayAt(lapResult,lapReplay.t));
+  const d=challengeSoundSample();   // powerslide, skidpad, spiral, fig8 replays: recorded revs and throttle
+  if(d&&d.rpm!=null)return trackSoundState({rpm:d.rpm,thr:d.thr||0,map:steadyMapAt(d.rpm,d.thr||0)});
+  const rf=raceFocusCar();
+  if(rf)return raceSoundState(rf);
+  return null;
 }
 // ---- tyre screech on the powerslide replay (build 362) ----
 // A tyre squeals while its contact patch slides: past the slip angle of peak force (the run's own pkR, the same
@@ -912,11 +943,20 @@ function lapSlide(L,q){
 function screechSlide(){
   if(!Sound.on)return 0;
   if(vizMode==='track'&&lapResult&&lapResult.replay&&lapReplay.playing)return lapSlide(lapResult,replayAt(lapResult,lapReplay.t));
+  const rf=raceFocusCar();
+  if(rf){
+    const i=((Math.floor(rf.s.pos)%rf.M.n)+rf.M.n)%rf.M.n,lim=rf.M.lim&&rf.M.lim[i];
+    if(lim==='corner'||lim==='traction'||rf.s.dv<-4){
+      const mu=(rf.M.tyre&&rf.M.tyre.mu)||rf.M.mu0||1;
+      return rf.s.v*Math.sin(screechPeak(mu,rf.M));
+    }
+    return 0;
+  }
   const R=typeof chalResult!=='undefined'?chalResult:null;
   if(vizMode!=='challenges'||!R||!R.ok)return 0;
   if(R.kind==='drift')return driftSlide(R,driftSampleAt(R,chalMooseNow()));
   if(R.kind==='moose')return driftSlide({pkR:screechPeak(R.mu,R)},mooseSampleAt(R,chalMooseNow()));
-  if(R.kind==='spiral'||R.kind==='fig8')return driftSlide({pkR:screechPeak(R.mu,R)},driftSampleAt(R,chalMooseNow()));
+  if(R.kind==='skidpad'||R.kind==='spiral'||R.kind==='fig8')return driftSlide({pkR:screechPeak(R.mu||tyreMu(vehicle.FzRef,vehicle.FzRef),R)},driftSampleAt(R,chalMooseNow()));
   return 0;
 }
 function updateScreech(t){
@@ -980,8 +1020,7 @@ function motorTorqueSplit(c,T){
   return [T0*r.Tpk/c.Tpk,T0*f.Tpk/c.Tpk];
 }
 // What the drive is doing now, or null when there is nothing to hear: the dyno's electric car or a hybrid's motor (the
-// bench), or the lap replay (the shaft power it recorded over the motor's speed; on a lift the drive's own braking, eb, is
-// the regeneration).
+// bench), the lap replay, challenge replays (drift/skidpad/spiral/fig8), or the focused car on the race tab.
 function motorSoundState(c){
   if(!c)return null;
   const e=engine;
@@ -999,6 +1038,20 @@ function motorSoundState(c){
       return {rpm,T:Number.isFinite(T)?T:0};
     }
     if(e.hy&&lapResult.hy&&st.i!=null){const T=(lapResult.hy.pm[st.i]||0)/w;return {rpm,T:Number.isFinite(T)?T:0};}
+  }
+  const d=challengeSoundSample();
+  if(d&&d.rpm!=null&&(isElectric()||e.hy)){
+    const rpm=Math.max(0,Number.isFinite(d.rpm)?d.rpm:0),thr=d.thr||0,brk=d.brk||0;
+    const T=isElectric()?(thr>0.02?thr*c.Tpk:-brk*0.3*c.Tpk):(thr-0.2*brk)*c.Tpk*0.6;
+    return {rpm,T:Number.isFinite(T)?T:0};
+  }
+  const rf=raceFocusCar();
+  if(rf&&(isElectric()||e.hy)){
+    const fd=vehicle&&vehicle.finalDrive?vehicle.finalDrive*(vehicle.ratios&&vehicle.ratios.length?vehicle.ratios[0]:1):9;
+    const rpm=clamp(rf.s.v/Math.max(0.2,(vehicle&&vehicle.rTire)||0.33)*fd*30/Math.PI,0,c.nMax||20000);
+    const dv=rf.s.dv||0;
+    const share=dv>0.2?clamp(0.35+dv/8,0.35,1):dv<-1?-clamp(-dv/10,0,0.5):0.15;
+    return {rpm,T:share*(c.Tpk||0)};
   }
   return null;
 }
@@ -1188,7 +1241,7 @@ function updateSound(){
   updateMotorSound(Sound.ctx.currentTime);   // the electric drive's voice, beside the engine's (build 198)
   updateScreech(Sound.ctx.currentTime);
   if(!Sound.on)return;
-  if(isElectric()||hybBenchEngineOff()&&vizMode!=='track')return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's engine may be off (build 190)
+  if(isElectric()||(vizMode==='dyno'&&hybBenchEngineOff()))return muteEngineSound();   // a motor has no engine to hear (its own voice: updateMotorSound); a hybrid's bench engine may be off (build 190)
   const src=soundSource();
   if(src&&src.off)return muteEngineSound();   // a hybrid's engine stopped on the lap replay (build 297)
   // a hybrid's engine on the bench runs at the ECU's throttle (H.thrE: AUTO, HOLD and CHARGE set it), not the pedal's

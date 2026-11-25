@@ -18,13 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 453)
+### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 454)
 
 - Added a 2-stroke tuned expansion-chamber resonant stuffing-wave model (`twoStrokePipeGain` in `src/js/gas-dynamics.js`, wired into `calcVE` and `deriveGasDynamics`; Blair SAE R-161 ch. 4): sport/race pipes tune `primL` to return a positive plugging wave before exhaust port close (~170° duration), while stock cast/box exhausts (`sigma >= 0.35`) return zero.
 - Implemented unthrottled quality-governed CI diesel operation on the LIVE bench (`mapTarget`, `pumpingMEP`, `withCiLoad`, `mappedAFR`, `stepEngineOnce`, `updateEnginePhysics`, `buildEngineCore`): intake stays at atmospheric + boost (`>= 1.0 bar`) with no intake throttle-plate vacuum pumping loss, and part-load torque is governed by fuel quantity (leaning out toward idle λ ~ 5–15, Heywood §1.5, §13.3).
 - Added exhaust silencer back-pressure (`silencerDp` and `EXHAUST_SILENCER` `K` loss factors in `src/js/parts.js`: `baffled` 4.2, `chambered` 2.2, `absorptive` 0.35, `straight` 0; Idelchik §11, Munjal ch. 2), wired into `backPressureBar()` and `exhaustReport()`, and exposed the `baffled` option in `src/shell.html` and `src/js/parts-art-3d.js`.
 - Added a derived oil-pressure model (`oilPressureBar` in `src/js/engine-physics.js`, `state.oilP` in `src/js/app-state.js`; Bosch Automotive Handbook + Sandoval & Heywood SAE 2003-01-0725 Vogel viscosity for SAE 10W-30) with spring relief-valve ceiling (4.8–5.2 bar), 0 bar on premix 2-strokes, and `LOW OIL PRESSURE` bearing wear in `stepWear()`.
 - Added `tests/test276.mjs` covering all four models.
+
+### Championship completion, timed-race countdown, and cross-mode audio (build 453)
+
+- Added five championship series (`kei_cup`, `muscle_cup`, `touring_cup`, `proto_cup`, `hybrid_cup`) covering the previously unreachable `kei_cup`, `muscle`, `touring`, `proto`, and `hyb_cup` classes, unlocked by default in `champCareer()`.
+- Added player team class eligibility checks (`champSeatDescriptor`, `champSeatEligible`, `champCheckTeamEligibility`) enforced in `champNewSeason()` and surfaced via `#champEligNote` on the CHAMP hub, along with track preview redraws on `#champSeries` change, `"WATCH REPLAY"` wired to `raceUI.run`, and Instant Season progress bar updates across rounds.
+- Wired `S.economy.tyres` dry/wet set consumption across stints and distinguished `CAREER` mode progression (persisting credits to `pes.champ.career`, scaling season tyre allocations, and charging `CHAMP.tyreSetCost` for extra sets) from sandbox seasons.
+- Replaced `LAP X/est` with a remaining countdown clock (`MM:SS` / `HH:MM:SS` via `fmtRaceClock` / `raceStatusClock`) in `#raceHead`, `#raceTopInfo`, and the race canvas header when `cfg.durationSec > 0`.
+- Extended cross-mode audio (`src/js/sound.js`, `src/js/skidpad-run.js`): recorded per-wheel slip angles `alpha` and `mu` in `skidpad-run.js`, wired `motorSoundState` and `soundSource`/`screechSlide` to Drift, Skidpad, Spiral, Figure 8, and the focused car on the Race tab, and restricted hybrid bench-off muting to `vizMode === 'dyno'` so Hybrids remain audible in Drift and Race replays.
+- Added `tests/test278.mjs` covering the new series, class eligibility, tyre consumption and career economy, WATCH REPLAY, timed-race countdown, and cross-mode audio.
 
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
