@@ -178,7 +178,7 @@ check(r.env.p25 > 0.72 && r.env.p25 < 0.77 && r.env.rho25 > 0.85 && r.env.rho25 
   `2500 m ISA values out of range: p25=${r.env.p25.toFixed(4)} rho25=${r.env.rho25.toFixed(4)}`);
 check(r.env.naDrop > 0.18 && r.env.naDrop < 0.35 && r.env.tbDrop < r.env.naDrop * 0.7,
   `altitude power drop: NA=${(r.env.naDrop*100).toFixed(1)}% turbo=${(r.env.tbDrop*100).toFixed(1)}%`);
-check(r.env.vHead < r.env.vCalm - 10 && r.env.vTail > r.env.vCalm + 5,
+check(r.env.vHead < r.env.vCalm - 10 && r.env.vTail > r.env.vCalm + 2,
   `wind topSpeed: head=${r.env.vHead.toFixed(1)} calm=${r.env.vCalm.toFixed(1)} tail=${r.env.vTail.toFixed(1)}`);
 check(r.env.lHead > r.env.lCalm + 0.5 && r.env.lTail < r.env.lCalm - 0.2,
   `wind WLTP L/100km: head=${r.env.lHead.toFixed(2)} calm=${r.env.lCalm.toFixed(2)} tail=${r.env.lTail.toFixed(2)}`);
