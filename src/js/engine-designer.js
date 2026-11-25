@@ -127,7 +127,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator'};
-const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust'];   // their change enables or disables other fields
+const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only
 // a description ("3.0 Turbo I6 (2JZ)" -> "2JZ") or a hybrid's ("Toyota 2ZR-FXE 1.8 + power-split (Prius)" -> "Prius").
@@ -163,6 +163,8 @@ function icdCompute(){
       safety:s.safety,knock:100-s.safety,cost:e.cost,redline:e.redline,float:e.floatRpm||0,ports:!!e.ports,rotary:e.type==='rotary',
       piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar,
       pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
+      turbo:e.intake==='turbo',turboLoad:e.turboLoad||0,compEff:e.compEff||0,spoolRpm:e.intake==='turbo'?Math.round(boostHalfRpm()):0,
+      peakEgtC:e.peakEgt?Math.round(e.peakEgt-273):0,peakEgtGas:e.peakEgtGas||0,vgtShut:e.vgtShut||0,
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -182,7 +184,7 @@ function icdSummary(c,r){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
       ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
-    case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig'):o('edScType')))+
+    case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
@@ -202,7 +204,9 @@ const ICD=new DesignCards({
   stats:(r,d)=>[['PEAK POWER',dcFmt(r.hp),'hp',d('hp',1,0)],['TORQUE',dcFmt(r.tq),'Nm',d('tq',1,0)],['DISPLACEMENT',dcFmt(r.disp,2),'L',''],
     ['GRADE',r.grade,' '+r.overall,d('overall',1,0)],['RELIABILITY',dcFmt(r.rel),'',d('rel',1,0)],['COST','$'+dcFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
   slowText:r=>tr('Peak power at {p} rpm, peak torque at {t} rpm').replace('{p}',dcFmt(r.hpRpm)).replace('{t}',dcFmt(r.tqRpm))+
-    (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1))),
+    (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1)))+
+    (r.peakEgtC>0?' · '+tr('peak EGT {e} °C').replace('{e}',dcFmt(r.peakEgtC)):'')+
+    (r.turbo?' · '+tr('50% boost @ {s} rpm · turbo load {l}% ({c}% eff)').replace('{s}',dcFmt(r.spoolRpm)).replace('{l}',dcFmt(Math.round(r.turboLoad*100))).replace('{c}',dcFmt(Math.round(r.compEff*100))):''),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',
   curve:r=>({xMax:r.redline,mark:null,pts:r.pts}),
   // what holds it back: the valvetrain against the redline, knock, and peak cylinder pressure
@@ -211,6 +215,7 @@ const ICD=new DesignCards({
     if(r.float>0)groups.push({head:'REVS',rows:[['valve float',r.float],['redline',r.redline]],lit:icdFloatShort(r)?0:1,fmt:v=>dcFmt(v/1000,1)+'k'});
     groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)||icdPreIgn(r)?0:1,fmt:v=>dcFmt(v)});
     if(r.pMax>0)groups.push({head:'CYL PRESSURE',rows:[['peak',r.pMax],['limit',r.pMaxLim]],lit:icdPmaxOver(r)?0:1,fmt:v=>dcFmt(v)+' bar'});
+    if(r.turbo&&r.turboLoad>0)groups.push({head:'TURBO',rows:[['load',Math.round(r.turboLoad*100)],['comp eff',Math.round(r.compEff*100)]],lit:r.turboLoad>1?0:1,fmt:v=>dcFmt(v)+'%'});
     let v;
     if(icdFloatShort(r))v=tr('The valves float at {f} rpm, before the {r} rpm redline: stiffer springs, lighter valves or a lower redline.')
       .replace('{f}',dcFmt(Math.round(r.float/100)*100)).replace('{r}',dcFmt(r.redline));
@@ -232,6 +237,8 @@ const ICD=new DesignCards({
     else if(icdPmaxOver(r)){w.edCR=tr('Peak cylinder pressure ({p} bar) exceeds the {l} bar limit.').replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));if(r.boost>0)w.edBoost=w.edCR;}
     else if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
     else if(r.knockCut){w.edCR=tr('ECU is cutting boost by {c} bar to stop knock.').replace('{c}',r.knockCut.maxCut.toFixed(2));w.edBoost=w.edCR;}
+    if(r.turbo&&r.turboLoad>1)w.edTurboSize=tr('Off the compressor map ({l}% load) — fit a bigger turbo frame.').replace('{l}',dcFmt(Math.round(r.turboLoad*100)));
+    if(r.vgtShut>0&&r.peakEgtGas>VANE_T_LIMIT+1)w.edVGT=tr('Exhaust gas ({t} °C) exceeds VGT vane limit.').replace('{t}',dcFmt(Math.round(r.peakEgtGas-273)));
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
   // low against high: the cylinder for what it shapes, the power curve for all four
