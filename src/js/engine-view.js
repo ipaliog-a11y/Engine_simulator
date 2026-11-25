@@ -123,14 +123,7 @@ function drawEngine(dt){
   ctx.save();
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
-  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
-  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
-  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
   ctx.restore();
-  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
-    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
-    ctx.fillRect(px(100),py(86),28*S,14*S);
-  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -771,9 +764,10 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
     const nose=(cl,down)=>(down+(d/2-camAt(cl)))*Math.PI/180;
     const hw=ev.dur/4;                                // half the lobe, in cam degrees
     const clIn=(ev.ivo+ev.ivc)/2,clEx=(ev.evo+ev.evc)/2;
-    if(e.valves===2){
-      // Two valves: pushrods, as on the presets that have two (the American V8s): one cam in the block,
-      // lifters and pushrods up the wall to rockers over the valves.
+    const vtKey=(typeof VALVETRAIN!=='undefined'&&VALVETRAIN[e.valvetrain])?e.valvetrain:(typeof valvetrainDefault==='function'?valvetrainDefault(e.valves):(e.valves===2?'ohv':'dohc-bucket'));
+    const isOhv=vtKey==='ohv'||vtKey==='ohv-roller';
+    if(isOhv){
+      // Pushrod OHV: one cam in the block, lifters and pushrods up the wall to rockers over the valves.
       const camX=cx-bore/2-10,camBY=boreTop+strokeLen*0.55;
       ctx.fillStyle='#15151f';ctx.fillRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);     // the rocker cover
       ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);
@@ -798,7 +792,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
         drawCamLobe(px,py,S,LW,vx,camY,rb,L,hw,nose(cl,90),lobe);
       }
       if(e.vvt){ctx.strokeStyle=C.cyan;ctx.lineWidth=LW(1);ctx.beginPath();ctx.arc(px(vIn),py(camY),(rb+L+2)*S,0,6.284);ctx.stroke();}
-      camTxt='DOHC '+e.valves+'V';
+      camTxt=(vtKey.startsWith('sohc')?'SOHC ':'DOHC ')+e.valves+'V';
     }
     // the cam's events, where the model has them
     const fmt=(v,a,b)=>Math.round(Math.abs(v))+'°'+(v>=0?a:b);

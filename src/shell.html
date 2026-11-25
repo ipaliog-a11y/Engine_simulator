@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 456</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 457</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -887,7 +887,7 @@
 <div class="perf-head" id="trkPreviewHead">—</div>
 <div class="perf-note" id="trkPreviewNote"></div>
 <div class="build-row"><button id="btnTrackStart">START LAP</button></div>
-<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button></div>
+<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button><button id="btnDeleteGpx" title="Delete the selected imported GPX track" hidden>DELETE GPX TRACK</button></div>
 </div>
 <div id="trackLive" hidden>
 <div class="perf-head" id="lapHead">—</div>
@@ -959,6 +959,11 @@
 <div class="field"><label for="chalTc">TC</label><select id="chalTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="chalEsp">ESP</label><select id="chalEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field" style="display:none"><label for="chalAwdMode">AWD DIFF</label><select id="chalAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
+</div>
+<div class="replay-row" id="chalReplayRow" hidden>
+<button id="btnChalPlay" class="toggle on" aria-pressed="true">PAUSE</button>
+<input type="range" id="chalReplayScrub" min="0" max="1000" value="0" aria-label="Replay time" style="flex:1;min-width:80px">
+<span id="chalReplayTime" style="font-size:6px;color:#9ab;align-self:center">0.0s</span>
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>

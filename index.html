@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 456</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 457</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4232,7 +4232,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="perf-head" id="trkPreviewHead">—</div>
 <div class="perf-note" id="trkPreviewNote"></div>
 <div class="build-row"><button id="btnTrackStart">START LAP</button></div>
-<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button></div>
+<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button><button id="btnDeleteGpx" title="Delete the selected imported GPX track" hidden>DELETE GPX TRACK</button></div>
 </div>
 <div id="trackLive" hidden>
 <div class="perf-head" id="lapHead">—</div>
@@ -4304,6 +4304,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="chalTc">TC</label><select id="chalTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="chalEsp">ESP</label><select id="chalEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field" style="display:none"><label for="chalAwdMode">AWD DIFF</label><select id="chalAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
+</div>
+<div class="replay-row" id="chalReplayRow" hidden>
+<button id="btnChalPlay" class="toggle on" aria-pressed="true">PAUSE</button>
+<input type="range" id="chalReplayScrub" min="0" max="1000" value="0" aria-label="Replay time" style="flex:1;min-width:80px">
+<span id="chalReplayTime" style="font-size:6px;color:#9ab;align-self:center">0.0s</span>
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
@@ -14776,7 +14781,8 @@ function renderSuspWin(){
     '<span><i class="d" style="border-color:#556"></i>'+esc(tr('the two natural frequencies'))+'</span>';
   el('susTS').textContent=tr('OVER A STEP IN THE ROAD (mm)');
   el('susLegS').innerHTML='<span><i style="border-color:'+SC_COL.body+'"></i>'+esc(tr('body'))+'</span><span><i style="border-color:'+SC_COL.wheel+'"></i>'+esc(tr('wheel'))+'</span>'+
-    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>';
+    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>'+
+    '<span><i style="border-color:'+SC_COL.load+'"></i>'+esc(tr('wheel in air'))+'</span>';
   el('susNote').textContent=tr('A calculator: it starts from the car\'s own corner, the quarter car the lap runs on, and nothing changed here goes back to the car. The rates are taken at the wheel through the motion ratio squared. A road wave meets the mean of the bound and rebound damping; the step uses each in its own direction, and the tyre cannot pull on the road. Bump stops, preload and the damper\'s blow-off are left out.');
   drawSuspFreq();drawSuspStep();
 }
@@ -25410,14 +25416,7 @@ function drawEngine(dt){
   ctx.save();
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
-  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
-  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
-  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
   ctx.restore();
-  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
-    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
-    ctx.fillRect(px(100),py(86),28*S,14*S);
-  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -26058,9 +26057,10 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
     const nose=(cl,down)=>(down+(d/2-camAt(cl)))*Math.PI/180;
     const hw=ev.dur/4;                                // half the lobe, in cam degrees
     const clIn=(ev.ivo+ev.ivc)/2,clEx=(ev.evo+ev.evc)/2;
-    if(e.valves===2){
-      // Two valves: pushrods, as on the presets that have two (the American V8s): one cam in the block,
-      // lifters and pushrods up the wall to rockers over the valves.
+    const vtKey=(typeof VALVETRAIN!=='undefined'&&VALVETRAIN[e.valvetrain])?e.valvetrain:(typeof valvetrainDefault==='function'?valvetrainDefault(e.valves):(e.valves===2?'ohv':'dohc-bucket'));
+    const isOhv=vtKey==='ohv'||vtKey==='ohv-roller';
+    if(isOhv){
+      // Pushrod OHV: one cam in the block, lifters and pushrods up the wall to rockers over the valves.
       const camX=cx-bore/2-10,camBY=boreTop+strokeLen*0.55;
       ctx.fillStyle='#15151f';ctx.fillRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);     // the rocker cover
       ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);
@@ -26085,7 +26085,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
         drawCamLobe(px,py,S,LW,vx,camY,rb,L,hw,nose(cl,90),lobe);
       }
       if(e.vvt){ctx.strokeStyle=C.cyan;ctx.lineWidth=LW(1);ctx.beginPath();ctx.arc(px(vIn),py(camY),(rb+L+2)*S,0,6.284);ctx.stroke();}
-      camTxt='DOHC '+e.valves+'V';
+      camTxt=(vtKey.startsWith('sohc')?'SOHC ':'DOHC ')+e.valves+'V';
     }
     // the cam's events, where the model has them
     const fmt=(v,a,b)=>Math.round(Math.abs(v))+'°'+(v>=0?a:b);
@@ -28333,7 +28333,7 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
           ctx.lineTo(toX(p.x - p.nx * hw), toY(p.y - p.ny * hw));
         }
         ctx.closePath();
-        ctx.fill('evenodd');
+        ctx.fill('nonzero');
         ctx.restore();
       };
       const strokeCenterline = (widthM, style, dash) => {
@@ -28485,44 +28485,46 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
   }
 
   /** Step & draw batched tire smoke and wet spray (1 path per kind). */
-  function _stepAndDrawBatchedParticles(ctx, cam, cars) {
+  function _stepAndDrawBatchedParticles(ctx, cam, cars, paused) {
     const wx = _getWX();
     const wet = wx ? (wx.wet || 0) : 0;
-    if (cars && _particles.length < 280) {
-      for (let i = 0; i < cars.length; i++) {
-        const car = cars[i];
-        const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
-        if (wet > 0.12 && Math.random() < 0.32) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.9,
-            y: car.y - Math.sin(car.hd) * 1.9,
-            vx: -Math.cos(car.hd) * 3.2,
-            vy: -Math.sin(car.hd) * 3.2,
-            life: 0,
-            max: 0.36,
-            kind: 'spray',
-          });
-        } else if (brk > 0.55 && Math.random() < 0.35) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.8,
-            y: car.y - Math.sin(car.hd) * 1.8,
-            vx: (Math.random() - 0.5) * 1.2,
-            vy: (Math.random() - 0.5) * 1.2,
-            life: 0,
-            max: 0.45,
-            kind: 'smoke',
-          });
+    if (!paused) {
+      if (cars && _particles.length < 280) {
+        for (let i = 0; i < cars.length; i++) {
+          const car = cars[i];
+          const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
+          if (wet > 0.12 && Math.random() < 0.32) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.9,
+              y: car.y - Math.sin(car.hd) * 1.9,
+              vx: -Math.cos(car.hd) * 3.2,
+              vy: -Math.sin(car.hd) * 3.2,
+              life: 0,
+              max: 0.36,
+              kind: 'spray',
+            });
+          } else if (brk > 0.55 && Math.random() < 0.35) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.8,
+              y: car.y - Math.sin(car.hd) * 1.8,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: (Math.random() - 0.5) * 1.2,
+              life: 0,
+              max: 0.45,
+              kind: 'smoke',
+            });
+          }
         }
       }
-    }
 
-    const dt = 1 / 60;
-    for (let i = _particles.length - 1; i >= 0; i--) {
-      const p = _particles[i];
-      p.life += dt;
-      if (p.life >= p.max) { _particles.splice(i, 1); continue; }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
+      const dt = 1 / 60;
+      for (let i = _particles.length - 1; i >= 0; i--) {
+        const p = _particles[i];
+        p.life += dt;
+        if (p.life >= p.max) { _particles.splice(i, 1); continue; }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+      }
     }
 
     if (_particles.length === 0) return;
@@ -28613,7 +28615,7 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       if (pr.sx < -90 || pr.sx > cam.W + 90 || pr.sy < -90 || pr.sy > cam.H + 90) continue;
       drawList.push({ sy: pr.sy, kind: 'car', car: cars[i], pr });
     }
-    if (paintedTiles) {
+    if (_modeBEnabled) {
       for (let i = 0; i < _sceneProps.length; i++) {
         const prop = _sceneProps[i];
         const pr = _project(cam, prop.x, prop.y, 0);
@@ -28688,12 +28690,15 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       }
     }
 
-    // 5. Batched smoke & wet spray particles
-    _stepAndDrawBatchedParticles(g, cam, cars);
+    // 5. Batched smoke & wet spray particles (frozen while replay/race is paused)
+    const paused = opts.paused != null ? !!opts.paused :
+      (typeof vizMode !== 'undefined' && vizMode === 'track' && typeof lapReplay !== 'undefined' && !lapReplay.playing) ||
+      (typeof vizMode !== 'undefined' && vizMode === 'race' && typeof raceUI !== 'undefined' && (!raceUI.playing || !!raceUI.scrubbing));
+    _stepAndDrawBatchedParticles(g, cam, cars, paused);
 
     // 6. Time-of-day atmospheric grading + additive night prop glow
     g.setTransform(_base);
-    if (paintedTiles && tod === 'night') {
+    if (tod === 'night') {
       g.fillStyle = 'rgba(6, 10, 24, 0.20)';
       g.fillRect(0, 0, cam.W, cam.H);
     } else if (tod === 'sunset') {
@@ -28727,6 +28732,8 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       tileHits: _tileHits,
       tileMisses: _tileMisses,
       propsPlaced: _sceneProps.length,
+      particles: _particles.length,
+      particle0: _particles.length ? { x: _particles[0].x, y: _particles[0].y, life: _particles[0].life } : null,
     };
   };
   window.sceneSetModeB = function (on) {
@@ -28895,18 +28902,21 @@ function drawReplayHud(L,st,W,y0){
   ctx.fillStyle='#99a';ctx.font='7px '+PS;ctx.fillText(Math.round(st.rpm)+' rpm',x0+48,y0+46);
   // rev bar to the redline
   const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
-  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
-  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
-  drawShiftLights(x0+10,y0+64,st.rpm,engine.redline);
-  if((st.tF||0)>450||(st.tR||0)>450){ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+64,8,8);}
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+52,96,5);
+  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+52,96*rf,5);
+  drawShiftLights(x0+10,y0+60,st.rpm,engine.redline);
+  if((st.tF||0)>450||(st.tR||0)>450){
+    ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+15,7,7);
+    ctx.font='6px '+PS;ctx.fillText(tr('HOT BRK'),x0+130,y0+22);
+  }
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
-  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+84);
+  bar('THR',st.thr,'#00ff88',y0+72);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+86);
   ctx.fillStyle='#667';ctx.font='6px '+PS;
-  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
+  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+107);
   if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
-    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
+    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+123);}
   drawGMeter(st,x0+146,y0+86,30,y0+128);
   // engine power now, as a bar against the peak
   const pw=powerReadout(st,L);
@@ -30443,6 +30453,10 @@ function closeTrackPage(){
 }
 function bindTrackPage(){
   document.getElementById('btnTrackFull').addEventListener('click',()=>{trackPage.open?closeTrackPage():openTrackPage();});
+  const bDel=document.getElementById('btnDeleteGpx');
+  if(bDel)bDel.addEventListener('click',()=>deleteImportedTrack());
+  const sel=document.getElementById('trkSel');
+  if(sel)sel.addEventListener('change',syncGpxDeleteBtn);
   addEventListener('resize',sizeTrackStage);
   addEventListener('orientationchange',()=>setTimeout(sizeTrackStage,200));
   addEventListener('keydown',e=>{if(e.key==='Escape'&&trackPage.open&&!document.fullscreenElement)closeTrackPage();});
@@ -30452,6 +30466,24 @@ function bindTrackPage(){
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
 const GPX_KEY='pes.tracks';
+function syncGpxDeleteBtn(){
+  const b=document.getElementById('btnDeleteGpx');
+  if(b)b.hidden=!(TRACKS[trackKey]&&TRACKS[trackKey].imported);
+}
+function deleteImportedTrack(key){
+  const k=key||trackKey;
+  if(!TRACKS[k]||!TRACKS[k].imported)return false;
+  const lbl=TRACKS[k].label||k;
+  delete TRACKS[k];
+  delete trackCache[k];
+  saveImportedTracks();
+  if(trackKey===k)trackKey='mixed';
+  refreshTrackList();
+  if(typeof renderTrackSetup==='function')renderTrackSetup();
+  if(typeof trackUI!=='undefined'&&trackUI.phase==='live')refreshLap();
+  flash(tr('DELETED')+' '+lbl);
+  return true;
+}
 function refreshTrackList(){
   const sel=document.getElementById('trkSel');if(!sel)return;
   sel.innerHTML='';
@@ -30468,6 +30500,7 @@ function refreshTrackList(){
     sel.appendChild(g);
   }
   sel.value=trackKey;
+  syncGpxDeleteBtn();
 }
 function saveImportedTracks(){
   try{
@@ -30819,6 +30852,7 @@ function drawDyno(){
     (lapNow!=null?'  •  '+tr('LAP')+' '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):'');
   ctx.fillText(costTxt,gX+4,iy+28);
   const ch=CHALLENGES.find(c=>c.id===activeChallenge);
+  let legY=iy+41;
   if(ch&&ch.id!=='free'){
     const ev=evalChallenge(ch,m);
     ctx.fillStyle=ev.pass?C.green:C.red;
@@ -30827,11 +30861,12 @@ function drawDyno(){
     const verdict=(ev.pass?'✓ ':'✗ ')+chName(ch).toLocaleUpperCase(currentLang)+' — '+trIn('dyno',ev.pass?'PASSED':'NOT MET');
     const fits=ctx.measureText(costTxt).width+ctx.measureText(verdict).width+24<=gW;
     ctx.textAlign='right';ctx.fillText(verdict,gX+gW,fits?iy+28:iy+41);ctx.textAlign='left';
+    if(!fits)legY=iy+54;
   }
   ctx.font='6px "Press Start 2P"';
   if(dynoPulls.length){
-    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
-  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
+    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,legY);});
+  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,legY);}
 }
 // Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
 // placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
@@ -37417,7 +37452,43 @@ const chalHover={i:-1,map:null};
 let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
-function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
+const chalReplay={playing:true,t:0,lastMs:0,t0Ref:0,scrubbing:false};
+function chalReplaySpan(R){
+  const S=R&&R.samples;
+  if(!S||!S.length)return{t0:0,t1:0,span:0};
+  const t0=S[0].t,t1=S[S.length-1].t;
+  return{t0,t1,span:Math.max(0.05,t1-t0)};
+}
+function chalSyncReplayUi(){
+  const pb=document.getElementById('btnChalPlay');
+  if(pb){pb.textContent=tr(chalReplay.playing?'PAUSE':'PLAY');pb.classList.toggle('on',chalReplay.playing);pb.setAttribute('aria-pressed',String(chalReplay.playing));}
+}
+function chalSyncReplayScrub(sp){
+  const sc=document.getElementById('chalReplayScrub'),tm=document.getElementById('chalReplayTime');
+  if(!sp||sp.span<=0)return;
+  if(sc&&!chalReplay.scrubbing)sc.value=String(Math.round(clamp(chalReplay.t/sp.span,0,1)*1000));
+  if(tm)tm.textContent=chalReplay.t.toFixed(1)+'s';
+}
+function chalReplayReset(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  chalMooseT0=nowMs;
+  chalReplay.t=0;chalReplay.playing=true;chalReplay.scrubbing=false;chalReplay.lastMs=nowMs;chalReplay.t0Ref=nowMs;
+  chalSyncReplayUi();
+  chalSyncReplayScrub(chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null));
+}
+function chalMooseNow(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  if(chalMooseT0!==chalReplay.t0Ref){chalReplay.t=0;chalReplay.t0Ref=chalMooseT0;chalReplay.lastMs=nowMs;}
+  if(!chalReplay.lastMs)chalReplay.lastMs=nowMs;
+  const dt=Math.max(0,(nowMs-chalReplay.lastMs)/1000);
+  chalReplay.lastMs=nowMs;
+  const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+  if(chalReplay.playing&&!chalReplay.scrubbing){
+    chalReplay.t=sp.span>0?(chalReplay.t+dt*chalMooseRate)%sp.span:(chalReplay.t+dt*chalMooseRate);
+  }
+  chalSyncReplayScrub(sp);
+  return sp.t0+chalReplay.t;
+}
 const chalUI={phase:'setup'};
 function syncDriveAidsUI(){
   const tcOn=vehicle.tc!==false;
@@ -37445,8 +37516,11 @@ function chalSyncFields(ch){
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
+  const isDynKind=ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8';
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&isDynKind)?'':'none';}
+  const rr=document.getElementById('chalReplayRow');
+  if(rr)rr.hidden=!(live&&isDynKind&&chalResult&&chalResult.ok&&chalResult.samples&&chalResult.samples.length);
   const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
   const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
   syncDriveAidsUI();
@@ -37472,7 +37546,7 @@ function refreshChallenge(){
   chalUI.phase='live';
   chalHover.i=-1;
   const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalReplayReset();
   chalSyncFields(ch);
   renderRunChallenge();
 }
@@ -37482,7 +37556,15 @@ function renderRunChallenge(){
   const ch=runChallengeById(activeRunChallenge);
   const R=chalResult;
   if(!R){head.textContent=tr('Build a car first.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
-  if(!R.ok){head.textContent=tr('This challenge is not ready yet.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
+  if(!R.ok){
+    const failMsg={
+      'no-clear':tr('Car could not clear the cones even at the lowest entry speed.'),
+      'no-hold':tr('Car could not hold the line within the tolerance at any speed.'),
+      'no-run':tr('No valid powerslide run found for this setup.')
+    }[R.reason];
+    head.textContent=failMsg||tr('This challenge is not ready yet.');
+    grid.innerHTML='';note.textContent=tr(ch.desc);return;
+  }
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
     const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
@@ -37498,7 +37580,7 @@ function renderRunChallenge(){
       cell('2-WHEEL LIFT',R.lift2>0?R.lift2.toFixed(2)+' s':tr('none'))+
       cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
       cell('STABILITY t/2h',R.ssf.toFixed(2));
-    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 48 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
     return;
   }
   if(R.kind==='drift'){
@@ -37517,7 +37599,7 @@ function renderRunChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD uses HANDBRAKE only with an electronic-clutch or lockable centre diff. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){
@@ -37707,8 +37789,11 @@ function drawDriftHud(s){
   const w=REPLAY_HUD_W,h=208,x0=vizW-w-10,y0=vizH-h-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
-  const rl=Math.max(1000,engine.redline),rMax=Math.ceil(rl/1000+0.5)*1000,v=(s.v||0)*3.6;
-  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,1000,'x1000',rl,x=>String(x/1000));
+  const ev=typeof isElectric==='function'&&isElectric();
+  const rl=Math.max(1000,ev&&engine.motor&&engine.motor.nMax?engine.motor.nMax:engine.redline);
+  const rStep=rl>10000?2000:1000,rMax=Math.ceil(rl/rStep+0.5)*rStep,v=(s.v||0)*3.6;
+  drawDriftHud.lastRl=rl;
+  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,rStep,'x1000',rl,x=>String(x/1000));
   ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.textAlign='center';ctx.fillText(String(s.gear),x0+47,y0+79);
   const top=Math.max(160,(perf&&perf.topSpeed)||160),vMax=Math.ceil(top*1.1/20)*20,vs=niceStep(vMax,7);
   drawDial(x0+137,y0+47,40,0,Math.ceil(vMax/vs)*vs,v,vs,'km/h',null,x=>String(x));
@@ -37717,7 +37802,8 @@ function drawDriftHud(s){
   const yb=y0+126,pedal=(xx,val,col,lbl)=>{ctx.fillStyle='#1d1d2b';ctx.fillRect(xx,yb-26,10,52);
     const hh=52*clamp(val,0,1);ctx.fillStyle=col;ctx.fillRect(xx,yb+26-hh,10,hh);
     ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(lbl,xx-1,yb+34);};
-  pedal(x0+40,s.thr||0,'#00ff88','T');pedal(x0+56,s.brk||0,'#ff5555','B');
+  pedal(x0+28,s.thr||0,'#00ff88','T');pedal(x0+44,s.brk||0,'#ff5555','B');
+  if(s.hb!=null)pedal(x0+60,s.hb,'#ffaa00','H');
   drawGMeter({gLat:-(s.ay||0)/DRIVE_G,gLong:(s.ax||0)/DRIVE_G},x0+148,yb,26,yb+36);
   const sw=steerText({steer:-(s.delta||0)*180/Math.PI}),ys=y0+172;   // drift steer is left-positive; the wheel reads R positive
   ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
@@ -38213,6 +38299,26 @@ function bindChallengeHover(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
+  const pb=document.getElementById('btnChalPlay');
+  if(pb)pb.addEventListener('click',()=>{
+    chalReplay.playing=!chalReplay.playing;
+    chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+    chalSyncReplayUi();
+  });
+  const sc=document.getElementById('chalReplayScrub');
+  if(sc){
+    const seek=()=>{
+      const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+      if(sp.span>0)chalReplay.t=clamp(+sc.value/1000,0,1)*sp.span;
+      chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+      chalSyncReplayScrub(sp);
+      if(vizMode==='challenges'&&typeof drawChallenge==='function')drawChallenge();
+    };
+    sc.addEventListener('pointerdown',()=>{chalReplay.scrubbing=true;});
+    sc.addEventListener('input',seek);
+    sc.addEventListener('change',()=>{seek();chalReplay.scrubbing=false;});
+    sc.addEventListener('pointerup',()=>{chalReplay.scrubbing=false;});
+  }
 }
 // ====== CHALLENGES: rank several cars on one challenge (build 370) ======
 // Each car is loaded in turn (withBuild, as the race does), solved by the challenge's own solver with the settings
@@ -38277,7 +38383,7 @@ function renderChalRank(){
   if(!chalRank.rows||chalRank.busy){out.innerHTML='';return;}
   out.innerHTML='<div class="perf-head">'+esc(tr(chalRank.ch.name))+'</div><table class="chal-rank"><thead><tr><th>#</th><th>'+tr('CAR')+'</th><th>'+tr('SCORE')+'</th><th>'+tr('RESULT')+'</th></tr></thead><tbody>'+
     chalRank.rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td title="'+esc(r.name)+'">'+esc(r.name)+'</td><td>'+(r.s?esc(r.s.text):'—')+'</td>'+
-      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'">'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
+      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'"'+(r.err?' title="'+esc(r.err)+'"':'')+'>'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
     '</tbody></table>';
 }
 function bindChalRank(){

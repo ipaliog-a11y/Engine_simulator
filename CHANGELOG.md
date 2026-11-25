@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Canvas/HUD layout fixes, challenge replay controls, and GPX track deletion (build 457)
+
+- Fixed canvas and HUD layout glitches: shifted the logged-pull legend below wrapped challenge verdicts in `drawDyno` (`src/js/dyno-ui.js`), spaced shift lights away from the `THR` bar and relocated the labeled hot-brake indicator clear of the G-meter in `drawReplayHud` (`src/js/track-view.js`), removed stray fixed-coordinate debug rectangles and switched OHV vs OHC cutaway selection to `e.valvetrain` in `src/js/engine-view.js`, and added the red `wheel in air` entry to the suspension step legend (`src/js/susp-window.js`).
+- Fixed `src/js/track-scene-v2.js`: paused particle spawning and integration while track/race replay is paused, switched `fillRibbon` to `'nonzero'` so figure-8 / self-crossing GPX tracks do not punch holes at intersections, and kept 3D props and night grading consistent on the 20-tile overview fallback.
+- Added Play/Pause (`#btnChalPlay`) and time scrub (`#chalReplayScrub`) controls for dynamic challenge replays, fixed EV tachometer redline (`engine.motor.nMax`) and added a handbrake bar in `drawDriftHud`, distinguished `no-clear`/`no-hold`/`no-run` verdicts from `"This challenge is not ready yet."`, updated stale Moose (48 lines) and Drift AWD handbrake copy (`src/js/chal-view.js`), and surfaced `r.err` tooltips on failed ranking rows (`src/js/chal-rank.js`).
+- Added a `DELETE GPX TRACK` button (`#btnDeleteGpx`) in `#trackSetup` to remove user-imported GPX circuits from `TRACKS` and `localStorage` (`pes.tracks`) (`src/js/fullscreen-track.js`, `src/shell.html`).
+- Added `tests/test281.mjs` covering challenge replay controls, failure verdicts, ranking error tooltips, EV drift tach redline, wheel-in-air legend, valvetrain cutaway, GPX deletion, and paused particles.
+
 ### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 456)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).
