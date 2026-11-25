@@ -694,7 +694,8 @@ function driveDriver(car,s,line,d){
   // ---- the pedals
   const ease=Math.max(0,Math.min(1,2*(Math.max(Math.abs(s.alpha[2]),Math.abs(s.alpha[3]))/pkR-1)));   // rear past its peak: off the plan by 1.5 x
   const plan=(p1.v*p1.v-p0.v*p0.v)/(2*ds)+SPEED*(p0.v-s.vx);
-  const F=car.m*plan*(1-ease)+0.5*DRIVE_RHO*car.cdA*s.vx*s.vx+car.crr*car.m*g+car.m*g*p0.grade;
+  const rhoF=envAirRho(car),vAirF=Math.max(0,s.vx+envWind(car)),dnF=0.5*rhoF*car.clA*vAirF*vAirF;
+  const F=car.m*plan*(1-ease)+0.5*rhoF*car.cdA*vAirF*vAirF+car.crr*(car.m*g+dnF)+car.m*g*p0.grade;
   const k=s.gear>0?car.ratios[s.gear-1]*car.fd*car.eff/car.r:0,wot=driveEngine(car,1,s.rpm,s.boost,s.soc),ov=-driveEngine(car,0,s.rpm,s.boost,s.soc);
   let thr=k>0?(F/k+ov)/Math.max(1,wot+ov):0,brk=0;
   if(thr<0){brk=Math.min(1,-(F+ov*k)/car.brakeF);thr=0;}
@@ -704,9 +705,25 @@ function driveDriver(car,s,line,d){
 // automatic clutch, gear 1.. or null for automatic shifts, road {sinT: the grade along the car, positive uphill; kv: the
 // road's vertical curvature along it, 1/m, negative over a crest; z and grip: the height (m) and the grip under each
 // wheel, four of each, as driveRoadAt gives them} or nothing for a flat road}. Returns s, with what happened in it for the instruments.
+// Dynamic aero sensitivity to ride height (heave, m, negative = compressed) and pitch (rad, negative = nose-down):
+// Katz, Race Car Aerodynamics ch. 5 & 8; Milliken & Milliken RCVD ch. 16.
+// Lowering the chassis increases ground-effect suction up to ~95% of bump travel, then chokes/stalls past bottoming.
+// Nose-down pitch (-pitch > 0) shifts aero balance forward (~1.8/rad ≈ 3.1%/deg) and adds attitude drag.
+function driveAeroAt(car,heave,pitch,vAir,rho){
+  const cl0=car.clA||0,cd0=car.cdA||0,bal0=car.aeroBal==null?0.5:car.aeroBal;
+  const bumpRef=Math.max(0.03,Math.min(car.bumpF||0.08,car.bumpR||0.08));
+  const hn=-(heave||0)/bumpRef,bottomed=hn>0.95;
+  let clScale=1;
+  if(cl0>0)clScale=hn<=0.95?Math.max(0.75,1+0.25*hn):Math.max(0.65,1.2375-0.8*(hn-0.95));
+  const p=pitch||0,aeroBal=Math.max(0.15,Math.min(0.85,bal0-p*1.8));
+  const cdScale=1+(cl0>0?0.10*Math.max(0,clScale-1):0)+0.8*Math.abs(p);
+  const clA=cl0*clScale,cdA=cd0*cdScale,r=rho!=null?rho:envAirRho(car);
+  return {clA,cdA,aeroBal,down:0.5*r*clA*vAir*vAir,clScale,cdScale,bottomed};
+}
 function stepCar(car,s,u,dt){
   if(!(dt>0))return s;
   const H=0.001,n=Math.max(1,Math.ceil(dt/H)),h=dt/n,g=DRIVE_G,L=car.a+car.b;
+  const rho=envAirRho(car),vWind=envWind(car);
   const xw=[car.a,car.a,-car.b,-car.b],yw=[car.tF/2,-car.tF/2,car.tR/2,-car.tR/2];
   const drv=car.drive==='awd'?[1,1,1,1]:car.drive==='fwd'?[1,1,0,0]:[0,0,1,1],nd=drv[0]+drv[1]+drv[2]+drv[3];
   // the share of the drive torque each wheel gets: equal, unless a centre differential splits it unequally (build 320)
@@ -740,9 +757,10 @@ function stepCar(car,s,u,dt){
     // the road under the car: on a grade the weight presses with its cosine, and over a crest (kv < 0) or through a
     // dip (kv > 0) the car's own speed adds v^2 kv, as the lap has it. With nothing left the car is in the air.
     const gz=Math.max(0,g*cosT+s.vx*s.vx*kv);
-    const down=0.5*DRIVE_RHO*car.clA*v*v;
-    // each tyre's load is its own deflection, between the road and its wheel (THE WHEELS)
     if(!s.zu){s.zu=[0,0,0,0];s.zuV=[0,0,0,0];s.heave=0;s.heaveV=0;s.rr=[0,0];}
+    const vAirX=s.vx+vWind,vAir=Math.hypot(vAirX,s.vy);
+    const aero=driveAeroAt(car,s.heave,s.pitch,vAir,rho),down=aero.down;
+    // each tyre's load is its own deflection, between the road and its wheel (THE WHEELS)
     const Fz=s.Fz;
     for(let i=0;i<4;i++)Fz[i]=Math.max(0,(i<2?W0F:W0R)+(i<2?car.ktF:car.ktR)*((zr?zr[i]||0:0)-s.zu[i]));
     // ---- tyres
@@ -953,7 +971,7 @@ function stepCar(car,s,u,dt){
       else if(CD&&CD.type==='visc'){const k=h*inv/4;Tc=CD.c*(Tc*k)/(1+CD.c*k);}
       for(let q=0;q<4;q++)s.w[q]+=(q<2?-1:1)*h*Tc/2/(car.Iw+h*car.r*dF[q]);}
     // ---- body
-    const drag=0.5*DRIVE_RHO*car.cdA*v*s.vx,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;
+    const drag=0.5*rho*aero.cdA*vAir*vAirX,ax=(FX-drag)/car.m-g*sinT,ay=FY/car.m;
     s.vx+=h*(ax+s.vy*s.yaw);s.vy+=h*(ay-s.vx*s.yaw);s.yaw+=h*MZ/car.Izz;
     if(brake>0&&thr===0&&Math.abs(s.vx)<0.05&&Math.abs(s.vy)<0.05){s.vx=0;s.vy=0;s.yaw=0;}   // held on the brakes
     s.psi+=h*s.yaw;const c=Math.cos(s.psi),sn=Math.sin(s.psi);
@@ -978,7 +996,8 @@ function stepCar(car,s,u,dt){
       SS+=SL+SR;MP+=xw[i]*(SL+SR);MR+=(SR-SL)*t/2;s.rr[q]=pr;}
     s.heaveV+=h*(SS-car.mS*dg-down)/car.mS;s.heave+=h*s.heaveV;
     s.rollV+=h*(car.m*ay*car.rollArm-MR)/car.rollI;s.roll+=h*s.rollV;
-    s.pitchV+=h*(car.m*ax*car.h+MP-down*(car.aeroBal*car.a-(1-car.aeroBal)*car.b))/car.pitchI;s.pitch+=h*s.pitchV;
+    s.pitchV+=h*(car.m*ax*car.h+MP-down*(aero.aeroBal*car.a-(1-aero.aeroBal)*car.b))/car.pitchI;s.pitch+=h*s.pitchV;
+    s.clAEff=aero.clA;s.cdAEff=aero.cdA;s.aeroBalEff=aero.aeroBal;s.aeroDown=down;s.aeroBottomed=aero.bottomed;
     s.ax=ax;s.ay=ay;s.delta=delta;s.t+=h;
   }
   s.rpm=s.we*30/Math.PI;s.speed=Math.hypot(s.vx,s.vy);
