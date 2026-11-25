@@ -22,6 +22,7 @@ function readEngineFromForm(){
     govRpm:clamp(Math.round(+g('edGovRpm').value||0),0,8000),
     tqLimit:clamp(Math.round(+g('edTqLimit').value||0),0,5000),
     intercooler:g('edIntercooler').value,
+    waterMeth:g('edWaterMeth').value,
     turboSize:g('edTurboSize').value,compExd_mm:(()=>{const v=+g('edCompWheel').value||0;return v>0?clamp(v,30,110):0;})(),
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
@@ -81,6 +82,7 @@ function applyEngineToForm(e){
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
   g('edIntake').value=e.intake;g('edBoost').value=e.boost_bar;g('edTaperRpm').value=e.taperRpm||0;g('edTaperPct').value=e.taperPct!=null?e.taperPct:100;g('edTqLimit').value=e.tqLimit||0;g('edGovRpm').value=e.govRpm||0;
   g('edIntercooler').value=(e.intercooler===true?'large':e.intercooler===false?'none':(e.intercooler||'large'));
+  g('edWaterMeth').value=e.waterMeth||'none';
   g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
@@ -145,6 +147,7 @@ function syncDesignEnable(){
   const intake=g('edIntake').value,na=intake==='na';
   g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na||!(+g('edTaperRpm').value>0);g('edTqLimit').disabled=na;
   g('edIntercooler').disabled=na;
+  g('edWaterMeth').disabled=na;
   const turbo=intake==='turbo', turboCustom=turbo&&g('edTurboSize').value.startsWith('part:');
   g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo||turboCustom;
   g('edTurboConfig').disabled=!turbo;
@@ -307,7 +310,7 @@ function buildEngineCore(prevStoich,quiet){
   }
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
-  state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;   // fresh tanks
+  state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
   state.engineHealth=1.0;state.blown=false;state.wearCause='';state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;

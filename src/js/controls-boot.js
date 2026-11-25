@@ -47,7 +47,7 @@ function bindControls(){
     state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
     state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();
     state.coolant=90;state.oil=100;state.tCat=450;state.batterySOC=1.0;
-    state.nitrousCharge=1.0;state.nitrousActive=false;
+    state.nitrousCharge=1.0;state.nitrousActive=false;state.wmCharge=1.0;
     const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}
     if(isElectric()){const tc=(engine.motor&&engine.motor.cool?engine.motor.cool.tCool:40);state.mT={w:tc,c:tc,r:tc};state.soc=0.9;state.battI=0;state.battKW=0;}
     const afr=engine.ci?(engine.stoichAFR||14.5)*1.4:(engine.stoichAFR||14.7);
@@ -90,6 +90,11 @@ function bindControls(){
     state.nitrousActive=!state.nitrousActive;
     const b=document.getElementById('btnNitrous');b.classList.toggle('on',state.nitrousActive);b.setAttribute('aria-pressed',state.nitrousActive);
     flash(tr(state.nitrousActive?'NITROUS ARMED — SPRAYS AT WOT':'NITROUS OFF'));
+  });
+  document.getElementById('btnRefillWM').addEventListener('click',()=>{
+    if(engine.intake==='na'||!engine.waterMeth||engine.waterMeth==='none'){flash(tr('NO WATER/METH FITTED — ADD IT ON THE ENGINE TAB'),'warn');return;}
+    state.wmCharge=1.0;
+    flash(tr('WMI TANK REFILLED'));
   });
   document.getElementById('btnSound').addEventListener('click',()=>setSound(!Sound.on));
   const sm=document.getElementById('edSoundModel');sm.value=Sound.model;sm.addEventListener('change',e=>setSoundModel(e.target.value));

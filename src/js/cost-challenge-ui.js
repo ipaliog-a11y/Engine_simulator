@@ -23,6 +23,7 @@ function computeCost(){
     c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
   }
   c+={none:0,small:500,large:900}[engine.nitrous]||0;
+  if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')c+=(WATER_METH[engine.waterMeth]?.cost||0);
   c+=engine.exhaustPart?EXHAUST_BUILD[engine.exhaustPart.build].cost:({stock:0,sport:550,race:1400}[engine.exhaust]||0);
   c+={none:0,sport:500,stock:300}[engine.cat]||0;
   c+={carb1:200,carb2:350,carb4:600,sidedraft:1400,mech:1900,efi:1200,itb:2600}[engine.intakeSys]||0;
@@ -131,6 +132,8 @@ function updateEngineLabels(){
     tr('Test-bench schematic of a {d} litre {t} engine').replace('{d}',disp).replace('{t}',tr(ENGINE_TYPE[engine.type].label)));
   const nb=document.getElementById('btnNitrous');
   nb.disabled=engine.nitrous==='none';nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
+  const wb=document.getElementById('btnRefillWM');
+  if(wb)wb.disabled=engine.intake==='na'||!engine.waterMeth||engine.waterMeth==='none';
 }
 function updateDesignSummary(){
   if(isElectric())return updateMotorSummary();
@@ -162,6 +165,7 @@ function updateDesignSummary(){
   }
   else induction=tr(SC_TYPE[engine.scType].label)+' S/C @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt;
   if(engine.nitrous!=='none')induction+=' • <span style="color:#ff66cc">'+tr(engine.nitrous==='large'?'BIG NITROUS':'SMALL NITROUS')+'</span>';
+  if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')induction+=' • <span style="color:#66ddff">'+tr(WATER_METH[engine.waterMeth].label)+'</span>';
   const dimLabel=engine.type==='rotary'?'rotor':'mm';
   const valveLine=engine.ports?'<br>'+tr('Induction ports')+' <b>'+tr('(no poppet valvetrain)')+'</b>':
     '<br>'+tr('Cam')+' <b>'+trOpt(engine.cam.toUpperCase())+(engine.vvt?' + VVT':'')+'</b>';

@@ -59,6 +59,26 @@ function icEffAt(m,faceV){
   const v=faceV!=null?faceV:(state.icFaceV!=null?state.icFaceV:IC_FACE_V);
   return icEps(icGeom(engine),m,v);
 }
+function wmActiveFrac(map){
+  if(!engine||engine.intake==='na'||!engine.waterMeth||engine.waterMeth==='none'||!(state.wmCharge>0))return 0;
+  return clamp((map-WM_ONSET_MAP)/(WM_FULL_MAP-WM_ONSET_MAP),0,1);
+}
+function wmCoolingC(map){
+  const wf=wmActiveFrac(map);if(!(wf>0))return 0;
+  const spec=WATER_METH[engine.waterMeth];if(!spec)return 0;
+  // ΔT = η_evap * (m_inj / m_air) * h_fg / c_p,air
+  return wf*WM_EVAP_EFF*(spec.flowRatio*spec.hfg)/CP_AIR_KJ;
+}
+function wmOctaneBonus(map){
+  const wf=wmActiveFrac(map);if(!(wf>0))return 0;
+  const spec=WATER_METH[engine.waterMeth];if(!spec||!(spec.methFrac>0))return 0;
+  // Methanol (RON 109) blended at ~15% of fuel mass raises effective octane linearly toward 109 RON
+  const methFuelShare=0.15*wf*(spec.methFrac/0.5);
+  return Math.max(0,109-(engine.effOctane||95))*methFuelShare;
+}
+function wmPumpA(map){
+  return wmActiveFrac(map)*WM_PUMP_AMPS;
+}
 function effIAT(map,rpm){
   // Forced induction heats the charge; an intercooler removes most of it. High-enthalpy
   // fuels (ethanol/methanol) evaporatively cool the charge — denser air and less knock.
@@ -80,6 +100,7 @@ function effIAT(map,rpm){
     t+=rise*(1-(rpm>0?icEffAt(airFlowAt(rpm,PR)):(engine.icEff||0)));
   }
   t-=engine.chargeCool*(engine.injector==='direct'?1.15:1.0);   // DI cools the charge slightly more
+  t-=wmCoolingC(map);
   return t;
 }
 function mbtAdvance(rpm,map){
@@ -501,7 +522,7 @@ function endGasTraceAt(rpm,map,ca50){
   const xb=th=>th<=soc?0:1-Math.exp(-WIEBE_A*Math.pow(Math.min(1,(th-soc)/burn),WIEBE_M+1));
   // the octane index: the reference fuel this fuel autoignites like, at this engine's T_comp15
   const T15=T1*Math.pow(15e5/p1,k),Kk=0.0056*T15-4.68;
-  const OI=(e.effOctane||95)-Kk*(OCT_SENS[e.fuel]??10);
+  const OI=(e.effOctane||95)+wmOctaneBonus(map)-Kk*(OCT_SENS[e.fuel]??10);
   const onF=DE_A*Math.pow(Math.max(50,OI)/100,DE_ON);
   // Below ~5 bar the delay is seconds (exp(3800/T) at the gas's few hundred kelvin), so the integral only counts
   // once compression has the pressure there; the trace still runs from IVC so the gas's state is right.
@@ -555,7 +576,7 @@ function knockScorePorted(rpm,map,adv){
   // autoignition integral, Livengood-Wu — a conversion of its own.)
   const KNOCK_RICH=75;                                  // points per unit lambda: 3 deg/0.1 x 2.5 pts/deg
   k-=Math.max(0,(0.95-lam))*KNOCK_RICH;
-  k-=(engine.effOctane-90)*2.2;                         // fuel octane resists knock
+  k-=(engine.effOctane+wmOctaneBonus(map)-90)*2.2;                         // fuel octane resists knock
   k-=engine.fuelKnockBonus;                             // alcohol extra knock margin
   if(engine.injector==='direct')k-=12;                  // DI charge cooling
   k+=nitrousImep()*4;                                   // nitrous raises cylinder pressure → more knock
@@ -622,7 +643,7 @@ function cylTraceAt(rpm,map,adv){
   if(e.ci||e.ports)return {I:0,Ipre:0,pMax:ciPortedPmax(rpm,map,adv)};
   if(!_knockCache||_knockCache.score!==e.score)_knockCache={score:e.score,m:new Map()};
   const lam=curAFR(rpm,map)/(e.stoichAFR||14.7),tc=Math.round(state.coolant!=null?state.coolant:90);
-  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType+'|'+tc+'|'+nitrousImep();
+  const key=Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+adv.toFixed(2)+'|'+effIAT(map,rpm).toFixed(1)+'|'+lam.toFixed(3)+'|'+e.effOctane+'|'+e.ignitionType+'|'+tc+'|'+nitrousImep()+'|'+(e.waterMeth||'none')+'|'+wmActiveFrac(map).toFixed(2);
   let tr=_knockCache.m.get(key);
   if(tr==null){
     tr=endGasTrace(rpm,map,knockCa50(rpm,map,adv),mbtAdvance(rpm,map)-adv);
@@ -682,7 +703,7 @@ function activeAdvance(rpm,map){
   // the same operating point is asked for several times per torque figure: remember the answer
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
   const tc=Math.round(state.coolant!=null?state.coolant:90);
-  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
+  const key='A|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+(curAFR(rpm,map)/(engine.stoichAFR||14.7)).toFixed(3)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep()+'|'+(engine.waterMeth||'none')+'|'+wmActiveFrac(map).toFixed(2);
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   let adv=mbt;
   if(knockAt(rpm,map,mbt)>KNOCK_TARGET){
@@ -716,7 +737,7 @@ function knockEnrichLambda(rpm,map,base){
   if(!ecuFuelsKnock()||!(base>LAMBDA_KNOCK_MIN))return base;
   if(!_knockCache||_knockCache.score!==engine.score)_knockCache={score:engine.score,m:new Map()};
   const tc=Math.round(state.coolant!=null?state.coolant:90);
-  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep();
+  const key='L|'+Math.round(rpm/10)+'|'+map.toFixed(3)+'|'+effIAT(map,rpm).toFixed(1)+'|'+base.toFixed(4)+'|'+engine.effOctane+'|'+engine.ignitionType+'|'+tc+'|'+nitrousImep()+'|'+(engine.waterMeth||'none')+'|'+wmActiveFrac(map).toFixed(2);
   const hit=_knockCache.m.get(key);if(hit!=null)return hit;
   const over=(l,floor)=>{_lamTrial=l;try{return knockAt(rpm,map,floor?knockFloorAdv(rpm,map):mbtAdvance(rpm,map))>KNOCK_TARGET;}finally{_lamTrial=null;}};
   let lam=base;
@@ -970,14 +991,14 @@ function altOutputA(rpm){         // ~35% of rated at idle, full by ~2500 rpm
   if(rpm<FIRE_RPM||(state.firing===false&&!isHybrid()))return 0;   // a stopped or cranking engine charges nothing (build 265)
   return engine.altMaxA*clamp((rpm-500)/2000,0.35,1);
 }
-function elecDemandA(){           // ECU/pump baseline + accessories + electric fan (when hot)
+function elecDemandA(map){           // ECU/pump baseline + accessories + electric fan (when hot) + WMI pump
   if(state.ignOn===false&&!isHybrid())return 0;   // switched off: nothing draws (build 265)
-  return ELEC_BASE_A+state.elecLoad*ELEC_ACC_A+(engine.fan==='electric'&&state.coolant>92?ELEC_FAN_A:0);
+  return ELEC_BASE_A+state.elecLoad*ELEC_ACC_A+(engine.fan==='electric'&&state.coolant>92?ELEC_FAN_A:0)+wmPumpA(map!=null?map:liveMap());
 }
 // Parasitic crank torque (Nm) to spin the alternator for the current actually generated —
 // significant at idle (low RPM), negligible up top.
-function electricalDragTorque(rpm){
-  const genA=Math.min(altOutputA(rpm),elecDemandA());
+function electricalDragTorque(rpm,map){
+  const genA=Math.min(altOutputA(rpm),elecDemandA(map));
   const watts=genA*14.0/0.55;     // electrical power / alternator efficiency
   return watts/(Math.max(rpm,500)*2*Math.PI/60);
 }
@@ -1203,7 +1224,7 @@ function calcAtRpm(rpm,mapOverride){
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
 
   const Vd=engine.displacement_L/1000;
-  let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm));   // power strokes/rev per type, minus alternator load
+  let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm,map));   // power strokes/rev per type, minus alternator load
   let powerKW=Math.max(0,torque*rpm*2*Math.PI/60/1000);
   let powerHP=Math.max(0,powerKW/0.7457);
 
@@ -1228,7 +1249,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
   const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
-  return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm);
+  return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm,map);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
 // Spool is the shaft equation of motion, integrated as ENERGY rather than angular velocity.
@@ -1388,6 +1409,15 @@ function stepEngineOnce(dt){
   if(state.nitrousActive){   // deplete the bottle while spraying at WOT (~14 s per fill)
     if(state.throttle>0.5&&state.nitrousCharge>0)state.nitrousCharge=Math.max(0,state.nitrousCharge-0.07*dt);
     if(state.nitrousCharge<=0)state.nitrousActive=false;
+  }
+  {
+    const wf=wmActiveFrac(state.map);
+    if(wf>0&&state.firing!==false&&!overrunFuelCut()&&state.rpm<engine.redline){
+      const spec=WATER_METH[engine.waterMeth],Vd=engine.displacement_L/1000,Tk=effIAT(state.map,state.rpm)+273.15;
+      const airMass=(state.map*1e5*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve||0.85))/(287*Tk)*(1-egrRate(state.rpm,state.map));
+      const wmVolLs=(airMass*spec.flowRatio*wf)/spec.density;
+      state.wmCharge=Math.max(0,state.wmCharge-(wmVolLs/spec.tankL)*dt);
+    }
   }
   if(state.firing==null){state.firing=true;state.ignOn=true;state.crank=0;}   // a state set up before build 265: running
   if(state.firing&&(!state.ignOn||state.blown||state.rpm<0.8*FIRE_RPM))state.firing=false;

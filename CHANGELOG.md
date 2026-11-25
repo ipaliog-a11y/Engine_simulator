@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Catalyst light-off and cold-start emissions (build 462)
+### Catalyst light-off and cold-start emissions (build 463)
 
 - **Catalyst brick thermal model (`state.tCat`)**: cordierite monolith substrate (~950 J/(kg·K), 0.5 kg/L brick) heats
   from exhaust gas temperature (EGT) and exhaust mass flow in `AUTO THERMAL` mode and cools toward ambient when off.
@@ -26,6 +26,17 @@ they are accurate about *what* shipped but not about the day it shipped.
   three-way catalyst 250–300 °C) to full conversion when hot; steady-state hot conversion (450 °C) is unchanged.
 - **WLTP cold-start emissions**: `engineCycle()` starts the catalyst at the 23 °C soak, crosses light-off in the Low
   phase, and reports cold-phase vs hot-phase CO, HC, and NOx (g/km). Added a `CATALYST` (`°C COLD`/`LIT`) tile on LIVE.
+
+### Water / methanol injection on AIR & BOOST (build 462)
+
+- **WATER / METH INJ** on the AIR & BOOST card (`NONE`, `WATER (H2O)`, `50/50 WATER-METH`). Defaults to `NONE`, so
+  existing engines and presets are unchanged.
+- Evaporative charge cooling reduces `effIAT` under boost (from latent heat of water 2257 kJ/kg, methanol 1100 kJ/kg,
+  air $c_p$ 1.005 kJ/(kg·K), and BMW M4 GTS Bosch WaterBoost flow ~1.2% of air mass, ~21.6 °C drop for water; ~20.0 °C
+  plus methanol 109 RON octane blending for 50/50).
+- Cooler charge and higher octane raise knock margin, allowing the ECU to advance timing and hold more boost. Includes
+  5 L tank + pump mass (+7.5–8 kg), build cost ($850–$950), 10 A pump alternator load, live tank depletion, and
+  **REFILL WMI** in the live bench's MORE menu. Plan E2 in `plans/engine-systems.md`.
 
 ### Altitude on the TRACK tab, and the live engine breathes it (build 461)
 
