@@ -7,8 +7,8 @@ after v1.0, so the finish line is a short, closed list again. **Every "proposed"
 
 ## What changed the picture
 
-- **Group 3 (driving sim H′ and I) is no longer "after v1.0".** Decision 23 deferred it at build 407; the post-441 plan
-  pulled it in, and builds 450 (tyre heat and wear, brake fade, converter slip in `stepCar`) and 456 (aero by ride height
+- **Group 3 (driving sim H′ and I) was partly built anyway.** Decision 23 deferred it at build 407 and still stands
+  (owner, build 474); the post-441 plan pulled it in regardless, and builds 450 (tyre heat and wear, brake fade, converter slip in `stepCar`) and 456 (aero by ride height
   and pitch, stall, ISA altitude, headwind) shipped it. Phase J (lap, 0–100 and race on the stepped car) stays after
   v1.0, so decision 21's four rules stand.
 - **Builds 441–473 moved lap, acceleration and engine numbers** (downforce in rolling resistance, ISA anchoring, knock and
@@ -83,8 +83,9 @@ Then the owner checks the finish line and tags v1.0.
 | 5 | G2 and E8 | **Before v1.0** (builds 6 and 7 above). |
 | 6 | Water-to-air per car | **Before v1.0** (decision 22 stands). |
 
+| 7 | Decision 23 (driving-sim H′ and I) | **Stands: after v1.0.** What builds 450 and 456 already shipped of them is not part of the v1.0 finish line. |
+
 ## Still open
 
-1. **Decision 23** (`plans/road-to-v1.md`): at build 407 the owner moved driving-sim H′ (tyre heat and wear, brake fade
-   in time) and I (aero by ride height and pitch) after v1.0. Builds 450 and 456 shipped them anyway. Record it as
-   reversed, so the guide and README describe them as part of v1.0?
+1. **`AERO_FLOOR`**: with the finish line above, it needs signing off at v1.0 (the floor and splitter come after v1.0).
+2. **Builds 450 and 456's code** under decision 23: kept as it is, or marked in the guide as beyond v1.0?
