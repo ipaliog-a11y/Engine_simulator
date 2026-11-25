@@ -94,7 +94,7 @@ const r = await page.evaluate(() => {
   if (!/kW/.test(gHtml) || !/82 kWh/.test(gHtml) || !/\d+\s*V/.test(gHtml) || !/AWD/.test(gHtml)) {
     fails.push('Garage EV detail missing kW/kWh/V/drive: ' + gHtml);
   }
-  if (/Bore|RON|4-stroke|petrol/i.test(gHtml)) {
+  if (/\bBore\b|\bRON\b|4-stroke|petrol/i.test(gHtml)) {
     fails.push('Garage EV detail leaked petrol fields: ' + gHtml);
   }
 
