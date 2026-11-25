@@ -8,6 +8,7 @@ function engineMass(){
   else if(engine.intake==='supercharger')m+=25;
   if(engine.layout==='v'||engine.layout==='boxer')m+=10;
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);
+  if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).

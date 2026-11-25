@@ -691,12 +691,14 @@ The engine makes its own electricity. A belt from the crank spins an <b>alternat
 <div class="guide-body" data-gk="electricalGame">
 <b>ELEC LOAD</b> on the LIVE tab is the accessories (lights, air conditioning, audio). Pick the <b>ALTERNATOR</b> size on the ENGINE tab: 60, 120 or 180 A. Watch the battery voltage at idle with the load turned up.<br>A <b>hybrid</b> has no alternator: its 12 V side runs off the traction pack through a DC-DC converter, as on every real hybrid, so its engine carries no belt drag or charging load. The ALTERNATOR field is hidden for a hybrid, and the 12 V load (300 W) comes out of the pack.
 </div>
+<p class="guide-body"><b>START-STOP</b> (non-hybrid cars): shuts the engine off when standing still on the WLTP or eco cycles once the coolant reaches 50 °C, cutting idle fuel and emissions to zero. Adds +6 kg and $350 for the reinforced starter and 12 V AGM battery.</p>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="electricalPhys">
 The alternator gives about 35% of its rating at idle, rising to full output by 2500 rpm. Demand is a 12 A baseline (ECU, pump, ignition), up to 55 A of accessories and 22 A for an electric fan when the coolant is hot. The battery integrates the difference, and system voltage follows its state of charge. The spark's strength scales with voltage between 9.5 and 13 V, and the ignition's dwell limit falls with it, so a flat battery and a distributor misfire early. The power drawn costs crank torque:
 <span class="geq">T<sub>alt</sub> = I · 14 V / 0.55 / ω</span>
 </div>
+<p class="guide-body"><b>Start-stop restart energy</b> is derived from the 12 V starter (0.5 kW/L petrol, 1.0 kW/L diesel, η<sub>starter</sub> = 0.60, 0.5 s warm crank) and recharged by the alternator (η<sub>alt</sub> = 0.55, AGM charge acceptance 0.90) on the next driving seconds.</p>
 </div>
 <div class="guide-see">See also: <a data-gp="ignition">Ignition &amp; spark timing</a> · <a data-gp="friction">Friction, oil &amp; pumping</a></div>
 </section>

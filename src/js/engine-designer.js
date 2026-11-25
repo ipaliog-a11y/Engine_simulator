@@ -119,7 +119,9 @@ const ICD_FIELDS={
   edThermostat:{adv:true,what:'The temperature at which the thermostat opens.',
     trade:'A cooler setting holds the engine cooler, a little further from knock; a warmer one wastes less heat.'},
   edAlternator:{guide:'electrical',what:'How much current the alternator can give. A hybrid has none: its 12 V side runs off the pack through a DC-DC converter.',
-    trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'}
+    trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'},
+  edStartStop:{guide:'electrical',what:'Shuts the engine off when standing still once warm, and restarts it on the 12 V starter when moving off. Not used on hybrids.',
+    trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
@@ -128,7 +130,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
-  edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator'};
+  edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator',edStartStop:'startStop'};
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only

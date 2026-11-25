@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Start-stop for non-hybrid cars (build 464)
+
+- **START-STOP** opt-in on Cooling & Electrical (`NO` / `YES (12 V AGM)`), defaulting to `NO` so existing engines and
+  presets are unchanged; disabled on hybrids (which already stop via the traction pack).
+- **WLTP & Eco Run**: shuts the engine off at standstill once warm (`Tc >= 50 °C`), cutting idle fuel and emissions to
+  zero, and recharges the derived 12 V starter crank energy (0.5 kW/L SI, 1.0 kW/L CI, 60% starter efficiency, 0.5 s
+  Bosch warm crank, 55% alternator, 90% AGM acceptance) on the next driving seconds. Adds +6 kg and $350 when fitted.
+  Plan E4 in `plans/engine-systems.md`.
+
 ### Catalyst light-off and cold-start emissions (build 463)
 
 - **Catalyst brick thermal model (`state.tCat`)**: cordierite monolith substrate (~950 J/(kg·K), 0.5 kg/L brick) heats
