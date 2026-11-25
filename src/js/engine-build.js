@@ -333,7 +333,7 @@ function buildEngineCore(prevStoich,quiet){
   state.firing=true;state.ignOn=true;state.crank=0;   // a built engine goes on the bench running (build 265)
   obdReset();   // a fresh engine: no codes stored (build 309)
   state.rpm=clamp(state.rpm,engine.idleRpmEff,engine.redline);
-  state.map=clamp(state.map,0.12,engine.mapMax);
+  state.map=clamp(state.map,engine.ci?1.0:0.12,engine.mapMax);
   // Re-range the AFR slider. Diesel is quality-governed: air is unthrottled and power is set
   // by how much fuel is injected, so it always runs lean (λ≥1) from the smoke limit to idle.
   const lam=state.afr/prevStoich,afrR={};

@@ -18,12 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 454)
+### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 455)
 
 - **LIVE bench & Dyno result (`src/shell.html`, `src/js/dyno-ui.js`):** Added live `PEAK PMAX` (bar), `PRE-IGNITION` integral, and conditional `OIL PRESSURE` tiles plus status-bar warnings and `#lampOilP` activation; added `state.blown` and `state.wearCause` to `renderDynoResult()`'s memo key so `#dynoDiag` never goes stale.
 - **OBD & ECU Computer (`src/js/obd.js`, `src/js/ecu-computer.js`):** Added fault codes `P0326` (pre-ignition), `P0330` (cylinder over-pressure), `P0196` (oil over-temp), `P0524` (low oil pressure), and `P0234` (ECU boost cut) with `pMax`/`preIgn`/`oil`/`oilP` freeze-frame fields; updated `ecuRenderDiag()` to show code titles, statuses, and freeze frames; fixed `#ecuLedEgt` in AUTO mode by comparing `egtEnrichLambda()` against pre-EGT base lambda; added `cylPmax`, `preIgn`, `egt`, `oil`, `oilP`, and `boostActual` scope channels.
 - **Guided Build (`src/js/guided-build.js`):** Added Build 441 (`icdPreIgn`, `icdPmaxOver`) and EV (`evdCompute` battery/rim/frequency) limits to `gwLimit()` and `gfLimit()`.
 - **Reports (`src/js/reports.js`, `src/js/electric-ui.js`):** Included custom `engine.icPart` in `reportSpecRows()`, rendered `diagnoseEngine()` findings on Dyno PNG/PDF sheets, added Build 436 track conditions (`weather`, `air`, `tyre`) to Hot Lap reports, fixed EV specs in `lapVehicleRows()`, and implemented full EV Dyno PNG/PDF export.
+
+### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 454)
+
+- Added a 2-stroke tuned expansion-chamber resonant stuffing-wave model (`twoStrokePipeGain` in `src/js/gas-dynamics.js`, wired into `calcVE` and `deriveGasDynamics`; Blair SAE R-161 ch. 4): sport/race pipes tune `primL` to return a positive plugging wave before exhaust port close (~170° duration), while stock cast/box exhausts (`sigma >= 0.35`) return zero.
+- Implemented unthrottled quality-governed CI diesel operation on the LIVE bench (`mapTarget`, `pumpingMEP`, `withCiLoad`, `mappedAFR`, `stepEngineOnce`, `updateEnginePhysics`, `buildEngineCore`): intake stays at atmospheric + boost (`>= 1.0 bar`) with no intake throttle-plate vacuum pumping loss, and part-load torque is governed by fuel quantity (leaning out toward idle λ ~ 5–15, Heywood §1.5, §13.3).
+- Added exhaust silencer back-pressure (`silencerDp` and `EXHAUST_SILENCER` `K` loss factors in `src/js/parts.js`: `baffled` 4.2, `chambered` 2.2, `absorptive` 0.35, `straight` 0; Idelchik §11, Munjal ch. 2), wired into `backPressureBar()` and `exhaustReport()`, and exposed the `baffled` option in `src/shell.html` and `src/js/parts-art-3d.js`.
+- Added a derived oil-pressure model (`oilPressureBar` in `src/js/engine-physics.js`, `state.oilP` in `src/js/app-state.js`; Bosch Automotive Handbook + Sandoval & Heywood SAE 2003-01-0725 Vogel viscosity for SAE 10W-30) with spring relief-valve ceiling (4.8–5.2 bar), 0 bar on premix 2-strokes, and `LOW OIL PRESSURE` bearing wear in `stepWear()`.
+- Added `tests/test276.mjs` covering all four models.
 
 ### Championship completion, timed-race countdown, and cross-mode audio (build 453)
 

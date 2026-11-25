@@ -113,7 +113,7 @@ function computeVE(rpm,map){
     // the runner's tuning in one. Until build 121 the geometric trapping loss and a ram wave that could
     // only repay it.
     ve*=fillAt(rpm);
-    ve*=1+scavengeGain(rpm,Tex);
+    ve*=1+scavengeGain(rpm,Tex)+twoStrokePipeGain(rpm,engine,Tex);
     engine.boostNow=map;
     ve*=1-residualLoss(1+backPressureBar(rpm,Tex),Math.max(0.3,map),engine.compression);
   }
@@ -197,6 +197,14 @@ function wotNeedsEnrichment(){
   for(let r=Math.max(1000,engine.idleRpmEff||800);r<=engine.redline;r+=250)if(egtAt(r,wotMapAt(r),1.0,0)>CAT_T_LIMIT)return true;   // at best-torque spark: the mixture it decides sets the knock limit
   return false;
 }
+// Live pedal load override for unthrottled quality-governed CI diesels on the LIVE bench (Heywood §1.5):
+// WOT dyno / fuel-map / vehicle-accel callers leave _ciLiveLoad = null so they read the WOT/MAP-relative schedule.
+let _ciLiveLoad=null;
+function withCiLoad(load,fn){
+  const prev=_ciLiveLoad;
+  _ciLiveLoad=engine.ci?clamp(load,0,1):null;
+  try{return fn();}finally{_ciLiveLoad=prev;}
+}
 function mappedAFR(rpm,map){
   const st=engine.stoichAFR;
   // A petrol engine's factory map is its curve, read exactly (build 202): the grid is what the player sees and edits,
@@ -206,11 +214,16 @@ function mappedAFR(rpm,map){
     const fr=fmRowOf(rpm,map);
     const c0=Math.floor(fc),c1=Math.min(c0+1,FM_COLS-1),tc=fc-c0;
     const r0=Math.floor(fr),r1=Math.min(r0+1,FM_ROWS-1),trr=fr-r0;
-    const lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
+    let lam=(fuelMap[r0][c0]*(1-tc)+fuelMap[r0][c1]*tc)*(1-trr)+(fuelMap[r1][c0]*(1-tc)+fuelMap[r1][c1]*tc)*trr;
+    // Below 45% pedal on an unthrottled CI diesel, fuel rack leans out toward idle (λ ~ 5–15, Heywood §1.5)
+    // so load is governed by fuel quantity at atmospheric/boosted MAP rather than by a throttle plate.
+    if(engine.ci&&_ciLiveLoad!=null&&_ciLiveLoad<0.45)lam*=0.45/Math.max(0.05,_ciLiveLoad);
     return st*lam;
   }
   if(_lamTrial!=null)return st*_lamTrial;   // the knock control trying a mixture (knockEnrichLambda)
-  return st*egtEnrichLambda(rpm,map,knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map)));
+  let lam=egtEnrichLambda(rpm,map,knockEnrichLambda(rpm,map,baseFuelLambda(rpm,map)));
+  if(engine.ci&&_ciLiveLoad!=null&&_ciLiveLoad<0.45)lam*=0.45/Math.max(0.05,_ciLiveLoad);
+  return st*lam;
 }
 // The AFR actually run at an operating point: the ECU map (AUTO) or the fixed slider (MANUAL).
 // The mixture actually burned. A diesel's injection system will not fuel past its full-load floor
@@ -233,7 +246,7 @@ const FM_LOAD0=0.15;
 const fmLoadAt=r=>lerp(FM_LOAD0,1,r/(FM_ROWS-1));
 const fmMapAtRC=(r,c)=>engine.ci?fmLoadAt(r)*wotMapAt(fmRpmAt(c)):fmMapAt(r);
 const fmRowOf=(rpm,map)=>engine.ci
-  ?clamp((map/Math.max(0.3,wotMapAt(rpm))-FM_LOAD0)/(1-FM_LOAD0)*(FM_ROWS-1),0,FM_ROWS-1)
+  ?clamp(((_ciLiveLoad!=null?_ciLiveLoad:map/Math.max(0.3,wotMapAt(rpm)))-FM_LOAD0)/(1-FM_LOAD0)*(FM_ROWS-1),0,FM_ROWS-1)
   :clamp((map-0.3)/Math.max(0.1,engine.mapMax-0.3)*(FM_ROWS-1),0,FM_ROWS-1);
 // Fill a fresh λ grid from the factory curve at each breakpoint.
 function generateFuelMap(){
@@ -296,7 +309,7 @@ function updateFuelMapMarker(){
   for(const id of ['fuelMapBox','sparkMapBox','veMapBox']){   // the spark and VE tables share the fuel map's breakpoints (builds 304-305)
     const box=document.getElementById(id);
     if(!box||box.style.display==='none'||!box.firstChild)continue;
-    const r=Math.round(fmRowOf(state.rpm,state.map));
+    const r=Math.round(withCiLoad(state.throttle,()=>fmRowOf(state.rpm,state.map)));
     const prev=box.querySelector('td.live');if(prev)prev.classList.remove('live');
     const cell=box.querySelector('td[data-c="'+c+'"][data-r="'+r+'"]');if(cell)cell.classList.add('live');
   }
@@ -921,12 +934,9 @@ function sparkRetardAt(rpm,map){
 //   turbine housing cost nothing at the top end, so nothing in the model pushed back on making one
 //   tighter — which is precisely why turbine housing sizing could not be derived.
 //
-//   INTAKE side, (1 - map). Throttling, unchanged, and it keeps its `ci` reduction. That factor is
-//   NOT physics: it compensates for mapTarget() giving a diesel a throttle plate it should not
-//   have. A real diesel is quality-governed — the intake sits at ambient+boost at every load and
-//   torque is set by fuel quantity, which is also why a diesel has so little engine braking that
-//   trucks need exhaust brakes. Fixing it means re-plumbing diesel load through fuelling rather
-//   than through map, which is its own change; labelled here rather than quietly carried.
+//   INTAKE side, (1 - map). Throttling on SI engines. CI diesels are unthrottled (quality-governed:
+//   mapTarget() holds intake at ambient+boost and load is governed by fuel quantity), so they pay
+//   no intake throttle vacuum loss.
 //
 // Deliberately NOT granting negative PMEP when boost exceeds back-pressure, even though positive
 // pumping work is real: this model's imep is a lumped correlation proportional to map, so it
@@ -938,9 +948,9 @@ function pumpingMEP(rpm,map){
   const pExh=1+backPressureBar(rpm,Tex);
   engine.boostNow=prev;
   // A diesel's IMEP is gross (fuel-based), so its gas exchange is the whole loop, signed: the piston
-  // pushes out against p_exh and is pushed down by p_int. A turbo that makes more boost than
-  // back-pressure gives work back. Below atmosphere the throttle term stays as described above.
-  if(engine.ci)return pExh-Math.max(1,map)+PUMP_K*Math.max(0,1.0-map)*0.15;
+  // pushes out against p_exh and is pushed down by p_int. CI diesels are unthrottled (quality-governed),
+  // so there is no intake throttle plate vacuum loss (Heywood §13.3).
+  if(engine.ci)return pExh-Math.max(1,map);
   return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map);
 }
 // Friction + pumping mean effective pressure.
@@ -1290,6 +1300,7 @@ function stepBoost(dt){
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
   const Pup=1.0+state.boostActual;                       // upstream pressure (atmo + boost)
+  if(engine.ci)return Pup;                               // CI diesel: unthrottled (quality-governed), intake stays at atmo + boost (Heywood §1.5)
   const tArea=IDLE_AIR+(1-IDLE_AIR)*Math.pow(state.throttle,1.2);
   const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
   return clamp(Pup*frac,0.12,Pup);
@@ -1388,12 +1399,14 @@ function stepEngineOnce(dt){
   // vacuum the plate holds (build 149). A fitted 0.14-0.44 x the reference torque was subtracted on top of it, 2-6
   // times the engine's own figure, and on a turbo engine it scaled with the boosted torque: a 2.0 turbo was
   // braking with ~14 bar, which a closed throttle cannot hold.
-  let tq=brakeTorqueRaw(state.rpm,state.map,cut);
+  let tq=withCiLoad(state.throttle,()=>brakeTorqueRaw(state.rpm,state.map,cut));
   tq-=brakeTorque();
   tq+=starterTorque(state.rpm);
   const wIdle=engine.idleRpmEff*2*Math.PI/60;
-  if(state.firing&&state.rpm<=engine.idleRpmEff){      // the idle valve: the air that holds the idle, if it can pass it
-    const able=brakeTorqueRaw(Math.max(state.rpm,FIRE_RPM),Math.max(state.map,IDLE_VALVE_MAP),false)-brakeTorque();
+  if(state.firing&&state.rpm<=engine.idleRpmEff){      // the idle valve (SI) or idle fuel rack (CI): holds idle speed
+    const able=(engine.ci
+      ?withCiLoad(0.25,()=>brakeTorqueRaw(Math.max(state.rpm,FIRE_RPM),state.map,false))
+      :brakeTorqueRaw(Math.max(state.rpm,FIRE_RPM),Math.max(state.map,IDLE_VALVE_MAP),false))-brakeTorque();
     tq=Math.max(tq,Math.min(able,(wIdle-state.rpm*2*Math.PI/60)*engine.inertia/0.25));
   }
   const omega=Math.max(0,state.rpm*2*Math.PI/60+tq/engine.inertia*dt);
@@ -1440,6 +1453,17 @@ function healthFactor(){return state.blown?0:(0.5+0.5*state.engineHealth);}
 // apex-seal lubrication & chatter limit ~36 m/s (2*pi*R*(rpm/3)/60 = 35.9 m/s at 9800 rpm on a 13B R=105 mm,
 // matching share-scoring.js's 9800 rpm rotary reliability threshold while keeping stock 9000 rpm RX-8 clean).
 const APEX_SPEED_LIMIT=36;
+// Oil pressure model (Bosch Automotive Handbook, "Lubrication"; viscosity temperature law from Sandoval & Heywood
+// SAE 2003-01-0725 Vogel equation for SAE 10W-30 anchored at 100 °C): positive-displacement pump flow (~N) against
+// laminar journal-bearing clearance leakage (~P / mu(T)), clamped by a spring-loaded pressure relief valve (~4.8–5.2 bar).
+// 2-strokes use premix/total-loss crankcase lubrication (no pressurized oil gallery).
+function oilPressureBar(rpm,oilTempC,e=engine){
+  if(!(rpm>0)||(e&&e.type==='twostroke'))return 0;
+  const T=clamp(oilTempC!=null?oilTempC:100,-20,220);
+  const muRel=Math.exp(1050/(T+110)-1050/210);                   // Vogel SAE 10W-30 relative viscosity (1.0 at 100 °C)
+  const pRelief=(e&&(e.redline>=7500||e.ci))?5.2:4.8;            // relief valve cracking/regulation pressure (bar)
+  return Math.min(pRelief,0.0018*muRel*rpm);
+}
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
   if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
@@ -1452,6 +1476,12 @@ function stepWear(dt){
   {const pLim=cylPmaxLimit();add(state.cylPmax>pLim?(state.cylPmax-pLim)/40*0.055:0,'OVER-PRESSURE');}   // head gasket / conrod limit
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
+  // Low oil pressure under load: hydrodynamic bearing starvation (Bosch Automotive Handbook: ~0.6 bar floor + 0.35 bar/1000 rpm, capped at 3.0 bar).
+  {const oilP=oilPressureBar(state.rpm,state.oil,engine);state.oilP=oilP;
+   if(engine.type!=='twostroke'&&state.firing!==false&&state.rpm>=FIRE_RPM){
+     const oilMin=Math.min(3.0,0.6+0.35*(state.rpm/1000));
+     if(oilP<oilMin&&(state.powerHP>10||state.bmep>1.5||oilP<0.55))add((oilMin-oilP)/Math.max(0.5,oilMin)*0.045,'LOW OIL PRESSURE');
+   }}
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   // Reciprocating inertial limit above PISTON_SPEED_LIMIT (25 m/s, Heywood §2.2) and Wankel apex-seal sliding limit.
   if(engine.type==='rotary'){
@@ -1659,39 +1689,42 @@ function meteredFuelKgS(map){
 }
 function updateEnginePhysics(){
   const map=liveMap();
-  // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
-  // readout, fuel flow, emissions and wear all reflect the mapped value.
-  if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
-  if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
-    state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
-    state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
-    computeEmissions();return;
-  }
-  state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
-  const r=calcAtRpm(state.rpm,map);
-  state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
-  state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
-  if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
-  else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
+  state.oilP=oilPressureBar(state.rpm,state.oil,engine);
+  withCiLoad(state.throttle,()=>{
+    // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
+    // readout, fuel flow, emissions and wear all reflect the mapped value.
+    if(engine.afrMode==='auto')state.afr=veMeteredAFR(state.rpm,map,mappedAFR(state.rpm,map))*o2Trim;
+    if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
+      state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
+      state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
+      computeEmissions();return;
+    }
+    state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
+    const r=calcAtRpm(state.rpm,map);
+    state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
+    state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+    if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
+    else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
 
-  if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
-    state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
-    // at the redline the frame may still have burned on the way there: the cooling system sees that share (build 336)
-    state.heatFuelLph=state.rpm>=engine.redline&&state.burnFrac>0&&!overrunFuelCut()?meteredFuelKgS(map)*3600/engine.fuelDensity*state.burnFrac:0;
-    if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
-    computeEmissions();   // zeros the analyser (fuelCut)
-    return;
-  }
-  // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
-  // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
-  // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
-  const meteredFuel=meteredFuelKgS(map);
-  state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
-  state.heatFuelLph=state.fuelFlowLph*(state.burnFrac!=null?state.burnFrac:1);   // what was burned, on the limiter too (build 235)
-  const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
-  state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
-  state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
-  computeEmissions();
+    if(state.fuelCut){   // overrun / limiter fuel cut → no fuel burned, engine braking
+      state.fuelFlowLph=0;state.bsfc=999;state.thermalEff=0;
+      // at the redline the frame may still have burned on the way there: the cooling system sees that share (build 336)
+      state.heatFuelLph=state.rpm>=engine.redline&&state.burnFrac>0&&!overrunFuelCut()?meteredFuelKgS(map)*3600/engine.fuelDensity*state.burnFrac:0;
+      if(state.rpm<engine.redline){state.torque=Math.min(0,brakeTorqueRaw(state.rpm,map,true));state.powerKW=state.torque*state.rpm*2*Math.PI/60/1000;state.powerHP=state.powerKW/0.7457;}
+      computeEmissions();   // zeros the analyser (fuelCut)
+      return;
+    }
+    // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
+    // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
+    // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
+    const meteredFuel=meteredFuelKgS(map);
+    state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
+    state.heatFuelLph=state.fuelFlowLph*(state.burnFrac!=null?state.burnFrac:1);   // what was burned, on the limiter too (build 235)
+    const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
+    state.thermalEff=fuelPower>0.1?clamp((state.powerKW/fuelPower)*100,0,46):0;
+    state.bsfc=state.powerKW>0.5?(meteredFuel*3600*1000)/state.powerKW:999;
+    computeEmissions();
+  });
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
