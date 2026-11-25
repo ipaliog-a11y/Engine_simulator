@@ -162,6 +162,9 @@ function bindControls(){
   if(trkWx)trkWx.addEventListener('change',e=>{trackUI.weather=e.target.value;renderTrackSetup();});
   const trkAir=document.getElementById('trkAir');
   if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
+  // Altitude sets the shared ISA ambient (ENV, build 456): the lap, 0-100, WLTP and the live bench all breathe it.
+  const trkAlt=document.getElementById('trkAlt');
+  if(trkAlt)trkAlt.addEventListener('change',e=>{ENV.alt_m=+e.target.value||0;renderTrackSetup();});
   const trkTy=document.getElementById('trkTyre');
   if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
   // Pre-run TC / ESP / AWD DIFF selectors synced across Track, Race, Challenges, and Vehicle Designer (build 440).

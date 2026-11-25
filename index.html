@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 460</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 461</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4224,6 +4224,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="race-row">
 <div class="field"><label for="trkWeather">WEATHER</label><select id="trkWeather"><option value="dry">DRY</option><option value="damp">DAMP</option><option value="wet">WET</option></select></div>
 <div class="field"><label for="trkAir">AIR °C</label><select id="trkAir"><option value="5">5</option><option value="12">12</option><option value="18">18</option><option value="22" selected>22</option><option value="28">28</option><option value="35">35</option></select></div>
+<div class="field"><label for="trkAlt">ALTITUDE m</label><select id="trkAlt"><option value="0" selected>0</option><option value="500">500</option><option value="1000">1000</option><option value="1500">1500</option><option value="2250">2250</option><option value="3000">3000</option></select></div>
 </div>
 <div class="field"><label for="trkTyre">TYRES</label><select id="trkTyre"><option value="own">OWN TYRES</option><option value="inter">INTERS</option><option value="wet">FULL WET</option></select></div>
 <div class="race-row">
@@ -12204,9 +12205,13 @@ function stepBoost(dt){
   state.shaftE=r.shaftE;state.boostActual=r.boost;
   state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
 }
+// Upstream pressure (atm abs) in the air ENV sets (ISO 2533, engine-constants-boost.js), as buildTorqueGrid has read it
+// since build 456: a supercharger multiplies the air it draws, a turbo's boost adds to it. pAmbAtm() is exactly 1 at sea
+// level. The scorecard (wotMapAt) stays at one standard atmosphere, as a rating is corrected to standard air (SAE J1349).
+const upstreamAtm=b=>{const p=pAmbAtm();return engine.intake==='supercharger'?p*(1+b):p+b;};
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
-  const Pup=1.0+state.boostActual;                       // upstream pressure (atmo + boost)
+  const Pup=upstreamAtm(state.boostActual);              // upstream pressure (atmo + boost)
   if(engine.ci)return Pup;                               // CI diesel: unthrottled (quality-governed), intake stays at atmo + boost (Heywood §1.5)
   const tArea=IDLE_AIR+(1-IDLE_AIR)*Math.pow(state.throttle,1.2);
   const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
@@ -12221,9 +12226,9 @@ function mapTarget(){
 // the turbo's shaft has actually built at each point (build 118).
 function steadyMapAt(rpm,thr){
   const b=boostAvail(rpm),t=clamp(thr,0,1);
-  if(engine.ci)return 1+b*t;
-  const closed=Math.max(0.12,IDLE_AIR/(IDLE_AIR+THR_K*(rpm/1000)*(1-IDLE_AIR)));   // mapTarget's floor
-  return Math.max(closed,t*(1+b));
+  if(engine.ci)return upstreamAtm(b*t);
+  const p=pAmbAtm(),closed=Math.max(0.12,p*IDLE_AIR/(IDLE_AIR+THR_K*(rpm/1000)*(1-IDLE_AIR)));   // mapTarget's floor
+  return Math.max(closed,t*upstreamAtm(b));
 }
 // Deceleration (overrun) fuel cut-off: on a closed throttle above idle, an injection system
 // cuts fuel entirely (no combustion, zero fuel flow) — saves fuel and adds engine braking.
@@ -41183,6 +41188,9 @@ function bindControls(){
   if(trkWx)trkWx.addEventListener('change',e=>{trackUI.weather=e.target.value;renderTrackSetup();});
   const trkAir=document.getElementById('trkAir');
   if(trkAir)trkAir.addEventListener('change',e=>{trackUI.air=+e.target.value||22;renderTrackSetup();});
+  // Altitude sets the shared ISA ambient (ENV, build 456): the lap, 0-100, WLTP and the live bench all breathe it.
+  const trkAlt=document.getElementById('trkAlt');
+  if(trkAlt)trkAlt.addEventListener('change',e=>{ENV.alt_m=+e.target.value||0;renderTrackSetup();});
   const trkTy=document.getElementById('trkTyre');
   if(trkTy)trkTy.addEventListener('change',e=>{trackUI.tyre=e.target.value||'own';renderTrackSetup();});
   // Pre-run TC / ESP / AWD DIFF selectors synced across Track, Race, Challenges, and Vehicle Designer (build 440).

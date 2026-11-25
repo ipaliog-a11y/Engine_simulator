@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Altitude on the TRACK tab, and the live engine breathes it (build 461)
+
+- **ALTITUDE m** (0-3000) beside AIR °C sets the shared ISO 2533 atmosphere that build 456 added but nothing could set.
+  It moves the lap, 0-100, WLTP and the live bench together. At 2250 m the air is 0.761 atm.
+- The live engine (`mapTarget`) and the lap's steady manifold (`steadyMapAt`) now draw ambient air, not a fixed 1 atm,
+  matching `buildTorqueGrid`. At sea level `pAmbAtm()` is exactly 1, so nothing moves by default.
+- The scorecard's rating (`wotMapAt`) stays at one standard atmosphere, as a rated figure is corrected to standard air.
+- Left open: a turbo's boost adds to ambient as gauge pressure, so it does not yet hold absolute boost at altitude by
+  spinning harder (the compressor's pressure-ratio and speed limit decide that). Plan E1 in the engine-systems plan.
+
 ### README's known limits brought up to date (build 460)
 
 - The list still described build ~150–300. Re-checked each entry against the code and the tests' named gaps.

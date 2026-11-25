@@ -1297,9 +1297,13 @@ function stepBoost(dt){
   state.shaftE=r.shaftE;state.boostActual=r.boost;
   state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
 }
+// Upstream pressure (atm abs) in the air ENV sets (ISO 2533, engine-constants-boost.js), as buildTorqueGrid has read it
+// since build 456: a supercharger multiplies the air it draws, a turbo's boost adds to it. pAmbAtm() is exactly 1 at sea
+// level. The scorecard (wotMapAt) stays at one standard atmosphere, as a rating is corrected to standard air (SAE J1349).
+const upstreamAtm=b=>{const p=pAmbAtm();return engine.intake==='supercharger'?p*(1+b):p+b;};
 // Target manifold pressure from throttle opening, RPM and available boost.
 function mapTarget(){
-  const Pup=1.0+state.boostActual;                       // upstream pressure (atmo + boost)
+  const Pup=upstreamAtm(state.boostActual);              // upstream pressure (atmo + boost)
   if(engine.ci)return Pup;                               // CI diesel: unthrottled (quality-governed), intake stays at atmo + boost (Heywood §1.5)
   const tArea=IDLE_AIR+(1-IDLE_AIR)*Math.pow(state.throttle,1.2);
   const frac=tArea/(tArea+THR_K*(state.rpm/1000)*(1-tArea));
@@ -1314,9 +1318,9 @@ function mapTarget(){
 // the turbo's shaft has actually built at each point (build 118).
 function steadyMapAt(rpm,thr){
   const b=boostAvail(rpm),t=clamp(thr,0,1);
-  if(engine.ci)return 1+b*t;
-  const closed=Math.max(0.12,IDLE_AIR/(IDLE_AIR+THR_K*(rpm/1000)*(1-IDLE_AIR)));   // mapTarget's floor
-  return Math.max(closed,t*(1+b));
+  if(engine.ci)return upstreamAtm(b*t);
+  const p=pAmbAtm(),closed=Math.max(0.12,p*IDLE_AIR/(IDLE_AIR+THR_K*(rpm/1000)*(1-IDLE_AIR)));   // mapTarget's floor
+  return Math.max(closed,t*upstreamAtm(b));
 }
 // Deceleration (overrun) fuel cut-off: on a closed throttle above idle, an injection system
 // cuts fuel entirely (no combustion, zero fuel flow) — saves fuel and adds engine braking.
