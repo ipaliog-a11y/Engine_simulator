@@ -142,6 +142,11 @@ function diagnoseEngine(){
     add('err','turboWear',tr('TURBO DAMAGE IN PROGRESS'),
       tr('Turbo health is falling from')+' '+tr(state.turboWearCause)+'.',
       tr('Ease boost or rpm, or fit a larger compressor wheel.'));
+  if(!state.blown&&(state.engineHealth<0.75||(state.crankcaseKpa||0)>4))
+    add(state.engineHealth<0.45?'err':'warn','blowby',tr('EXCESS BLOW-BY / WORN RINGS'),
+      tr('Ring wear raised blow-by to {l} L/min and crankcase pressure to +{p} kPa (oil use {o} L/1000 km).')
+        .replace('{l}',(state.blowbyLpm||0).toFixed(1)).replace('{p}',Math.max(0,state.crankcaseKpa||0).toFixed(1)).replace('{o}',((state.oilConsMlh||0)*0.01).toFixed(2)),
+      tr('Rebuild with BUILD & DYNO, or fit gapless piston rings.'));
   else if(state.coolant>115)
     add('warn','hot',tr('OVERHEAT ON THE BENCH'),
       tr('Coolant is at {t} °C.').replace('{t}',Math.round(state.coolant)),
@@ -223,6 +228,11 @@ function renderDynoResult(force){
     (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
     (tors&&tors.applicable?' · '+tr('crank torsional')+' '+Math.round(tors.crankTorsionalHz)+' Hz'+(tors.damper!=='stock'?' ('+tr(tors.damperLabel)+')':''):'')+
     (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
+  const bbRef=typeof blowbyAt==='function'?blowbyAt(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),at(s.peakHPrpm||engine.redline).tq>0?10:5,state.engineHealth,engine):null;
+  const bbAir=bbRef&&typeof blowbyIntakeKgS==='function'?blowbyIntakeKgS(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),0.9,engine):0;
+  const bbPct=bbRef&&bbAir>1e-5?(bbRef.kgS/bbAir*100):0;
+  const bbNote=bbRef?('<br><b>'+tr('BLOW-BY & RING SEALING')+'</b> — '+bbRef.lpm.toFixed(1)+' L/min ('+bbPct.toFixed(2)+'% '+tr('intake')+')'+
+    (engine.type!=='twostroke'?' · '+tr('crankcase')+' '+(bbRef.crankcaseKpa>=0?'+':'')+bbRef.crankcaseKpa.toFixed(1)+' kPa · '+tr('oil')+' '+(bbRef.oilMlh*0.01).toFixed(2)+' L/1000 km':'')):'';
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
@@ -231,7 +241,7 @@ function renderDynoResult(force){
     '</div>'+
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
-    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+balNote+'</p>'+
+    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+balNote+bbNote+'</p>'+
     dynoDiagHtml(diag)+
     dynoTableToggle(step)+
     '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
@@ -436,6 +446,18 @@ function updateUI(){
         tbEl.querySelector('.value').textContent=state.turboBlown?tr('FAILED'):th;
         tbEl.querySelector('.unit').textContent=state.turboBlown?'':'%';
         tbEl.className='stat'+(state.turboBlown||th<30?' danger':(th<70?' warning':''));
+      }
+    }
+    const bbEl=document.getElementById('statBlowby');
+    if(bbEl){
+      const hasBb=!isElectric();
+      bbEl.style.display=hasBb?'':'none';
+      if(hasBb){
+        const lpm=state.blowbyLpm||0, cc=state.crankcaseKpa||0, oil=(state.oilConsMlh||0)*0.01;
+        bbEl.querySelector('.value').textContent=lpm.toFixed(1);
+        bbEl.querySelector('.unit').textContent='L/min'+(engine.type!=='twostroke'?' · '+(cc>=0?'+':'')+cc.toFixed(1)+' kPa':'');
+        bbEl.title=tr('Blow-by')+': '+lpm.toFixed(1)+' L/min · '+tr('Crankcase')+': '+(cc>=0?'+':'')+cc.toFixed(1)+' kPa · '+tr('Oil')+': '+oil.toFixed(2)+' L/1000 km';
+        bbEl.className='stat'+(cc>5||state.engineHealth<0.45?' danger':cc>2.5||state.engineHealth<0.75?' warning':'');
       }
     }
   }

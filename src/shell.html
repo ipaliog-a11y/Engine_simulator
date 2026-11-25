@@ -46,7 +46,7 @@
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 472</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 473</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -159,6 +159,7 @@
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 <div class="field"><label for="edBalShaft">BALANCE SHAFT</label><select id="edBalShaft"><option value="no">NONE</option><option value="yes">BALANCE SHAFT</option></select></div>
 <div class="field"><label for="edDrySump">LUBRICATION</label><select id="edDrySump"><option value="wet">WET SUMP (STOCK)</option><option value="dry">DRY SUMP</option></select></div>
+<div class="field"><label for="edRings">PISTON RINGS</label><select id="edRings"><option value="stock">STOCK RINGS</option><option value="gapless">GAPLESS / RACE</option><option value="lowtension">LOW-TENSION</option></select></div>
 <div class="field"><label for="edCrankDamper">CRANK DAMPER</label><select id="edCrankDamper"><option value="stock">STOCK (ELASTOMER)</option><option value="none">NONE (SOLID PULLEY)</option><option value="fluid">FLUID / RACE DAMPER</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
@@ -800,6 +801,7 @@
 <div class="stat" id="statOilP" style="display:none" title="Oil gallery pressure"><span class="label">OIL PRESSURE</span><div class="value">—</div><span class="unit">bar</span></div>
 <div class="stat" id="statTurbo" style="display:none" title="Turbocharger cartridge health"><span class="label">TURBO</span><div class="value">100</div><span class="unit">%</span></div>
 <div class="stat" id="statPF" style="display:none" title="Particulate filter soot load and regeneration status"><span class="label">DPF / GPF</span><div class="value">0.0</div><span class="unit">g</span></div>
+<div class="stat" id="statBlowby" style="display:none" title="Ring blow-by flow, crankcase pressure and oil consumption"><span class="label">BLOW-BY</span><div class="value">0.0</div><span class="unit">L/min</span></div>
 </div>
 <div id="liveEmRows">
 <div class="gauge-row">
