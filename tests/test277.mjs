@@ -76,7 +76,7 @@ const r = await page.evaluate(() => {
 
   // Scope channels
   const needCh = ['cylPmax', 'preIgn', 'egt', 'oil', 'oilP', 'boostActual'];
-  const chMap = Object.fromEntries(ECU_CH.ice.map(c => [c[0], c]));
+  const chMap = Object.fromEntries(ECU_SIG.ice.map(c => [c[0], c]));
   out.scopeAllPresent = needCh.every(k => !!chMap[k]);
   out.scopeAllFinite = needCh.every(k => Number.isFinite(chMap[k][5]()));
 
