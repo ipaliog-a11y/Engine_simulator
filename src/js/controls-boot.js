@@ -45,7 +45,7 @@ function bindControls(){
   document.getElementById('btnEco').addEventListener('click',()=>applyOperatingPoint('eco'));
   document.getElementById('btnReset').addEventListener('click',()=>{
     state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
-    state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();
+    state.engineHealth=1.0;state.blown=false;state.wearCause='';state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';obdReset();
     state.coolant=90;state.oil=100;state.tCat=450;state.batterySOC=1.0;
     state.nitrousCharge=1.0;state.nitrousActive=false;state.wmCharge=1.0;
     const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}

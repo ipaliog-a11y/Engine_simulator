@@ -92,7 +92,7 @@ function drawEngine(dt){
   // The turbo turns with the shaft speed the spool model integrates (build 164; it followed the manifold
   // pressure), at a readable pace: a quarter turn a second stopped to under three at the shaft's limit.
   const nShaft=e.shaftJ?Math.sqrt(2*Math.max(0,state.shaftE||0)/e.shaftJ)*60/(2*Math.PI):0;
-  turboAngle=(turboAngle+(state.blown?0:(0.25+2.6*clamp(nShaft/Math.max(1,e.shaftMax),0,1))*Math.PI*2)*dt)%(Math.PI*2);
+  turboAngle=(turboAngle+(state.blown||state.turboBlown?0:(0.25+2.6*clamp(nShaft/Math.max(1,e.shaftMax),0,1))*Math.PI*2)*dt)%(Math.PI*2);
   // A Roots or screw blower is geared to the crank on screen as on the engine; a centrifugal's 12:1 would blur.
   const scD=(SC_SOUND[e.scType]||SC_SOUND.roots).drive;
   scAngle=(scAngle+(state.blown?0:(e.scType==='centrifugal'?(0.25+2.6*clamp(rpm/e.redline,0,1))*Math.PI*2:rate*scD))*dt)%(Math.PI*2*12);

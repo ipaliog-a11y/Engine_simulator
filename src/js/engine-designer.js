@@ -162,7 +162,7 @@ function icdCompute(){
     const e=engine,s=e.score,am=e.afrMode;
     // the curve: the scorecard's own sweep (a warm, healthy engine at its best-power mixture), so it meets its peaks
     e.afrMode='fixed';
-    Object.assign(state,{iat:25,coolant:90,oil:100,engineHealth:1,blown:false,elecLoad:0.3,icFaceV:null,afr:e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.86});
+    Object.assign(state,{iat:25,coolant:90,oil:100,engineHealth:1,blown:false,turboBlown:false,elecLoad:0.3,icFaceV:null,afr:e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.86});
     const pts=[];for(let r=1000;r<=e.redline;r+=100){const q=calcAtRpm(r);pts.push({x:r,a:q.powerHP,b:q.torque});}
     e.afrMode=am;
     return {hp:s.peakHP,hpRpm:s.peakHPrpm,tq:s.peakTQ,tqRpm:s.peakTQrpm,disp:e.displacement_L,overall:s.overall,grade:s.grade,rel:s.reliability,

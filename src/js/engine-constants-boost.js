@@ -119,9 +119,9 @@ function tqLimitBoost(rpm){
 function buildTorqueLimit(){
   const e=engine;e.tqLimTable=null;
   if(!(e.tqLimit>0)||e.intake==='na'||!(e.maxBoost>0))return;
-  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
+  const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,turboBlown:state.turboBlown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
   const savedAfrMode=e.afrMode;e.afrMode='fixed';
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;state.icFaceV=null;
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.turboBlown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;state.icFaceV=null;
   state.afr=e.ci?e.stoichAFR*SMOKE_LAMBDA_CI:e.stoichAFR*0.88;
   const tb=[];
   for(let r=1000;r<=e.redline+199;r+=200){
@@ -152,8 +152,8 @@ function knockLimitBoost(rpm){
 function buildKnockLimit(){
   const e=engine;e.knockLimTable=null;
   if(e.ci||e.ports||e.intake==='na'||!(e.maxBoost>0)||e.timingMode!=='auto'||sparkMapCustom)return false;
-  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV};
-  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;
+  const sv={iat:state.iat,afr:state.afr,coolant:state.coolant,nitrousActive:state.nitrousActive,icFaceV:state.icFaceV,turboBlown:state.turboBlown};
+  state.iat=25;state.afr=e.stoichAFR||14.7;state.coolant=90;state.nitrousActive=false;state.icFaceV=null;state.turboBlown=false;
   try{
     _knockCache={score:e.score,m:new Map()};   // the engine built before shares the score object until it is rescored
     const over=(r,b)=>{const m=1+b;return knockAt(r,m,activeAdvance(r,m))>KNOCK_TARGET;};

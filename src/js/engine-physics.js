@@ -9,6 +9,7 @@ function spoolFrac(rpm){
 // a supercharger is crank-driven so it makes boost almost from idle).
 function boostAvail(rpm){
   if(engine.intake==='turbo'){
+    if(state.turboBlown)return 0;   // failed cartridge: compressor no longer builds boost
     // Steady boost is now SOLVED from the shaft power balance, not read off a logistic curve in
     // rpm. spool50 and spoolWidth are gone: where a turbo comes on song is where its turbine can
     // finally supply what its compressor is drawing, which depends on the wheel, the housing A/R,
@@ -1317,7 +1318,9 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // one shaft's share of it: the active turbos fill the volume together (build 290)
     const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
     const Enext=E+(r.net-loss)*h-fill;
-    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0)overspeed=true;
+    // Wastegated turbos dump excess exhaust once r.prRaw reaches 1+boostTarget; only flag overspeed
+    // when the wheel hits TIP_LIMIT (520 m/s) while still trying to meet boostTarget.
+    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0&&((r.prRaw!=null?r.prRaw:r.pr)-1)<=boostTarget(rpm)+0.01)overspeed=true;
     E=clamp(Enext,0,Emax);
     b=b2;
     if(isCompSurge(compFlowFrac(rpm,mAirStep),1+b))surge=true;
@@ -1326,6 +1329,7 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
 }
 function stepBoost(dt){
   if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;return;}
+  if(state.turboBlown){state.shaftE=0;state.boostActual=0;state.turboSurge=false;state.turboOverspeed=false;return;}
   if(state.shaftE==null)state.shaftE=0;
   const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
                        state.throttle!=null?state.throttle:1,dt);
@@ -1523,8 +1527,25 @@ function oilPressureBar(rpm,oilTempC,e=engine){
 }
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
-  if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';return;}  // invincible
+  if(!wearEnabled){state.engineHealth=1;state.blown=false;state.wearCause='';state.turboHealth=1;state.turboBlown=false;state.turboWearCause='';return;}  // invincible
   if(state.blown)return;   // stays dead until rebuilt; keep the cause that killed it
+  // Turbo cartridge health (E14): sustained overspeed past TIP_LIMIT (520 m/s, cast Al wheel burst limit)
+  // or compressor surge (stall / thrust-bearing load) degrades the cartridge independently of the engine block.
+  if(engine.intake==='turbo'&&!state.turboBlown){
+    let tw=0,tWorst=0,tCause='';
+    const addT=(a,label)=>{if(a>0){tw+=a;if(a>tWorst){tWorst=a;tCause=label;}}};
+    addT(state.turboOverspeed?0.025:0,'TURBO OVERSPEED');
+    addT(state.turboSurge?0.008:0,'TURBO SURGE');
+    if(tw>0){
+      state.turboHealth=clamp((state.turboHealth!=null?state.turboHealth:1)-tw*dt,0,1);
+      state.turboWearCause=tCause;
+      if(state.turboHealth<=0){state.turboBlown=true;state.turboHealth=0;state.turboWearCause=tCause||'TURBO FAILED';}
+    }else{
+      state.turboWearCause='';
+    }
+  }else if(engine.intake!=='turbo'){
+    state.turboHealth=1;state.turboBlown=false;state.turboWearCause='';
+  }
   const lam=state.afr/engine.stoichAFR;
   let w=0,worst=0,cause='';
   const add=(a,label)=>{if(a>0){w+=a;if(a>worst){worst=a;cause=label;}}};
@@ -1555,8 +1576,6 @@ function stepWear(dt){
    if(engine.ci)add(ei>2.5?(ei-2.5)/8*0.020:0,'OVER-FUEL/EGT');}
   add(state.oil<55&&state.powerHP>15?0.004:0,'COLD-OIL');
   add(nitrousImep()>0?0.011:0,'NITROUS');                                        // nitrous stresses everything
-  add(state.turboOverspeed?0.025:0,'TURBO OVERSPEED');                           // compressor wheel hitting TIP_LIMIT (520 m/s)
-  add(state.turboSurge?0.008:0,'TURBO SURGE');                                   // compressor stall / thrust-bearing load
   add(engine.antilag&&state.rpm>2500?0.004:0,'ANTI-LAG');                        // ALS cooks the turbo/exhaust
   w+=0.000006;   // baseline fatigue (negligible — hours of clean running)
   state.engineHealth=clamp(state.engineHealth-w*dt,0,1);
@@ -1816,7 +1835,7 @@ function updateEnginePhysics(){
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
-  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil)].join('|');
+  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil),state.turboBlown?1:0].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));
