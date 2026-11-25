@@ -467,6 +467,18 @@ function updateUI(){
       catEl.className='stat'+(lit?'':' warning');
     }
   }
+  const pfEl=document.getElementById('statPF');
+  if(pfEl){
+    if(engine.partFilter&&!isElectric()){
+      pfEl.style.display='';
+      const sg=state.pfSootG||0,sMax=typeof pfMaxSootG==='function'?pfMaxSootG():14;
+      pfEl.querySelector('.value').textContent=sg<1?sg.toFixed(2):sg.toFixed(1);
+      pfEl.querySelector('.unit').textContent=state.pfRegen?('g '+tr('REGEN')):('g/'+Math.round(sMax));
+      pfEl.className='stat'+(state.pfRegen?' warning':sg>=sMax*0.85?' danger':'');
+    }else{
+      pfEl.style.display='none';
+    }
+  }
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}
@@ -483,6 +495,7 @@ function updateUI(){
   else if(hybBenchEngineOff()){status.textContent=tr('ENGINE OFF')+' • '+tr('ELECTRIC DRIVE')+' • '+tr('SHAFT')+' '+Math.round(hybBench.n)+' RPM';status.className='status-bar'}   // build 190
   else if(state.rpm>=engine.redline-30){status.textContent=tr('REV LIMITER')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
   else if(state.fuelCut){status.textContent=tr('OVERRUN')+' • '+tr('FUEL CUT-OFF (DFCO)')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
+  else if(engine.partFilter&&state.pfRegen){status.textContent=tr('DPF / GPF REGEN')+' • '+(state.pfSootG||0).toFixed(1)+' g • '+Math.round(state.rpm)+' RPM';status.className='status-bar warn'}
   else if(state.powerHP>5){status.textContent=tr('RUNNING')+' • '+state.powerHP.toFixed(0)+' HP @ '+Math.round(state.rpm)+' RPM • BMEP '+state.bmep.toFixed(1)+' bar';status.className='status-bar'}
   else{status.textContent=tr('IDLE / LOW LOAD')+' • '+Math.round(state.rpm)+' RPM';status.className='status-bar'}
   if(vizMode==='design')legend.innerHTML=tr('Bore/stroke set displacement. Octane+compression+boost+ignition feed the knock model.')+'<br>'+tr('Cooling (radiator/fan/oil cooler/thermostat) sets running temps in AUTO THERMAL mode.');

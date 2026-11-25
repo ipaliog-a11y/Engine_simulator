@@ -32,6 +32,7 @@ function readEngineFromForm(){
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
     cat:g('edCat').value,
+    partFilter:g('edPartFilter').value==='yes',
     intakeSys:g('edIntakeSys').value,
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
@@ -101,7 +102,7 @@ function applyEngineToForm(e){
   g('edValveSpec').value=e.ivValve_mm>0&&e.evValve_mm>0?e.ivValve_mm+'/'+e.evValve_mm+'@'+e.bore_mm+'x'+(e.valves||4):'';
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
-  partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edPartFilter').value=e.partFilter?'yes':'no';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
@@ -329,7 +330,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
