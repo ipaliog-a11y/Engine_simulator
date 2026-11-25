@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Engine balance, NVH smoothness & optional balance shaft (build 466)
+
+- **Derived primary & secondary balance (`computeEngineBalance`, `deriveBalance`)**: computes 1st- and 2nd-order shaking
+  forces ($F_1, F_2$) and rocking couples ($M_1, M_2$) from layout (`inline`, `v`, `boxer`), cylinder count, crankpin
+  phasing, bank angle, $\lambda = r/L = 1/\text{ROD\_RATIO}$, and reciprocating mass (~$0.55\,(B/86)^{2.5}$ kg/cyl, +25%
+  CI), with crankshaft counterweights cancelling forward-rotating primary vectors (Taylor vol. 2, ch. 8).
+- **NVH smoothness (0–100)**: reports smoothness and unbalanced force/couple on the BLOCK card, design summary, and
+  dyno result (I6/F6/V12/V8/Rotary = 100/100; 1.6 I4 = 73/100 with 4475 N secondary force at 5000 rpm; I3 = 91/100,
+  V6-90 = 86/100).
+- **Optional BALANCE SHAFT on BLOCK**: defaults to `NONE` (existing engines/presets unchanged); disabled on inherently
+  balanced layouts. Fitting it cancels the dominant unbalanced force/couple (I4 $F_2 \to 0$, smoothness 73 → 100/100) at
+  a derived bearing/drive friction cost (`mechFrictionMEP`: +0.058 bar at 5000 rpm on 1.6 I4), +2.5–4.5 kg mass, and
+  +$350–$550 cost. Plan E11 in `plans/engine-systems.md`.
+
 ### Start-stop for non-hybrid cars (build 465)
 
 - **START-STOP** opt-in on Cooling & Electrical (`NO` / `YES (12 V AGM)`), defaulting to `NO` so existing engines and

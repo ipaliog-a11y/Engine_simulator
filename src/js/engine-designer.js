@@ -30,6 +30,8 @@ const ICD_FIELDS={
     trade:'Higher compression burns the fuel more efficiently and adds torque everywhere, but brings knock closer: it needs more octane, less boost or later spark.'},
   edRedline:{guide:'redline',what:'The highest rpm the engine is allowed to reach.',
     trade:'More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.'},
+  edBalShaft:{adv:true,guide:'firing',what:'Counter-rotating shaft(s) driven off the crank to cancel unbalanced primary/secondary shaking forces (I4, I1) or rocking couples (I3, I5, F4, V6).',
+    trade:'Smooths out engine vibration (higher NVH smoothness) at a small cost in parasitic bearing/drive friction, mass and build cost. Disabled on inherently balanced layouts (I6, F6, V8, V12, rotary).'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
@@ -126,7 +128,7 @@ const ICD_FIELDS={
     trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
-const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
+const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
@@ -171,6 +173,7 @@ function icdCompute(){
       pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
       turbo:e.intake==='turbo',turboLoad:e.turboLoad||0,compEff:e.compEff||0,spoolRpm:e.intake==='turbo'?Math.round(boostHalfRpm()):0,
       peakEgtC:e.peakEgt?Math.round(e.peakEgt-273):0,peakEgtGas:e.peakEgtGas||0,vgtShut:e.vgtShut||0,
+      smoothness:e.balance?e.balance.smoothness:100,unbalF:e.balance?Math.round(e.balance.totalForce_N):0,unbalM:e.balance?Math.round(e.balance.totalMoment_Nm):0,
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -188,7 +191,7 @@ function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
-      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
+      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'');
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
@@ -211,6 +214,8 @@ const ICD=new DesignCards({
     ['GRADE',r.grade,' '+r.overall,d('overall',1,0)],['RELIABILITY',dcFmt(r.rel),'',d('rel',1,0)],['COST','$'+dcFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
   slowText:r=>tr('Peak power at {p} rpm, peak torque at {t} rpm').replace('{p}',dcFmt(r.hpRpm)).replace('{t}',dcFmt(r.tqRpm))+
     (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1)))+
+    ' · '+tr('smoothness {s}/100').replace('{s}',r.smoothness)+
+    (r.unbalF>0?' ('+r.unbalF+' N)':r.unbalM>0?' ('+r.unbalM+' N·m)':'')+
     (r.peakEgtC>0?' · '+tr('peak EGT {e} °C').replace('{e}',dcFmt(r.peakEgtC)):'')+
     (r.turbo?' · '+tr('50% boost @ {s} rpm · turbo load {l}% ({c}% eff)').replace('{s}',dcFmt(r.spoolRpm)).replace('{l}',dcFmt(Math.round(r.turboLoad*100))).replace('{c}',dcFmt(Math.round(r.compEff*100))):''),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 465</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 466</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1007,6 +1007,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edEcc">ECCENTRICITY e (mm)</label><input type="number" id="edEcc" min="8" max="25" step="0.5" value="15"></div>
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
+<div class="field"><label for="edBalShaft">BALANCE SHAFT</label><select id="edBalShaft"><option value="no">NONE</option><option value="yes">BALANCE SHAFT</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
@@ -1640,11 +1641,11 @@ Some engines are naturally smooth: an <b>inline six</b> and a <b>V12</b> cancel 
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="firingPhys">
-On a four-stroke every cylinder fires once in 720° of crank, so evenly spaced firings are <b>720°/n</b> apart: 180° for a four, 120° for a six, 90° for a V8. The crank-slider's second harmonic (<i>r/l</i> on <a data-gp="live">Watching it run</a>) is why a flat four-cylinder crank leaves an unbalanced shaking force at twice crank speed, even though the pistons are paired.<br>
+On a four-stroke every cylinder fires once in 720° of crank, so evenly spaced firings are <b>720°/n</b> apart: 180° for a four, 120° for a six, 90° for a V8. The crank-slider's second harmonic (<i>r/l</i> on <a data-gp="live">Watching it run</a>) is why a flat four-cylinder crank leaves an unbalanced shaking force at twice crank speed, even though the pistons are paired. Primary and secondary shaking forces and rocking couples are derived from the crankpin phases, bank angle, <i>r/l</i>, and reciprocating mass (Taylor), giving a 0–100 smoothness score; an optional <b>balance shaft</b> cancels the unbalanced force or couple at a small cost in bearing/drive friction and mass.<br>
 The firing order is used for real in two places: the LIVE bank draws each cylinder at its own phase, and the engine sound fires each cylinder's exhaust pulse in that order down its own bank's pipe, so a cross-plane V8's A-B-A-B-B-A-B-A bank sequence produces its beat without anything in the code knowing what a V8 sounds like.
 </div>
 <div class="guide-limit" data-gk="firingLimit">
-Not modelled: vibration and balance. An engine's shaking forces do not cost it power or reliability here.
+Not modelled: crank torsional resonance and engine-mount structural transfer. Shaking forces are reported as smoothness rather than causing wear.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="sound">Options, sound &amp; tips</a> · <a data-gp="live">Watching it run</a> · <a data-gp="bottom">Bore, stroke &amp; displacement</a></div>
@@ -3606,7 +3607,7 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>Some hardware is hand-set to real relative behaviour</b> rather than derived: the induction systems, the supercharger boost laws, the nitrous shot, the MBT spark rule, the friction curve's shape, the cooling-system model (<a data-gp="induction">Induction &amp; throttle</a>, <a data-gp="supercharger">Superchargers</a>, <a data-gp="nitrous">Nitrous oxide</a>, <a data-gp="ignition">Ignition &amp; spark timing</a>, <a data-gp="friction">Friction, oil &amp; pumping</a>, <a data-gp="heat">Heat, cooling &amp; EGT</a>).<br>
 · <b>Designed parts leave two things out</b>: a silencer's own back-pressure, and the intake plenum's volume (<a data-gp="parts">Designing your own parts</a>).<br>
 · <b>Emissions are trend correlations</b>, not chemistry (<a data-gp="emissions">Emissions &amp; the catalyst</a>). <b>Wear rates are game rules</b> (<a data-gp="wear">Wear &amp; reliability</a>). The <b>scorecard's weights</b> are design choices (<a data-gp="scorecard">The scorecard</a>).<br>
-· <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
+· <b>Crank torsional resonance and engine-mount transfer</b> are not modelled; primary/secondary balance and smoothness are (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>
 · <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
 · <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
@@ -4751,6 +4752,107 @@ const VALVETRAIN={
 };
 // A design that does not say: four or five valves are almost always two cams over buckets, two valves one cam and rockers.
 const valvetrainDefault=valves=>(+valves||4)>=4?'dohc-bucket':'sohc-rocker';
+// ---- Engine balance & NVH (Taylor, The Internal-Combustion Engine in Theory and Practice, vol. 2, ch. 8) ----
+// Reciprocating inertia force of one cylinder along its axis:
+//   F_rec(theta) = m_rec * r * w^2 * [cos(theta + alpha - psi) + lambda * cos(2*(theta + alpha - psi))]
+// where r = S/2, lambda = r/L = 1/ROD_RATIO, psi is the bank angle from +y, alpha is the crankpin phase.
+// Crankshaft counterweights cancel the forward-rotating 1st-order component (50% on inline, 100% on 90-deg V-twin/V8).
+// Typical reciprocating mass (piston + pin + rings + ~1/3 conrod): ~0.55 kg at 86 mm bore, scaling ~B^2.5 (+25% CI).
+function balanceLayoutAngles(layout,nc){
+  if(layout==='inline'){
+    if(nc===1)return {psi:[0],alpha:[0],z:[0],bays:1};
+    const pitch=1,z=Array.from({length:nc},(_,k)=>(k-(nc-1)/2)*pitch);
+    const alphas={
+      2:[0,Math.PI],
+      3:[0,2*Math.PI/3,4*Math.PI/3],
+      4:[0,Math.PI,Math.PI,0],
+      5:[0,4*Math.PI/5,8*Math.PI/5,2*Math.PI/5,6*Math.PI/5],
+      6:[0,2*Math.PI/3,4*Math.PI/3,4*Math.PI/3,2*Math.PI/3,0],
+      8:[0,Math.PI,Math.PI/2,3*Math.PI/2,3*Math.PI/2,Math.PI/2,Math.PI,0],
+      10:[0,4*Math.PI/5,8*Math.PI/5,2*Math.PI/5,6*Math.PI/5,6*Math.PI/5,2*Math.PI/5,8*Math.PI/5,4*Math.PI/5,0]
+    };
+    return {psi:Array(nc).fill(0),alpha:alphas[nc]||Array.from({length:nc},(_,k)=>k*2*Math.PI/nc),z,bays:nc};
+  }
+  const pairs=Math.max(1,Math.floor(nc/2));
+  if(layout==='boxer'){
+    const throwA=pairs===1?[0]:pairs===2?[0,Math.PI]:pairs===3?[0,2*Math.PI/3,4*Math.PI/3]:
+      pairs===4?[0,Math.PI,Math.PI,0]:pairs===5?[0,4*Math.PI/5,8*Math.PI/5,2*Math.PI/5,6*Math.PI/5]:
+      [0,2*Math.PI/3,4*Math.PI/3,4*Math.PI/3,2*Math.PI/3,0];
+    const psi=[],alpha=[],z=[],bankOff=0.35;
+    for(let t=0;t<pairs;t++){
+      const zb=t-(pairs-1)/2;
+      psi.push(-Math.PI/2,Math.PI/2);
+      alpha.push(throwA[t],throwA[t]+Math.PI);
+      z.push(zb-bankOff/2,zb+bankOff/2);
+    }
+    return {psi,alpha,z,bays:pairs};
+  }
+  // V-engine: standard bank angles (90 deg V2/V4/V6/V8, 72 deg V10, 60 deg V12)
+  const bankDeg=nc===12?60:nc===10?72:90;
+  const halfB=(bankDeg*Math.PI/180)/2;
+  const throwA=pairs===1?[0]:pairs===2?[0,Math.PI]:pairs===3?[0,2*Math.PI/3,4*Math.PI/3]:
+    pairs===4?[0,Math.PI/2,3*Math.PI/2,Math.PI]:pairs===5?[0,4*Math.PI/5,8*Math.PI/5,2*Math.PI/5,6*Math.PI/5]:
+    [0,2*Math.PI/3,4*Math.PI/3,4*Math.PI/3,2*Math.PI/3,0];
+  const split=nc===6?(15*Math.PI/180):0;   // 30-deg split pins on 90-deg even-fire V6
+  const psi=[],alpha=[],z=[],bankOff=0.25;
+  for(let t=0;t<pairs;t++){
+    const zb=t-(pairs-1)/2;
+    psi.push(-halfB,halfB);
+    alpha.push(throwA[t]-split,throwA[t]+split);
+    z.push(zb-bankOff/2,zb+bankOff/2);
+  }
+  return {psi,alpha,z,bays:pairs};
+}
+function computeEngineBalance(spec){
+  if(!spec||spec.type==='rotary'||spec.type==='electric'){
+    return {mRec_kg:0,lambda:0,f1_N:0,f2_N:0,m1_Nm:0,m2_Nm:0,totalForce_N:0,totalMoment_Nm:0,smoothness:100,balShaftType:'none',balShaftActive:false,refRpm:spec?spec.redline||6000:6000};
+  }
+  const nc=spec.cylinders||4,B=(spec.bore_mm||86)/1000,S=(spec.stroke_mm||86)/1000,r=S/2;
+  const lambda=1/(typeof ROD_RATIO==='number'?ROD_RATIO:3.2);
+  const mRec_kg=0.55*Math.pow(B/0.086,2.5)*(spec.ci?1.25:1.0);
+  const pitch=1.15*B;
+  const g=balanceLayoutAngles(spec.layout||'inline',nc);
+  let a1x=0,b1x=0,a1y=0,b1y=0,a2x=0,b2x=0,a2y=0,b2y=0;
+  let c1x=0,d1x=0,c1y=0,d1y=0,c2x=0,d2x=0,c2y=0,d2y=0;
+  for(let k=0;k<g.psi.length;k++){
+    const psi=g.psi[k],del=g.alpha[k]-psi,z=g.z[k]*pitch,ux=Math.sin(psi),uy=Math.cos(psi);
+    const c1=Math.cos(del),s1=Math.sin(del),c2=Math.cos(2*del),s2=Math.sin(2*del);
+    a1x+=c1*ux;b1x+=-s1*ux;a1y+=c1*uy;b1y+=-s1*uy;
+    a2x+=c2*ux;b2x+=-s2*ux;a2y+=c2*uy;b2y+=-s2*uy;
+    c1x+=z*c1*ux;d1x+=-z*s1*ux;c1y+=z*c1*uy;d1y+=-z*s1*uy;
+    c2x+=z*c2*ux;d2x+=-z*s2*ux;c2y+=z*c2*uy;d2y+=-z*s2*uy;
+  }
+  // Subtract forward-rotating 1st-order vector (cancelled by crankshaft counterweights)
+  const f1axp=(a1x-b1y)/2,f1bxp=(b1x+a1y)/2;
+  const r1ax=a1x-f1axp,r1bx=b1x-f1bxp,r1ay=a1y-f1bxp,r1by=b1y+f1axp;
+  const m1axp=(c1x-d1y)/2,m1bxp=(d1x+c1y)/2;
+  const q1ax=c1x-m1axp,q1bx=d1x-m1bxp,q1ay=c1y-m1bxp,q1by=d1y+m1axp;
+
+  const rms4=(a,b,c,d)=>Math.sqrt(0.5*(a*a+b*b+c*c+d*d));
+  let f1c=rms4(r1ax,r1bx,r1ay,r1by), f2c=rms4(a2x,b2x,a2y,b2y);
+  let m1c=rms4(q1ax,q1bx,q1ay,q1by), m2c=rms4(c2x,d2x,c2y,d2y);
+  if(f1c<1e-6)f1c=0;if(f2c<1e-6)f2c=0;if(m1c<1e-6)m1c=0;if(m2c<1e-6)m2c=0;
+
+  const balShaftType=f1c>0?'1x-force':f2c>0?'2x-force':m1c>0?'1x-couple':m2c>0?'2x-couple':'none';
+  const balShaftActive=!!spec.balShaft&&balShaftType!=='none';
+  if(balShaftActive){
+    if(balShaftType==='1x-force')f1c=0;
+    else if(balShaftType==='2x-force')f2c=0;
+    else if(balShaftType==='1x-couple')m1c=0;
+    else if(balShaftType==='2x-couple')m2c=0;
+  }
+  const refRpm=Math.min(spec.redline||6000,5000),w=2*Math.PI*refRpm/60,scale=mRec_kg*r*w*w;
+  const f1_N=f1c*scale, f2_N=f2c*scale*lambda, m1_Nm=m1c*scale, m2_Nm=m2c*scale*lambda;
+  const totalForce_N=Math.hypot(f1_N,f2_N), totalMoment_Nm=Math.hypot(m1_Nm,m2_Nm);
+  const lMount=Math.max(0.25,g.bays*pitch);
+  const fEq=Math.hypot(totalForce_N,totalMoment_Nm/lMount);
+  const smoothness=Math.round(100*Math.exp(-fEq/14000));
+  return {mRec_kg,lambda,f1_N,f2_N,m1_Nm,m2_Nm,totalForce_N,totalMoment_Nm,smoothness,balShaftType,balShaftActive,refRpm};
+}
+function deriveBalance(){
+  engine.balance=computeEngineBalance(engine);
+  if(!engine.balance.balShaftActive)engine.balShaft=false;
+}
 // The engine's fixed geometry for the model, once per build (deriveFriction, after deriveValvetrain).
 function deriveFriction(){
   const e=engine;
@@ -4758,20 +4860,27 @@ function deriveFriction(){
   if(e.type==='rotary'||e.ports){e.fric=null;return;}
   const nc=e.cylinders,banks=e.layout==='inline'?1:2,perBank=Math.ceil(nc/banks);
   const vt=VALVETRAIN[e.vtMech];
+  const bal=e.balance&&e.balance.balShaftActive;
+  const bal2x=bal&&(e.balance.balShaftType==='2x-force'||e.balance.balShaftType==='2x-couple');
   e.fric={B:e.bore_mm,S:e.stroke_mm,nc,rc:e.compression,vt,
     nMain:perBank+1,                                   // a main bearing either side of each throw (V and flat: shared throws)
     nPin:nc,
     nCam:vt.cams?vt.cams*banks*(perBank+1):perBank+1,   // OHV: one cam in the block, on as many journals as the crank
     nv:(e.valves||4)*nc,
     Lv:e.ivLift_mm||0.28*0.39*e.bore_mm,
-    Dm:FRIC_MAIN_D*e.bore_mm,Dp:FRIC_PIN_D*e.bore_mm};
+    Dm:FRIC_MAIN_D*e.bore_mm,Dp:FRIC_PIN_D*e.bore_mm,
+    balBrg:bal?(bal2x?4:2):0,balMul:bal2x?2:1,Db:0.30*e.bore_mm};
 }
 // Rubbing + auxiliary friction mean effective pressure (bar) at N rpm and intake pressure map (bar absolute).
 // actFrac (1 by default, 0.5 with half-cylinder deactivation) scales combustion gas ring load and
 // valve/follower actuation (cam bearings still spin, while collapsed lifters/lobes have zero lift).
 function mechFrictionMEP(N,map,actFrac=1){
   const f=engine.fric;
-  if(!f)return (0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
+  if(!f){
+    let fm=(0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
+    if(engine.balance&&engine.balance.balShaftActive)fm+=0.02*(N/6000);
+    return fm;
+  }
   N=Math.max(N,300);
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
   const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
@@ -4781,7 +4890,8 @@ function mechFrictionMEP(N,map,actFrac=1){
   const valve=244*N*nCam/(B2S*nc)+(4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
-  return (crank+recip+gas+valve+aux)/100;
+  const bal=f.balBrg?(brg(f.Db,f.balBrg)*f.balMul+0.0005*N*f.balMul):0;   // balance shaft bearings + chain/gear mesh
+  return (crank+recip+gas+valve+aux+bal)/100;
 }
 // ================================================================================================
 // PHYSICS CORE — GAS DYNAMICS
@@ -6122,7 +6232,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,cylDeact:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,balShaft:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false
@@ -10286,6 +10396,7 @@ function readEngineFromForm(){
     compression:clamp(+g('edCR').value||tp.crDef,tp.crMin,tp.crMax),
     layout:type==='rotary'?'rotary':g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
+    balShaft:g('edBalShaft').value==='yes',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -10350,6 +10461,7 @@ function applyEngineToForm(e){
   g('edType').value=e.type||'petrol4';
   g('edCyl').value=e.cylinders;g('edLayout').value=(e.layout==='rotary'?'inline':e.layout);g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
+  g('edBalShaft').value=e.balShaft?'yes':'no';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -10413,6 +10525,9 @@ function syncDesignEnable(){
     if(odd&&(laySel.value==='v'||laySel.value==='boxer'))laySel.value='inline';
     else if(cyl===12&&laySel.value==='inline')laySel.value='v';
   }
+  const balOk=type!=='rotary'&&computeEngineBalance({type,cylinders:+cylSel.value||4,layout:g('edLayout').value,bore_mm:86,stroke_mm:86,redline:6000}).balShaftType!=='none';
+  if(!balOk)g('edBalShaft').value='no';
+  g('edBalShaft').disabled=!balOk;
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -10576,7 +10691,8 @@ function buildEngineCore(prevStoich,quiet){
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
-  deriveFriction();         // the friction model's geometry: bearings, cams, valves (build 243)
+  deriveBalance();          // primary/secondary shaking forces, rocking couples & NVH smoothness (E11)
+  deriveFriction();         // the friction model's geometry: bearings, cams, valves, balance shaft (build 243)
   deriveCharge();           // the charge path: intercooler, compressor frame, spool
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
   // rpm of every torque-curve build. Sample it once per engine into a table and interpolate — the
@@ -10746,6 +10862,7 @@ function computeCost(){
   let c=900*engine.cylinders+350*engine.displacement_L;          // block, machining, internals
   c+={petrol4:0,diesel:2500,twostroke:-400,rotary:1200}[engine.type]||0;  // cycle-specific build cost
   c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
+  if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -10920,10 +11037,12 @@ function updateDesignSummary(){
   const elecLine=engine.ci?
     '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('glow-plug start (no spark)'):
     '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
+  const bal=engine.balance;
+  const balLine=bal?' • '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+(bal.balShaftActive?' • <b>'+tr('BALANCE SHAFT')+'</b>':''):'';
   document.getElementById('designSummary').innerHTML=
     '<b>'+tr(ENGINE_TYPE[engine.type].label)+'</b> • <b>'+unitWord+'</b>'+
     '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+
-    '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+
+    '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+balLine+
     '<br>'+tr('Induction')+' <b>'+induction+'</b>'+
     '<br>'+tr('Intake')+' <b>'+tr(INTAKE_SYS[engine.intakeSys].label)+'</b> • '+tr('Filter')+' <b>'+tr(AIR_FILTER[engine.airFilter].label)+'</b>'+
     '<br>'+tr('Exhaust')+' <b>'+(engine.exhaustPart?esc(engine.exhaustPart.name):trOpt(engine.exhaust.toUpperCase()))+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
@@ -14154,6 +14273,7 @@ function engineMass(){
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);
   if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   if(engine.cylDeact)m+=0.5*engine.cylinders;
+  if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).
@@ -30956,6 +31076,11 @@ function renderDynoResult(force){
   const boosted=engine.intake!=='na';
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
   const diag=diagnoseEngine();
+  const bal=engine.balance;
+  const balNote=bal?('<br><b>'+tr('BALANCE & NVH')+'</b> — '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+
+    (bal.totalForce_N>0?' · '+tr('unbalanced shaking force')+' '+Math.round(bal.totalForce_N)+' N':'')+
+    (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
+    (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')):'';
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
@@ -30964,7 +31089,7 @@ function renderDynoResult(force){
     '</div>'+
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
-    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+'</p>'+
+    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+balNote+'</p>'+
     dynoDiagHtml(diag)+
     dynoTableToggle(step)+
     '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
@@ -39498,6 +39623,8 @@ const ICD_FIELDS={
     trade:'Higher compression burns the fuel more efficiently and adds torque everywhere, but brings knock closer: it needs more octane, less boost or later spark.'},
   edRedline:{guide:'redline',what:'The highest rpm the engine is allowed to reach.',
     trade:'More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.'},
+  edBalShaft:{adv:true,guide:'firing',what:'Counter-rotating shaft(s) driven off the crank to cancel unbalanced primary/secondary shaking forces (I4, I1) or rocking couples (I3, I5, F4, V6).',
+    trade:'Smooths out engine vibration (higher NVH smoothness) at a small cost in parasitic bearing/drive friction, mass and build cost. Disabled on inherently balanced layouts (I6, F6, V8, V12, rotary).'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
@@ -39594,7 +39721,7 @@ const ICD_FIELDS={
     trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
-const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
+const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
@@ -39639,6 +39766,7 @@ function icdCompute(){
       pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
       turbo:e.intake==='turbo',turboLoad:e.turboLoad||0,compEff:e.compEff||0,spoolRpm:e.intake==='turbo'?Math.round(boostHalfRpm()):0,
       peakEgtC:e.peakEgt?Math.round(e.peakEgt-273):0,peakEgtGas:e.peakEgtGas||0,vgtShut:e.vgtShut||0,
+      smoothness:e.balance?e.balance.smoothness:100,unbalF:e.balance?Math.round(e.balance.totalForce_N):0,unbalM:e.balance?Math.round(e.balance.totalMoment_Nm):0,
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -39656,7 +39784,7 @@ function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
-      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
+      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'');
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
@@ -39679,6 +39807,8 @@ const ICD=new DesignCards({
     ['GRADE',r.grade,' '+r.overall,d('overall',1,0)],['RELIABILITY',dcFmt(r.rel),'',d('rel',1,0)],['COST','$'+dcFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
   slowText:r=>tr('Peak power at {p} rpm, peak torque at {t} rpm').replace('{p}',dcFmt(r.hpRpm)).replace('{t}',dcFmt(r.tqRpm))+
     (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1)))+
+    ' · '+tr('smoothness {s}/100').replace('{s}',r.smoothness)+
+    (r.unbalF>0?' ('+r.unbalF+' N)':r.unbalM>0?' ('+r.unbalM+' N·m)':'')+
     (r.peakEgtC>0?' · '+tr('peak EGT {e} °C').replace('{e}',dcFmt(r.peakEgtC)):'')+
     (r.turbo?' · '+tr('50% boost @ {s} rpm · turbo load {l}% ({c}% eff)').replace('{s}',dcFmt(r.spoolRpm)).replace('{l}',dcFmt(Math.round(r.turboLoad*100))).replace('{c}',dcFmt(Math.round(r.compEff*100))):''),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',
