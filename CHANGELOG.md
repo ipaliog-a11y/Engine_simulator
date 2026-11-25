@@ -18,13 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 454)
+### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 455)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).
 - Added axle suspension bump-stop downforce capping and `aeroBottomed` flagging (`aeroDownforce`, `aeroBumpCapF/R = 2 * ks * bump`; Milliken & Milliken RCVD ch. 16) in `src/js/tyres-brakes-driveline.js`, `src/js/vehicle-accel.js`, `src/js/racing-line-lap.js`, and `src/js/eco-run.js`.
 - Added global ISO 2533 International Standard Atmosphere altitude/barometric pressure (`ENV`, `pAmbBar`, `pAmbAtm`, `airRho`, anchored at `alt_m = 0, tempC = 20 °C -> 1.20 kg/m³`) and headwind (`envWind`) across `engine-constants-boost.js`, `vehicle-spec.js`, `vehicle-accel.js`, `drive-model.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Included aerodynamic downforce (`N = m*G*cosT + F_df`) in rolling resistance across `vehicle-spec.js`, `vehicle-accel.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Added `tests/test275.mjs` covering post-stall wing drag/lift, dynamic ride-height/pitch aero, suspension bottoming, ISA altitude & headwind scaling, and downforce rolling resistance.
+
+### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 454)
+
+- Added a 2-stroke tuned expansion-chamber resonant stuffing-wave model (`twoStrokePipeGain` in `src/js/gas-dynamics.js`, wired into `calcVE` and `deriveGasDynamics`; Blair SAE R-161 ch. 4): sport/race pipes tune `primL` to return a positive plugging wave before exhaust port close (~170° duration), while stock cast/box exhausts (`sigma >= 0.35`) return zero.
+- Implemented unthrottled quality-governed CI diesel operation on the LIVE bench (`mapTarget`, `pumpingMEP`, `withCiLoad`, `mappedAFR`, `stepEngineOnce`, `updateEnginePhysics`, `buildEngineCore`): intake stays at atmospheric + boost (`>= 1.0 bar`) with no intake throttle-plate vacuum pumping loss, and part-load torque is governed by fuel quantity (leaning out toward idle λ ~ 5–15, Heywood §1.5, §13.3).
+- Added exhaust silencer back-pressure (`silencerDp` and `EXHAUST_SILENCER` `K` loss factors in `src/js/parts.js`: `baffled` 4.2, `chambered` 2.2, `absorptive` 0.35, `straight` 0; Idelchik §11, Munjal ch. 2), wired into `backPressureBar()` and `exhaustReport()`, and exposed the `baffled` option in `src/shell.html` and `src/js/parts-art-3d.js`.
+- Added a derived oil-pressure model (`oilPressureBar` in `src/js/engine-physics.js`, `state.oilP` in `src/js/app-state.js`; Bosch Automotive Handbook + Sandoval & Heywood SAE 2003-01-0725 Vogel viscosity for SAE 10W-30) with spring relief-valve ceiling (4.8–5.2 bar), 0 bar on premix 2-strokes, and `LOW OIL PRESSURE` bearing wear in `stepWear()`.
+- Added `tests/test276.mjs` covering all four models.
 
 ### Championship completion, timed-race countdown, and cross-mode audio (build 453)
 

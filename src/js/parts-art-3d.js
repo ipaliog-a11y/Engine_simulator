@@ -136,7 +136,7 @@ function buildPart3D(R,kind,p,t,opts){
       const zp=zPipes[pi],idB=40+pi*10;
       if(pipes===2)R.tube([[xColl+44,yColl,0],[xColl+105,yColl,zp*0.75],[xSil0+6,yColl,zp]],sysR,8,pipeCol,idB,{smooth:true,spec:18});
       else R.cylinder([xColl+46,yColl,0],[xSil0+6,yColl,0],sysR,sysR,10,pipeCol,idB,{spec:18});
-      if(sil==='chambered'){
+      if(sil==='chambered'||sil==='baffled'){
         const mw=68+sysR*0.9,mh=42+sysR*0.65;
         if(!xray)R.box((xSil0+xSil1)*0.5,yColl,zp,xSil1-xSil0,mh*2,mw*1.5,'#8a90a6',idB+2,{spec:18});
         else{

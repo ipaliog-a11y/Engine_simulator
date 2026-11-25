@@ -9,8 +9,8 @@
 //   primaries      diameter and length, in mm; on a turbo engine the length is set by packaging (as before) and
 //                  the length here is not used;
 //   system         the pipes after the collector: how many, their diameter, their length;
-//   silencer       what it does to the sound (SILENCER in sound.js). Its own back-pressure is not modelled yet: a
-//                  factory system's restriction is in its pipe (sysV), and so is a designed one's.
+//   silencer       what it does to the sound (SILENCER in sound.js) and its own back-pressure (silencerDp,
+//                  from chamber/baffle flow-loss geometry, added in backPressureBar).
 // The INTAKE MANIFOLD (build 206) is its runners, the other half of the breathing model, read by the integrated intake
 // stroke (intakeFill, buildFillTable) and its tuning (intakeRamGain, helmholtzHz):
 //   runners        length, plenum to head (the port in the head is added, as on the factory manifolds), and
@@ -65,12 +65,26 @@ const EXHAUST_BUILD={
   tubular:{label:'TUBULAR HEADER',     sigma:EXHAUST.sport.sigma,cls:'sport',cost:550},
   equal:  {label:'EQUAL-LENGTH HEADER',sigma:EXHAUST.race.sigma, cls:'race', cost:1400}
 };
-// the silencer, by the factory system whose silencer it is (SILENCER and GAS_SILENCER_HZ in sound.js)
+// Silencer acoustics (SILENCER and GAS_SILENCER_HZ in sound.js) and flow-loss coefficients K = dP / (0.5 * rho * v^2)
+// (Idelchik, Handbook of Hydraulic Resistance §11; Munjal, Acoustics of Ducts and Mufflers ch. 2):
+// straight pipe 0, perforated straight-through absorptive ~0.35, multi-chamber reactive ~2.2, multi-baffle ~4.2.
 const EXHAUST_SILENCER={
-  chambered: {label:'CHAMBERED',              cls:'stock'},
-  absorptive:{label:'STRAIGHT-THROUGH',       cls:'sport'},
-  straight:  {label:'NONE (STRAIGHT PIPE)',   cls:'race'}
+  baffled:   {label:'BAFFLED (QUIET)',        cls:'stock', K:4.2},
+  chambered: {label:'CHAMBERED',              cls:'stock', K:2.2},
+  absorptive:{label:'STRAIGHT-THROUGH',       cls:'sport', K:0.35},
+  straight:  {label:'NONE (STRAIGHT PIPE)',   cls:'race',  K:0}
 };
+// Exhaust silencer pressure drop (Pa) from chamber/baffle geometry at volume flow Q (m^3/s per pipe) and gas density rho (kg/m^3).
+function silencerDp(Q,part,rho){
+  if(!(Q>0))return 0;
+  const key=typeof part==='string'?part:(part&&part.silencer?part.silencer:(engine.exhaustPart?engine.exhaustPart.silencer:factorySilencer(engine)));
+  const sil=EXHAUST_SILENCER[key]||EXHAUST_SILENCER.chambered;
+  if(!(sil.K>0))return 0;
+  const D=(part&&typeof part==='object'&&part.sysD_mm>0)?part.sysD_mm/1000:(engine.sysD||0.055);
+  const v=Q/(Math.PI/4*D*D);
+  const r=rho>0?rho:0.38;
+  return sil.K*0.5*r*v*v;
+}
 // What a part's numbers may be. The pipe diameter is the range the factory sizing clamps to (deriveGasDynamics);
 // a primary is 200-1000 mm, past either end of the 350-900 mm a fabricator can route round an engine bay. A runner
 // runs from a 40 mm stub (an ITB's trumpet) to 800 mm, past the factory LONG's 460.
@@ -590,9 +604,11 @@ function wotPull(){
 function exhaustReport(x){
   return withExhaust(x,e=>{
     const pull=wotPull(),T=exhaustGasT(1.0,pull.peakHPrpm);
+    const rho=101325/(287*Math.max(300,T));
     const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(pull.peakHPrpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
+    const silBpKPa=silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho)/1000;
     return Object.assign(pull,{primD:e.primD,primL:e.primL,primK:e.primK,sysD:e.sysD,sysL:e.sysL,sysPipes:e.sysPipes,sigma:e.exhSigma,
-      scavPeakRpm:e.scavPeakRpm,bpKPa:backPressureBar(pull.peakHPrpm,T)*100,pipeV:m3s/(Math.PI/4*e.sysD*e.sysD)});
+      scavPeakRpm:e.scavPeakRpm,bpKPa:backPressureBar(pull.peakHPrpm,T)*100,silBpKPa,pipeV:m3s/(Math.PI/4*e.sysD*e.sysD)});
   });
 }
 // The runner diameter the factory manifold gives this engine: matched to the ports behind it (deriveGasDynamics).
@@ -1018,12 +1034,12 @@ function previewPart(kind){
   lines.push(tr('Primary')+': '+fmt(p.primD_mm,1)+' mm = '+fmt(p.primD_mm/engine.bore_mm,2)+' × '+tr('bore')
     +' <span class="dim">('+tr('the factory exhausts: cast 0.38, tubular 0.46, race 0.54')+')</span>');
   if(turbo)lines.push(tr('On a turbo engine the manifold is as short as packaging allows: the primary length is not used, and its suction wave turns into a compression against the turbine.'));
+  else if(engine.type==='twostroke')lines.push(r.scavPeakRpm?tr('Expansion-chamber plugging wave tunes at')+' <b>'+r.scavPeakRpm+' rpm</b>; '+tr('peak power is at')+' '+r.peakHPrpm+' rpm.':tr('A cast/box exhaust has no tuned expansion chamber: it sets back-pressure only.'));
   else if(ported)lines.push(tr('A port-timed engine has no valve overlap to scavenge through: the header changes its back-pressure, not its filling.'));
   else lines.push(tr('Scavenging is strongest at')+' <b>'+r.scavPeakRpm+' rpm</b>'+(r.primK?' ('+tr('wave order')+' '+r.primK+')':'')
     +'; '+tr('peak power is at')+' '+r.peakHPrpm+' rpm.');
   lines.push(tr('Gas speed in the pipe at peak power')+': <b>'+fmt(r.pipeV)+' m/s</b> <span class="dim">('+tr('design practice ~75; quieter road systems run faster, race systems slower')+')</span>');
-  lines.push(tr('Back-pressure at peak power')+': <b>'+fmt(r.bpKPa,1)+' kPa</b> <span class="dim">('+tr('now')+' '+fmt(now.bpKPa,1)+')</span>');
-  lines.push('<span class="dim">'+tr('The silencer changes the sound only; its own back-pressure is not modelled yet.')+'</span>');
+  lines.push(tr('Back-pressure at peak power')+': <b>'+fmt(r.bpKPa,1)+' kPa</b> <span class="dim">('+tr('now')+' '+fmt(now.bpKPa,1)+'; '+tr('silencer')+' '+fmt(r.silBpKPa,1)+' kPa)</span>');
   pv('partGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawPartCurves('exhaust',now,r);
 }
