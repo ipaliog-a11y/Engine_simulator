@@ -184,7 +184,7 @@ function renderDynoResult(force){
   const box=document.getElementById('dynoResult');
   if(!box||box.hidden||!engine.score)return;
   const data=getDynoData();
-  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang+'|'+Math.round(state.coolant)+'|'+Math.round(state.oil)+'|'+state.systemVoltage.toFixed(1);
+  const key=buildRev+'|'+dynoCacheKey+'|'+dynoPulls.length+'|'+currentLang+'|'+Math.round(state.coolant)+'|'+Math.round(state.oil)+'|'+state.systemVoltage.toFixed(1)+'|'+(state.blown?1:0)+'|'+(state.wearCause||'');
   if(!force&&key===dynoResultKey)return;
   dynoResultKey=key;
   const s=engine.score, kW=hp=>hp*0.7457, lbft=nm=>nm*0.73756;
@@ -321,7 +321,12 @@ function updateDashLamps(){
   if(!ev){
     set('lampCool',state.coolant>115?'danger':state.coolant>108?'warn':'');
     set('lampOil',state.oil>OIL_WEAR_C?'danger':state.oil<55||state.oil>OIL_CONT_C?'warn':'');
-    set('lampOilP','');   // stub: never lights
+    if(state.oilP!=null&&isFinite(state.oilP)){
+      const opEl=g('lampOilP');if(opEl)opEl.classList.remove('lamp-stub');
+      const run=typeof obdRunning==='function'?obdRunning():state.firing!==false&&!state.blown;
+      set('lampOilP',run&&state.rpm>400&&state.oilP<0.8?'danger':run&&state.oilP<1.5?'warn':'',null,
+        tr('Oil pressure')+' • '+state.oilP.toFixed(1)+' bar');
+    }else set('lampOilP','');
   }
   {const L=obdLamp(),n=Object.keys(obd.codes).length;
     set('lampFault',L==='flash'?'danger lamp-blink':L==='on'?'danger':L==='pending'?'warn':'',null,
@@ -347,6 +352,7 @@ function updateUI(){
   if(typeof ecuTick==='function')ecuTick();
   updateHybridPanel();   // build 190: shown for a hybrid, hidden otherwise
   if(engine)document.body.dataset.pt=isElectric()?'ev':isHybrid()?'hy':'ice';
+  const cylRow=document.getElementById('liveCylRow');if(cylRow)cylRow.style.display=isElectric()?'none':'';
   if(isElectric()){updateMotorUI();updateDashLamps();return;}
   if(vizMode==='design'||(typeof ecuMapsOn==='function'&&ecuMapsOn()))updateFuelMapMarker();
   document.getElementById('valThrottle').textContent=Math.round(state.throttle*100);
@@ -374,6 +380,31 @@ function updateUI(){
   healthEl.querySelector('.value').textContent=state.blown?tr('DEAD'):hp;
   healthEl.className='stat'+(state.blown||hp<30?' danger':(hp<70?' warning':''));
   updateLambdaTile();
+  {
+    const pmaxEl=document.getElementById('statPmax');
+    if(pmaxEl){
+      const p=state.cylPmax||0,lim=typeof cylPmaxLimit==='function'?cylPmaxLimit():130;
+      pmaxEl.querySelector('.value').textContent=p>0.5?Math.round(p):'0';
+      pmaxEl.className='stat'+(p>lim?' danger':p>lim*0.85?' warning':'');
+    }
+    const preEl=document.getElementById('statPreIgn');
+    if(preEl){
+      const pi=state.preIgn||0;
+      preEl.querySelector('.value').textContent=pi>=1.0?tr('ACTIVE'):pi>=0.7?tr('WARN'):tr('OK');
+      preEl.querySelector('.unit').textContent=pi>=0.1?'I='+pi.toFixed(2):'';
+      preEl.className='stat'+(pi>=1.0?' danger':pi>=0.7?' warning':'');
+    }
+    const oilPEl=document.getElementById('statOilP');
+    if(oilPEl){
+      const hasOilP=state.oilP!=null&&isFinite(state.oilP);
+      oilPEl.style.display=hasOilP?'':'none';
+      if(hasOilP){
+        const run=typeof obdRunning==='function'?obdRunning():state.firing!==false&&!state.blown;
+        oilPEl.querySelector('.value').textContent=state.oilP.toFixed(1);
+        oilPEl.className='stat'+(run&&state.rpm>400&&state.oilP<0.8?' danger':run&&state.oilP<1.5?' warning':'');
+      }
+    }
+  }
   // Exhaust analyser (build 257): CLEAN / OK / DIRTY from emRating; rates in g/s.
   // Per-species tone (build 258): same g/kg (and CO2 g/kWh) thresholds the rating uses.
   const emEl=document.getElementById('statEmit');
@@ -402,6 +433,8 @@ function updateUI(){
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}
   else if(state.blown){status.textContent=tr('ENGINE FAILURE')+' ('+tr(state.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err'}
   else if(state.wearCause){status.textContent=tr('DAMAGE')+': '+tr(state.wearCause)+' — '+tr('HEALTH')+' '+hp+'% '+tr('FALLING');status.className='status-bar err'}
+  else if((state.preIgn||0)>=1.0){status.textContent=tr('PRE-IGNITION — LOWER COMPRESSION, BOOST OR ADD OCTANE');status.className='status-bar err'}
+  else if((state.cylPmax||0)>(typeof cylPmaxLimit==='function'?cylPmaxLimit():130)){status.textContent=tr('PEAK CYLINDER PRESSURE EXCEEDED');status.className='status-bar err'}
   else if(state.knockRisk>70){status.textContent=tr('DETONATION RISK — RETARDING SPARK / POWER CUT');status.className='status-bar err'}
   else if(state.coolant>115){status.textContent=tr('OVERHEAT — REDUCE LOAD OR INCREASE COOLING');status.className='status-bar err'}
   else if(state.oil<55){status.textContent=tr('COLD OIL — HIGH FRICTION, WARM UP RECOMMENDED');status.className='status-bar warn'}

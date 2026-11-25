@@ -405,10 +405,10 @@ function setLiveLabels(ev){
   const em=document.getElementById('liveEmRows');if(em)em.hidden=!!ev;   // no exhaust analyser on a pure EV (build 257)
   const sg=document.getElementById('evSocGroup');if(sg)sg.hidden=!ev;   // the pack's charge, set by hand (build 198)
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's
-  // load, auto-thermal and nitrous, and the printable report (EV_REPORT_NOTE); it comes back with an engine
+  // load, auto-thermal and nitrous; it comes back with an engine
   ['afr','iat','coolant','oil','elec'].forEach(id=>{const el=document.getElementById(id);
     if(el){el.disabled=ev;const grp=el.closest('.control-group');if(grp)grp.style.display=ev?'none':'';}});
-  ['btnAutoThermal','btnReportPng'].forEach(id=>{const el=document.getElementById(id);
+  ['btnAutoThermal'].forEach(id=>{const el=document.getElementById(id);
     if(el){const row=el.closest('.btn-row');if(row)row.style.display=ev?'none':'';}});
   if(ev){const nb=document.getElementById('btnNitrous');if(nb)nb.disabled=true;}
 }

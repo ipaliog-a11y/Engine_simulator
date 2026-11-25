@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 453)
+
+- **LIVE bench & Dyno result (`src/shell.html`, `src/js/dyno-ui.js`):** Added live `PEAK PMAX` (bar), `PRE-IGNITION` integral, and conditional `OIL PRESSURE` tiles plus status-bar warnings and `#lampOilP` activation; added `state.blown` and `state.wearCause` to `renderDynoResult()`'s memo key so `#dynoDiag` never goes stale.
+- **OBD & ECU Computer (`src/js/obd.js`, `src/js/ecu-computer.js`):** Added fault codes `P0326` (pre-ignition), `P0330` (cylinder over-pressure), `P0196` (oil over-temp), `P0524` (low oil pressure), and `P0234` (ECU boost cut) with `pMax`/`preIgn`/`oil`/`oilP` freeze-frame fields; updated `ecuRenderDiag()` to show code titles, statuses, and freeze frames; fixed `#ecuLedEgt` in AUTO mode by comparing `egtEnrichLambda()` against pre-EGT base lambda; added `cylPmax`, `preIgn`, `egt`, `oil`, `oilP`, and `boostActual` scope channels.
+- **Guided Build (`src/js/guided-build.js`):** Added Build 441 (`icdPreIgn`, `icdPmaxOver`) and EV (`evdCompute` battery/rim/frequency) limits to `gwLimit()` and `gfLimit()`.
+- **Reports (`src/js/reports.js`, `src/js/electric-ui.js`):** Included custom `engine.icPart` in `reportSpecRows()`, rendered `diagnoseEngine()` findings on Dyno PNG/PDF sheets, added Build 436 track conditions (`weather`, `air`, `tyre`) to Hot Lap reports, fixed EV specs in `lapVehicleRows()`, and implemented full EV Dyno PNG/PDF export.
+
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
 - Added battery pack cooling options (`PACK_COOLING` in `src/js/electric.js`: `liquid` 2.0 W/K/kWh default, `air_forced` 0.8, `air_passive` 0.35; Pesaran NREL/CP-540-31018) and ambient/starting pack temperature (`evAmbT`, `-10..45 °C`, default `25 °C`), and extended `evPackGain` (`src/js/electric-car.js`) down to `-15 °C` so cold-weather Arrhenius impedance rise genuinely derates cold packs.
