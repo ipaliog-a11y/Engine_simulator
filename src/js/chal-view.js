@@ -3,7 +3,43 @@ const chalHover={i:-1,map:null};
 let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
-function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
+const chalReplay={playing:true,t:0,lastMs:0,t0Ref:0,scrubbing:false};
+function chalReplaySpan(R){
+  const S=R&&R.samples;
+  if(!S||!S.length)return{t0:0,t1:0,span:0};
+  const t0=S[0].t,t1=S[S.length-1].t;
+  return{t0,t1,span:Math.max(0.05,t1-t0)};
+}
+function chalSyncReplayUi(){
+  const pb=document.getElementById('btnChalPlay');
+  if(pb){pb.textContent=tr(chalReplay.playing?'PAUSE':'PLAY');pb.classList.toggle('on',chalReplay.playing);pb.setAttribute('aria-pressed',String(chalReplay.playing));}
+}
+function chalSyncReplayScrub(sp){
+  const sc=document.getElementById('chalReplayScrub'),tm=document.getElementById('chalReplayTime');
+  if(!sp||sp.span<=0)return;
+  if(sc&&!chalReplay.scrubbing)sc.value=String(Math.round(clamp(chalReplay.t/sp.span,0,1)*1000));
+  if(tm)tm.textContent=chalReplay.t.toFixed(1)+'s';
+}
+function chalReplayReset(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  chalMooseT0=nowMs;
+  chalReplay.t=0;chalReplay.playing=true;chalReplay.scrubbing=false;chalReplay.lastMs=nowMs;chalReplay.t0Ref=nowMs;
+  chalSyncReplayUi();
+  chalSyncReplayScrub(chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null));
+}
+function chalMooseNow(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  if(chalMooseT0!==chalReplay.t0Ref){chalReplay.t=0;chalReplay.t0Ref=chalMooseT0;chalReplay.lastMs=nowMs;}
+  if(!chalReplay.lastMs)chalReplay.lastMs=nowMs;
+  const dt=Math.max(0,(nowMs-chalReplay.lastMs)/1000);
+  chalReplay.lastMs=nowMs;
+  const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+  if(chalReplay.playing&&!chalReplay.scrubbing){
+    chalReplay.t=sp.span>0?(chalReplay.t+dt*chalMooseRate)%sp.span:(chalReplay.t+dt*chalMooseRate);
+  }
+  chalSyncReplayScrub(sp);
+  return sp.t0+chalReplay.t;
+}
 const chalUI={phase:'setup'};
 function syncDriveAidsUI(){
   const tcOn=vehicle.tc!==false;
@@ -31,8 +67,11 @@ function chalSyncFields(ch){
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
+  const isDynKind=ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8';
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&isDynKind)?'':'none';}
+  const rr=document.getElementById('chalReplayRow');
+  if(rr)rr.hidden=!(live&&isDynKind&&chalResult&&chalResult.ok&&chalResult.samples&&chalResult.samples.length);
   const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
   const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
   syncDriveAidsUI();
@@ -58,7 +97,7 @@ function refreshChallenge(){
   chalUI.phase='live';
   chalHover.i=-1;
   const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalReplayReset();
   chalSyncFields(ch);
   renderRunChallenge();
 }
@@ -68,7 +107,15 @@ function renderRunChallenge(){
   const ch=runChallengeById(activeRunChallenge);
   const R=chalResult;
   if(!R){head.textContent=tr('Build a car first.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
-  if(!R.ok){head.textContent=tr('This challenge is not ready yet.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
+  if(!R.ok){
+    const failMsg={
+      'no-clear':tr('Car could not clear the cones even at the lowest entry speed.'),
+      'no-hold':tr('Car could not hold the line within the tolerance at any speed.'),
+      'no-run':tr('No valid powerslide run found for this setup.')
+    }[R.reason];
+    head.textContent=failMsg||tr('This challenge is not ready yet.');
+    grid.innerHTML='';note.textContent=tr(ch.desc);return;
+  }
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
     const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
@@ -84,7 +131,7 @@ function renderRunChallenge(){
       cell('2-WHEEL LIFT',R.lift2>0?R.lift2.toFixed(2)+' s':tr('none'))+
       cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
       cell('STABILITY t/2h',R.ssf.toFixed(2));
-    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 48 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
     return;
   }
   if(R.kind==='drift'){
@@ -103,7 +150,7 @@ function renderRunChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD uses HANDBRAKE only with an electronic-clutch or lockable centre diff. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){
@@ -293,8 +340,11 @@ function drawDriftHud(s){
   const w=REPLAY_HUD_W,h=208,x0=vizW-w-10,y0=vizH-h-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
-  const rl=Math.max(1000,engine.redline),rMax=Math.ceil(rl/1000+0.5)*1000,v=(s.v||0)*3.6;
-  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,1000,'x1000',rl,x=>String(x/1000));
+  const ev=typeof isElectric==='function'&&isElectric();
+  const rl=Math.max(1000,ev&&engine.motor&&engine.motor.nMax?engine.motor.nMax:engine.redline);
+  const rStep=rl>10000?2000:1000,rMax=Math.ceil(rl/rStep+0.5)*rStep,v=(s.v||0)*3.6;
+  drawDriftHud.lastRl=rl;
+  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,rStep,'x1000',rl,x=>String(x/1000));
   ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.textAlign='center';ctx.fillText(String(s.gear),x0+47,y0+79);
   const top=Math.max(160,(perf&&perf.topSpeed)||160),vMax=Math.ceil(top*1.1/20)*20,vs=niceStep(vMax,7);
   drawDial(x0+137,y0+47,40,0,Math.ceil(vMax/vs)*vs,v,vs,'km/h',null,x=>String(x));
@@ -303,7 +353,8 @@ function drawDriftHud(s){
   const yb=y0+126,pedal=(xx,val,col,lbl)=>{ctx.fillStyle='#1d1d2b';ctx.fillRect(xx,yb-26,10,52);
     const hh=52*clamp(val,0,1);ctx.fillStyle=col;ctx.fillRect(xx,yb+26-hh,10,hh);
     ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(lbl,xx-1,yb+34);};
-  pedal(x0+40,s.thr||0,'#00ff88','T');pedal(x0+56,s.brk||0,'#ff5555','B');
+  pedal(x0+28,s.thr||0,'#00ff88','T');pedal(x0+44,s.brk||0,'#ff5555','B');
+  if(s.hb!=null)pedal(x0+60,s.hb,'#ffaa00','H');
   drawGMeter({gLat:-(s.ay||0)/DRIVE_G,gLong:(s.ax||0)/DRIVE_G},x0+148,yb,26,yb+36);
   const sw=steerText({steer:-(s.delta||0)*180/Math.PI}),ys=y0+172;   // drift steer is left-positive; the wheel reads R positive
   ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
@@ -799,4 +850,24 @@ function bindChallengeHover(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
+  const pb=document.getElementById('btnChalPlay');
+  if(pb)pb.addEventListener('click',()=>{
+    chalReplay.playing=!chalReplay.playing;
+    chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+    chalSyncReplayUi();
+  });
+  const sc=document.getElementById('chalReplayScrub');
+  if(sc){
+    const seek=()=>{
+      const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+      if(sp.span>0)chalReplay.t=clamp(+sc.value/1000,0,1)*sp.span;
+      chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+      chalSyncReplayScrub(sp);
+      if(vizMode==='challenges'&&typeof drawChallenge==='function')drawChallenge();
+    };
+    sc.addEventListener('pointerdown',()=>{chalReplay.scrubbing=true;});
+    sc.addEventListener('input',seek);
+    sc.addEventListener('change',()=>{seek();chalReplay.scrubbing=false;});
+    sc.addEventListener('pointerup',()=>{chalReplay.scrubbing=false;});
+  }
 }

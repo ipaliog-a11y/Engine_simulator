@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 457</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 459</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4162,6 +4162,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hy-soc" id="hySoc" role="meter" aria-label="Battery state of charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div class="hy-soc-win"></div><div class="hy-soc-fill" id="hySocFill"></div></div>
 <div class="readout" id="hyPack">PACK 0.0 kW</div>
 <div class="readout" id="hyReadout"></div>
+<div class="readout" id="hyTemp"></div>
 <div class="control-group"><label for="hyDrive"><span class="ctl-lbl">DRIVE MODE</span></label><select id="hyDrive"><option value="auto">AUTO</option><option value="ev">EV</option><option value="hold">HOLD</option><option value="charge">CHARGE</option><option value="sport">SPORT</option><option value="engine">ENGINE ONLY</option><option value="manual">MANUAL</option></select></div>
 <div class="control-group"><label for="hySocSet"><span class="ctl-lbl">BATTERY CHARGE</span> <span class="val" id="valHySoc">60</span> %</label><input type="range" id="hySocSet" min="0" max="100" step="1" value="60" aria-label="Battery state of charge percent"></div>
 <div class="control-group hy-man"><label for="hyCmd"><span class="ctl-lbl">MOTOR COMMAND</span> <span class="val" id="valHyCmd">0</span> %</label><input type="range" id="hyCmd" min="-100" max="100" step="1" value="0" aria-label="Motor command percent, negative regenerating"></div>
@@ -4233,7 +4234,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="perf-head" id="trkPreviewHead">—</div>
 <div class="perf-note" id="trkPreviewNote"></div>
 <div class="build-row"><button id="btnTrackStart">START LAP</button></div>
-<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button></div>
+<div class="build-row"><button id="btnImportGpx" title="Load a circuit from a GPX trace">IMPORT GPX TRACK</button><button id="btnDeleteGpx" title="Delete the selected imported GPX track" hidden>DELETE GPX TRACK</button></div>
 </div>
 <div id="trackLive" hidden>
 <div class="perf-head" id="lapHead">—</div>
@@ -4305,6 +4306,11 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="field"><label for="chalTc">TC</label><select id="chalTc"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field"><label for="chalEsp">ESP</label><select id="chalEsp"><option value="on">ON</option><option value="off">OFF</option></select></div>
 <div class="field" style="display:none"><label for="chalAwdMode">AWD DIFF</label><select id="chalAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
+</div>
+<div class="replay-row" id="chalReplayRow" hidden>
+<button id="btnChalPlay" class="toggle on" aria-pressed="true">PAUSE</button>
+<input type="range" id="chalReplayScrub" min="0" max="1000" value="0" aria-label="Replay time" style="flex:1;min-width:80px">
+<span id="chalReplayTime" style="font-size:6px;color:#9ab;align-self:center">0.0s</span>
 </div>
 <div class="perf-head" id="chalHead">—</div>
 <div class="perf-grid" id="chalGrid"></div>
@@ -14796,7 +14802,8 @@ function renderSuspWin(){
     '<span><i class="d" style="border-color:#556"></i>'+esc(tr('the two natural frequencies'))+'</span>';
   el('susTS').textContent=tr('OVER A STEP IN THE ROAD (mm)');
   el('susLegS').innerHTML='<span><i style="border-color:'+SC_COL.body+'"></i>'+esc(tr('body'))+'</span><span><i style="border-color:'+SC_COL.wheel+'"></i>'+esc(tr('wheel'))+'</span>'+
-    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>';
+    '<span><i style="border-color:'+SC_COL.road+'"></i>'+esc(tr('road'))+'</span>'+
+    '<span><i style="border-color:'+SC_COL.load+'"></i>'+esc(tr('wheel in air'))+'</span>';
   el('susNote').textContent=tr('A calculator: it starts from the car\'s own corner, the quarter car the lap runs on, and nothing changed here goes back to the car. The rates are taken at the wheel through the motion ratio squared. A road wave meets the mean of the bound and rebound damping; the step uses each in its own direction, and the tyre cannot pull on the road. Bump stops, preload and the damper\'s blow-off are left out.');
   drawSuspFreq();drawSuspStep();
 }
@@ -20658,20 +20665,40 @@ function garageDelete(id){
 // What VIEW opens: the spec the entry will load, read from its record (not from what is built now).
 const garageOpen=new Set();
 function garageDetail(g){
-  const e=g.build.engine||{},v=g.build.vehicle,row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
-  const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
-  const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
-  const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
-  let h=row(tr('Engine'),typ+' • '+unit)+
-    row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
-    row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
-    row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
-    row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
-  const st=g.stats||{};
-  if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  const e=g.build.engine||{},v=g.build.vehicle,st=g.stats||{},row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
+  const isEv=e.type==='electric';
+  let h='';
+  if(isEv){
+    const chem=CHEM[e.evChem]||CHEM.nca,ser=e.evSeries||96;
+    const vNom=Math.round(ser*chem.ocv.reduce((a,b)=>a+b,0)/chem.ocv.length);
+    const mType=e.evMotorType==='im'?tr('INDUCTION MOTOR'):tr('PERMANENT-MAGNET MOTOR');
+    const rear=(e.evRearCount===2?'2× ':'1× ')+tr('rear')+' '+(e.evMotorType==='im'?'IM':'PM');
+    const front=e.evFront==='pm'||e.evFront==='im'?' + 1× '+tr('front')+' '+(e.evFront==='im'?'IM':'PM'):'';
+    const layout=(e.evFront==='pm'||e.evFront==='im'?'AWD':(v&&v.drive?String(v.drive).toUpperCase():'RWD'))+' ('+rear+front+')';
+    const inv=(INVERTER[e.evInverter]||INVERTER.igbt).label;
+    h=row(tr('Motor'),mType+' • '+(e.evRotorD||150)+'×'+(e.evStack||134)+' mm • '+(e.evPoles||6)+'-'+tr('pole'))+
+      row(tr('Drive'),layout+' • '+(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'))+
+      row(tr('Inverter'),inv+' • '+(e.evAmps||950)+' A')+
+      row(tr('Battery'),tr(chem.label)+' • '+(e.evKWh||75)+' kWh • '+vNom+' V ('+ser+'s)');
+    if(st.hp){
+      const kw=Math.round(st.hp*0.7457);
+      h+=row(tr('Output'),kw+' kW ('+st.hp+' hp)'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+    }
+  }else{
+    const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
+    const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
+    const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
+    h=row(tr('Engine'),typ+' • '+unit)+
+      row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
+      row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
+      row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
+      row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
+    if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  }
   if(v){
     const b=v.body;
-    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+v.gears+'-speed '+(v.gearbox||''))+
+    const tx=isEv?(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'):(v.gears+'-speed '+(v.gearbox||''));
+    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+tx)+
       row(tr('Tyres'),(TIRE_TYPE[v.tireType]||{}).label+' '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' • '+(SPEED_RATING[v.speedRating]||{label:'—'}).label)+
       row(tr('Speed limiter'),v.governor>0?v.governor+' km/h':tr('removed'))+
       row(tr('Traction control'),v.tc===false?tr('off'):tr('on'));
@@ -25431,14 +25458,7 @@ function drawEngine(dt){
   ctx.save();
   if(rotary)drawRotaryCutaway(px,py,S,F,LW,dt,m);
   else drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m);
-  if(vizBovT>0){ctx.fillStyle='#d8e4ee';ctx.fillRect(px(150),py(78),(6+vizBovT*10)*S,4*S);}
-  if(state.nitrousActive){ctx.fillStyle='#4488ff';ctx.fillRect(px(48),py(96),5*S,12*S);}
-  if(state.blown||(e.ci&&(state.emPM||0)>0.002)){ctx.fillStyle='#1a1a1a';ctx.fillRect(px(520),py(210),10*S,8*S);}
   ctx.restore();
-  if(state.knockRisk>40||(typeof obdMisfire==='function'&&obdMisfire()>0.02)){
-    ctx.fillStyle=still?'rgba(255,40,40,0.35)':'rgba(255,40,40,'+(0.2+0.25*Math.abs(Math.sin((performance.now())/90)))+')';
-    ctx.fillRect(px(100),py(86),28*S,14*S);
-  }
 
   // ---------- status strip ----------
   ctx.fillStyle='#12121c';ctx.fillRect(px(0),py(398),640*S,24*S);
@@ -26079,9 +26099,10 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
     const nose=(cl,down)=>(down+(d/2-camAt(cl)))*Math.PI/180;
     const hw=ev.dur/4;                                // half the lobe, in cam degrees
     const clIn=(ev.ivo+ev.ivc)/2,clEx=(ev.evo+ev.evc)/2;
-    if(e.valves===2){
-      // Two valves: pushrods, as on the presets that have two (the American V8s): one cam in the block,
-      // lifters and pushrods up the wall to rockers over the valves.
+    const vtKey=(typeof VALVETRAIN!=='undefined'&&VALVETRAIN[e.valvetrain])?e.valvetrain:(typeof valvetrainDefault==='function'?valvetrainDefault(e.valves):(e.valves===2?'ohv':'dohc-bucket'));
+    const isOhv=vtKey==='ohv'||vtKey==='ohv-roller';
+    if(isOhv){
+      // Pushrod OHV: one cam in the block, lifters and pushrods up the wall to rockers over the valves.
       const camX=cx-bore/2-10,camBY=boreTop+strokeLen*0.55;
       ctx.fillStyle='#15151f';ctx.fillRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);     // the rocker cover
       ctx.strokeStyle=C.metal;ctx.lineWidth=LW(1.2);ctx.strokeRect(px(cx-bore/2-20),py(camY-8),(bore+40)*S,(headY-camY+8)*S);
@@ -26106,7 +26127,7 @@ function drawPistonCutaway(px,py,S,F,LW,deg,nCyl,rodRatio,bsr,two,m){
         drawCamLobe(px,py,S,LW,vx,camY,rb,L,hw,nose(cl,90),lobe);
       }
       if(e.vvt){ctx.strokeStyle=C.cyan;ctx.lineWidth=LW(1);ctx.beginPath();ctx.arc(px(vIn),py(camY),(rb+L+2)*S,0,6.284);ctx.stroke();}
-      camTxt='DOHC '+e.valves+'V';
+      camTxt=(vtKey.startsWith('sohc')?'SOHC ':'DOHC ')+e.valves+'V';
     }
     // the cam's events, where the model has them
     const fmt=(v,a,b)=>Math.round(Math.abs(v))+'°'+(v>=0?a:b);
@@ -28354,7 +28375,7 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
           ctx.lineTo(toX(p.x - p.nx * hw), toY(p.y - p.ny * hw));
         }
         ctx.closePath();
-        ctx.fill('evenodd');
+        ctx.fill('nonzero');
         ctx.restore();
       };
       const strokeCenterline = (widthM, style, dash) => {
@@ -28506,44 +28527,46 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
   }
 
   /** Step & draw batched tire smoke and wet spray (1 path per kind). */
-  function _stepAndDrawBatchedParticles(ctx, cam, cars) {
+  function _stepAndDrawBatchedParticles(ctx, cam, cars, paused) {
     const wx = _getWX();
     const wet = wx ? (wx.wet || 0) : 0;
-    if (cars && _particles.length < 280) {
-      for (let i = 0; i < cars.length; i++) {
-        const car = cars[i];
-        const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
-        if (wet > 0.12 && Math.random() < 0.32) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.9,
-            y: car.y - Math.sin(car.hd) * 1.9,
-            vx: -Math.cos(car.hd) * 3.2,
-            vy: -Math.sin(car.hd) * 3.2,
-            life: 0,
-            max: 0.36,
-            kind: 'spray',
-          });
-        } else if (brk > 0.55 && Math.random() < 0.35) {
-          _particles.push({
-            x: car.x - Math.cos(car.hd) * 1.8,
-            y: car.y - Math.sin(car.hd) * 1.8,
-            vx: (Math.random() - 0.5) * 1.2,
-            vy: (Math.random() - 0.5) * 1.2,
-            life: 0,
-            max: 0.45,
-            kind: 'smoke',
-          });
+    if (!paused) {
+      if (cars && _particles.length < 280) {
+        for (let i = 0; i < cars.length; i++) {
+          const car = cars[i];
+          const brk = typeof car.brk === 'number' ? car.brk : car.brk ? 1 : 0;
+          if (wet > 0.12 && Math.random() < 0.32) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.9,
+              y: car.y - Math.sin(car.hd) * 1.9,
+              vx: -Math.cos(car.hd) * 3.2,
+              vy: -Math.sin(car.hd) * 3.2,
+              life: 0,
+              max: 0.36,
+              kind: 'spray',
+            });
+          } else if (brk > 0.55 && Math.random() < 0.35) {
+            _particles.push({
+              x: car.x - Math.cos(car.hd) * 1.8,
+              y: car.y - Math.sin(car.hd) * 1.8,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: (Math.random() - 0.5) * 1.2,
+              life: 0,
+              max: 0.45,
+              kind: 'smoke',
+            });
+          }
         }
       }
-    }
 
-    const dt = 1 / 60;
-    for (let i = _particles.length - 1; i >= 0; i--) {
-      const p = _particles[i];
-      p.life += dt;
-      if (p.life >= p.max) { _particles.splice(i, 1); continue; }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
+      const dt = 1 / 60;
+      for (let i = _particles.length - 1; i >= 0; i--) {
+        const p = _particles[i];
+        p.life += dt;
+        if (p.life >= p.max) { _particles.splice(i, 1); continue; }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+      }
     }
 
     if (_particles.length === 0) return;
@@ -28634,7 +28657,7 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       if (pr.sx < -90 || pr.sx > cam.W + 90 || pr.sy < -90 || pr.sy > cam.H + 90) continue;
       drawList.push({ sy: pr.sy, kind: 'car', car: cars[i], pr });
     }
-    if (paintedTiles) {
+    if (_modeBEnabled) {
       for (let i = 0; i < _sceneProps.length; i++) {
         const prop = _sceneProps[i];
         const pr = _project(cam, prop.x, prop.y, 0);
@@ -28709,12 +28732,15 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       }
     }
 
-    // 5. Batched smoke & wet spray particles
-    _stepAndDrawBatchedParticles(g, cam, cars);
+    // 5. Batched smoke & wet spray particles (frozen while replay/race is paused)
+    const paused = opts.paused != null ? !!opts.paused :
+      (typeof vizMode !== 'undefined' && vizMode === 'track' && typeof lapReplay !== 'undefined' && !lapReplay.playing) ||
+      (typeof vizMode !== 'undefined' && vizMode === 'race' && typeof raceUI !== 'undefined' && (!raceUI.playing || !!raceUI.scrubbing));
+    _stepAndDrawBatchedParticles(g, cam, cars, paused);
 
     // 6. Time-of-day atmospheric grading + additive night prop glow
     g.setTransform(_base);
-    if (paintedTiles && tod === 'night') {
+    if (tod === 'night') {
       g.fillStyle = 'rgba(6, 10, 24, 0.20)';
       g.fillRect(0, 0, cam.W, cam.H);
     } else if (tod === 'sunset') {
@@ -28748,6 +28774,8 @@ return { sceneBind, sceneWeather, sceneChase, sceneOverview, scenePan, sceneProj
       tileHits: _tileHits,
       tileMisses: _tileMisses,
       propsPlaced: _sceneProps.length,
+      particles: _particles.length,
+      particle0: _particles.length ? { x: _particles[0].x, y: _particles[0].y, life: _particles[0].life } : null,
     };
   };
   window.sceneSetModeB = function (on) {
@@ -28916,18 +28944,21 @@ function drawReplayHud(L,st,W,y0){
   ctx.fillStyle='#99a';ctx.font='7px '+PS;ctx.fillText(Math.round(st.rpm)+' rpm',x0+48,y0+46);
   // rev bar to the redline
   const rf=clamp(st.rpm/Math.max(1,engine.redline),0,1);
-  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+54,96,6);
-  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+54,96*rf,6);
-  drawShiftLights(x0+10,y0+64,st.rpm,engine.redline);
-  if((st.tF||0)>450||(st.tR||0)>450){ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+64,8,8);}
+  ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+10,y0+52,96,5);
+  ctx.fillStyle=rf>0.92?'#ff5555':rf>0.8?C.yellow:'#00ccff';ctx.fillRect(x0+10,y0+52,96*rf,5);
+  drawShiftLights(x0+10,y0+60,st.rpm,engine.redline);
+  if((st.tF||0)>450||(st.tR||0)>450){
+    ctx.fillStyle='#ff4422';ctx.fillRect(x0+120,y0+15,7,7);
+    ctx.font='6px '+PS;ctx.fillText(tr('HOT BRK'),x0+130,y0+22);
+  }
   // pedals
   const bar=(lbl,val,col,yy)=>{ctx.fillStyle='#778';ctx.font='6px '+PS;ctx.fillText(lbl,x0+10,yy+6);
     ctx.fillStyle='#1d1d2b';ctx.fillRect(x0+40,yy,66,7);ctx.fillStyle=col;ctx.fillRect(x0+40,yy,66*clamp(val,0,1),7);};
-  bar('THR',st.thr,'#00ff88',y0+70);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+84);
+  bar('THR',st.thr,'#00ff88',y0+72);bar('BRK',st.brk,st.fade<0.999?'#ff8800':'#ff5555',y0+86);
   ctx.fillStyle='#667';ctx.font='6px '+PS;
-  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+106);
+  ctx.fillText(Math.round(st.thr*100)+'% / '+Math.round(st.brk*100)+'%',x0+10,y0+107);
   if(engine.intake!=='na'){const b=st.map-1;ctx.fillStyle=b>0.02?'#ff8800':'#99a';
-    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+124);}
+    ctx.fillText(tr('BOOST')+' '+(b>=0?'+':'')+b.toFixed(2)+' bar',x0+10,y0+123);}
   drawGMeter(st,x0+146,y0+86,30,y0+128);
   // engine power now, as a bar against the peak
   const pw=powerReadout(st,L);
@@ -30464,6 +30495,10 @@ function closeTrackPage(){
 }
 function bindTrackPage(){
   document.getElementById('btnTrackFull').addEventListener('click',()=>{trackPage.open?closeTrackPage():openTrackPage();});
+  const bDel=document.getElementById('btnDeleteGpx');
+  if(bDel)bDel.addEventListener('click',()=>deleteImportedTrack());
+  const sel=document.getElementById('trkSel');
+  if(sel)sel.addEventListener('change',syncGpxDeleteBtn);
   addEventListener('resize',sizeTrackStage);
   addEventListener('orientationchange',()=>setTimeout(sizeTrackStage,200));
   addEventListener('keydown',e=>{if(e.key==='Escape'&&trackPage.open&&!document.fullscreenElement)closeTrackPage();});
@@ -30473,6 +30508,24 @@ function bindTrackPage(){
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
 const GPX_KEY='pes.tracks';
+function syncGpxDeleteBtn(){
+  const b=document.getElementById('btnDeleteGpx');
+  if(b)b.hidden=!(TRACKS[trackKey]&&TRACKS[trackKey].imported);
+}
+function deleteImportedTrack(key){
+  const k=key||trackKey;
+  if(!TRACKS[k]||!TRACKS[k].imported)return false;
+  const lbl=TRACKS[k].label||k;
+  delete TRACKS[k];
+  delete trackCache[k];
+  saveImportedTracks();
+  if(trackKey===k)trackKey='mixed';
+  refreshTrackList();
+  if(typeof renderTrackSetup==='function')renderTrackSetup();
+  if(typeof trackUI!=='undefined'&&trackUI.phase==='live')refreshLap();
+  flash(tr('DELETED')+' '+lbl);
+  return true;
+}
 function refreshTrackList(){
   const sel=document.getElementById('trkSel');if(!sel)return;
   sel.innerHTML='';
@@ -30489,6 +30542,7 @@ function refreshTrackList(){
     sel.appendChild(g);
   }
   sel.value=trackKey;
+  syncGpxDeleteBtn();
 }
 function saveImportedTracks(){
   try{
@@ -30840,6 +30894,7 @@ function drawDyno(){
     (lapNow!=null?'  •  '+tr('LAP')+' '+fmtLap(lapNow)+' '+((TRACKS[trackKey]||{}).label||''):'');
   ctx.fillText(costTxt,gX+4,iy+28);
   const ch=CHALLENGES.find(c=>c.id===activeChallenge);
+  let legY=iy+41;
   if(ch&&ch.id!=='free'){
     const ev=evalChallenge(ch,m);
     ctx.fillStyle=ev.pass?C.green:C.red;
@@ -30848,11 +30903,12 @@ function drawDyno(){
     const verdict=(ev.pass?'✓ ':'✗ ')+chName(ch).toLocaleUpperCase(currentLang)+' — '+trIn('dyno',ev.pass?'PASSED':'NOT MET');
     const fits=ctx.measureText(costTxt).width+ctx.measureText(verdict).width+24<=gW;
     ctx.textAlign='right';ctx.fillText(verdict,gX+gW,fits?iy+28:iy+41);ctx.textAlign='left';
+    if(!fits)legY=iy+54;
   }
   ctx.font='6px "Press Start 2P"';
   if(dynoPulls.length){
-    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,iy+41);});
-  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,iy+41);}
+    dynoPulls.forEach((pl,i)=>{ctx.fillStyle=pl.color;ctx.fillText('— '+pl.label,gX+4+i*132,legY);});
+  }else{ctx.fillStyle='#667';ctx.fillText(tr('LOG PULL to snapshot & overlay a curve for comparison'),gX+4,legY);}
 }
 // Dashboard telltales (build 254): thresholds match the status line / canvas gauge bars. Oil pressure is a
 // placeholder until it is modeled; FAULT is the check-engine lamp of obd.js (build 309); hybrid mode only for a hybrid; ICE-only lamps hide on EV.
@@ -33550,8 +33606,11 @@ function drawMotorDyno(){
   const cx=X(clamp(state.rpm,0,rMax));
   ctx.strokeStyle=C.green;ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(cx,gY);ctx.lineTo(cx,gY+gH);ctx.stroke();ctx.setLineDash([]);
   // the knee, where the voltage runs out and the torque starts to fall
-  const kx=X(s.knee);ctx.strokeStyle='#556';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(kx,gY);ctx.lineTo(kx,gY+gH);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#889';ctx.fillText(tr('KNEE'),kx+3,gY+gH-6);
+  if(s.knee>0&&s.knee<=rMax){
+    const kx=clamp(X(s.knee),gX,gX+gW);
+    ctx.strokeStyle='#556';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(kx,gY);ctx.lineTo(kx,gY+gH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#889';ctx.fillText(tr('KNEE'),Math.min(kx+3,gX+gW-30),gY+gH-6);
+  }
   const iy=gY+gH+30;
   drawPixelRect(0,iy-14,W,H-(iy-14),'#12121c');
   ctx.font='7px "Press Start 2P"';
@@ -33625,7 +33684,8 @@ function updateMotorUI(){
   g('valThrottle').textContent=Math.round(st.throttle*100);
   g('valLoad').textContent=Math.round(st.load*100);
   g('valElec').textContent='—';
-  g('readout').textContent='RPM '+Math.round(st.rpm)+' • BUS '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • SOC '+Math.round(st.soc*100)+'%';
+  const tB0=st.tB?st.tB.b:PACK_COOLANT;
+  g('readout').textContent='RPM '+Math.round(st.rpm)+' • BUS '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • SOC '+Math.round(st.soc*100)+'% • '+tr('PACK')+' '+Math.round(tB0)+'°C';
   document.querySelector('#statHP .value').textContent=st.powerHP.toFixed(1);
   document.querySelector('#statTQ .value').textContent=st.torque.toFixed(1);
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
@@ -33643,7 +33703,7 @@ function updateMotorUI(){
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
   hEl.querySelector('.value').textContent=st.blown?tr('DEAD'):hp;
   hEl.className='stat'+(st.blown||hp<30?' danger':(hp<70?' warning':''));
-  const status=g('status'),legend=g('legend'),tB=st.tB?st.tB.b:PACK_COOLANT,der=motorDerate(engine,st.mT)*packDerate(tB);
+  const status=g('status'),legend=g('legend'),tB=tB0,der=motorDerate(engine,st.mT)*packDerate(tB);
   if(performance.now()<statusFlashUntil){/* keep the flash */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
@@ -33661,7 +33721,7 @@ function updateMotorUI(){
 }
 function updateMotorLabels(){
   const e=engine,m=e.motor,b=e.pack;
-  document.getElementById('subtitle').textContent=tr('ELECTRIC')+' • '+tr('PM MOTOR')+' '+e.evRotorD+'×'+e.evStack+' mm • '+m.poles+'-'+tr('POLE')+
+  document.getElementById('subtitle').textContent=tr('ELECTRIC')+' • '+tr(m.im?'IM MOTOR':'PM MOTOR')+' '+e.evRotorD+'×'+e.evStack+' mm • '+m.poles+'-'+tr('POLE')+
     ' • '+b.kWh+' kWh '+tr(b.chem.label)+' '+Math.round(b.Vnom)+' V';
   document.getElementById('engineCanvas').setAttribute('aria-label',tr('Test bench of an electric motor and its battery'));
   const nb=document.getElementById('btnNitrous');nb.disabled=true;nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
@@ -33694,6 +33754,8 @@ function motorScoreLine(s,m,b){
     tr('Reliability')+' <b style="color:'+relCol+'">'+s.reliability+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k'+scoreLapLine();
 }
 
+// Dynamic rotor/magnet temperature bar ceiling so high-Tmax magnets (e.g. Ferrite 250 C) are not clipped at 200 C.
+const rotorTempBarMax=m=>Math.max(200,Math.ceil((((m&&m.mag&&m.mag.Tmax)||150)+20)/50)*50);
 // ---- the motor on the ENGINE view: no cutaway (decision 7), the bench's instruments ----
 function drawMotorView(dt){
   const W=vizW,H=vizH,st=state,m=engine.motor,s=engine.score;
@@ -33716,35 +33778,40 @@ function drawMotorView(dt){
   // the instruments
   const bar=(x,y,label,v,max,lim,unit,col)=>{
     ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';ctx.fillText(label,x,y-4);
-    drawPixelRect(x,y,240,12,'#1a1a28');
-    ctx.fillStyle=col;ctx.fillRect(x,y,240*clamp(v/max,0,1),12);
-    if(lim!=null){ctx.fillStyle='#ff5555';ctx.fillRect(x+240*clamp(lim/max,0,1)-1,y-2,2,16);}
-    ctx.fillStyle='#e0e0e0';ctx.fillText(Math.round(v)+unit,x+248,y+10);
+    drawPixelRect(x,y,240,10,'#1a1a28');
+    ctx.fillStyle=col;ctx.fillRect(x,y,240*clamp(v/max,0,1),10);
+    if(lim!=null){ctx.fillStyle='#ff5555';ctx.fillRect(x+240*clamp(lim/max,0,1)-1,y-2,2,14);}
+    ctx.fillStyle='#e0e0e0';ctx.fillText(Math.round(v)+unit,x+248,y+9);
   };
-  const x0=330;
-  bar(x0,60,tr('TORQUE'),st.torque,Math.max(1,s.peakTQ),null,' Nm',C.cyan);
-  bar(x0,95,tr('POWER'),st.powerKW,Math.max(1,s.peakKW),null,' kW',C.yellow);
-  bar(x0,130,tr('WINDING'),st.mT.w,200,180,' °C',st.mT.w>150?'#ff5555':'#ffaa44');
-  bar(x0,165,tr(rotorWord(m)),st.mT.r,200,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
-  bar(x0,200,tr('STATOR CORE'),st.mT.c,200,null,' °C','#88aacc');
-  bar(x0,235,tr('CHARGE'),st.soc*100,100,null,' %','#66dd99');
+  const x0=330,tB=st.tB?st.tB.b:PACK_COOLANT,rMaxT=rotorTempBarMax(m);
+  const pCol=tB>=55?'#ff5555':tB>=50?'#ffcc00':'#66dd99';
+  bar(x0,52,tr('TORQUE'),st.torque,Math.max(1,s.peakTQ),null,' Nm',C.cyan);
+  bar(x0,81,tr('POWER'),st.powerKW,Math.max(1,s.peakKW),null,' kW',C.yellow);
+  bar(x0,110,tr('WINDING'),st.mT.w,200,180,' °C',st.mT.w>150?'#ff5555':'#ffaa44');
+  bar(x0,139,tr(rotorWord(m)),st.mT.r,rMaxT,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
+  bar(x0,168,tr('STATOR CORE'),st.mT.c,200,null,' °C','#88aacc');
+  bar(x0,197,tr('PACK TEMP')+(tB>=50?' ('+tr('HOT')+')':''),tB,70,60,' °C',pCol);
+  bar(x0,226,tr('CHARGE'),st.soc*100,100,null,' %','#66dd99');
   ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';
-  ctx.fillText(tr('BUS')+' '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • '+(st.battKW||0).toFixed(0)+' kW '+tr('from the pack'),x0,275);
-  ctx.fillText(tr('DRIVE EFF')+' '+st.thermalEff.toFixed(1)+'% • '+tr('derate')+' '+Math.round(motorDerate(engine,st.mT)*100)+'%',x0,292);
+  ctx.fillText(tr('BUS')+' '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • '+(st.battKW||0).toFixed(0)+' kW '+tr('from the pack'),x0,258);
+  const derPct=Math.round(motorDerate(engine,st.mT)*packDerate(tB)*100);
+  ctx.fillStyle=derPct<100?'#ff5555':'#99aabb';
+  ctx.fillText(tr('DRIVE EFF')+' '+st.thermalEff.toFixed(1)+'% • '+tr('derate')+' '+derPct+'%',x0,275);
+  ctx.fillStyle='#99aabb';
   // Where the losses go (build 285): what motorLosses already computes at this point, as one stacked bar, and what the
   // pack is doing: its current over its capacity (the C-rate), the volts its resistance drops, and the heat that makes.
   const L=st.evLoss||{},parts=[['copper',L.cu,'#ffaa44'],['cage',L.rcu,'#ff7755'],['iron',L.fe,'#88aacc'],['friction',L.mech,'#99aa66'],['inverter',L.inv,'#cc88ff']].filter(q=>q[1]>0);
   const tot=parts.reduce((a,q)=>a+q[1],0);
-  ctx.fillText(tr('LOSSES')+' '+(tot/1000).toFixed(1)+' kW',x0,312);
-  drawPixelRect(x0,316,240,12,'#1a1a28');
-  let lx=x0,tx=x0,ty=342;
+  ctx.fillText(tr('LOSSES')+' '+(tot/1000).toFixed(1)+' kW',x0,295);
+  drawPixelRect(x0,299,240,12,'#1a1a28');
+  let lx=x0,tx=x0,ty=325;
   for(const q of parts){
-    const wd=240*q[1]/Math.max(1,tot);ctx.fillStyle=q[2];ctx.fillRect(lx,316,wd,12);lx+=wd;
+    const wd=240*q[1]/Math.max(1,tot);ctx.fillStyle=q[2];ctx.fillRect(lx,299,wd,12);lx+=wd;
     const t=tr(q[0])+' '+(q[1]/1000).toFixed(1),tw=ctx.measureText(t).width;if(tx+tw>W-6){tx=x0;ty+=14;}ctx.fillText(t,tx,ty);tx+=tw+8;
   }
-  ctx.fillStyle='#99aabb';
-  const tB=st.tB?st.tB.b:PACK_COOLANT;
+  ctx.fillStyle=tB>=50?'#ff5555':'#99aabb';
   ctx.fillText(tr('PACK')+' '+((st.battI||0)/engine.pack.Ah).toFixed(1)+'C • '+tr('sag')+' '+Math.round(st.battSag||0)+' V • '+tr('heat')+' '+((st.battHeat||0)/1000).toFixed(1)+' kW • '+Math.round(tB)+'°C',x0,ty+18);
+  ctx.fillStyle='#99aabb';
   // an induction motor's slip: the cage's loss is the slip's share of the power crossing the air gap
   if(m.im&&!m.parts&&L.rcu>0&&st.torque>0){
     const Pm=st.torque*st.rpm*Math.PI/30,slip=L.rcu/(Pm+L.rcu),c=imCurrents(m,st.torque,st.rpm,st.systemVoltage);
@@ -33759,7 +33826,7 @@ function drawMotorSprite(buf,e,t,opts){
   drawMotor3D(R,e||DEFAULT_ENGINE,t||0,opts);
   R.blitToPixBuf(buf);
 }
-const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';
+const motorCaption=e=>(e&&e.evMotorType==='im'?'IM ':'PM ')+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';
 // ====== ELECTRIC CAR: the drive on the road — one reduction, regenerative braking, heat over a lap (build 180) ======
 // Step 2.3 of plans/hybrid-electric/. The 0-100, the top speed and the lap run the electric drive through the same
 // solvers as an engine (powertrain(), build 177); what an electric car does differently is here:
@@ -35282,14 +35349,24 @@ function hybStartStop(){
 // ---- the LIVE tab's hybrid panel: the power-flow diagram, the battery gauge, the drive mode and the manual controls ----
 // Colours (decision 17): orange the engine driving, blue the pack driving, green regeneration, purple the engine charging.
 const HYB_FLOW_COL={eng:'#ff9a3c',bat:'#4aa3ff',regen:'#00ff88',charge:'#b48cff',idle:'#3a3a4a'};
+function hybFrontPeakKW(hy){
+  if(!hy||!hy.front)return 0;
+  if(hy.front._pkKW!=null)return hy.front._pkKW;
+  const fm=hy.front.motor,V=hybBusV(hy);let P=0;
+  for(let r=200;r<=fm.nMax;r+=200)P=Math.max(P,motorMaxTorque(fm,r,V,60)*r*Math.PI/30);
+  const pb=packMaxPower(hy.pack,HYB_SOC)*(hy.front.shareF||0.5);
+  return (hy.front._pkKW=Math.min(P,pb)/1000);
+}
 function updateHybridPanel(){
   const panel=document.getElementById('hybridPanel');if(!panel)return;
   const show=isHybrid()&&(vizMode==='engine'||vizMode==='dyno');
   panel.hidden=!show;if(!show)return;
   const H=hybBenchState(),hy=engine.hy,ps=hy.mode==='ps',ser=hy.mode==='series',g=id=>document.getElementById(id);
-  // the gauge: the charge in its window, the pack's power and heat
-  const soc=H.soc*100,fill=g('hySocFill');
-  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<HYB_BENCH.socLo?'#ff5555':H.soc>HYB_BENCH.socHi?'#ffcc00':'#00ff88';}
+  // the gauge: the charge in its window (from hybTune so PHEVs like 12-95% aren't falsely flagged), the pack's power and heat
+  const tu=hybTune(engine),socLo=tu.socLo/100,socHi=tu.socHi/100;
+  const soc=H.soc*100,fill=g('hySocFill'),win=panel.querySelector('.hy-soc-win');
+  if(win){win.style.left=tu.socLo+'%';win.style.width=Math.max(0,tu.socHi-tu.socLo)+'%';}
+  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<socLo?'#ff5555':H.soc>socHi?'#ffcc00':'#00ff88';}
   const meter=g('hySoc');if(meter)meter.setAttribute('aria-valuenow',Math.round(soc));
   const sl=g('hySocSet');if(sl&&document.activeElement!==sl)sl.value=Math.round(soc);
   if(g('valHySoc'))g('valHySoc').textContent=Math.round(soc);
@@ -35297,7 +35374,16 @@ function updateHybridPanel(){
   if(g('hyPack'))g('hyPack').textContent=tr('PACK')+' '+(Math.abs(pb)<0.05?'0.0 kW':(pb>0?tr('DISCHARGING')+' ':tr('CHARGING')+' ')+Math.abs(pb).toFixed(1)+' kW')+' • '+Math.round(H.tB.b)+'°C';
   if(g('hyReadout'))g('hyReadout').textContent=tr('ENGINE')+' '+(H.engOn?Math.round(H.ne)+' rpm '+H.Pe.toFixed(1)+' kW':tr('OFF'))+
     ' • '+(ps?'MG2':tr('MOTOR'))+' '+(H.Pm>=0?'+':'')+H.Pm.toFixed(1)+' kW'+(ps||ser?' • '+(ps?'MG1':tr('GEN'))+' '+(H.P1>=0?'+':'')+H.P1.toFixed(1)+' kW':'')+
+    (hy.front?' • '+tr('FRONT EV')+' '+Math.round(hybFrontPeakKW(hy))+' kW':'')+
     ' • '+tr('SHAFT')+' '+Math.round(H.n)+' rpm '+H.Psys.toFixed(1)+' kW';
+  const tEl=g('hyTemp');
+  if(tEl&&H.mT){
+    const mT=H.mT,tLim=hy.motor.mag.Tmax,mDer=motorDerate({motor:hy.motor},mT),pDer=packDerate(H.tB.b);
+    const warn=mDer<0.999||pDer<0.999,hot=mT.w>165||mT.r>tLim-10||H.tB.b>=55;
+    tEl.textContent=tr('WINDING')+' '+Math.round(mT.w)+'°C • '+tr('CORE')+' '+Math.round(mT.c)+'°C • '+tr(rotorWord(hy.motor))+' '+Math.round(mT.r)+'°C'+
+      (warn?' • '+tr('THERMAL DERATE')+' '+Math.round(Math.min(mDer,pDer)*100)+'%':'');
+    tEl.style.color=hot?'#ff5555':(warn||mT.w>140||mT.r>tLim-25||H.tB.b>=45)?'#ffcc00':'';
+  }
   const ds=g('hyDrive');if(ds&&document.activeElement!==ds&&ds.value!==H.mode)ds.value=H.mode;
   panel.classList.toggle('manual',H.mode==='manual');panel.classList.toggle('ps',ps||ser);   // an engine-speed target for both (build 193)
   if(g('valHyCmd'))g('valHyCmd').textContent=Math.round(H.cmd*100);
@@ -35335,8 +35421,10 @@ function drawHybridFlow(H){
     c.font=F(5);c.fillStyle='#e0e0e0';c.textAlign=horiz?'center':'left';c.textBaseline=horiz?'bottom':'middle';
     c.fillText(a.toFixed(1),horiz?mx:mx+wd/2+3*S,horiz?my-wd/2-2*S:my);
   };
+  const frontLink=(x1,y1,x2,y2)=>{c.save();c.strokeStyle=state.ignOn!==false&&H.soc>0.02?C.bat:C.idle;c.lineWidth=1.5*S;c.setLineDash([3*S,2*S]);c.beginPath();c.moveTo(x1*S,y1*S);c.lineTo(x2*S,y2*S);c.stroke();c.restore();};
   const motCol=H.Pm>=0?(H.Pb>0.2?C.bat:C.eng):(H.engOn&&H.Pe>0.5?C.charge:C.regen);
   const batCol=H.Pb>=0?C.bat:(H.engOn&&H.Pe>0.5?C.charge:C.regen);
+  const fOn=state.ignOn!==false&&H.soc>0.02,fSub=hy.front?Math.round(hybFrontPeakKW(hy))+' kW':'';
   if(hy.mode==='series'){
     // ENGINE - GENERATOR, then the bus to the MOTOR - BRAKE; the PACK on the bus between them (build 193)
     const Pmot=H.P1+H.Pb-HYB_BENCH.auxW/1000;
@@ -35351,17 +35439,23 @@ function drawHybridFlow(H){
     box(160,20,58,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(238,20,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(124,104,52,30,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(176,119,228,119);box(228,104,64,30,tr('FRONT EV'),fSub,fOn);}
   }else if(!ps){
     // ENGINE -clutch- MOTOR - BRAKE in a row, the PACK under the motor
-    c.fillStyle=H.engOn?'#8a8aa0':'#3a3a4a';c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((H.engOn?108:110)*S,28*S,3*S,18*S);
-    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle='#888';c.fillText(tr(H.engOn?'CLOSED':'OPEN'),108*S,58*S);
-    flow([[72,37],[118,37]],H.engOn?H.Pe:0,C.eng);
-    flow([[182,37],[228,37]],H.Psys,H.engOn&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
+    const run=!!(H.engOn&&H.fired);
+    const clutchState=run?'CLOSED':(H.engOn?'CRANKING':'OPEN');
+    c.fillStyle=run?'#8a8aa0':(H.engOn?'#ffcc00':'#3a3a4a');
+    c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((run?108:110)*S,28*S,3*S,18*S);
+    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle=H.engOn&&!run?'#ffcc00':'#888';
+    c.fillText(tr(clutchState),108*S,58*S);
+    flow([[72,37],[118,37]],run?H.Pe:0,C.eng);
+    flow([[182,37],[228,37]],H.Psys,run&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
     flow([[150,100],[150,54]],H.Pb,batCol);
     box(8,20,64,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
     box(118,20,64,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(228,20,64,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(118,100,64,34,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(182,117,228,117);box(228,100,64,34,tr('FRONT EV'),fSub,fOn);}
   }else{
     // the shafts in a row (ENGINE -> the planetary -> BRAKE), MG1 above the planetary, MG2 under the ring shaft; the
     // electrical bus down the middle joins MG1, MG2 and the PACK
@@ -35378,6 +35472,7 @@ function drawHybridFlow(H){
     box(238,46,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(196,96,52,26,'MG2',(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(96,112,52,26,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(96,125,68,125);box(4,112,64,26,tr('FRONT EV'),fSub,fOn);}
   }
   c.textAlign='left';c.textBaseline='alphabetic';c.font=F(5);c.fillStyle='#888';
   c.fillText(tr((HYBRID_MODES[hy.mode]||{}).label||'')+' • '+tr(HYB_DRIVE[H.mode].label),6*S,(Hh/S-4)*S);
@@ -37438,7 +37533,43 @@ const chalHover={i:-1,map:null};
 let chalMooseT0=0;
 // Replay speed (build 353): 1, 0.5 or 0.25 of real time. Changing it restarts the replay from its first frame.
 let chalMooseRate=1;const CHAL_MOOSE_RATES=[1,0.5,0.25];
-function chalMooseNow(){return((typeof performance!=='undefined'?performance.now():Date.now())-chalMooseT0)/1000*chalMooseRate;}
+const chalReplay={playing:true,t:0,lastMs:0,t0Ref:0,scrubbing:false};
+function chalReplaySpan(R){
+  const S=R&&R.samples;
+  if(!S||!S.length)return{t0:0,t1:0,span:0};
+  const t0=S[0].t,t1=S[S.length-1].t;
+  return{t0,t1,span:Math.max(0.05,t1-t0)};
+}
+function chalSyncReplayUi(){
+  const pb=document.getElementById('btnChalPlay');
+  if(pb){pb.textContent=tr(chalReplay.playing?'PAUSE':'PLAY');pb.classList.toggle('on',chalReplay.playing);pb.setAttribute('aria-pressed',String(chalReplay.playing));}
+}
+function chalSyncReplayScrub(sp){
+  const sc=document.getElementById('chalReplayScrub'),tm=document.getElementById('chalReplayTime');
+  if(!sp||sp.span<=0)return;
+  if(sc&&!chalReplay.scrubbing)sc.value=String(Math.round(clamp(chalReplay.t/sp.span,0,1)*1000));
+  if(tm)tm.textContent=chalReplay.t.toFixed(1)+'s';
+}
+function chalReplayReset(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  chalMooseT0=nowMs;
+  chalReplay.t=0;chalReplay.playing=true;chalReplay.scrubbing=false;chalReplay.lastMs=nowMs;chalReplay.t0Ref=nowMs;
+  chalSyncReplayUi();
+  chalSyncReplayScrub(chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null));
+}
+function chalMooseNow(){
+  const nowMs=typeof performance!=='undefined'?performance.now():Date.now();
+  if(chalMooseT0!==chalReplay.t0Ref){chalReplay.t=0;chalReplay.t0Ref=chalMooseT0;chalReplay.lastMs=nowMs;}
+  if(!chalReplay.lastMs)chalReplay.lastMs=nowMs;
+  const dt=Math.max(0,(nowMs-chalReplay.lastMs)/1000);
+  chalReplay.lastMs=nowMs;
+  const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+  if(chalReplay.playing&&!chalReplay.scrubbing){
+    chalReplay.t=sp.span>0?(chalReplay.t+dt*chalMooseRate)%sp.span:(chalReplay.t+dt*chalMooseRate);
+  }
+  chalSyncReplayScrub(sp);
+  return sp.t0+chalReplay.t;
+}
 const chalUI={phase:'setup'};
 function syncDriveAidsUI(){
   const tcOn=vehicle.tc!==false;
@@ -37466,8 +37597,11 @@ function chalSyncFields(ch){
   if(ms){const row=ms.closest('.field');if(row)row.style.display=ch.kind==='moose'?'':'none';}
   for(const id of['chalDriftEntry','chalDriftMethod']){const el=document.getElementById(id);
     if(el){const row=el.closest('.field');if(row)row.style.display=ch.kind==='drift'?'':'none';}}
+  const isDynKind=ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8';
   const mr=document.getElementById('chalMooseRate');
-  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&(ch.kind==='moose'||ch.kind==='drift'||ch.kind==='skidpad'||ch.kind==='spiral'||ch.kind==='fig8'))?'':'none';}
+  if(mr){const row=mr.closest('.field');if(row)row.style.display=(live&&isDynKind)?'':'none';}
+  const rr=document.getElementById('chalReplayRow');
+  if(rr)rr.hidden=!(live&&isDynKind&&chalResult&&chalResult.ok&&chalResult.samples&&chalResult.samples.length);
   const bk=document.getElementById('btnChalBack');if(bk)bk.hidden=!live;
   const go=document.getElementById('btnChalSolve');if(go)go.textContent=tr(live?'RUN AGAIN':'START CHALLENGE');
   syncDriveAidsUI();
@@ -37493,7 +37627,7 @@ function refreshChallenge(){
   chalUI.phase='live';
   chalHover.i=-1;
   const key=chalResult&&chalResult.road?chalResult.road.label:'';if(key!==chalView.key){chalView.key=key;chalViewReset();}
-  chalMooseT0=(typeof performance!=='undefined'?performance.now():Date.now());
+  chalReplayReset();
   chalSyncFields(ch);
   renderRunChallenge();
 }
@@ -37503,7 +37637,15 @@ function renderRunChallenge(){
   const ch=runChallengeById(activeRunChallenge);
   const R=chalResult;
   if(!R){head.textContent=tr('Build a car first.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
-  if(!R.ok){head.textContent=tr('This challenge is not ready yet.');grid.innerHTML='';note.textContent=tr(ch.desc);return;}
+  if(!R.ok){
+    const failMsg={
+      'no-clear':tr('Car could not clear the cones even at the lowest entry speed.'),
+      'no-hold':tr('Car could not hold the line within the tolerance at any speed.'),
+      'no-run':tr('No valid powerslide run found for this setup.')
+    }[R.reason];
+    head.textContent=failMsg||tr('This challenge is not ready yet.');
+    grid.innerHTML='';note.textContent=tr(ch.desc);return;
+  }
   const cell=(k,v)=>'<div class="perf-cell"><div class="k">'+tr(k)+'</div><div class="v">'+v+'</div></div>';
   if(R.kind==='moose'){
     const col=MOOSE_OUT_COL[R.outcome]||'#e0e0e0',warn=R.lift2>0?' · '+tr('2-WHEEL LIFT'):'';
@@ -37519,7 +37661,7 @@ function renderRunChallenge(){
       cell('2-WHEEL LIFT',R.lift2>0?R.lift2.toFixed(2)+' s':tr('none'))+
       cell('MAX TIP',(R.tipMax*180/Math.PI).toFixed(1)+'°')+
       cell('STABILITY t/2h',R.ssf.toFixed(2));
-    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 12 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
+    note.textContent=tr(ch.desc)+' '+tr('Throttle released at entry, top gear; the best of 48 lines. BEST CLEAR raises the speed until a cone falls (ISO 3888-2); 72 and 77 km/h are the entry speeds Teknikens Värld and km77 judge by. A car fails by a CONE, a SPIN (turned past 90°) or a ROLLOVER (two wheels up and tipped past its outer tyres).');
     return;
   }
   if(R.kind==='drift'){
@@ -37538,7 +37680,7 @@ function renderRunChallenge(){
       cell('TARGET β',(R.betaT*180/Math.PI).toFixed(0)+'°')+
       cell('RADIUS',R.radius+' m')+
       cell('DRIVE',tr((R.drive||'').toUpperCase())+(R.centre?' · '+tr(({lock:'CLUTCH',fric:'TORSEN',visc:'VISCOUS',open:'OPEN'})[R.centre.type]||'')+' '+Math.round(100*R.centre.f)+':'+Math.round(100*(1-R.centre.f)):''));
-    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD has no HANDBRAKE. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
+    note.textContent=tr(ch.desc)+' '+tr('ESP and traction control off. METHOD picks how the slide starts: POWER-OVER (throttle), CLUTCH KICK (clutch down, the engine revs itself, then the clutch is dropped), FLICK (lift and steer away, then sharply in, each for half the body’s natural period, so its rebound helps turn-in; FWD lifts to rotate) or HANDBRAKE (the lever locks the rears at turn-in; a FWD car holds it while short of the target slip, with part throttle on the fronts). AUTO tries the dynamic methods first and falls back to HANDBRAKE; AWD uses HANDBRAKE only with an electronic-clutch or lockable centre diff. ENTRY fixes the speed, or BEST picks the highest-scoring CLEAR (mean corner speed × sin(mean sustained β), discounted for near-spin spikes). The driver anticipates each bend, holds body slip with active countersteer and throttle, unwinds cleanly and accelerates across the mid-straight into the second bend. CLEAR needs a sustained slide in both. Failures: NO_SLIDE, FADE (one corner), STALL, OFF (any body corner over the edge), or SPIN. AWD powers over as far as its centre coupling lets the rear spin faster than the front. Loose surfaces are not modelled yet.');
     return;
   }
   if(R.kind==='skidpad'){
@@ -37728,8 +37870,11 @@ function drawDriftHud(s){
   const w=REPLAY_HUD_W,h=208,x0=vizW-w-10,y0=vizH-h-10,PS='"Press Start 2P"';
   ctx.fillStyle='rgba(10,10,18,0.86)';ctx.fillRect(x0,y0,w,h);
   ctx.strokeStyle='#33334a';ctx.lineWidth=2;ctx.strokeRect(x0,y0,w,h);
-  const rl=Math.max(1000,engine.redline),rMax=Math.ceil(rl/1000+0.5)*1000,v=(s.v||0)*3.6;
-  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,1000,'x1000',rl,x=>String(x/1000));
+  const ev=typeof isElectric==='function'&&isElectric();
+  const rl=Math.max(1000,ev&&engine.motor&&engine.motor.nMax?engine.motor.nMax:engine.redline);
+  const rStep=rl>10000?2000:1000,rMax=Math.ceil(rl/rStep+0.5)*rStep,v=(s.v||0)*3.6;
+  drawDriftHud.lastRl=rl;
+  drawDial(x0+47,y0+47,40,0,rMax,s.rpm,rStep,'x1000',rl,x=>String(x/1000));
   ctx.fillStyle=C.yellow;ctx.font='8px '+PS;ctx.textAlign='center';ctx.fillText(String(s.gear),x0+47,y0+79);
   const top=Math.max(160,(perf&&perf.topSpeed)||160),vMax=Math.ceil(top*1.1/20)*20,vs=niceStep(vMax,7);
   drawDial(x0+137,y0+47,40,0,Math.ceil(vMax/vs)*vs,v,vs,'km/h',null,x=>String(x));
@@ -37738,7 +37883,8 @@ function drawDriftHud(s){
   const yb=y0+126,pedal=(xx,val,col,lbl)=>{ctx.fillStyle='#1d1d2b';ctx.fillRect(xx,yb-26,10,52);
     const hh=52*clamp(val,0,1);ctx.fillStyle=col;ctx.fillRect(xx,yb+26-hh,10,hh);
     ctx.fillStyle='#778';ctx.font='5px '+PS;ctx.fillText(lbl,xx-1,yb+34);};
-  pedal(x0+40,s.thr||0,'#00ff88','T');pedal(x0+56,s.brk||0,'#ff5555','B');
+  pedal(x0+28,s.thr||0,'#00ff88','T');pedal(x0+44,s.brk||0,'#ff5555','B');
+  if(s.hb!=null)pedal(x0+60,s.hb,'#ffaa00','H');
   drawGMeter({gLat:-(s.ay||0)/DRIVE_G,gLong:(s.ax||0)/DRIVE_G},x0+148,yb,26,yb+36);
   const sw=steerText({steer:-(s.delta||0)*180/Math.PI}),ys=y0+172;   // drift steer is left-positive; the wheel reads R positive
   ctx.fillStyle=C.yellow;ctx.font='6px '+PS;ctx.fillText(sw.txt,x0+60,ys+12);
@@ -38234,6 +38380,26 @@ function bindChallengeHover(){
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;last=ptrs.size===1?[...ptrs.values()][0]:null;};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('pointerleave',()=>{if(chalHover.i>=0)chalHover.i=-1;});
+  const pb=document.getElementById('btnChalPlay');
+  if(pb)pb.addEventListener('click',()=>{
+    chalReplay.playing=!chalReplay.playing;
+    chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+    chalSyncReplayUi();
+  });
+  const sc=document.getElementById('chalReplayScrub');
+  if(sc){
+    const seek=()=>{
+      const sp=chalReplaySpan(typeof chalResult!=='undefined'?chalResult:null);
+      if(sp.span>0)chalReplay.t=clamp(+sc.value/1000,0,1)*sp.span;
+      chalReplay.lastMs=typeof performance!=='undefined'?performance.now():Date.now();
+      chalSyncReplayScrub(sp);
+      if(vizMode==='challenges'&&typeof drawChallenge==='function')drawChallenge();
+    };
+    sc.addEventListener('pointerdown',()=>{chalReplay.scrubbing=true;});
+    sc.addEventListener('input',seek);
+    sc.addEventListener('change',()=>{seek();chalReplay.scrubbing=false;});
+    sc.addEventListener('pointerup',()=>{chalReplay.scrubbing=false;});
+  }
 }
 // ====== CHALLENGES: rank several cars on one challenge (build 370) ======
 // Each car is loaded in turn (withBuild, as the race does), solved by the challenge's own solver with the settings
@@ -38298,7 +38464,7 @@ function renderChalRank(){
   if(!chalRank.rows||chalRank.busy){out.innerHTML='';return;}
   out.innerHTML='<div class="perf-head">'+esc(tr(chalRank.ch.name))+'</div><table class="chal-rank"><thead><tr><th>#</th><th>'+tr('CAR')+'</th><th>'+tr('SCORE')+'</th><th>'+tr('RESULT')+'</th></tr></thead><tbody>'+
     chalRank.rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td title="'+esc(r.name)+'">'+esc(r.name)+'</td><td>'+(r.s?esc(r.s.text):'—')+'</td>'+
-      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'">'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
+      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'"'+(r.err?' title="'+esc(r.err)+'"':'')+'>'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
     '</tbody></table>';
 }
 function bindChalRank(){
@@ -38954,7 +39120,8 @@ function evdCompute(){
       const T=hybMotorTq(hy,r),Tm=motorMaxTorque(m,r,V,60),w=r*Math.PI/30;
       pts.push({r,T,Tm});pk=Math.max(pk,T*w/1000);tq=Math.max(tq,T);pkM=Math.max(pkM,Tm*w/1000);
     }
-    return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
+    const d={motor:m,pack:hy.pack,redline:Math.floor(m.nMax/50)*50};
+    return {hybrid,d,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
   const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
@@ -38970,9 +39137,9 @@ function evdCompute(){
     knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:Math.min(...parts.map(q=>q.nTip)),nFreq:Math.min(...parts.map(q=>q.nFreq)),
     poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
 }
-// How long the peak lasts and what the cooling holds for good (electric only): slower, so worked out after a pause.
+// How long the peak lasts and what the cooling holds for good: slower, so worked out after a pause.
 function evdComputeSlow(r){
-  if(!r||r.hybrid)return null;
+  if(!r||!r.d)return null;
   return {hold:motorPeakHold(r.d,r.V),cont:motorContinuousKW(r.d,r.V)};
 }
 
@@ -38992,7 +39159,7 @@ function evdSummary(c,r){
 
 // ---- the cards: src/js/design-cards.js, with this drive's preview, limits and pictures ----
 const evdG=id=>document.getElementById(id),evdFmt=dcFmt,evdOptText=dcOptText,evdCtx=dcCtx,evdShown=dcShown,EVD_C=DC_COLOURS;
-const evdFrontOnly=(id,d)=>!(/^evFront(D|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
+const evdFrontOnly=(id,d)=>!(/^evFront(D|OD|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
 const EVD=new DesignCards({
   prefix:'evd',root:'evDesigner',cards:EVD_CARDS,fields:EVD_FIELDS,depFields:EVD_SPEED_FIELDS,realHead:'REAL DRIVES',
   ticks:evdTicks,using:evdUsing,choices:id=>dcUsers(evdRealDrives(),id),
@@ -39004,7 +39171,7 @@ const EVD=new DesignCards({
   deltas:[['pk',' kW',0,1,''],['tq',' Nm',0,1,''],['top',' rpm',-2,1,'top'],['mass',' kg',1,-1,'motor'],['packMass',' kg',0,-1,'pack'],['cost','',-2,-1,'cost']],
   stats:(r,d)=>[['PEAK POWER',evdFmt(r.pk),'kW',d('pk',1,0)],['TORQUE',evdFmt(r.tq),'Nm',d('tq',1,0)],['TOP RPM',evdFmt(r.top/1000,1),'k rpm',d('top',1,0)],
     ['MOTOR',evdFmt(r.mass),'kg',d('mass',-1,1)],['PACK',evdFmt(r.packMass),'kg',d('packMass',-1,0)],['COST','$'+evdFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
-  slowText:(r,s)=>r.hybrid?'':s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
+  slowText:(r,s)=>s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
   legend:[['p','power'],['t','torque'],['m','motor alone']],curveLabel:'Torque and power against motor speed',
   curve:r=>({xMax:r.top,mark:{x:r.knee,label:tr('knee')},pts:r.pts.map(q=>{const w=q.r*Math.PI/30/1000;return {x:q.r,a:q.T*w,b:q.T,a0:q.Tm*w,b0:q.Tm};})}),
   // what holds it back: the battery or the motor for the power; the rim, the inverter or the design limit for the speed

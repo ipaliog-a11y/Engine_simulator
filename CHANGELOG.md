@@ -18,12 +18,27 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Vehicle and engine designer fixes, setup safety warnings, and layout validation (build 457)
+### Vehicle and engine designer fixes, setup safety warnings, and layout validation (build 459)
 
 - **Vehicle Designer & challenge UI fixes**: fixed the ballast summary in `vcdSummary` (`+g('vhBallast') > 0`), updated `updateGearingLabel()` to show the actual `vehicle.finalDrive` instead of a dummy lerp, added hybrid front-axle motor force (`pt.frontForce(v)`) to the `vcdForce` drive-force curve, and fixed circuit challenge budget bars in `renderChallenge()` to use total car cost (`ev.cost`) instead of engine-only cost (`m.cost`).
 - **AWD diff selector & Vehicle Designer safety warnings**: added `#vhAwdMode` to the `CHASSIS & DRIVE` card (synced with Track, Race, and Challenge AWD selectors), and added setup safety warnings for rotor-in-wheel clearance, rollover hazard (`track/(2·CG) < μ`), tyre load-rating overload, rear-before-front brake lockup (`zc < 0.80 g`), 200–0 brake fade, and high-speed aero spring bottoming.
 - **Engine Designer validation, disabled states & readouts**: blocked invalid cylinder/layout combinations (odd 1/3/5-cyl V/Boxer and 12-cyl Inline) in `syncDesignEnable()`, synced rotary `edEcc` max to `Math.floor(bore / 5)`, disabled `edCompWheel`/`edHousing` when a custom `turboPart` is active and `edTaperPct` when `edTaperRpm === 0`, surfaced `turboLoad`, spool RPM (`boostHalfRpm()`), `compEff`, and peak EGT readouts in Engine Designer, and accounted for `engine.icPart` in `computeCost()` and `updateDesignSummary()`.
 - **Regression test**: added `tests/test279.mjs`. Zero physics or preset changes.
+
+### Canvas/HUD layout fixes, challenge replay controls, and GPX track deletion (build 458)
+
+- Fixed canvas and HUD layout glitches: shifted the logged-pull legend below wrapped challenge verdicts in `drawDyno` (`src/js/dyno-ui.js`), spaced shift lights away from the `THR` bar and relocated the labeled hot-brake indicator clear of the G-meter in `drawReplayHud` (`src/js/track-view.js`), removed stray fixed-coordinate debug rectangles and switched OHV vs OHC cutaway selection to `e.valvetrain` in `src/js/engine-view.js`, and added the red `wheel in air` entry to the suspension step legend (`src/js/susp-window.js`).
+- Fixed `src/js/track-scene-v2.js`: paused particle spawning and integration while track/race replay is paused, switched `fillRibbon` to `'nonzero'` so figure-8 / self-crossing GPX tracks do not punch holes at intersections, and kept 3D props and night grading consistent on the 20-tile overview fallback.
+- Added Play/Pause (`#btnChalPlay`) and time scrub (`#chalReplayScrub`) controls for dynamic challenge replays, fixed EV tachometer redline (`engine.motor.nMax`) and added a handbrake bar in `drawDriftHud`, distinguished `no-clear`/`no-hold`/`no-run` verdicts from `"This challenge is not ready yet."`, updated stale Moose (48 lines) and Drift AWD handbrake copy (`src/js/chal-view.js`), and surfaced `r.err` tooltips on failed ranking rows (`src/js/chal-rank.js`).
+- Added a `DELETE GPX TRACK` button (`#btnDeleteGpx`) in `#trackSetup` to remove user-imported GPX circuits from `TRACKS` and `localStorage` (`pes.tracks`) (`src/js/fullscreen-track.js`, `src/shell.html`).
+- Added `tests/test281.mjs` covering challenge replay controls, failure verdicts, ranking error tooltips, EV drift tach redline, wheel-in-air legend, valvetrain cutaway, GPX deletion, and paused particles.
+
+### EV and hybrid bench telemetry, garage detail, and designer UI parity (build 457)
+
+- **EV LIVE bench & dyno (`src/js/electric-ui.js`):** Added a live pack temperature (`state.tB`) bar with thermal warning (`>= 50 °C`) on the bench canvas and `#readout`, scaled the rotor/magnet temperature bar ceiling dynamically from `m.mag.Tmax` (`rotorTempBarMax`, so Ferrite's 250 °C limit is not clipped at 200 °C), labelled induction motors `IM MOTOR` / `IM ` instead of hardcoded `PM MOTOR` / `PM `, and clamped the EV dyno `KNEE` marker inside chart bounds (skipping off-chart draw when `s.knee > redline`).
+- **Hybrid LIVE bench (`src/js/hybrid-bench.js`, `src/shell.html`):** Added live motor temperatures (`H.mT`: winding, core, rotor °C) and thermal derate warnings in `#hyTemp`, coloured `#hySocFill` and `.hy-soc-win` from `hybTune().socLo` / `socHi` instead of hardcoded 35%–85% (fixing false warnings on PHEVs such as the 330e), showed `FRONT EV` in `drawHybridFlow` and `#hyReadout` when a front motor is fitted (e.g. 918 Spyder), and showed P2 clutch state as `CRANKING` / `OPEN` until `H.engOn && H.fired`.
+- **EV Garage detail & Designer (`src/js/saves-garage.js`, `src/js/ev-designer.js`):** Updated `garageDetail()` so saved EVs display motor type, drive layout, inverter, battery chemistry/kWh/voltage, and peak kW instead of falling back to `ENGINE_TYPE.petrol4`, enabled `evdComputeSlow` continuous kW / peak hold preview for hybrid motors, and included `evFrontOD` in `evdFrontOnly`.
+- Added `tests/test280.mjs` covering all EV/Hybrid bench, Garage detail, and EV Designer parity behaviours. Zero physics or preset changes.
 
 ### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 456)
 

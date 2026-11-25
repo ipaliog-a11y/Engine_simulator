@@ -61,7 +61,7 @@ function renderChalRank(){
   if(!chalRank.rows||chalRank.busy){out.innerHTML='';return;}
   out.innerHTML='<div class="perf-head">'+esc(tr(chalRank.ch.name))+'</div><table class="chal-rank"><thead><tr><th>#</th><th>'+tr('CAR')+'</th><th>'+tr('SCORE')+'</th><th>'+tr('RESULT')+'</th></tr></thead><tbody>'+
     chalRank.rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td title="'+esc(r.name)+'">'+esc(r.name)+'</td><td>'+(r.s?esc(r.s.text):'—')+'</td>'+
-      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'">'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
+      '<td style="color:'+(r.s?(r.s.pass?'#55dd66':'#ff4444'):'#888')+'"'+(r.err?' title="'+esc(r.err)+'"':'')+'>'+(r.s?tr(r.s.pass?'PASS':'FAIL'):tr(r.err?'ERROR':'NO RESULT'))+'</td></tr>').join('')+
     '</tbody></table>';
 }
 function bindChalRank(){

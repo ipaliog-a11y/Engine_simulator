@@ -42,6 +42,10 @@ function closeTrackPage(){
 }
 function bindTrackPage(){
   document.getElementById('btnTrackFull').addEventListener('click',()=>{trackPage.open?closeTrackPage():openTrackPage();});
+  const bDel=document.getElementById('btnDeleteGpx');
+  if(bDel)bDel.addEventListener('click',()=>deleteImportedTrack());
+  const sel=document.getElementById('trkSel');
+  if(sel)sel.addEventListener('change',syncGpxDeleteBtn);
   addEventListener('resize',sizeTrackStage);
   addEventListener('orientationchange',()=>setTimeout(sizeTrackStage,200));
   addEventListener('keydown',e=>{if(e.key==='Escape'&&trackPage.open&&!document.fullscreenElement)closeTrackPage();});
@@ -51,6 +55,24 @@ function bindTrackPage(){
 // Imported circuits live alongside the built-in ones and persist in localStorage, so a track you
 // loaded is still there next session. Only geometry is stored — it is the user's own file.
 const GPX_KEY='pes.tracks';
+function syncGpxDeleteBtn(){
+  const b=document.getElementById('btnDeleteGpx');
+  if(b)b.hidden=!(TRACKS[trackKey]&&TRACKS[trackKey].imported);
+}
+function deleteImportedTrack(key){
+  const k=key||trackKey;
+  if(!TRACKS[k]||!TRACKS[k].imported)return false;
+  const lbl=TRACKS[k].label||k;
+  delete TRACKS[k];
+  delete trackCache[k];
+  saveImportedTracks();
+  if(trackKey===k)trackKey='mixed';
+  refreshTrackList();
+  if(typeof renderTrackSetup==='function')renderTrackSetup();
+  if(typeof trackUI!=='undefined'&&trackUI.phase==='live')refreshLap();
+  flash(tr('DELETED')+' '+lbl);
+  return true;
+}
 function refreshTrackList(){
   const sel=document.getElementById('trkSel');if(!sel)return;
   sel.innerHTML='';
@@ -67,6 +89,7 @@ function refreshTrackList(){
     sel.appendChild(g);
   }
   sel.value=trackKey;
+  syncGpxDeleteBtn();
 }
 function saveImportedTracks(){
   try{
