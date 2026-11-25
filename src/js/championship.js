@@ -13,7 +13,8 @@ const CHAMP={
   vscPace:0.6,         // speed under VSC as a share of free pace
   vscLaps:1,           // VSC lasts this many leader laps
   blueIgnorePen:5,     // s added for ignoring blue (P5)
-  ballastStep:10       // kg soft BoP steps (P7)
+  ballastStep:10,      // kg soft BoP steps (P7)
+  tyreSetCost:1500     // credits per extra tyre set in career mode
 };
 const CHAMP_POINTS={
   top8:[10,8,6,5,4,3,2,1],
@@ -48,6 +49,7 @@ const CHAMP_CLASSES={
   open:{id:'open',label:'OPEN',eligible:()=>true}
 };
 function champEngineHp(p){
+  if(p&&p._hp!=null)return p._hp;
   const ep=(typeof FACTORY_ENGINES!=='undefined'?FACTORY_ENGINES:[]).find(e=>e.name===p.engine);
   return ep&&ep.real&&ep.real.hp||0;
 }
@@ -99,6 +101,40 @@ const CHAMP_SERIES=[
       {track:'tech',laps:8,weather:'dry'},
       {track:'fast',laps:6,weather:'dry'}
     ],regs:{weekend:'feature',flPoint:false,economy:false,vsc:true}},
+  {id:'kei_cup',name:'KEI CUP',classId:'kei_cup',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'brands',laps:10,weather:'dry'},
+      {track:'tech',laps:8,weather:'dry'},
+      {track:'suzuka',laps:6,weather:'damp'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'muscle_cup',name:'MUSCLE SERIES',classId:'muscle',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'laguna',laps:8,weather:'dry'},
+      {track:'cota',laps:7,weather:'dry'},
+      {track:'montreal',laps:8,weather:'damp'},
+      {track:'fast',laps:8,weather:'dry'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'touring_cup',name:'TOURING CUP',classId:'touring',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'brands',laps:10,weather:'dry'},
+      {track:'zandvoort',laps:9,weather:'damp'},
+      {track:'spielberg',laps:9,weather:'dry'},
+      {track:'nurgp',laps:7,weather:'rain'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'proto_cup',name:'PROTOTYPE SERIES',classId:'proto',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'lemans',laps:6,weather:'dry'},
+      {track:'spa',laps:8,weather:'damp'},
+      {track:'silverstone',laps:9,weather:'dry'},
+      {track:'monza',laps:10,weather:'dry'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
+  {id:'hybrid_cup',name:'HYBRID CUP',classId:'hyb_cup',pointsId:'top8',unlock:null,
+    calendar:[
+      {track:'interlagos',laps:8,weather:'dry'},
+      {track:'shanghai',laps:8,weather:'damp'},
+      {track:'catalunya',laps:8,weather:'dry'},
+      {track:'yasmarina',laps:8,weather:'dry'}
+    ],regs:{weekend:'quali_race',flPoint:true,economy:true,vsc:true,bop:true}},
   {id:'ev_series',name:'EV SERIES',classId:'ev_cup',pointsId:'top8',unlock:'hatch_cup',
     calendar:[
       {track:'shanghai',laps:8,weather:'dry'},
@@ -137,7 +173,7 @@ function champPushHistory(S){
     finishedAt:new Date().toISOString().slice(0,10),rounds:S.results.length});
   champSave('pes.champ.history',h.slice(0,CHAMP.historyN));
 }
-function champCareer(){return champLoad('pes.champ.career',{unlocked:['pixel_gt','hatch_cup','sports_trophy','multi_open'],finished:[],credits:50000});}
+function champCareer(){return champLoad('pes.champ.career',{unlocked:['pixel_gt','hatch_cup','sports_trophy','kei_cup','muscle_cup','touring_cup','proto_cup','hybrid_cup','multi_open'],finished:[],credits:50000});}
 function champSaveCareer(C){return champSave('pes.champ.career',C);}
 function champTeam(){return champLoad('pes.champ.team',null);}
 function champSaveTeam(T){return champSave('pes.champ.team',T);}
@@ -211,31 +247,73 @@ function champFastestLapId(results){
   for(const r of results){if(r.best!=null&&(best==null||r.best<best)){best=r.best;id=r.id;}}
   return id;
 }
+// ---- player team class eligibility ----
+function champSeatDescriptor(seat){
+  if(!seat)return null;
+  const ref=seat.ref!=null?String(seat.ref):'';
+  const pIdx=seat.presetIdx!=null?seat.presetIdx:(ref.startsWith('p:')?+ref.slice(2):null);
+  if(pIdx!=null&&Number.isInteger(pIdx)&&FACTORY_CARS[pIdx])return FACTORY_CARS[pIdx];
+  const e=ref==='cur'?raceEntrantFrom('cur'):(ref.startsWith('g:')?raceEntrantFrom(ref):null);
+  if(!e||!e.build)return null;
+  const b=e.build,v=b.vehicle||{},eng=b.engine||{};
+  const ev=!!eng.ev||eng.powertrain==='electric';
+  const hy=!ev&&!!(eng.hyMode&&eng.hyMode!=='none');
+  let hp=0;
+  if(ref==='cur'&&typeof powertrain==='function'&&powertrain().ready())hp=powertrain().rating().peakHP||0;
+  else if(b.score&&b.score.peakHP)hp=b.score.peakHP;
+  else if(typeof withBuild==='function'){try{hp=withBuild(b,()=>powertrain().ready()?powertrain().rating().peakHP||0:0);}catch(err){hp=0;}}
+  return {name:e.name,chassis:v.chassis||'',cat:ev?'Electric':hy?'Hybrid':'',body:{kg:v.mass||1200},_hp:hp};
+}
+function champSeatEligible(seat,series){
+  if(!series)return true;
+  const multi=!!(series.regs&&series.regs.multiClass&&series.classIds&&series.classIds.length);
+  if(!multi&&(!series.classId||series.classId==='open'))return true;
+  const desc=champSeatDescriptor(seat);
+  if(!desc)return false;
+  if(multi)return series.classIds.some(cid=>CHAMP_CLASSES[cid]&&CHAMP_CLASSES[cid].eligible(desc));
+  const cls=CHAMP_CLASSES[series.classId];
+  return !cls||cls.eligible(desc);
+}
+function champCheckTeamEligibility(team,series){
+  if(!team||!team.cars||!team.cars.length)return {ok:true,bad:[]};
+  const bad=[];
+  team.cars.slice(0,2).forEach(seat=>{
+    if(!champSeatEligible(seat,series)){
+      const desc=champSeatDescriptor(seat);
+      bad.push((desc&&desc.name)||seat.ref||'—');
+    }
+  });
+  return {ok:!bad.length,bad};
+}
 // ---- season lifecycle ----
 function champNewSeason(seriesId,opts){
   opts=opts||{};
   const series=champSeries(seriesId);
   const career=champCareer();
-  if(series.unlock&&career.unlocked.indexOf(series.id)<0&&career.unlocked.indexOf(series.unlock)<0){
-    // unlock gate: need the prerequisite series id in unlocked, or having finished it
-  }
+  const mode=opts.mode||'round'; // 'round'|'instant'|'career'
+  const isCareer=mode==='career';
   const seed=(opts.seed>>>0)||(1+Math.floor(Math.random()*99999));
   const multi=series.regs&&series.regs.multiClass&&series.classIds;
   let entrants;
   if(opts.entrants&&opts.entrants.length>=2)entrants=opts.entrants.slice(0,CHAMP.maxGrid);
   else if(multi)entrants=champFillMultiGrid(series.classIds,Math.ceil(CHAMP.maxGrid/series.classIds.length),seed,{bop:true});
   else entrants=champFillGrid(series.classId,CHAMP.maxGrid,seed,{bop:!!(series.regs&&series.regs.bop)});
-  // attach player team cars (P4)
-  const team=champTeam();
-  if(team&&team.cars&&team.cars.length&&opts.useTeam){
+  // attach player team cars (P4) with class eligibility check
+  const team=champTeam(),ineligibleTeam=[];
+  if(team&&team.cars&&team.cars.length&&(opts.useTeam||isCareer)){
     const bop=!!(series.regs&&series.regs.bop);
     team.cars.slice(0,2).forEach(seat=>{
+      if(!champSeatEligible(seat,series)){
+        const d=champSeatDescriptor(seat);
+        ineligibleTeam.push((d&&d.name)||seat.ref||'—');
+        return;
+      }
       const ref=seat.ref!=null?String(seat.ref):'';
       const pIdx=seat.presetIdx!=null?seat.presetIdx:(ref.startsWith('p:')?+ref.slice(2):null);
       let clsId=series.classId;
       if(multi){
-        const p=pIdx!=null&&Number.isInteger(pIdx)?FACTORY_CARS[pIdx]:null;
-        clsId=(p&&series.classIds.find(cid=>CHAMP_CLASSES[cid]&&CHAMP_CLASSES[cid].eligible(p)))||series.classIds[0];
+        const d=champSeatDescriptor(seat);
+        clsId=(d&&series.classIds.find(cid=>CHAMP_CLASSES[cid]&&CHAMP_CLASSES[cid].eligible(d)))||series.classIds[0];
       }
       let e=null;
       if(pIdx!=null&&Number.isInteger(pIdx))e=champEntrantFromPreset(pIdx,{classId:clsId,classTag:clsId,driver:seat.driver||'balanced',teamId:team.id,bop});
@@ -251,9 +329,13 @@ function champNewSeason(seriesId,opts){
       }
     });
   }
-  const economy=series.regs&&series.regs.economy?{
+  const hasEco=isCareer||!!(series.regs&&series.regs.economy);
+  const dryInit=isCareer?CHAMP.tyreDry+Math.max(0,series.calendar.length-1):CHAMP.tyreDry;
+  const wetInit=isCareer?CHAMP.tyreWet+Math.max(0,Math.floor(series.calendar.length/2)):CHAMP.tyreWet;
+  const economy=hasEco?{
     credits:opts.credits!=null?opts.credits:(career.credits||50000),
-    tyres:entrants.map(()=>({dry:CHAMP.tyreDry,wet:CHAMP.tyreWet}))
+    tyres:entrants.map(()=>({dry:dryInit,wet:wetInit})),
+    spent:0,earned:0,tyresBought:0,career:isCareer
   }:null;
   const S={
     id:'s'+Date.now().toString(36),
@@ -261,7 +343,7 @@ function champNewSeason(seriesId,opts){
     entrants,standings:champBlankStandings(entrants),teamStandings:[],
     results:[],economy,regs:Object.assign({},series.regs),
     classId:series.classId,classIds:series.classIds||null,pointsId:series.pointsId,
-    calendar:series.calendar.slice(),mode:opts.mode||'round' // 'round'|'instant'|'career'
+    calendar:series.calendar.slice(),mode,ineligibleTeam
   };
   champSaveActive(S);return S;
 }
@@ -295,16 +377,41 @@ function champApplyRaceToSeason(S,R,meta){
   const flPoint=!!(S.regs&&S.regs.flPoint);
   champApplyPoints(S.standings,results,table,{flId,flPoint,poleId:meta.poleId});
   S.teamStandings=champTeamStandings(S.standings);
-  // economy (P3)
+  // economy (P3): entry fee, tyre set consumption across rounds, player prize credits; career persists credits
   if(S.economy){
-    S.economy.credits-=CHAMP.entryFee;
     const team=champTeam(),teamId=team&&team.id;
+    S.economy.credits-=CHAMP.entryFee;
+    S.economy.spent=(S.economy.spent||0)+CHAMP.entryFee;
+    if(S.economy.tyres){
+      results.forEach(r=>{
+        const ts=S.economy.tyres[r.id];if(!ts)return;
+        const stints=r.stints&&r.stints.length?r.stints:[{tyre:(R.cfg&&R.cfg.weather==='wet')?'wet':'dry'}];
+        let dryUsed=0,wetUsed=0;
+        stints.forEach(st=>{if(st.tyre==='wet'||st.tyre==='inter')wetUsed++;else dryUsed++;});
+        let extra=0;
+        if(dryUsed>ts.dry){extra+=dryUsed-ts.dry;ts.dry=0;}else ts.dry-=dryUsed;
+        if(wetUsed>ts.wet){extra+=wetUsed-ts.wet;ts.wet=0;}else ts.wet-=wetUsed;
+        if(extra>0&&S.mode==='career'){
+          const ent=S.entrants&&S.entrants[r.id];
+          if(ent&&ent.teamId&&(!teamId||ent.teamId===teamId)){
+            const cost=extra*CHAMP.tyreSetCost;
+            S.economy.credits-=cost;
+            S.economy.spent=(S.economy.spent||0)+cost;
+            S.economy.tyresBought=(S.economy.tyresBought||0)+extra;
+          }
+        }
+      });
+    }
     results.forEach((r,k)=>{
       if(r.state==='dnf'||r.state==='dsq')return;
       const ent=S.entrants&&S.entrants[r.id];
-      if(ent&&ent.teamId&&(!teamId||ent.teamId===teamId))S.economy.credits+=(CHAMP.prize[k]||0);
+      if(ent&&ent.teamId&&(!teamId||ent.teamId===teamId)){
+        const p=CHAMP.prize[k]||0;
+        S.economy.credits+=p;
+        S.economy.earned=(S.economy.earned||0)+p;
+      }
     });
-    const career=champCareer();career.credits=S.economy.credits;champSaveCareer(career);
+    if(S.mode==='career'){const career=champCareer();career.credits=S.economy.credits;champSaveCareer(career);}
   }
   S.results.push({roundIdx:S.roundIdx,track:R.cfg.track,seed:R.cfg.seed,classification:results,
     poleId:meta.poleId,flId,quali:meta.quali||null});
@@ -316,7 +423,7 @@ function champApplyRaceToSeason(S,R,meta){
 function champFinishSeason(S){
   S.done=true;
   champPushHistory(S);
-  // career unlock (P6): finishing a series opens dependents that list it as unlock
+  // career unlock (P6): finishing a series opens dependents that list it as unlock; credits persist in career mode
   const career=champCareer();
   if(!career.finished)career.finished=[];
   if(career.finished.indexOf(S.seriesId)<0)career.finished.push(S.seriesId);
@@ -324,7 +431,7 @@ function champFinishSeason(S){
   CHAMP_SERIES.filter(s=>s.unlock===S.seriesId).forEach(s=>{
     if(career.unlocked.indexOf(s.id)<0)career.unlocked.push(s.id);
   });
-  if(S.economy)career.credits=S.economy.credits;
+  if(S.economy&&S.mode==='career')career.credits=S.economy.credits;
   champSaveCareer(career);
   champClearActive();
   champSave('pes.champ.last',S);
@@ -356,9 +463,11 @@ async function champSimulateRound(S,opts){
 }
 async function champSimulateSeason(S,opts){
   opts=opts||{};
+  let lastR=null;
   while(!S.done&&S.roundIdx<S.calendar.length){
     if(opts.onRound)opts.onRound(S.roundIdx);
-    await champSimulateRound(S,opts);
+    lastR=await champSimulateRound(S,opts);
+    if(opts.onRoundDone)opts.onRoundDone(lastR,S.roundIdx-1);
   }
   return S;
 }

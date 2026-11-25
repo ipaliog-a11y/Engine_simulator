@@ -18,12 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 453)
+### Surface Build 441 and EV diagnostics across LIVE, OBD, ECU, Guided Build, and Reports (build 454)
 
 - **LIVE bench & Dyno result (`src/shell.html`, `src/js/dyno-ui.js`):** Added live `PEAK PMAX` (bar), `PRE-IGNITION` integral, and conditional `OIL PRESSURE` tiles plus status-bar warnings and `#lampOilP` activation; added `state.blown` and `state.wearCause` to `renderDynoResult()`'s memo key so `#dynoDiag` never goes stale.
 - **OBD & ECU Computer (`src/js/obd.js`, `src/js/ecu-computer.js`):** Added fault codes `P0326` (pre-ignition), `P0330` (cylinder over-pressure), `P0196` (oil over-temp), `P0524` (low oil pressure), and `P0234` (ECU boost cut) with `pMax`/`preIgn`/`oil`/`oilP` freeze-frame fields; updated `ecuRenderDiag()` to show code titles, statuses, and freeze frames; fixed `#ecuLedEgt` in AUTO mode by comparing `egtEnrichLambda()` against pre-EGT base lambda; added `cylPmax`, `preIgn`, `egt`, `oil`, `oilP`, and `boostActual` scope channels.
 - **Guided Build (`src/js/guided-build.js`):** Added Build 441 (`icdPreIgn`, `icdPmaxOver`) and EV (`evdCompute` battery/rim/frequency) limits to `gwLimit()` and `gfLimit()`.
 - **Reports (`src/js/reports.js`, `src/js/electric-ui.js`):** Included custom `engine.icPart` in `reportSpecRows()`, rendered `diagnoseEngine()` findings on Dyno PNG/PDF sheets, added Build 436 track conditions (`weather`, `air`, `tyre`) to Hot Lap reports, fixed EV specs in `lapVehicleRows()`, and implemented full EV Dyno PNG/PDF export.
+
+### Championship completion, timed-race countdown, and cross-mode audio (build 453)
+
+- Added five championship series (`kei_cup`, `muscle_cup`, `touring_cup`, `proto_cup`, `hybrid_cup`) covering the previously unreachable `kei_cup`, `muscle`, `touring`, `proto`, and `hyb_cup` classes, unlocked by default in `champCareer()`.
+- Added player team class eligibility checks (`champSeatDescriptor`, `champSeatEligible`, `champCheckTeamEligibility`) enforced in `champNewSeason()` and surfaced via `#champEligNote` on the CHAMP hub, along with track preview redraws on `#champSeries` change, `"WATCH REPLAY"` wired to `raceUI.run`, and Instant Season progress bar updates across rounds.
+- Wired `S.economy.tyres` dry/wet set consumption across stints and distinguished `CAREER` mode progression (persisting credits to `pes.champ.career`, scaling season tyre allocations, and charging `CHAMP.tyreSetCost` for extra sets) from sandbox seasons.
+- Replaced `LAP X/est` with a remaining countdown clock (`MM:SS` / `HH:MM:SS` via `fmtRaceClock` / `raceStatusClock`) in `#raceHead`, `#raceTopInfo`, and the race canvas header when `cfg.durationSec > 0`.
+- Extended cross-mode audio (`src/js/sound.js`, `src/js/skidpad-run.js`): recorded per-wheel slip angles `alpha` and `mu` in `skidpad-run.js`, wired `motorSoundState` and `soundSource`/`screechSlide` to Drift, Skidpad, Spiral, Figure 8, and the focused car on the Race tab, and restricted hybrid bench-off muting to `vizMode === 'dyno'` so Hybrids remain audible in Drift and Race replays.
+- Added `tests/test278.mjs` covering the new series, class eligibility, tyre consumption and career economy, WATCH REPLAY, timed-race countdown, and cross-mode audio.
 
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
