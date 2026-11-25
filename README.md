@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 474
+# PIXEL POWERTRAIN v0.8 build 475
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -714,7 +714,7 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   including static weight distribution, longitudinal weight transfer under acceleration, and
   aero downforce). Aero drag (½ρ·CdA·v²) and rolling resistance oppose it; the car shifts at the
   limiter, losing drive for the gearbox's shift time. In top gear there is nothing left to shift
-  into, so **the rev limiter cuts drive to zero** and drag brings the car back — both the
+  into, so **the rev limiter cuts the fuel**, the engine's own overrun drag and the air bring the car back — both the
   standing-start run and the lap solver are bound by the speed the gearing can actually reach,
   never by drag alone. The launch depends on the gearbox. A clutch
   box (manual/sequential/DCT) models a **slipping clutch**: from a standstill the engine is held
@@ -1047,10 +1047,6 @@ documented in the GUIDE at the point where it matters:
 - **A TRACK lap is a single best-case hot lap** — no tyre wear, no fuel burn, no traffic, no driver error, the
   brakes after one preparation lap. The RACE tab adds those, as rules where they are rules (above).
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
-- **Engine braking stops at the limiter.** Since build 149 the engine brakes the car through the braking
-  zones (its own overrun torque, in the gear the driver has worked down to). On the power at the rev limiter
-  the drive is cut to zero but nothing drags back, so a steep descent can carry a car a km/h or so past the
-  speed its top gear allows.
 - **Known gaps the tests name** (each may only shrink):
   - The ported engines still use a hand-set exhaust share, so the Renesis (~842 °C) and the 500cc two-stroke
     (~764 °C) read cool; each has a floor in test46/47.

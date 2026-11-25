@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Engine braking at the limiter (build 475)
+
+- **What changed**: past the rev limiter in top gear the fuel is cut, and the lap solver, the open-road (eco) solver
+  and the 0–100 / top-speed run gave the drive as **zero**, a free wheel. Now the engine, still in gear, drags the car
+  with its own overrun torque at the limiter: the same `overrunTable` (friction and pumping against a closed throttle,
+  `brakeTorqueRaw` with the fuel cut) that the braking zones have used since build 149, through the gearing and the
+  driveline. Nothing fitted. The dyno and the driving model already did this.
+- **Why**: on a descent past the top-gear redline speed only the air held the car back. A Golf GTI Mk1 (34.7 Nm of
+  drag at the limiter) now slows 0.56 m/s² harder 5% past it; on a 2 km 20% descent the open-road solver tops out at
+  197.6 km/h (limiter 196.6) instead of 204.1.
+- **What moved**: FINGERPRINT_PLACEHOLDER
+- **Left open**: mid-shift and with the clutch slipping there is no drag (clutch open). The README's "known gaps"
+  line for this is removed.
+
 ### The v1.0 scoreboard, measured (build 474)
 
 - **No physics change**: the fingerprint is identical (5331 values). New read-only `tools/scoreboard.mjs` loads all

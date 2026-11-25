@@ -25,6 +25,8 @@ function ecoMinTime(line,speedCap,eco){
   const rollF=(v,cosT)=>crrAt(vehicle.crr,v)*(m*G*(cosT==null?1:cosT)+down(v));
   const VMAX0=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   const VMAX=speedCap>0?Math.min(VMAX0,speedCap):VMAX0;
+  // past the limiter in every gear: the engine's own drag with the fuel cut, at the limiter (as the lap; build 475)
+  const ovLim=(()=>{const t=pt.overrunTable(rl),x=(rl-500)/250,k=Math.min(t.length-2,Math.floor(x));return t[k]+(t[k+1]-t[k])*(x-k)||0;})();
   function gearAt(v){
     let bi=ratios.length-1,bf=-1,bq=0;
     for(let i=0;i<ratios.length;i++){
@@ -33,7 +35,7 @@ function ecoMinTime(line,speedCap,eco){
       const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT+frontF(v);
       if(f>bf){bf=f;bi=i;bq=tqAt(clamp(rpm,idle,rl))*tot;}
     }
-    return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
+    return{gear:bi,F:bf<0?-ovLim*ratios[bi]*fd/(rT*eff):bf,tqFrac:bq/axleTqMax};
   }
   const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
   const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
