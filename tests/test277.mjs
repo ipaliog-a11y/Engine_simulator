@@ -122,7 +122,7 @@ const r = await page.evaluate(() => {
   trackUI.weather = 'wet';
   trackUI.air = 12;
   trackUI.tyre = 'inter';
-  runHotLap();
+  refreshLap();
   out.lapCond = lapCondSummary(lapResult);
   const cvLap = hotLapReportCanvas(1);
   out.lapCvOk = !!cvLap && cvLap.width === 1240 && cvLap.height === 1754;
