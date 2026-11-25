@@ -108,6 +108,12 @@ const ICD_FIELDS={
     trade:'Higher octane resists knock: more compression, boost or spark advance before it knocks.'},
   edInjector:{guide:'fuelmap',what:'Where the fuel is sprayed: into the port, or straight into the cylinder.',
     trade:'Direct injection cools the charge as the fuel evaporates, which holds off knock and fills the cylinder a little better. It needs fuel injection.'},
+  edRailPress:{guide:'fuels',what:'Diesel common-rail injection pressure (1600–2500 bar). Orifice flow scales as √Δp.',
+    trade:'Higher rail pressure atomizes fuel finer, cutting soot (PM) and combustion noise and slightly speeding the burn, at higher NOx and high-pressure pump drag.'},
+  edPilotSplit:{guide:'fuels',what:'Injects a small ~1–2 mg pilot charge before the main injection to pre-heat the cylinder.',
+    trade:'Shortens ignition delay, cutting diesel clatter/NVH and NOx, with a small soot trade-off.'},
+  edGlowPlugs:{guide:'electrical',what:'Ceramic/rapid glow plugs (~120 W/cyl) that pre-heat the combustion chamber before a cold crank.',
+    trade:'Sets cold-start preheat time and draws 12 V battery energy (recharged by the alternator), while cutting cold-start unburned HC.'},
   edIgnType:{adv:true,guide:'electrical',what:'How the spark reaches the plugs.',
     trade:'Coil-on-plug gives the strongest spark at high rpm and at low voltage; a distributor is the first to misfire when the battery runs down.'},
   edTiming:{what:'Whether the spark timing is fixed, or set by the ECU against knock.',
@@ -135,7 +141,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
-  edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
+  edInjector:'injector',edRailPress:'railPress',edPilotSplit:'pilotSplit',edGlowPlugs:'glowPlugs',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator',edStartStop:'startStop'};
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
@@ -198,7 +204,8 @@ function icdSummary(c,r){
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
-    case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
+    case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming')+
+      (g('edRailPress')!=='stock'?' · '+g('edRailPress')+' bar CR':'')+(g('edPilotSplit')==='yes'?' · '+tr('pilot split'):'')+(g('edGlowPlugs')==='yes'?' · '+tr('glow plugs'):'');
     case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));
   }
   return '';

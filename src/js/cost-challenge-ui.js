@@ -34,6 +34,11 @@ function computeCost(){
   if(engine.vvt)c+=1200;
   if(engine.cylDeact)c+=450+50*engine.cylinders;
   if(engine.injector==='direct')c+=900;
+  if(engine.ci){
+    c+=({1600:600,2000:950,2500:1400}[engine.railPress]||0);
+    if(engine.pilotSplit)c+=250;
+    if(engine.glowPlugs)c+=120+35*engine.cylinders;
+  }
   c+={distributor:150,wasted:400,coil:900}[engine.ignitionType]||0;
   if(engine.timingMode==='auto')c+=600;
   c+={gasoline:0,race:0,e85:300,methanol:500}[engine.fuel]||0;

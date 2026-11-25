@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Diesel common rail & glow plugs (build 469)
+
+- **Opt-in `COMMON RAIL` (1600 / 2000 / 2500 bar) & `PILOT INJECTION` (`PILOT + MAIN SPLIT`) on `FUEL & SPARK`** (CI diesel only, default `STOCK (UNIT / VE)` and `NONE` so existing diesel presets do not move): higher rail pressure ($\dot{m} \propto \sqrt{\Delta p}$, $p_{\text{ref}} = 1350\text{ bar}$, Bosch Automotive Handbook) shortens mixing-controlled burn (`dieselBurnTimeFactor`) and ignition delay (`dieselIgnDelayFactor`), cuts combustion noise (`dieselCombNoiseDbDelta`, up to −5.6 dB with 2500 bar + pilot split), and shifts the NOx/PM trade-off (finer atomization cuts PM while higher peak flame temperature raises NOx; pilot split softens the premixed spike for −12% NOx / +8% PM), at a derived CP3/CP4 pump FMEP (`mechFrictionMEP`), +4 kg mass, and +\$600–\$1,400 (+\$250 pilot split).
+- **Opt-in `GLOW PLUGS` (`CERAMIC / RAPID GLOW`, default `NONE`)**: models ambient-dependent preheat time (`glowPreheatTime`, 2.0 s at 23 °C to 7.1 s at −20 °C) and 12 V electrical draw (`GLOW_W_PER_CYL = 120` W/cyl, Bosch Handbook) recharged via the alternator on WLTP cold start (`engineCycle`), while reducing cold-start unburned HC (+1 kg, +\$120 + \$35/cyl).
+- **Checks**: added `tests/test291.mjs` (`291`, `276`, `284` pass).
+
 ### Wet vs dry sump lubrication & lateral-g oil starvation (build 468)
 
 - **Wet-sump pickup starvation (`stepSumpStarve`, `oilPressureBar`, `stepWear`, `lapSumpReport`)**: oil surface tilt
