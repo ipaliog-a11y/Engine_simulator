@@ -148,6 +148,88 @@ function deriveBalance(){
   engine.balance=computeEngineBalance(engine);
   if(!engine.balance.balShaftActive)engine.balShaft=false;
 }
+// ---- Crankshaft torsional vibration & damper (E12) ----
+// Sources:
+//   · Taylor, The Internal-Combustion Engine in Theory and Practice, vol. 2, ch. 9 (Torsional Vibration):
+//     slider-crank effective inertia J_recip = 0.5*m_rec*r^2, Carter's equivalent-length throw stiffness,
+//     Holzer multi-DOF natural frequency, and gas-torque harmonic orders k = 0.5, 1, 1.5... (4-stroke) / 1, 2... (2-stroke).
+//   · Nestorides (BICERA), A Handbook on Torsional Vibration, §1.2 (crank throw stiffness) & §2 (damping).
+//   · Bosch Automotive Handbook: steel shear modulus G = 79.3 GPa, density 7850 kg/m^3, elastomer vs fluid dampers.
+// Empirical journal-to-bore ratios (FRIC_MAIN_D=0.65, FRIC_PIN_D=0.56, FRIC_BRG_LD=0.35) are used because
+// per-preset journal dimensions are not stored.
+const CRANK_DAMPERS={
+  none:  {label:'NONE (SOLID PULLEY)', zeta:0.015, noseMult:0.35, massKg:-1.5, cost:-120},
+  stock: {label:'STOCK (ELASTOMER)',   zeta:0.080, noseMult:0.65, massKg:0,    cost:0},
+  fluid: {label:'FLUID / RACE DAMPER', zeta:0.180, noseMult:0.95, massKg:1.5,  cost:450}
+};
+const TORSIONAL_REF=2.5;
+function computeCrankTorsional(spec){
+  const damper=spec&&CRANK_DAMPERS[spec.crankDamper]?spec.crankDamper:'stock';
+  const ds=CRANK_DAMPERS[damper];
+  if(!spec||spec.type==='rotary'||spec.type==='electric'){
+    return {applicable:false,crankTorsionalHz:0,throwStiff_NmRad:0,throwInertia_kgm2:0,damper,damperLabel:ds.label,
+      criticalRpms:[],worstResRpm:0,worstOrder:0,worstMajor:false,resonanceInRange:false,dampedOk:true,severity:0};
+  }
+  const nc=spec.cylinders||4,B=(spec.bore_mm||86)/1000,S=(spec.stroke_mm||86)/1000,r=S/2;
+  const nThrows=spec.layout==='v'?Math.max(1,Math.ceil(nc/2)):nc;
+  const cylPerThrow=nc/nThrows;
+  const Dm=FRIC_MAIN_D*B,Dp=FRIC_PIN_D*B,Lm=FRIC_BRG_LD*Dm,Lp=FRIC_BRG_LD*Dp,Lbay=1.15*B;
+  const tw=Math.min(0.20*B,Math.max(0.08*B,0.5*(Lbay-Lm-Lp))),ww=1.35*Dm;
+  const G_steel=79.3e9,Jm=(Math.PI/32)*Math.pow(Dm,4);
+  const Le=Lm+0.8*Lp*Math.pow(Dm/Dp,4)+(1.5*r*Math.pow(Dm,4))/(tw*Math.pow(ww,3));
+  const K_throw=(G_steel*Jm)/Le;
+
+  const mRec=0.55*Math.pow(B/0.086,2.5)*(spec.ci?1.25:1.0);
+  const mRodRot=0.45*mRec;
+  const J_recipRod=cylPerThrow*(mRodRot+0.5*mRec)*r*r;
+  const rhoSteel=7850;
+  const mPin=rhoSteel*(Math.PI/4)*Dp*Dp*Lp;
+  const J_pin=mPin*r*r;
+  const mWebs=2*rhoSteel*ww*tw*(1.6*r);
+  const J_webs=mWebs*Math.pow(0.55*r,2);
+  const J_throw=J_recipRod+J_pin+J_webs;
+  const J_nose=ds.noseMult*J_throw;
+
+  // Holzer fixed-free first torsional mode via bisection (strictly bracketed below the 2nd mode)
+  const holzer0=w=>{
+    let th=1,T=w*w*(J_throw+J_nose)*th;
+    for(let i=nThrows-1;i>=1;i--){th-=T/K_throw;T+=w*w*J_throw*th;}
+    return th-T/K_throw;
+  };
+  let lo=0,hi=2.02*Math.sqrt(K_throw/J_throw)*Math.sin(Math.PI/(2*(2*nThrows+1)));
+  for(let it=0;it<40;it++){const mid=0.5*(lo+hi);if(holzer0(mid)>0)lo=mid;else hi=mid;}
+  const crankTorsionalHz=0.5*(lo+hi)/(2*Math.PI);
+
+  const twoStroke=spec.type==='twostroke';
+  const kFire=twoStroke?nc:nc/2;
+  const step=twoStroke?1:0.5;
+  const redline=spec.redline||7000;
+  const criticalRpms=[];
+  let worst=null;
+  for(let k=step;k<=12.01;k+=step){
+    const isMajor=Math.abs(k-Math.round(k/kFire)*kFire)<1e-6&&k>=kFire-1e-6;
+    const isHalfMajor=nThrows>=3&&(Math.abs(k-0.5*kFire)<1e-6||Math.abs(k-1.5*kFire)<1e-6);
+    if(!isMajor&&!isHalfMajor)continue;
+    const amp=(isMajor?1.0:0.45)/Math.pow(k,0.85);
+    const rpm=(60*crankTorsionalHz)/k;
+    if(rpm<1200||rpm>redline*1.05)continue;
+    const stress=(amp*(rpm/6000)*Math.pow(nThrows/4,0.35)*Math.sqrt(S/B))/(2*ds.zeta*TORSIONAL_REF);
+    const entry={order:k,rpm:Math.round(rpm),isMajor,amp,stress};
+    criticalRpms.push(entry);
+    if(!worst||stress>worst.stress)worst=entry;
+  }
+  const severity=worst?worst.stress:0;
+  const dampedOk=!(worst&&worst.stress>1.0);
+  return {
+    applicable:true,crankTorsionalHz,throwStiff_NmRad:K_throw,throwInertia_kgm2:J_throw,
+    damper,damperLabel:ds.label,criticalRpms,
+    worstResRpm:worst?worst.rpm:0,worstOrder:worst?worst.order:0,worstMajor:worst?worst.isMajor:false,
+    resonanceInRange:criticalRpms.length>0,dampedOk,severity
+  };
+}
+function deriveTorsional(){
+  engine.torsional=computeCrankTorsional(engine);
+}
 // The engine's fixed geometry for the model, once per build (deriveFriction, after deriveValvetrain).
 function deriveFriction(){
   const e=engine;

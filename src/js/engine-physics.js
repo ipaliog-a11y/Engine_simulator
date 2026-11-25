@@ -1641,6 +1641,15 @@ function stepWear(dt){
     const mps=2*(engine.stroke_mm/1000)*state.rpm/60;
     add(mps>PISTON_SPEED_LIMIT?(mps-PISTON_SPEED_LIMIT)*0.012:0,'PISTON SPEED');
   }
+  if(engine.torsional&&engine.torsional.applicable&&!engine.torsional.dampedOk&&state.firing!==false&&state.rpm>=FIRE_RPM){
+    let torsW=0;
+    for(const c of engine.torsional.criticalRpms){
+      if(!(c.stress>1.0))continue;
+      const rel=Math.abs(state.rpm-c.rpm)/c.rpm;
+      if(rel<0.08)torsW=Math.max(torsW,Math.min(0.05,0.015*(c.stress-1.0))*(1-(rel/0.08)*(rel/0.08)));
+    }
+    add(torsW,'TORSIONAL RESONANCE');
+  }
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
   // the smoke limit (Heywood ch.11 diesel PM order); was a dimensionless analyser index before build 257.

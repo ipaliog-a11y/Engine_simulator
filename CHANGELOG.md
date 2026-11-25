@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Crank torsional limit (build 472)
+
+- **Derived crank first torsional natural frequency (`computeCrankTorsional`, `deriveTorsional`)**: computes crank-throw torsional stiffness $K$ (Carter / BICERA equivalent-length formula using steel $G = 79.3\text{ GPa}$ and empirical journal-to-bore ratios $D_m = 0.65 B$, $D_p = 0.56 B$ from `friction.js`), throw inertia $J$ (crankpin, webs, conrod rotating end, and $\frac{1}{2} m_\text{rec} r^2$ per Taylor vol. 2 ch. 9), and Holzer fixed-free first torsional mode $f_{n1}$ (`crankTorsionalHz`), checked against 4-stroke ($k = 0.5, 1, 1.5, \dots$) and 2-stroke ($k = 1, 2, \dots$) firing-order harmonics in the operating rev range. Plan E12 in `plans/engine-systems.md`.
+- **Opt-in `CRANK DAMPER` on `BLOCK` (`crankDamper`)**: defaults to `STOCK (ELASTOMER)` (`'stock'`, $\zeta = 0.08$, 0 kg, \$0) so all existing presets keep their exact dyno/lap numbers and suffer no unexpected wear; `NONE (SOLID PULLEY)` (`'none'`, $\zeta = 0.015$, −1.5 kg, −\$120) leaves firing-order resonances undamped and adds `TORSIONAL RESONANCE` wear in `stepWear()` plus a fault in `diagnoseEngine()`, while `FLUID / RACE DAMPER` (`'fluid'`, $\zeta = 0.18$, +1.5 kg, +\$450) suppresses high-order and long-stroke resonance wear.
+- **Checks**: added `tests/test294.mjs` (`294`, `287`, `276` pass).
+
 ### Electric turbo / MGU-H (build 471)
 
 - **Opt-in `ELECTRIC TURBO` on AIR & BOOST**: defaults to `NONE` (`eTurbo: 'none'`) so existing engines and presets stay unchanged; `E-TURBO (48 V)` (6 kW, 88% eff, +4.5 kg, +$1,600, Garrett E-Turbo ref) and `MGU-H (HV)` (90 kW, 92% eff, +7.0 kg, +$6,500, FIA F1 2014–25 ref). Plan E5 in `plans/engine-systems.md`.

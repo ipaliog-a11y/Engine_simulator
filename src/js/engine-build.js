@@ -17,6 +17,7 @@ function readEngineFromForm(){
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     balShaft:g('edBalShaft').value==='yes',
     drySump:g('edDrySump').value==='dry',
+    crankDamper:g('edCrankDamper')?g('edCrankDamper').value:'stock',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -88,6 +89,7 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edBalShaft').value=e.balShaft?'yes':'no';
   g('edDrySump').value=e.drySump?'dry':'wet';
+  if(g('edCrankDamper'))g('edCrankDamper').value=(typeof CRANK_DAMPERS!=='undefined'&&CRANK_DAMPERS[e.crankDamper])?e.crankDamper:'stock';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -160,6 +162,7 @@ function syncDesignEnable(){
   g('edBalShaft').disabled=!balOk;
   if(type==='twostroke')g('edDrySump').value='wet';
   g('edDrySump').disabled=(type==='twostroke');
+  if(g('edCrankDamper')){if(type==='rotary')g('edCrankDamper').value='stock';g('edCrankDamper').disabled=(type==='rotary');}
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -334,6 +337,7 @@ function buildEngineCore(prevStoich,quiet){
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
   deriveBalance();          // primary/secondary shaking forces, rocking couples & NVH smoothness (E11)
+  deriveTorsional();        // crank first torsional natural frequency & critical resonance check (E12)
   deriveFriction();         // the friction model's geometry: bearings, cams, valves, balance shaft (build 243)
   deriveCharge();           // the charge path: intercooler, compressor frame, spool
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
