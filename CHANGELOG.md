@@ -18,13 +18,22 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 453)
+### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 454)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).
 - Added axle suspension bump-stop downforce capping and `aeroBottomed` flagging (`aeroDownforce`, `aeroBumpCapF/R = 2 * ks * bump`; Milliken & Milliken RCVD ch. 16) in `src/js/tyres-brakes-driveline.js`, `src/js/vehicle-accel.js`, `src/js/racing-line-lap.js`, and `src/js/eco-run.js`.
 - Added global ISO 2533 International Standard Atmosphere altitude/barometric pressure (`ENV`, `pAmbBar`, `pAmbAtm`, `airRho`, anchored at `alt_m = 0, tempC = 20 °C -> 1.20 kg/m³`) and headwind (`envWind`) across `engine-constants-boost.js`, `vehicle-spec.js`, `vehicle-accel.js`, `drive-model.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Included aerodynamic downforce (`N = m*G*cosT + F_df`) in rolling resistance across `vehicle-spec.js`, `vehicle-accel.js`, `racing-line-lap.js`, `fuel-cycle.js`, and `eco-run.js`.
 - Added `tests/test275.mjs` covering post-stall wing drag/lift, dynamic ride-height/pitch aero, suspension bottoming, ISA altitude & headwind scaling, and downforce rolling resistance.
+
+### Championship completion, timed-race countdown, and cross-mode audio (build 453)
+
+- Added five championship series (`kei_cup`, `muscle_cup`, `touring_cup`, `proto_cup`, `hybrid_cup`) covering the previously unreachable `kei_cup`, `muscle`, `touring`, `proto`, and `hyb_cup` classes, unlocked by default in `champCareer()`.
+- Added player team class eligibility checks (`champSeatDescriptor`, `champSeatEligible`, `champCheckTeamEligibility`) enforced in `champNewSeason()` and surfaced via `#champEligNote` on the CHAMP hub, along with track preview redraws on `#champSeries` change, `"WATCH REPLAY"` wired to `raceUI.run`, and Instant Season progress bar updates across rounds.
+- Wired `S.economy.tyres` dry/wet set consumption across stints and distinguished `CAREER` mode progression (persisting credits to `pes.champ.career`, scaling season tyre allocations, and charging `CHAMP.tyreSetCost` for extra sets) from sandbox seasons.
+- Replaced `LAP X/est` with a remaining countdown clock (`MM:SS` / `HH:MM:SS` via `fmtRaceClock` / `raceStatusClock`) in `#raceHead`, `#raceTopInfo`, and the race canvas header when `cfg.durationSec > 0`.
+- Extended cross-mode audio (`src/js/sound.js`, `src/js/skidpad-run.js`): recorded per-wheel slip angles `alpha` and `mu` in `skidpad-run.js`, wired `motorSoundState` and `soundSource`/`screechSlide` to Drift, Skidpad, Spiral, Figure 8, and the focused car on the Race tab, and restricted hybrid bench-off muting to `vizMode === 'dyno'` so Hybrids remain audible in Drift and Race replays.
+- Added `tests/test278.mjs` covering the new series, class eligibility, tyre consumption and career economy, WATCH REPLAY, timed-race countdown, and cross-mode audio.
 
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
