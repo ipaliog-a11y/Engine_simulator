@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Vehicle and engine designer fixes, setup safety warnings, and layout validation (build 457)
+
+- **Vehicle Designer & challenge UI fixes**: fixed the ballast summary in `vcdSummary` (`+g('vhBallast') > 0`), updated `updateGearingLabel()` to show the actual `vehicle.finalDrive` instead of a dummy lerp, added hybrid front-axle motor force (`pt.frontForce(v)`) to the `vcdForce` drive-force curve, and fixed circuit challenge budget bars in `renderChallenge()` to use total car cost (`ev.cost`) instead of engine-only cost (`m.cost`).
+- **AWD diff selector & Vehicle Designer safety warnings**: added `#vhAwdMode` to the `CHASSIS & DRIVE` card (synced with Track, Race, and Challenge AWD selectors), and added setup safety warnings for rotor-in-wheel clearance, rollover hazard (`track/(2·CG) < μ`), tyre load-rating overload, rear-before-front brake lockup (`zc < 0.80 g`), 200–0 brake fade, and high-speed aero spring bottoming.
+- **Engine Designer validation, disabled states & readouts**: blocked invalid cylinder/layout combinations (odd 1/3/5-cyl V/Boxer and 12-cyl Inline) in `syncDesignEnable()`, synced rotary `edEcc` max to `Math.floor(bore / 5)`, disabled `edCompWheel`/`edHousing` when a custom `turboPart` is active and `edTaperPct` when `edTaperRpm === 0`, surfaced `turboLoad`, spool RPM (`boostHalfRpm()`), `compEff`, and peak EGT readouts in Engine Designer, and accounted for `engine.icPart` in `computeCost()` and `updateDesignSummary()`.
+- **Regression test**: added `tests/test279.mjs`. Zero physics or preset changes.
+
 ### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 456)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).

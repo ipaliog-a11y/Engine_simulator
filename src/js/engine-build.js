@@ -117,25 +117,39 @@ function syncDesignEnable(){
   g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
   g('edEcc').disabled=type!=='rotary';
+  if(type==='rotary'){
+    const eccMax=Math.max(8,Math.floor((+g('edBore').value||105)/5));
+    g('edEcc').max=eccMax;
+    if(+g('edEcc').value>eccMax)g('edEcc').value=eccMax;
+  }
   // Cylinder / rotor count is capped per type: production Wankels top out at four rotors (Mazda
   // 26B) and two-strokes at six cylinders. Counts above the cap are shown disabled rather than
   // silently clamped at build time, which used to turn a 12-rotor choice into 3 with no word said.
   const maxCyl=tp.maxCyl||12, cylSel=g('edCyl');
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
+  // Block physically invalid bank/cylinder combinations: odd 1/3/5-cyl cannot be V or Boxer; 12-cyl cannot be Inline.
+  if(type!=='rotary'){
+    const cyl=+cylSel.value, laySel=g('edLayout'), odd=cyl%2===1;
+    [...laySel.options].forEach(o=>{
+      o.disabled=(odd&&(o.value==='v'||o.value==='boxer'))||(cyl===12&&o.value==='inline');
+    });
+    if(odd&&(laySel.value==='v'||laySel.value==='boxer'))laySel.value='inline';
+    else if(cyl===12&&laySel.value==='inline')laySel.value='v';
+  }
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
-  g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na;g('edTqLimit').disabled=na;
+  g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na||!(+g('edTaperRpm').value>0);g('edTqLimit').disabled=na;
   g('edIntercooler').disabled=na;
-  const turbo=intake==='turbo';
-  g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo;
+  const turbo=intake==='turbo', turboCustom=turbo&&g('edTurboSize').value.startsWith('part:');
+  g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo||turboCustom;
   g('edTurboConfig').disabled=!turbo;
-  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168)
-  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||g('edVGT').value==='yes';
+  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168); a custom turboPart sets its own too
+  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||turboCustom||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.

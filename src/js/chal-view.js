@@ -17,7 +17,7 @@ function syncDriveAidsUI(){
   const cTc=document.getElementById('chalTc'),cEsp=document.getElementById('chalEsp');
   if(cTc)cTc.value=(isDrift?(chalDriftTc===true):tcOn)?'on':'off';
   if(cEsp)cEsp.value=(isDrift?(chalDriftEsp===true):espOn)?'on':'off';
-  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+  for(const id of['vhAwdMode','trkAwdMode','chalAwdMode','raceAwdMode']){
     const el=document.getElementById(id);
     if(el){el.value=awdM;const row=el.closest('.field');if(row)row.style.display=isAwd?'':'none';}
   }
