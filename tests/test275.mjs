@@ -115,7 +115,7 @@ const r = await page.evaluate(() => {
       p0, rho0, p25, rho25,
       naDrop: 1 - naTq25 / naTq0,
       tbDrop: 1 - tbTq25 / tbTq0,
-      vCalm: accCalm.topSpeed, vHead: accHead.topSpeed, vTail: accTail.topSpeed,
+      vCalm: accCalm.freeSpeed, vHead: accHead.freeSpeed, vTail: accTail.freeSpeed,
       lCalm: cycCalm.l100, lHead: cycHead.l100, lTail: cycTail.l100,
       lapCalm: lapCalm.lap, lapHead: lapHead.lap
     };
