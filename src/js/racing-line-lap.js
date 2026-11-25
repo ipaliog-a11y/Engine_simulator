@@ -368,10 +368,16 @@ function simulateLapCore(key,opts){
   // limiter, and leaving it out is not a small error: exempting top gear (so the car could keep
   // pulling clamped-to-redline torque at any speed) let an over-geared car run on down the
   // straight until aerodynamic drag alone stopped it, tens of km/h past the speed its own gearing
-  // allows. Past the limiter in every gear, bf stays -1 and the force below floors to zero, which
-  // is exactly what a fuel cut does; drag then brings the car back to the top-gear redline speed.
-  // The gear index still defaults to top so the gear readout and shift count stay sensible up
-  // there rather than snapping back to first.
+  // allows. Past the limiter in every gear the fuel is cut, and the gear index stays top so the
+  // gear readout and shift count stay sensible up there rather than snapping back to first.
+  // Build 475 (G3): a fuel cut is not a free wheel. The engine is still in gear, turned by the car, and brakes it
+  // with its own friction and pumping against the closed throttle: the overrun torque the braking zones use
+  // (overrunTable: brakeTorqueRaw with the fuel cut, the same engine the dyno runs), at the limiter, back through
+  // the gearing and the driveline. Until this build the force here floored to zero, so on a descent past the
+  // top-gear redline speed only the air held the car back.
+  const ovTab=pt.overrunTable(rl);
+  const overrunTq=r=>{const x=(clamp(r,500,rl)-500)/250,k=Math.min(ovTab.length-2,Math.floor(x));return ovTab[k]+(ovTab[k+1]-ovTab[k])*(x-k);};
+  const limiterF=g=>-overrunTq(rl)*ratios[g]*fd/(rT*eff);   // the engine's drag at the limiter, at the road (N)
   const VMAX_BG=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   function bestGear(v){
     let bi=ratios.length-1,bf=-1,bq=0;
@@ -381,7 +387,7 @@ function simulateLapCore(key,opts){
       const f=tqAt(clamp(rpm,idle,rl))*tot*eff/rT+frontF(v);   // a hybrid's front axle motor on top (build 195)
       if(f>bf){bf=f;bi=i;bq=tqAt(clamp(rpm,idle,rl))*tot;}
     }
-    return{gear:bi,F:Math.max(0,bf),tqFrac:bq/axleTqMax};
+    return{gear:bi,F:bf<0?limiterF(bi):bf,tqFrac:bq/axleTqMax};
   }
   // The same, tabulated every 0.05 m/s and interpolated: it depends only on the speed, and the line
   // optimiser asks for it hundreds of thousands of times (build 115).
@@ -504,10 +510,10 @@ function simulateLapCore(key,opts){
   }
   // Accelerating from q at vi: the fastest the car can be at the next point, what limits it, and the
   // share of the tyre in use sideways.
-  // The drive in one given gear: none past the limiter, which cuts the fuel.
+  // The drive in one given gear: past the limiter, which cuts the fuel, the engine's own drag (build 475).
   function inGear(vi,g){
     const tot=ratios[g]*fd,rpm=vi*tot/rT*60/TWO_PI;
-    if(rpm>rl)return{gear:g,F:0,tqFrac:0};
+    if(rpm>rl)return{gear:g,F:limiterF(g),tqFrac:0};
     const tq=tqAt(clamp(rpm,idle,rl));
     return{gear:g,F:tq*tot*eff/rT+frontF(vi),tqFrac:tq*tot/axleTqMax};
   }
@@ -524,7 +530,7 @@ function simulateLapCore(key,opts){
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
-    const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
+    const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F>0?g0.F*boostShare:g0.F,tqFrac:g0.tqFrac*boostShare}:g0;
     const R=(drag(vi)+rollF(vi,q.cosT)+corneringDrag(m,aLat,N))/m+G*q.sinT;
     let kk;
     if(vehicle.drive==='awd'){
@@ -680,8 +686,7 @@ function simulateLapCore(key,opts){
   //     driveline. Mid-shift the clutch is open and there is none. It adds to the brakes and cannot take the
   //     tyres past their grip, so on a hot lap, where the tyres are the limit, it mostly takes work off the brakes
   //     (cooler rotors, less fade); it only shortens a stop where the brakes themselves are the limit.
-  const ovTab=pt.overrunTable(rl);
-  const overrunTq=r=>{const x=(clamp(r,500,rl)-500)/250,k=Math.min(ovTab.length-2,Math.floor(x));return ovTab[k]+(ovTab[k+1]-ovTab[k])*(x-k);};
+  //     (ovTab and overrunTq are above bestGear, which uses them at the limiter.)
   const rpmIn=(g,vv)=>vv*ratios[g]*fd/rT*60/TWO_PI;
   const engineBrakeA=(g,vv)=>overrunTq(clamp(rpmIn(g,vv),idle,rl))*ratios[g]*fd/(rT*eff*m);
   // what the tyres slow the car by at i (brakes and engine; not the air, rolling, cornering drag or the hill)

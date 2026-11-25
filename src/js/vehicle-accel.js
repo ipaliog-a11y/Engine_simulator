@@ -415,6 +415,7 @@ function simulateAccelRun(){
   const m=vehicle.mass,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff,ratios=vehicle.ratios;
   const vGov=(vehicle.governor||0)/3.6;   // m/s, 0 when the limiter is removed
   const idle=pt.idleRpm(),rl=pt.maxRpm(),TWO_PI=Math.PI*2,dt=0.005;
+  const ovLim=(()=>{const t=pt.overrunTable(rl),x=(rl-500)/250,k=Math.min(t.length-2,Math.floor(x));return t[k]+(t[k+1]-t[k])*(x-k)||0;})();   // the engine's drag at the limiter, fuel cut (Nm; build 475)
   const gb=vehicle.gb||GEARBOX.manual;
   const shiftTime=gb.shift,tcStall=gb.stall>0?clamp(gb.stall,idle,rl*0.85):0;
   // an electric car has no clutch to slip and no launch speed to choose: the motor turns with the wheels from rest (build 180)
@@ -499,10 +500,13 @@ function simulateAccelRun(){
     // to be over the redline here is to be in top gear with nowhere left to go — and then the
     // limiter cuts fuel. Without this the clamp above quietly hands back full redline torque for
     // ever, and the car keeps pulling past the fastest speed its gearing can actually reach.
+    // Build 475 (G3): with the fuel cut the engine, still in gear, brakes the car with its own overrun torque at the
+    // limiter (overrunTable, as the lap's braking zones), through the gearing and driveline. Not mid-shift (clutch open).
     const overRev=rpm>rl;
     let driveF=0;
     // mid-shift with the drive cut (a manual or a sequential); a powershift box drives on through it (build 171)
     const cutNow=shiftT>0&&!gb.powershift;
+    if(overRev&&!cutNow&&!slipping)driveF=-ovLim*totalRatio/(r*eff);
     // Spin the turbo up alongside the car. Off throttle during a shift the exhaust cools and the
     // shaft coasts down, which is why an upshift costs boost and why it costs a big frame more.
     // Throttle floor during the shift is deliberately not zero: a lift to 0.15 dumped so much shaft
