@@ -120,8 +120,8 @@ const r = await page.evaluate(() => {
   sceneBind(T);
   const p0 = T.pts[0];
   const hd0 = Math.atan2(p0.ty || 0, p0.tx || 1);
-  const cam = sceneChaseV2(p0.x, p0.y, hd0, 320, 200, 1);
   const car = { x: p0.x, y: p0.y, hd: hd0, brk: 1, col: '#ff4444' };
+  const cam = sceneChase(car, 320, 200, 14, 0.72);
   lapReplay.playing = true;
   for (let i = 0; i < 40; i++) scenePaintV2(ctx, cam, { cars: [car] });
   const playingStats = window.sceneV2Stats();
