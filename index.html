@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 470</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 471</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1033,6 +1033,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edHousing">TURBINE A/R</label><select id="edHousing"><option value="tight">TIGHT (RESPONSE)</option><option value="stock">STOCK</option><option value="loose">LOOSE (TOP END)</option></select></div>
 <div class="field"><label for="edVGT">TURBINE</label><select id="edVGT"><option value="no">FIXED HOUSING</option><option value="yes">VARIABLE GEOMETRY</option></select></div>
 <div class="field"><label for="edAntilag">ANTI-LAG (ALS)</label><select id="edAntilag"><option value="no">NO</option><option value="yes">YES</option></select></div>
+<div class="field"><label for="edETurbo">ELECTRIC TURBO</label><select id="edETurbo"><option value="none">NONE</option><option value="e48">E-TURBO (48 V)</option><option value="mguh">MGU-H (HV)</option></select></div>
 <div class="field"><label for="edScType">SUPERCHARGER</label><select id="edScType"><option value="roots">ROOTS</option><option value="screw">TWIN-SCREW</option><option value="centrifugal">CENTRIFUGAL</option></select></div>
 <div class="field"><label for="edTaperRpm">BOOST TAPER FROM (rpm, 0 = off)</label><input type="number" id="edTaperRpm" min="0" max="12000" step="100" value="0"></div>
 <div class="field"><label for="edTaperPct">BOOST AT LIMITER (%)</label><input type="number" id="edTaperPct" min="20" max="100" step="1" value="100"></div>
@@ -6261,7 +6262,7 @@ const AIR_FILTER={
 const DEFAULT_ENGINE={
   type:'petrol4',
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
-  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
+  intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,eTurbo:'none',nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',railPress:'stock',pilotSplit:false,glowPlugs:false,ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
@@ -8813,6 +8814,17 @@ const TURBO={
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer, every factory turbo (a designed turbo sets its own)
+// Electric turbo / MGU-H (E5): coaxial motor-generator on the turbocharger shaft.
+//   e48   Garrett 48 V E-Turbo (e.g. Mercedes-AMG M139l): ~4-6 kW continuous/peak e-assist & recuperation
+//         at ~88% motor + 48 V MOSFET inverter efficiency (Garrett Motion technical specs; SAE 2021).
+//   mguh  HV MGU-H (FIA F1 2014-2025 PU Regs Art. 5.1.4/5.2): unlimited ES-MGU-H transfer, ~90 kW
+//         peak shaft motoring/recovery on HV bus at ~92% PMSM + SiC/IGBT inverter efficiency.
+// baseFrac (0.35 of shaftMax) sets the corner speed for peak motor torque T_max = maxW / (baseFrac * wMax).
+const E_TURBO={
+  none:{label:'NONE',maxW:0,eta:1,vBus:0,baseFrac:0.35,massKg:0,cost:0},
+  e48: {label:'E-TURBO (48 V)',maxW:6000,eta:0.88,vBus:48,baseFrac:0.35,massKg:4.5,cost:1600},
+  mguh:{label:'MGU-H (HV)',maxW:90000,eta:0.92,vBus:400,baseFrac:0.35,massKg:7.0,cost:6500}
+};
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
 // so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){
@@ -10394,7 +10406,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,latG:0,sumpStarve:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',turboHealth:1.0,turboBlown:false,turboWearCause:'',pfSootG:0,pfRegen:false,pfSootRate:0,fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,latG:0,sumpStarve:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,eTurboW:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',turboHealth:1.0,turboBlown:false,turboWearCause:'',pfSootG:0,pfRegen:false,pfSootRate:0,fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
 let lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -10441,6 +10453,7 @@ function readEngineFromForm(){
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
+    eTurbo:g('edETurbo')?g('edETurbo').value:'none',
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
     cat:g('edCat').value,
@@ -10508,6 +10521,7 @@ function applyEngineToForm(e){
   g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
+  if(g('edETurbo'))g('edETurbo').value=E_TURBO[e.eTurbo]?e.eTurbo:'none';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';g('edCylDeact').value=e.cylDeact?'yes':'no';
@@ -10585,6 +10599,7 @@ function syncDesignEnable(){
   // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168); a custom turboPart sets its own too
   g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||turboCustom||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
+  if(g('edETurbo'))g('edETurbo').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
   g('edSilencer').disabled=g('edExhaust').value.startsWith('part:');   // a designed exhaust carries its own silencer
@@ -10757,7 +10772,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.eTurboW=0;state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
@@ -10921,6 +10936,7 @@ function computeCost(){
     c+=({small:1200,medium:1800,large:2600}[engine.turboSize]||1800)*({single:1,twin:1.8,sequential:2.6,compound:3.0}[engine.turboConfig]||1)
        *(engine.vgt?1.7:1);   // a vane ring, its bearings and an actuator, in nickel alloy
     if(engine.antilag)c+=700;
+    if(engine.eTurbo&&E_TURBO[engine.eTurbo])c+=E_TURBO[engine.eTurbo].cost;
   }else if(engine.intake==='supercharger'){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
   }
@@ -12456,8 +12472,11 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
   // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
   const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
+  const et=engine.intake==='turbo'?E_TURBO[engine.eTurbo]:null;
+  const etActive=!!(et&&et.maxW>0);
+  let eElSum=0;
   for(let k=0;k<sub;k++){
-    const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
+    const w=Math.sqrt(2*E/J), n=w*60/(2*Math.PI);
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
     // The compressor draws AMBIENT air. This passed the charge temperature after the compressor and the
@@ -12471,7 +12490,8 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // FALLS only as fast as the engine empties the volume: tau = (air held) / (air swallowed). Letting
     // it fall instantly with every dip in shaft speed, and charging the refill each time, burned
     // energy in a loop — with a real-sized charge volume that stalled spool above 1 bar.
-    const bShaft=clamp(r.pr-1,0,boostTarget(rpm));
+    const tgtB=boostTarget(rpm), rawB=(r.prRaw!=null?r.prRaw:r.pr)-1;
+    const bShaft=clamp(r.pr-1,0,tgtB);
     let b2=bShaft;
     if(bShaft<b){
       const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,mAirStep);
@@ -12480,25 +12500,45 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     const dB=Math.max(0,b2-b);
     const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
     // one shaft's share of it: the active turbos fill the volume together (build 290)
-    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
-    const Enext=E+(r.net-loss)*h-fill;
+    const units=unitsAt(rpm);
+    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/units;
+    // E5: Electric turbo / MGU-H motoring (spool assist off-boost) & generating (exhaust recovery at full load).
+    // Motor torque is capped at T_max = maxW / (baseFrac * wMax) so low-speed torque stays physical;
+    // generation only absorbs surplus turbine power above compressor + bearing loss so boost never sags.
+    let pEm=0, pEl=0;
+    if(etActive&&th>0.25){
+      const wBase=et.baseFrac*wMax, tMax=et.maxW/Math.max(1,wBase);
+      const pCap=Math.min(et.maxW,tMax*Math.max(w,200))/units;
+      if(rawB<tgtB-0.01&&E<Emax){
+        const assistFrac=clamp((tgtB-rawB)/0.15,0,1);
+        pEm=pCap*assistFrac;
+        pEl=-(pEm*units)/et.eta;
+      }else if((r.net-loss)>0&&(rawB>=tgtB-0.01||E>=Emax*0.98)){
+        const pGen=Math.min(pCap,r.net-loss);
+        pEm=-pGen;
+        pEl=(pGen*units)*et.eta;
+      }
+    }
+    eElSum+=pEl*h;
+    const Enext=E+(r.net-loss+pEm)*h-fill;
     // Wastegated turbos dump excess exhaust once r.prRaw reaches 1+boostTarget; only flag overspeed
     // when the wheel hits TIP_LIMIT (520 m/s) while still trying to meet boostTarget.
-    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0&&((r.prRaw!=null?r.prRaw:r.pr)-1)<=boostTarget(rpm)+0.01)overspeed=true;
+    if(Enext>=Emax&&Emax>0&&(r.net-loss+pEm)>0&&rawB<=tgtB+0.01)overspeed=true;
     E=clamp(Enext,0,Emax);
     b=b2;
     if(isCompSurge(compFlowFrac(rpm,mAirStep),1+b))surge=true;
   }
-  return{shaftE:E,boost:b,overspeed,surge};
+  return{shaftE:E,boost:b,overspeed,surge,eGenW:dt>0?eElSum/dt:0};
 }
 function stepBoost(dt){
-  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;return;}
-  if(state.turboBlown){state.shaftE=0;state.boostActual=0;state.turboSurge=false;state.turboOverspeed=false;return;}
+  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;state.eTurboW=0;return;}
+  if(state.turboBlown){state.shaftE=0;state.boostActual=0;state.turboSurge=false;state.turboOverspeed=false;state.eTurboW=0;return;}
   if(state.shaftE==null)state.shaftE=0;
   const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
                        state.throttle!=null?state.throttle:1,dt);
   state.shaftE=r.shaftE;state.boostActual=r.boost;
   state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
+  state.eTurboW=r.eGenW||0;
 }
 // Upstream pressure (atm abs) in the air ENV sets (ISO 2533, engine-constants-boost.js), as buildTorqueGrid has read it
 // since build 456: a supercharger multiplies the air it draws, a turbo's boost adds to it. pAmbAtm() is exactly 1 at sea
@@ -12653,7 +12693,8 @@ function stepEngineOnce(dt){
 // System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
 function stepElectrical(dt){
   if(isElectric()||isHybrid())return;   // no alternator: the traction pack is the bench's (stepMotorBench, stepHybridBench)
-  const netA=altOutputA(state.rpm)-elecDemandA();
+  const eTurboA=(state.eTurboW||0)/14.0;   // E-Turbo / MGU-H net current onto 12 V / 48 V bus via DC-DC (+ charging, - drawing)
+  const netA=altOutputA(state.rpm)-elecDemandA()+eTurboA;
   state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
   const charging=netA>0&&state.batterySOC<0.999;
   state.systemVoltage=clamp(11.4+1.6*state.batterySOC+(charging?0.6:0),10.5,14.4);
@@ -14439,7 +14480,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 function engineMass(){
   let m=50+18*engine.displacement_L+7*engine.cylinders;
   if(engine.ci)m*=1.35;                                   // diesels: iron block, strong internals
-  if(engine.intake==='turbo')m+=15+engine.boost_bar*10;
+  if(engine.intake==='turbo'){m+=15+engine.boost_bar*10;if(engine.eTurbo&&E_TURBO[engine.eTurbo])m+=E_TURBO[engine.eTurbo].massKg;}
   else if(engine.intake==='supercharger')m+=25;
   if(engine.layout==='v'||engine.layout==='boxer')m+=10;
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);
@@ -35719,7 +35760,7 @@ function stepHybridBench(dt){
     withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));});
     const cut=state.rpm>=e.redline||withEngThr(H,overrunFuelCut);
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
-  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
+  }else{H.Te=0;state.eTurboW=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
   // MG1 (power-split / series): the engine's speed, reaction, and tracked MG1 thermal node
   let P1=0;
@@ -35736,12 +35777,12 @@ function stepHybridBench(dt){
     P1=Ts!==0&&(H.engOn||H.Tspin)?mg1Res.P1:0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
-  // takes, with the 12 V load and MG1's power on the same bus (through the DC-DC boost converter on a power-split)
-  const etaBoost=psBoostEta(hy);
-  const PinMax=lim.Pmax*etaBoost+P1-B.auxW,PinMin=-lim.Pchg/etaBoost+P1-B.auxW;
-  let Tm=H.TmWant==null?hybMotorFor(hy,H.n,P1-B.auxW,temp):H.TmWant;
-  Tm=Math.min(Tm,hybMotorFor(hy,H.n,H.soc>0.02?PinMax:P1-B.auxW,temp));
-  Tm=Math.max(Tm,hybMotorFor(hy,H.n,H.soc<0.98?PinMin:P1-B.auxW,temp)*(H.n>5?1:0));
+  // takes, with the 12 V load, MG1's power, and any E-Turbo/MGU-H power on the same bus
+  const etaBoost=psBoostEta(hy),eTurboW=state.eTurboW||0;
+  const PinMax=lim.Pmax*etaBoost+P1+eTurboW-B.auxW,PinMin=-lim.Pchg/etaBoost+P1+eTurboW-B.auxW;
+  let Tm=H.TmWant==null?hybMotorFor(hy,H.n,P1+eTurboW-B.auxW,temp):H.TmWant;
+  Tm=Math.min(Tm,hybMotorFor(hy,H.n,H.soc>0.02?PinMax:P1+eTurboW-B.auxW,temp));
+  Tm=Math.max(Tm,hybMotorFor(hy,H.n,H.soc<0.98?PinMin:P1+eTurboW-B.auxW,temp)*(H.n>5?1:0));
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor reserves cranking torque for the K0 clutch while starting
@@ -35758,7 +35799,7 @@ function stepHybridBench(dt){
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,TmAvail-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
   const Pm=Tm*w0+H.Tc2*Math.max(w0,state.rpm*Math.PI/30)+(Tm!==0||H.Tc2||H.n>0?L.total:0);
-  const Pbus=Pm-P1+B.auxW,Pbat=Pbus>=0?Pbus/etaBoost:Pbus*etaBoost;
+  const Pbus=Pm-P1-eTurboW+B.auxW,Pbat=Pbus>=0?Pbus/etaBoost:Pbus*etaBoost;
   const d=packDrawClamped(pack,H.soc,Pbat,H.tB.b);
   H.soc=clamp(H.soc-d.I*dt/(pack.Ah*3600),0,1);
   motorHeatStep(m,temp,L,dt);packHeatStep(pack,H.tB,d.heat,dt);
@@ -39905,6 +39946,8 @@ const ICD_FIELDS={
     trade:'It works like a tight housing low down and a loose one at the top. It costs more, and takes the place of the housing choice.'},
   edAntilag:{adv:true,guide:'lag',what:'Keeps the turbo spinning off the throttle by burning fuel in the exhaust.',
     trade:'No lag after a lift, at the cost of heat in the turbo and the exhaust.'},
+  edETurbo:{adv:true,guide:'lag',what:'A motor-generator on the turbo shaft: spins the wheel up off boost and recovers exhaust energy at full load.',
+    trade:'48 V E-Turbo gives ~6 kW of spool assist and recovery; HV MGU-H gives up to 90 kW into the hybrid pack. Adds mass and cost.'},
   edScType:{guide:'supercharger',what:'The kind of supercharger.',
     trade:'A Roots or a twin-screw gives its boost from low rpm; a centrifugal one builds boost with rpm, like a turbo without the lag.'},
   edTaperRpm:{adv:true,guide:'wastegate',what:'The rpm from which the ECU lets the boost fall. 0 holds it to the limiter.',
