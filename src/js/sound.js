@@ -808,7 +808,7 @@ function soundDrive(dt,s=state){
   // How hard it rings is how much fuel goes up at once: for a diesel that is the fuel injected during the
   // delay, which is not the load; for a detonating petrol charge it is the end gas, which is.
   const cool=Number.isFinite(s.coolant)?s.coolant:90,kr=Number.isFinite(s.knockRisk)?s.knockRisk:0;
-  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1);}
+  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1)*(typeof dieselIgnDelayFactor==='function'?dieselIgnDelayFactor(e):1);}
   else{knockProb=clamp((kr-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
   // blow-off: the charge pipe holds the boost the compressor made while the throttle was open; when the
   // throttle shuts on it, however gently, the valve vents it, once (a diesel has no throttle to shut)

@@ -1103,13 +1103,45 @@ function rotaryLostWork(cr){
   const pis=wiebePhasingEff(SI_BURN_DEG,SI_CA50-x50*SI_BURN_DEG,cr,pistonVol);
   return Math.max(0,1-rot/pis);       // share of the piston-referenced work the rotary does not do
 }
+// Diesel common-rail & glow-plug physics (Bosch Automotive Handbook: rail pressures 1600-2500 bar,
+// injector orifice flow m_dot ~ sqrt(dp), glow-plug power ~100-150 W/cyl cold-crank preheat).
+const CR_REF_BAR=1350, GLOW_W_PER_CYL=120;
+function dieselRailBar(e){
+  if(!e||!e.ci||!e.railPress||e.railPress==='stock')return 0;
+  const p=+e.railPress;return Number.isFinite(p)&&p>0?p:0;
+}
+function dieselBurnTimeFactor(e){
+  const p=dieselRailBar(e);
+  return p>0?Math.pow(CR_REF_BAR/p,0.20):1;
+}
+function dieselIgnDelayFactor(e){
+  if(!e||!e.ci)return 1;
+  let f=1;
+  const p=dieselRailBar(e);
+  if(p>0)f*=Math.pow(CR_REF_BAR/p,0.35);
+  if(e.pilotSplit)f*=0.65;
+  return clamp(f,0.45,1.0);
+}
+function dieselCombNoiseDbDelta(e){
+  const f=dieselIgnDelayFactor(e);
+  return f<1?20*Math.log10(f):0;
+}
+function glowPreheatTime(tempC,e){
+  if(!e||!e.ci||!e.glowPlugs||!(tempC<40))return 0;
+  return clamp((40-tempC)/8.5,0.5,10.0);
+}
+function glowPreheatEnergyJ(tempC,e){
+  const t=glowPreheatTime(tempC,e);
+  return t>0?(e.cylinders||4)*GLOW_W_PER_CYL*t:0;
+}
 function buildBurnTable(){
   const e=engine;
   e.burnTab=null;
   e.rotaryLost=e.type==='rotary'?rotaryLostWork(e.compression):0;
   if(!e.ci)return;
   const ref=wiebePhasingEff(6*BURN_REF_RPM*BURN_T_CI,SOC_CI,e.compression),tab=[];
-  for(let r=0;r<=e.redline*1.3+200;r+=100)tab.push(wiebePhasingEff(6*Math.max(r,300)*BURN_T_CI,SOC_CI,e.compression)/ref);
+  const burnT=BURN_T_CI*dieselBurnTimeFactor(e);
+  for(let r=0;r<=e.redline*1.3+200;r+=100)tab.push(wiebePhasingEff(6*Math.max(r,300)*burnT,SOC_CI,e.compression)/ref);
   e.burnTab=tab;
 }
 function burnPhasing(rpm){
@@ -1707,7 +1739,7 @@ function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
     phiHC+=Math.max(0,engine.overlap||0)/90*0.04+meterSlop*0.05+cold*0.08;
     phiHC+=Math.max(0,lam-1.06)*0.15+Math.max(0,1.0-lam)*0.02;
   }
-  if(engine.ci){const fuelling=clamp((1.7-lam)/1.0,0,1);phiHC+=fuelling*0.02+cold*0.04;}
+  if(engine.ci){const fuelling=clamp((1.7-lam)/1.0,0,1);phiHC+=fuelling*0.02+cold*0.04*(engine.glowPlugs?0.65:1);}
   phiHC=clamp(phiHC,0,0.45);
   let mHC=(phiHC*burn+shortHC)*1000;                // g/s as fuel mass
   const cFrac=MW_C/(MW_C+y*MW_H+z*MW_O);
@@ -1734,8 +1766,14 @@ function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
   let noxIdx,pmIdx=0;
   if(engine.ci){
     const fuelling=clamp((1.7-lam)/1.0,0,1);
-    noxIdx=8+130*clamp(tempF*0.62,0,1.4);
-    pmIdx=2+Math.pow(fuelling,1.6)*80+meterSlop*30;
+    const pRail=dieselRailBar(engine);
+    // Common-rail NOx/soot trade-off (Bosch Automotive Handbook): finer atomization cuts PM (~(p_ref/p)^1.1)
+    // while higher peak local flame T raises NOx (~(p/p_ref)^0.35); pilot split softens premixed spike (-12% NOx, +8% PM).
+    const railPmMul=pRail>0?Math.pow(CR_REF_BAR/pRail,1.1):1;
+    const railNoxMul=pRail>0?Math.pow(pRail/CR_REF_BAR,0.35):1;
+    const pilotNoxMul=engine.pilotSplit?0.88:1, pilotPmMul=engine.pilotSplit?1.08:1;
+    noxIdx=(8+130*clamp(tempF*0.62,0,1.4))*railNoxMul*pilotNoxMul;
+    pmIdx=(2+Math.pow(fuelling,1.6)*80+meterSlop*30)*railPmMul*pilotPmMul;
     mCO+=(3+fuelling*9)/300*burn*1000*0.15;         // small diesel CO EI on top of majors
   }else if(engine.type==='twostroke')noxIdx=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
   else if(engine.type==='rotary')noxIdx=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
