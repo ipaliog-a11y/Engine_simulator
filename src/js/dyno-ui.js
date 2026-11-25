@@ -430,6 +430,19 @@ function updateUI(){
     if(engine.ci){setEm('statPM',state.emPM||0,tone((state.emPM||0)/fkg,3.2,8));}
     else if(pmEl){pmEl.querySelector('.value').textContent='—';pmEl.className='stat';}
   }
+  const catEl=document.getElementById('statCat');
+  if(catEl){
+    if(engine.cat==='none'){
+      catEl.querySelector('.value').textContent='—';
+      catEl.querySelector('.unit').textContent=tr('NONE');
+      catEl.className='stat';
+    }else{
+      const tc=state.tCat!=null?state.tCat:450,lit=catLightOff(tc)>=0.5;
+      catEl.querySelector('.value').textContent=Math.round(tc);
+      catEl.querySelector('.unit').textContent='°C '+(lit?tr('LIT'):tr('COLD'));
+      catEl.className='stat'+(lit?'':' warning');
+    }
+  }
   const status=document.getElementById('status'),legend=document.getElementById('legend');
   if(performance.now()<statusFlashUntil){/* keep transient flash message */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar'}
