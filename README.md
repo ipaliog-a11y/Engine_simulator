@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 460
+# PIXEL POWERTRAIN v0.8 build 461
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -214,6 +214,8 @@ assist map over speed and pedal), regeneration, load-point shifting, electric-dr
   (time + trap speed), **top speed**, **100–0 braking** and the **0–200–0** test live — a
   traction-limited launch and a tyre/brake-limited stop (with fade), weight transfer, downforce,
   aero drag and rolling resistance. Vehicle cost and power-to-weight are shown too.
+- **Altitude** — **ALTITUDE m** on the TRACK tab sets the air (ISO 2533 standard atmosphere) for the lap, 0-100,
+  WLTP and the live bench; the rated power stays at standard air.
 - **Hot lap report (new)** — **LAP REPORT PNG / PDF** on the TRACK tab saves the lap as a printable
   telemetry sheet: the circuit map with **full-throttle** and **braking** sections picked out and
   every corner tagged, a **speed trace** against distance with braking zones shaded, an **elevation
