@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 473
+# PIXEL POWERTRAIN v0.8 build 474
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -932,6 +932,7 @@ context small, which is most of what a pull request costs to make.
 ├── tools/stamp.mjs                # Stamps + verifies the build number
 ├── tools/split-i18n.mjs          # One translation per line in src/js/i18n.js (keeps diffs small)
 ├── tools/fingerprint.mjs          # Every car's 0-100, laps and a race, exactly; --compare proves a refactor moved nothing
+├── tools/scoreboard.mjs           # Every factory car against its published power, torque, 0-100, top speed (read-only)
 ├── plans/                         # Proposals not yet built — plans/hybrid-electric/
 ├── .gitattributes / .ignore       # Keep the generated index.html out of git diffs and out of searches
 └── .github/workflows/             # pages.yml: auto-deploy to GitHub Pages · check.yml: index.html is src/ joined
