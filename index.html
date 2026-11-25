@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 456</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 457</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -4161,6 +4161,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="hy-soc" id="hySoc" role="meter" aria-label="Battery state of charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div class="hy-soc-win"></div><div class="hy-soc-fill" id="hySocFill"></div></div>
 <div class="readout" id="hyPack">PACK 0.0 kW</div>
 <div class="readout" id="hyReadout"></div>
+<div class="readout" id="hyTemp"></div>
 <div class="control-group"><label for="hyDrive"><span class="ctl-lbl">DRIVE MODE</span></label><select id="hyDrive"><option value="auto">AUTO</option><option value="ev">EV</option><option value="hold">HOLD</option><option value="charge">CHARGE</option><option value="sport">SPORT</option><option value="engine">ENGINE ONLY</option><option value="manual">MANUAL</option></select></div>
 <div class="control-group"><label for="hySocSet"><span class="ctl-lbl">BATTERY CHARGE</span> <span class="val" id="valHySoc">60</span> %</label><input type="range" id="hySocSet" min="0" max="100" step="1" value="60" aria-label="Battery state of charge percent"></div>
 <div class="control-group hy-man"><label for="hyCmd"><span class="ctl-lbl">MOTOR COMMAND</span> <span class="val" id="valHyCmd">0</span> %</label><input type="range" id="hyCmd" min="-100" max="100" step="1" value="0" aria-label="Motor command percent, negative regenerating"></div>
@@ -20637,20 +20638,40 @@ function garageDelete(id){
 // What VIEW opens: the spec the entry will load, read from its record (not from what is built now).
 const garageOpen=new Set();
 function garageDetail(g){
-  const e=g.build.engine||{},v=g.build.vehicle,row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
-  const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
-  const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
-  const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
-  let h=row(tr('Engine'),typ+' • '+unit)+
-    row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
-    row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
-    row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
-    row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
-  const st=g.stats||{};
-  if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  const e=g.build.engine||{},v=g.build.vehicle,st=g.stats||{},row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
+  const isEv=e.type==='electric';
+  let h='';
+  if(isEv){
+    const chem=CHEM[e.evChem]||CHEM.nca,ser=e.evSeries||96;
+    const vNom=Math.round(ser*chem.ocv.reduce((a,b)=>a+b,0)/chem.ocv.length);
+    const mType=e.evMotorType==='im'?tr('INDUCTION MOTOR'):tr('PERMANENT-MAGNET MOTOR');
+    const rear=(e.evRearCount===2?'2× ':'1× ')+tr('rear')+' '+(e.evMotorType==='im'?'IM':'PM');
+    const front=e.evFront==='pm'||e.evFront==='im'?' + 1× '+tr('front')+' '+(e.evFront==='im'?'IM':'PM'):'';
+    const layout=(e.evFront==='pm'||e.evFront==='im'?'AWD':(v&&v.drive?String(v.drive).toUpperCase():'RWD'))+' ('+rear+front+')';
+    const inv=(INVERTER[e.evInverter]||INVERTER.igbt).label;
+    h=row(tr('Motor'),mType+' • '+(e.evRotorD||150)+'×'+(e.evStack||134)+' mm • '+(e.evPoles||6)+'-'+tr('pole'))+
+      row(tr('Drive'),layout+' • '+(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'))+
+      row(tr('Inverter'),inv+' • '+(e.evAmps||950)+' A')+
+      row(tr('Battery'),tr(chem.label)+' • '+(e.evKWh||75)+' kWh • '+vNom+' V ('+ser+'s)');
+    if(st.hp){
+      const kw=Math.round(st.hp*0.7457);
+      h+=row(tr('Output'),kw+' kW ('+st.hp+' hp)'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+    }
+  }else{
+    const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
+    const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
+    const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
+    h=row(tr('Engine'),typ+' • '+unit)+
+      row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
+      row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
+      row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
+      row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
+    if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  }
   if(v){
     const b=v.body;
-    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+v.gears+'-speed '+(v.gearbox||''))+
+    const tx=isEv?(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'):(v.gears+'-speed '+(v.gearbox||''));
+    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+tx)+
       row(tr('Tyres'),(TIRE_TYPE[v.tireType]||{}).label+' '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' • '+(SPEED_RATING[v.speedRating]||{label:'—'}).label)+
       row(tr('Speed limiter'),v.governor>0?v.governor+' km/h':tr('removed'))+
       row(tr('Traction control'),v.tc===false?tr('off'):tr('on'));
@@ -33529,8 +33550,11 @@ function drawMotorDyno(){
   const cx=X(clamp(state.rpm,0,rMax));
   ctx.strokeStyle=C.green;ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(cx,gY);ctx.lineTo(cx,gY+gH);ctx.stroke();ctx.setLineDash([]);
   // the knee, where the voltage runs out and the torque starts to fall
-  const kx=X(s.knee);ctx.strokeStyle='#556';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(kx,gY);ctx.lineTo(kx,gY+gH);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#889';ctx.fillText(tr('KNEE'),kx+3,gY+gH-6);
+  if(s.knee>0&&s.knee<=rMax){
+    const kx=clamp(X(s.knee),gX,gX+gW);
+    ctx.strokeStyle='#556';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(kx,gY);ctx.lineTo(kx,gY+gH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#889';ctx.fillText(tr('KNEE'),Math.min(kx+3,gX+gW-30),gY+gH-6);
+  }
   const iy=gY+gH+30;
   drawPixelRect(0,iy-14,W,H-(iy-14),'#12121c');
   ctx.font='7px "Press Start 2P"';
@@ -33604,7 +33628,8 @@ function updateMotorUI(){
   g('valThrottle').textContent=Math.round(st.throttle*100);
   g('valLoad').textContent=Math.round(st.load*100);
   g('valElec').textContent='—';
-  g('readout').textContent='RPM '+Math.round(st.rpm)+' • BUS '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • SOC '+Math.round(st.soc*100)+'%';
+  const tB0=st.tB?st.tB.b:PACK_COOLANT;
+  g('readout').textContent='RPM '+Math.round(st.rpm)+' • BUS '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • SOC '+Math.round(st.soc*100)+'% • '+tr('PACK')+' '+Math.round(tB0)+'°C';
   document.querySelector('#statHP .value').textContent=st.powerHP.toFixed(1);
   document.querySelector('#statTQ .value').textContent=st.torque.toFixed(1);
   document.querySelector('#statBSFC .value').textContent=(st.battKW||0).toFixed(1);
@@ -33622,7 +33647,7 @@ function updateMotorUI(){
   const hp=Math.round(st.engineHealth*100),hEl=g('statHealth');
   hEl.querySelector('.value').textContent=st.blown?tr('DEAD'):hp;
   hEl.className='stat'+(st.blown||hp<30?' danger':(hp<70?' warning':''));
-  const status=g('status'),legend=g('legend'),tB=st.tB?st.tB.b:PACK_COOLANT,der=motorDerate(engine,st.mT)*packDerate(tB);
+  const status=g('status'),legend=g('legend'),tB=tB0,der=motorDerate(engine,st.mT)*packDerate(tB);
   if(performance.now()<statusFlashUntil){/* keep the flash */}
   else if(vizMode==='design'){status.textContent=tr('DESIGN MODE • CONFIGURE & BUILD');status.className='status-bar';}
   else if(st.blown){status.textContent=tr('MOTOR FAILURE')+' ('+tr(st.wearCause)+') — '+tr('REBUILD WITH BUILD & DYNO');status.className='status-bar err';}
@@ -33640,7 +33665,7 @@ function updateMotorUI(){
 }
 function updateMotorLabels(){
   const e=engine,m=e.motor,b=e.pack;
-  document.getElementById('subtitle').textContent=tr('ELECTRIC')+' • '+tr('PM MOTOR')+' '+e.evRotorD+'×'+e.evStack+' mm • '+m.poles+'-'+tr('POLE')+
+  document.getElementById('subtitle').textContent=tr('ELECTRIC')+' • '+tr(m.im?'IM MOTOR':'PM MOTOR')+' '+e.evRotorD+'×'+e.evStack+' mm • '+m.poles+'-'+tr('POLE')+
     ' • '+b.kWh+' kWh '+tr(b.chem.label)+' '+Math.round(b.Vnom)+' V';
   document.getElementById('engineCanvas').setAttribute('aria-label',tr('Test bench of an electric motor and its battery'));
   const nb=document.getElementById('btnNitrous');nb.disabled=true;nb.classList.remove('on');nb.setAttribute('aria-pressed','false');
@@ -33673,6 +33698,8 @@ function motorScoreLine(s,m,b){
     tr('Reliability')+' <b style="color:'+relCol+'">'+s.reliability+'</b> • <b>'+(engine.cost>0?(s.peakHP/(engine.cost/1000)).toFixed(1):0)+'</b> hp/$1k'+scoreLapLine();
 }
 
+// Dynamic rotor/magnet temperature bar ceiling so high-Tmax magnets (e.g. Ferrite 250 C) are not clipped at 200 C.
+const rotorTempBarMax=m=>Math.max(200,Math.ceil((((m&&m.mag&&m.mag.Tmax)||150)+20)/50)*50);
 // ---- the motor on the ENGINE view: no cutaway (decision 7), the bench's instruments ----
 function drawMotorView(dt){
   const W=vizW,H=vizH,st=state,m=engine.motor,s=engine.score;
@@ -33695,35 +33722,40 @@ function drawMotorView(dt){
   // the instruments
   const bar=(x,y,label,v,max,lim,unit,col)=>{
     ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';ctx.fillText(label,x,y-4);
-    drawPixelRect(x,y,240,12,'#1a1a28');
-    ctx.fillStyle=col;ctx.fillRect(x,y,240*clamp(v/max,0,1),12);
-    if(lim!=null){ctx.fillStyle='#ff5555';ctx.fillRect(x+240*clamp(lim/max,0,1)-1,y-2,2,16);}
-    ctx.fillStyle='#e0e0e0';ctx.fillText(Math.round(v)+unit,x+248,y+10);
+    drawPixelRect(x,y,240,10,'#1a1a28');
+    ctx.fillStyle=col;ctx.fillRect(x,y,240*clamp(v/max,0,1),10);
+    if(lim!=null){ctx.fillStyle='#ff5555';ctx.fillRect(x+240*clamp(lim/max,0,1)-1,y-2,2,14);}
+    ctx.fillStyle='#e0e0e0';ctx.fillText(Math.round(v)+unit,x+248,y+9);
   };
-  const x0=330;
-  bar(x0,60,tr('TORQUE'),st.torque,Math.max(1,s.peakTQ),null,' Nm',C.cyan);
-  bar(x0,95,tr('POWER'),st.powerKW,Math.max(1,s.peakKW),null,' kW',C.yellow);
-  bar(x0,130,tr('WINDING'),st.mT.w,200,180,' °C',st.mT.w>150?'#ff5555':'#ffaa44');
-  bar(x0,165,tr(rotorWord(m)),st.mT.r,200,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
-  bar(x0,200,tr('STATOR CORE'),st.mT.c,200,null,' °C','#88aacc');
-  bar(x0,235,tr('CHARGE'),st.soc*100,100,null,' %','#66dd99');
+  const x0=330,tB=st.tB?st.tB.b:PACK_COOLANT,rMaxT=rotorTempBarMax(m);
+  const pCol=tB>=55?'#ff5555':tB>=50?'#ffcc00':'#66dd99';
+  bar(x0,52,tr('TORQUE'),st.torque,Math.max(1,s.peakTQ),null,' Nm',C.cyan);
+  bar(x0,81,tr('POWER'),st.powerKW,Math.max(1,s.peakKW),null,' kW',C.yellow);
+  bar(x0,110,tr('WINDING'),st.mT.w,200,180,' °C',st.mT.w>150?'#ff5555':'#ffaa44');
+  bar(x0,139,tr(rotorWord(m)),st.mT.r,rMaxT,m.mag.Tmax,' °C',st.mT.r>m.mag.Tmax-20?'#ff5555':'#cc88ff');
+  bar(x0,168,tr('STATOR CORE'),st.mT.c,200,null,' °C','#88aacc');
+  bar(x0,197,tr('PACK TEMP')+(tB>=50?' ('+tr('HOT')+')':''),tB,70,60,' °C',pCol);
+  bar(x0,226,tr('CHARGE'),st.soc*100,100,null,' %','#66dd99');
   ctx.fillStyle='#99aabb';ctx.font='7px "Press Start 2P"';
-  ctx.fillText(tr('BUS')+' '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • '+(st.battKW||0).toFixed(0)+' kW '+tr('from the pack'),x0,275);
-  ctx.fillText(tr('DRIVE EFF')+' '+st.thermalEff.toFixed(1)+'% • '+tr('derate')+' '+Math.round(motorDerate(engine,st.mT)*100)+'%',x0,292);
+  ctx.fillText(tr('BUS')+' '+st.systemVoltage.toFixed(0)+' V • '+Math.round(st.battI||0)+' A • '+(st.battKW||0).toFixed(0)+' kW '+tr('from the pack'),x0,258);
+  const derPct=Math.round(motorDerate(engine,st.mT)*packDerate(tB)*100);
+  ctx.fillStyle=derPct<100?'#ff5555':'#99aabb';
+  ctx.fillText(tr('DRIVE EFF')+' '+st.thermalEff.toFixed(1)+'% • '+tr('derate')+' '+derPct+'%',x0,275);
+  ctx.fillStyle='#99aabb';
   // Where the losses go (build 285): what motorLosses already computes at this point, as one stacked bar, and what the
   // pack is doing: its current over its capacity (the C-rate), the volts its resistance drops, and the heat that makes.
   const L=st.evLoss||{},parts=[['copper',L.cu,'#ffaa44'],['cage',L.rcu,'#ff7755'],['iron',L.fe,'#88aacc'],['friction',L.mech,'#99aa66'],['inverter',L.inv,'#cc88ff']].filter(q=>q[1]>0);
   const tot=parts.reduce((a,q)=>a+q[1],0);
-  ctx.fillText(tr('LOSSES')+' '+(tot/1000).toFixed(1)+' kW',x0,312);
-  drawPixelRect(x0,316,240,12,'#1a1a28');
-  let lx=x0,tx=x0,ty=342;
+  ctx.fillText(tr('LOSSES')+' '+(tot/1000).toFixed(1)+' kW',x0,295);
+  drawPixelRect(x0,299,240,12,'#1a1a28');
+  let lx=x0,tx=x0,ty=325;
   for(const q of parts){
-    const wd=240*q[1]/Math.max(1,tot);ctx.fillStyle=q[2];ctx.fillRect(lx,316,wd,12);lx+=wd;
+    const wd=240*q[1]/Math.max(1,tot);ctx.fillStyle=q[2];ctx.fillRect(lx,299,wd,12);lx+=wd;
     const t=tr(q[0])+' '+(q[1]/1000).toFixed(1),tw=ctx.measureText(t).width;if(tx+tw>W-6){tx=x0;ty+=14;}ctx.fillText(t,tx,ty);tx+=tw+8;
   }
-  ctx.fillStyle='#99aabb';
-  const tB=st.tB?st.tB.b:PACK_COOLANT;
+  ctx.fillStyle=tB>=50?'#ff5555':'#99aabb';
   ctx.fillText(tr('PACK')+' '+((st.battI||0)/engine.pack.Ah).toFixed(1)+'C • '+tr('sag')+' '+Math.round(st.battSag||0)+' V • '+tr('heat')+' '+((st.battHeat||0)/1000).toFixed(1)+' kW • '+Math.round(tB)+'°C',x0,ty+18);
+  ctx.fillStyle='#99aabb';
   // an induction motor's slip: the cage's loss is the slip's share of the power crossing the air gap
   if(m.im&&!m.parts&&L.rcu>0&&st.torque>0){
     const Pm=st.torque*st.rpm*Math.PI/30,slip=L.rcu/(Pm+L.rcu),c=imCurrents(m,st.torque,st.rpm,st.systemVoltage);
@@ -33738,7 +33770,7 @@ function drawMotorSprite(buf,e,t,opts){
   drawMotor3D(R,e||DEFAULT_ENGINE,t||0,opts);
   R.blitToPixBuf(buf);
 }
-const motorCaption=e=>'PM '+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';
+const motorCaption=e=>(e&&e.evMotorType==='im'?'IM ':'PM ')+(e.evRotorD||150)+'×'+(e.evStack||134)+' '+(e.evKWh||75)+'kWh';
 // ====== ELECTRIC CAR: the drive on the road — one reduction, regenerative braking, heat over a lap (build 180) ======
 // Step 2.3 of plans/hybrid-electric/. The 0-100, the top speed and the lap run the electric drive through the same
 // solvers as an engine (powertrain(), build 177); what an electric car does differently is here:
@@ -35261,14 +35293,24 @@ function hybStartStop(){
 // ---- the LIVE tab's hybrid panel: the power-flow diagram, the battery gauge, the drive mode and the manual controls ----
 // Colours (decision 17): orange the engine driving, blue the pack driving, green regeneration, purple the engine charging.
 const HYB_FLOW_COL={eng:'#ff9a3c',bat:'#4aa3ff',regen:'#00ff88',charge:'#b48cff',idle:'#3a3a4a'};
+function hybFrontPeakKW(hy){
+  if(!hy||!hy.front)return 0;
+  if(hy.front._pkKW!=null)return hy.front._pkKW;
+  const fm=hy.front.motor,V=hybBusV(hy);let P=0;
+  for(let r=200;r<=fm.nMax;r+=200)P=Math.max(P,motorMaxTorque(fm,r,V,60)*r*Math.PI/30);
+  const pb=packMaxPower(hy.pack,HYB_SOC)*(hy.front.shareF||0.5);
+  return (hy.front._pkKW=Math.min(P,pb)/1000);
+}
 function updateHybridPanel(){
   const panel=document.getElementById('hybridPanel');if(!panel)return;
   const show=isHybrid()&&(vizMode==='engine'||vizMode==='dyno');
   panel.hidden=!show;if(!show)return;
   const H=hybBenchState(),hy=engine.hy,ps=hy.mode==='ps',ser=hy.mode==='series',g=id=>document.getElementById(id);
-  // the gauge: the charge in its window, the pack's power and heat
-  const soc=H.soc*100,fill=g('hySocFill');
-  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<HYB_BENCH.socLo?'#ff5555':H.soc>HYB_BENCH.socHi?'#ffcc00':'#00ff88';}
+  // the gauge: the charge in its window (from hybTune so PHEVs like 12-95% aren't falsely flagged), the pack's power and heat
+  const tu=hybTune(engine),socLo=tu.socLo/100,socHi=tu.socHi/100;
+  const soc=H.soc*100,fill=g('hySocFill'),win=panel.querySelector('.hy-soc-win');
+  if(win){win.style.left=tu.socLo+'%';win.style.width=Math.max(0,tu.socHi-tu.socLo)+'%';}
+  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<socLo?'#ff5555':H.soc>socHi?'#ffcc00':'#00ff88';}
   const meter=g('hySoc');if(meter)meter.setAttribute('aria-valuenow',Math.round(soc));
   const sl=g('hySocSet');if(sl&&document.activeElement!==sl)sl.value=Math.round(soc);
   if(g('valHySoc'))g('valHySoc').textContent=Math.round(soc);
@@ -35276,7 +35318,16 @@ function updateHybridPanel(){
   if(g('hyPack'))g('hyPack').textContent=tr('PACK')+' '+(Math.abs(pb)<0.05?'0.0 kW':(pb>0?tr('DISCHARGING')+' ':tr('CHARGING')+' ')+Math.abs(pb).toFixed(1)+' kW')+' • '+Math.round(H.tB.b)+'°C';
   if(g('hyReadout'))g('hyReadout').textContent=tr('ENGINE')+' '+(H.engOn?Math.round(H.ne)+' rpm '+H.Pe.toFixed(1)+' kW':tr('OFF'))+
     ' • '+(ps?'MG2':tr('MOTOR'))+' '+(H.Pm>=0?'+':'')+H.Pm.toFixed(1)+' kW'+(ps||ser?' • '+(ps?'MG1':tr('GEN'))+' '+(H.P1>=0?'+':'')+H.P1.toFixed(1)+' kW':'')+
+    (hy.front?' • '+tr('FRONT EV')+' '+Math.round(hybFrontPeakKW(hy))+' kW':'')+
     ' • '+tr('SHAFT')+' '+Math.round(H.n)+' rpm '+H.Psys.toFixed(1)+' kW';
+  const tEl=g('hyTemp');
+  if(tEl&&H.mT){
+    const mT=H.mT,tLim=hy.motor.mag.Tmax,mDer=motorDerate({motor:hy.motor},mT),pDer=packDerate(H.tB.b);
+    const warn=mDer<0.999||pDer<0.999,hot=mT.w>165||mT.r>tLim-10||H.tB.b>=55;
+    tEl.textContent=tr('WINDING')+' '+Math.round(mT.w)+'°C • '+tr('CORE')+' '+Math.round(mT.c)+'°C • '+tr(rotorWord(hy.motor))+' '+Math.round(mT.r)+'°C'+
+      (warn?' • '+tr('THERMAL DERATE')+' '+Math.round(Math.min(mDer,pDer)*100)+'%':'');
+    tEl.style.color=hot?'#ff5555':(warn||mT.w>140||mT.r>tLim-25||H.tB.b>=45)?'#ffcc00':'';
+  }
   const ds=g('hyDrive');if(ds&&document.activeElement!==ds&&ds.value!==H.mode)ds.value=H.mode;
   panel.classList.toggle('manual',H.mode==='manual');panel.classList.toggle('ps',ps||ser);   // an engine-speed target for both (build 193)
   if(g('valHyCmd'))g('valHyCmd').textContent=Math.round(H.cmd*100);
@@ -35314,8 +35365,10 @@ function drawHybridFlow(H){
     c.font=F(5);c.fillStyle='#e0e0e0';c.textAlign=horiz?'center':'left';c.textBaseline=horiz?'bottom':'middle';
     c.fillText(a.toFixed(1),horiz?mx:mx+wd/2+3*S,horiz?my-wd/2-2*S:my);
   };
+  const frontLink=(x1,y1,x2,y2)=>{c.save();c.strokeStyle=state.ignOn!==false&&H.soc>0.02?C.bat:C.idle;c.lineWidth=1.5*S;c.setLineDash([3*S,2*S]);c.beginPath();c.moveTo(x1*S,y1*S);c.lineTo(x2*S,y2*S);c.stroke();c.restore();};
   const motCol=H.Pm>=0?(H.Pb>0.2?C.bat:C.eng):(H.engOn&&H.Pe>0.5?C.charge:C.regen);
   const batCol=H.Pb>=0?C.bat:(H.engOn&&H.Pe>0.5?C.charge:C.regen);
+  const fOn=state.ignOn!==false&&H.soc>0.02,fSub=hy.front?Math.round(hybFrontPeakKW(hy))+' kW':'';
   if(hy.mode==='series'){
     // ENGINE - GENERATOR, then the bus to the MOTOR - BRAKE; the PACK on the bus between them (build 193)
     const Pmot=H.P1+H.Pb-HYB_BENCH.auxW/1000;
@@ -35330,17 +35383,23 @@ function drawHybridFlow(H){
     box(160,20,58,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(238,20,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(124,104,52,30,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(176,119,228,119);box(228,104,64,30,tr('FRONT EV'),fSub,fOn);}
   }else if(!ps){
     // ENGINE -clutch- MOTOR - BRAKE in a row, the PACK under the motor
-    c.fillStyle=H.engOn?'#8a8aa0':'#3a3a4a';c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((H.engOn?108:110)*S,28*S,3*S,18*S);
-    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle='#888';c.fillText(tr(H.engOn?'CLOSED':'OPEN'),108*S,58*S);
-    flow([[72,37],[118,37]],H.engOn?H.Pe:0,C.eng);
-    flow([[182,37],[228,37]],H.Psys,H.engOn&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
+    const run=!!(H.engOn&&H.fired);
+    const clutchState=run?'CLOSED':(H.engOn?'CRANKING':'OPEN');
+    c.fillStyle=run?'#8a8aa0':(H.engOn?'#ffcc00':'#3a3a4a');
+    c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((run?108:110)*S,28*S,3*S,18*S);
+    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle=H.engOn&&!run?'#ffcc00':'#888';
+    c.fillText(tr(clutchState),108*S,58*S);
+    flow([[72,37],[118,37]],run?H.Pe:0,C.eng);
+    flow([[182,37],[228,37]],H.Psys,run&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
     flow([[150,100],[150,54]],H.Pb,batCol);
     box(8,20,64,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
     box(118,20,64,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(228,20,64,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(118,100,64,34,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(182,117,228,117);box(228,100,64,34,tr('FRONT EV'),fSub,fOn);}
   }else{
     // the shafts in a row (ENGINE -> the planetary -> BRAKE), MG1 above the planetary, MG2 under the ring shaft; the
     // electrical bus down the middle joins MG1, MG2 and the PACK
@@ -35357,6 +35416,7 @@ function drawHybridFlow(H){
     box(238,46,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(196,96,52,26,'MG2',(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(96,112,52,26,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(96,125,68,125);box(4,112,64,26,tr('FRONT EV'),fSub,fOn);}
   }
   c.textAlign='left';c.textBaseline='alphabetic';c.font=F(5);c.fillStyle='#888';
   c.fillText(tr((HYBRID_MODES[hy.mode]||{}).label||'')+' • '+tr(HYB_DRIVE[H.mode].label),6*S,(Hh/S-4)*S);
@@ -38933,7 +38993,8 @@ function evdCompute(){
       const T=hybMotorTq(hy,r),Tm=motorMaxTorque(m,r,V,60),w=r*Math.PI/30;
       pts.push({r,T,Tm});pk=Math.max(pk,T*w/1000);tq=Math.max(tq,T);pkM=Math.max(pkM,Tm*w/1000);
     }
-    return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
+    const d={motor:m,pack:hy.pack,redline:Math.floor(m.nMax/50)*50};
+    return {hybrid,d,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
   const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
@@ -38949,9 +39010,9 @@ function evdCompute(){
     knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:Math.min(...parts.map(q=>q.nTip)),nFreq:Math.min(...parts.map(q=>q.nFreq)),
     poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
 }
-// How long the peak lasts and what the cooling holds for good (electric only): slower, so worked out after a pause.
+// How long the peak lasts and what the cooling holds for good: slower, so worked out after a pause.
 function evdComputeSlow(r){
-  if(!r||r.hybrid)return null;
+  if(!r||!r.d)return null;
   return {hold:motorPeakHold(r.d,r.V),cont:motorContinuousKW(r.d,r.V)};
 }
 
@@ -38971,7 +39032,7 @@ function evdSummary(c,r){
 
 // ---- the cards: src/js/design-cards.js, with this drive's preview, limits and pictures ----
 const evdG=id=>document.getElementById(id),evdFmt=dcFmt,evdOptText=dcOptText,evdCtx=dcCtx,evdShown=dcShown,EVD_C=DC_COLOURS;
-const evdFrontOnly=(id,d)=>!(/^evFront(D|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
+const evdFrontOnly=(id,d)=>!(/^evFront(D|OD|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
 const EVD=new DesignCards({
   prefix:'evd',root:'evDesigner',cards:EVD_CARDS,fields:EVD_FIELDS,depFields:EVD_SPEED_FIELDS,realHead:'REAL DRIVES',
   ticks:evdTicks,using:evdUsing,choices:id=>dcUsers(evdRealDrives(),id),
@@ -38983,7 +39044,7 @@ const EVD=new DesignCards({
   deltas:[['pk',' kW',0,1,''],['tq',' Nm',0,1,''],['top',' rpm',-2,1,'top'],['mass',' kg',1,-1,'motor'],['packMass',' kg',0,-1,'pack'],['cost','',-2,-1,'cost']],
   stats:(r,d)=>[['PEAK POWER',evdFmt(r.pk),'kW',d('pk',1,0)],['TORQUE',evdFmt(r.tq),'Nm',d('tq',1,0)],['TOP RPM',evdFmt(r.top/1000,1),'k rpm',d('top',1,0)],
     ['MOTOR',evdFmt(r.mass),'kg',d('mass',-1,1)],['PACK',evdFmt(r.packMass),'kg',d('packMass',-1,0)],['COST','$'+evdFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
-  slowText:(r,s)=>r.hybrid?'':s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
+  slowText:(r,s)=>s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
   legend:[['p','power'],['t','torque'],['m','motor alone']],curveLabel:'Torque and power against motor speed',
   curve:r=>({xMax:r.top,mark:{x:r.knee,label:tr('knee')},pts:r.pts.map(q=>{const w=q.r*Math.PI/30/1000;return {x:q.r,a:q.T*w,b:q.T,a0:q.Tm*w,b0:q.Tm};})}),
   // what holds it back: the battery or the motor for the power; the rim, the inverter or the design limit for the speed

@@ -18,6 +18,13 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### EV and hybrid bench telemetry, garage detail, and designer UI parity (build 457)
+
+- **EV LIVE bench & dyno (`src/js/electric-ui.js`):** Added a live pack temperature (`state.tB`) bar with thermal warning (`>= 50 °C`) on the bench canvas and `#readout`, scaled the rotor/magnet temperature bar ceiling dynamically from `m.mag.Tmax` (`rotorTempBarMax`, so Ferrite's 250 °C limit is not clipped at 200 °C), labelled induction motors `IM MOTOR` / `IM ` instead of hardcoded `PM MOTOR` / `PM `, and clamped the EV dyno `KNEE` marker inside chart bounds (skipping off-chart draw when `s.knee > redline`).
+- **Hybrid LIVE bench (`src/js/hybrid-bench.js`, `src/shell.html`):** Added live motor temperatures (`H.mT`: winding, core, rotor °C) and thermal derate warnings in `#hyTemp`, coloured `#hySocFill` and `.hy-soc-win` from `hybTune().socLo` / `socHi` instead of hardcoded 35%–85% (fixing false warnings on PHEVs such as the 330e), showed `FRONT EV` in `drawHybridFlow` and `#hyReadout` when a front motor is fitted (e.g. 918 Spyder), and showed P2 clutch state as `CRANKING` / `OPEN` until `H.engOn && H.fired`.
+- **EV Garage detail & Designer (`src/js/saves-garage.js`, `src/js/ev-designer.js`):** Updated `garageDetail()` so saved EVs display motor type, drive layout, inverter, battery chemistry/kWh/voltage, and peak kW instead of falling back to `ENGINE_TYPE.petrol4`, enabled `evdComputeSlow` continuous kW / peak hold preview for hybrid motors, and included `evFrontOD` in `evdFrontOnly`.
+- Added `tests/test280.mjs` covering all EV/Hybrid bench, Garage detail, and EV Designer parity behaviours. Zero physics or preset changes.
+
 ### Dynamic aero (ride-height, pitch, stall) and ambient altitude/wind environment (build 456)
 
 - Added post-stall lift drop toward ~0.55 `WING_CLMAX` (Abbott & von Doenhoff NACA 4412; Katz ch. 3) and separated wake drag `cdStall` (Hoerner ch. 3) in `wingAero` (`src/js/tyres-brakes-driveline.js`), and coupled live `s.heave` (ground-effect suction up to 95% bump travel, then choke/stall) and `s.pitch` (forward aero balance shift ~1.8/rad + attitude drag; Katz ch. 5 & 8) into `driveAeroAt` / `stepCar` (`src/js/drive-model.js`).

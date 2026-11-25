@@ -118,7 +118,8 @@ function evdCompute(){
       const T=hybMotorTq(hy,r),Tm=motorMaxTorque(m,r,V,60),w=r*Math.PI/30;
       pts.push({r,T,Tm});pk=Math.max(pk,T*w/1000);tq=Math.max(tq,T);pkM=Math.max(pkM,Tm*w/1000);
     }
-    return {hybrid,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
+    const d={motor:m,pack:hy.pack,redline:Math.floor(m.nMax/50)*50};
+    return {hybrid,d,m,J:m.Jpk/1e6,pack:hy.pack,V,pb,pts,pk,tq,pkM,top:m.nMax,mass:m.mass,packMass:hy.pack.mass,cost:m.cost+hy.pack.cost,
       knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:m.nTip,nFreq:m.nFreq,poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
   }
   const m=evMotorOf(e),pack=packBuild({chem:e.evChem,series:e.evSeries,kWh:e.evKWh,year:e.evYear,cooling:e.evPackCool,ambT:e.evAmbT});
@@ -134,9 +135,9 @@ function evdCompute(){
     knee:motorBaseW(m,V,motorPsi(m,60))*30/Math.PI,nTip:Math.min(...parts.map(q=>q.nTip)),nFreq:Math.min(...parts.map(q=>q.nFreq)),
     poles:m.poles,vTip:m.ret.vTip,maxRpm:e.evMaxRpm};
 }
-// How long the peak lasts and what the cooling holds for good (electric only): slower, so worked out after a pause.
+// How long the peak lasts and what the cooling holds for good: slower, so worked out after a pause.
 function evdComputeSlow(r){
-  if(!r||r.hybrid)return null;
+  if(!r||!r.d)return null;
   return {hold:motorPeakHold(r.d,r.V),cont:motorContinuousKW(r.d,r.V)};
 }
 
@@ -156,7 +157,7 @@ function evdSummary(c,r){
 
 // ---- the cards: src/js/design-cards.js, with this drive's preview, limits and pictures ----
 const evdG=id=>document.getElementById(id),evdFmt=dcFmt,evdOptText=dcOptText,evdCtx=dcCtx,evdShown=dcShown,EVD_C=DC_COLOURS;
-const evdFrontOnly=(id,d)=>!(/^evFront(D|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
+const evdFrontOnly=(id,d)=>!(/^evFront(D|OD|Stack|Poles|Turns|Amps)$/.test(id)&&!(d.e.evFront==='pm'||d.e.evFront==='im'));
 const EVD=new DesignCards({
   prefix:'evd',root:'evDesigner',cards:EVD_CARDS,fields:EVD_FIELDS,depFields:EVD_SPEED_FIELDS,realHead:'REAL DRIVES',
   ticks:evdTicks,using:evdUsing,choices:id=>dcUsers(evdRealDrives(),id),
@@ -168,7 +169,7 @@ const EVD=new DesignCards({
   deltas:[['pk',' kW',0,1,''],['tq',' Nm',0,1,''],['top',' rpm',-2,1,'top'],['mass',' kg',1,-1,'motor'],['packMass',' kg',0,-1,'pack'],['cost','',-2,-1,'cost']],
   stats:(r,d)=>[['PEAK POWER',evdFmt(r.pk),'kW',d('pk',1,0)],['TORQUE',evdFmt(r.tq),'Nm',d('tq',1,0)],['TOP RPM',evdFmt(r.top/1000,1),'k rpm',d('top',1,0)],
     ['MOTOR',evdFmt(r.mass),'kg',d('mass',-1,1)],['PACK',evdFmt(r.packMass),'kg',d('packMass',-1,0)],['COST','$'+evdFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
-  slowText:(r,s)=>r.hybrid?'':s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
+  slowText:(r,s)=>s?tr('Cooling: peak torque for {s} s, and the motor alone holds {c} kW for good').replace('{s}',s.hold>=300?'300+':evdFmt(s.hold)).replace('{c}',evdFmt(s.cont)):'…',
   legend:[['p','power'],['t','torque'],['m','motor alone']],curveLabel:'Torque and power against motor speed',
   curve:r=>({xMax:r.top,mark:{x:r.knee,label:tr('knee')},pts:r.pts.map(q=>{const w=q.r*Math.PI/30/1000;return {x:q.r,a:q.T*w,b:q.T,a0:q.Tm*w,b0:q.Tm};})}),
   // what holds it back: the battery or the motor for the power; the rim, the inverter or the design limit for the speed
