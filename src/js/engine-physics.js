@@ -1596,24 +1596,42 @@ function pipeProducts(y,z,lam,burn_kg_s){
     o2:nFuel*nO2*MW_O2, n2:nFuel*nN2*28.014, burn:burn_kg_s, MWf
   };
 }
-function computeEmissions(){
-  if(!engine||engine.type==='electric'){zeroEmissions();return state.emRating;}
-  if(state.fuelCut){zeroEmissions();return state.emRating;}
-  const map=liveMap(),lam=state.afr/engine.stoichAFR;
-  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map));
-  const afr=Math.max(3,curAFR(state.rpm,map));
-  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);   // kg/s delivered (incl. nitrous fuel)
-  const burn=metered/Math.max(1,engine.typeBsfc);                   // kg/s trapped / burned
-  const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
-  if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
-
+// ---- Catalyst brick thermal & light-off model (E9) ----
+// Three-way catalyst light-off (T50): ~250-300 °C for Pt/Pd/Rh washcoat (Heywood §11.6;
+// Eastwood, "Critical Topics in Exhaust Gas Aftertreatment", 2000). Below light-off,
+// conversion is ~0; it rises smoothly around T50 = 275 °C to full activity by ~380-400 °C.
+// Cordierite monolith substrate (400 cpsi, ~0.75 void): cp ≈ 950 J/(kg·K) (900-1000 J/(kg·K),
+// Corning Celcor), bulk density ~500 kg/m³ (~0.5 kg/L of brick), brick volume ≈ 1× swept
+// displacement (same basis as CAT_OSC_G_PER_L below).
+const CAT_T50_C=275;           // °C, 50% conversion light-off temperature
+const CAT_LIGHT_SPAN_C=22;     // °C, logistic width (~0 at 23 °C, 0.5 at 275 °C, >0.99 at 390 °C)
+const CAT_CP_J_KGK=950;        // J/(kg·K), cordierite substrate specific heat
+const CAT_MASS_KG_PER_L=0.50;  // kg/L brick, 400 cpsi cordierite monolith
+const CAT_EXH_CP=1100;         // J/(kg·K), exhaust gas specific heat at ~600 K (Heywood §4.7)
+function catLightOff(tCatC){
+  const t=tCatC!=null?tCatC:450;
+  return 1/(1+Math.exp(-(t-CAT_T50_C)/CAT_LIGHT_SPAN_C));
+}
+// Exact exponential thermal step for the catalyst brick over dt seconds.
+function stepCatTemp(tCatC,gasTempC,exhFlowKgS,ambC,dt){
+  if(!engine||engine.cat==='none'||!(dt>0))return ambC;
+  const vd=Math.max(0.2,engine.displacement_L||2.0);
+  const scale=engine.cat==='sport'?0.7:1.0;
+  const Ccat=CAT_MASS_KG_PER_L*vd*scale*CAT_CP_J_KGK;   // J/K
+  const eps=0.90;                                       // 400-600 cpsi monolith NTU effectiveness at light-off flow
+  const Ggas=Math.max(0,exhFlowKgS||0)*CAT_EXH_CP*eps;  // W/K from exhaust gas
+  const Gamb=0.15*vd;                                   // W/K insulated shell loss to ambient
+  const Gtot=Ggas+Gamb;
+  const Teq=(Ggas*gasTempC+Gamb*ambC)/Gtot;
+  return Teq+(tCatC-Teq)*Math.exp(-Gtot/Ccat*dt);
+}
+function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
   const y=engine.fuelHC!=null?engine.fuelHC:1.87,z=engine.fuelOC!=null?engine.fuelOC:0;
   const prod=pipeProducts(y,z,lam,burn);
 
   // Unburned HC fraction of the trapped charge (Heywood fig. 3-9 midpoints via COMB_INEFF_*),
   // plus cold / overlap / metering / lean-misfire / rotary leakage. Carbon removed from CO2/CO.
-  const cold=state.coolant<60?(60-state.coolant)/60:0,meterSlop=1-engine.meteringEff;
+  const cold=coolantC<60?(60-coolantC)/60:0,meterSlop=1-engine.meteringEff;
   let phiHC=(engine.ci?COMB_INEFF_CI:COMB_INEFF_SI);
   if(engine.type==='twostroke')phiHC+=0.08;
   else if(engine.type==='rotary')phiHC+=0.05+Math.max(0,lam-1.06)*0.12;
@@ -1640,17 +1658,17 @@ function computeEmissions(){
   }
 
   // NOx / PM: prior correlation shapes, scaled to g/s. NOx as NO (MW 30).
-  const load=clamp((state.rpm-800)/(engine.redline-800),0,1)*0.5+clamp((map-0.3)/(engine.mapMax-0.3),0,1)*0.5;
-  const adv=activeAdvance(state.rpm,map),mbt=mbtAdvance(state.rpm,map);
+  const load=clamp((rpm-800)/(engine.redline-800),0,1)*0.5+clamp((map-0.3)/(engine.mapMax-0.3),0,1)*0.5;
+  const adv=activeAdvance(rpm,map),mbt=mbtAdvance(rpm,map);
   const tempF=clamp(0.4+load*0.9+Math.max(0,engine.compression-9)*0.05
-    +Math.max(0,effIAT(map,state.rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
-    +Math.max(0,state.coolant-90)*0.004+nitrousImep()*0.08,0.2,2.6);
+    +Math.max(0,effIAT(map,rpm)-30)*0.006+Math.max(0,adv-mbt+8)*0.010
+    +Math.max(0,coolantC-90)*0.004+nitrousImep()*0.08,0.2,2.6);
   let noxIdx,pmIdx=0;
   if(engine.ci){
     const fuelling=clamp((1.7-lam)/1.0,0,1);
     noxIdx=8+130*clamp(tempF*0.62,0,1.4);
     pmIdx=2+Math.pow(fuelling,1.6)*80+meterSlop*30;
-    mCO+= (3+fuelling*9)/300*burn*1000*0.15;         // small diesel CO EI on top of majors
+    mCO+=(3+fuelling*9)/300*burn*1000*0.15;         // small diesel CO EI on top of majors
   }else if(engine.type==='twostroke')noxIdx=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
   else if(engine.type==='rotary')noxIdx=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
   else noxIdx=2+100*Math.exp(-Math.pow((lam-1.08)/0.11,2))*tempF;
@@ -1658,30 +1676,42 @@ function computeEmissions(){
   let mPM=(pmIdx/80)*EI_PM_REF*burn;
 
   // Aftertreatment on the regulated species; oxidised CO/HC become extra CO2.
+  const litoff=catLightOff(tCatC);
   let oxEff,redEff,pmEff=0;
   if(engine.ci){
-    const hot=state.coolant<50?0.3:1;
-    oxEff=engine.catConv*hot;pmEff=engine.catConv*hot;redEff=(engine.cat==='stock'?0.9:0)*hot;
+    oxEff=engine.catConv*litoff;pmEff=engine.catConv*litoff;redEff=(engine.cat==='stock'?0.9:0)*litoff;
   }else{
-    const lc=catStoreLambda(lam,burn,y,z);   // the mixture the converter acts on, after its oxygen storage
+    const lc=liveOsc?catStoreLambda(lam,burn,y,z):lam;   // the mixture the converter acts on, after its oxygen storage
     const w=Math.exp(-Math.pow((lc-1.0)/0.02,2));
-    const leanO2=clamp((lc-1.0)/0.05,0,1),richRed=clamp((1.0-lc)/0.05,0,1),litoff=state.coolant<50?0.25:1;
+    const leanO2=clamp((lc-1.0)/0.05,0,1),richRed=clamp((1.0-lc)/0.05,0,1);
     oxEff=engine.catConv*litoff*Math.max(w,leanO2*0.85);
     redEff=engine.catConv*litoff*Math.max(w,richRed*0.85);
   }
   const dCO=mCO*oxEff,dHC=mHC*oxEff;
   mCO-=dCO;mHC-=dHC;mNOx*=(1-redEff);mPM*=(1-pmEff);
-  let mCO2=prod.co2+dCO*(MW_CO2/MW_CO)+dHC*cFrac*(MW_CO2/MW_C);
-  let mO2=prod.o2;
+  const mCO2=prod.co2+dCO*(MW_CO2/MW_CO)+dHC*cFrac*(MW_CO2/MW_C);
   // Oxidation consumes O2 when lean/stoich spare O2 is present.
-  mO2=Math.max(0,mO2-dCO*(0.5*MW_O2/MW_CO)-dHC*cFrac*(MW_O2/MW_C));
-
-  state.emCO=mCO;state.emHC=mHC;state.emNOx=mNOx;state.emPM=mPM;state.emCO2=mCO2;state.emO2=mO2;
+  const mO2=Math.max(0,prod.o2-dCO*(0.5*MW_O2/MW_CO)-dHC*cFrac*(MW_O2/MW_C));
+  return{co:mCO,hc:mHC,nox:mNOx,pm:mPM,co2:mCO2,o2:mO2};
+}
+function computeEmissions(){
+  if(!engine||engine.type==='electric'){zeroEmissions();return state.emRating;}
+  if(state.fuelCut){zeroEmissions();return state.emRating;}
+  const map=liveMap(),lam=state.afr/engine.stoichAFR;
+  const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
+  const airMass=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map));
+  const afr=Math.max(3,curAFR(state.rpm,map));
+  const metered=(airMass/afr)/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);   // kg/s delivered (incl. nitrous fuel)
+  const burn=metered/Math.max(1,engine.typeBsfc);                   // kg/s trapped / burned
+  const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
+  if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
+  const em=calcPipeEmissions(state.rpm,map,lam,burn,shortHC,state.coolant,state.tCat,true);
+  state.emCO=em.co;state.emHC=em.hc;state.emNOx=em.nox;state.emPM=em.pm;state.emCO2=em.co2;state.emO2=em.o2;
   // Cleanliness from emission indices (g/kg fuel) so large and small engines share a scale.
   // Denominators: cruise-dirty references after a failed/decat tune (g/kg).
   const fkg=Math.max(burn,1e-9);
-  const coBad=clamp((mCO/fkg)/40,0,1),hcBad=clamp((mHC/fkg)/25,0,1);
-  const noxBad=clamp((mNOx/fkg)/20,0,1),pmBad=clamp((mPM/fkg)/8,0,1);
+  const coBad=clamp((em.co/fkg)/40,0,1),hcBad=clamp((em.hc/fkg)/25,0,1);
+  const noxBad=clamp((em.nox/fkg)/20,0,1),pmBad=clamp((em.pm/fkg)/8,0,1);
   if(engine.ci)state.emRating=Math.round(clamp(100-(coBad*14+hcBad*12+noxBad*36+pmBad*34),0,100));
   else state.emRating=Math.round(clamp(100-(coBad*38+hcBad*30+noxBad*32),0,100));
   return state.emRating;
@@ -1697,7 +1727,7 @@ const CAT_OSC_G_PER_L=30*(0.25*32/172.1)*0.3;   // ~0.42 g O2 per litre
 const CAT_OSC_CELLS=5;   // the brick in slices along the flow: it fills from the front, as a real one does
 function catStoreLambda(lam,burn,y,z){
   const L=typeof o2Loop!=='undefined'?o2Loop:null;
-  if(!L||!L.live||!(L.dt>0)||!(engine.catConv>0)||state.coolant<50)return lam;
+  if(!L||!L.live||!(L.dt>0)||!(engine.catConv>0)||(state.tCat!=null?state.tCat:450)<CAT_T50_C)return lam;
   if(!Array.isArray(L.osc))L.osc=new Array(CAT_OSC_CELLS).fill(0.5);
   const capMol=CAT_OSC_G_PER_L*engine.displacement_L*engine.catConv/0.97/32/CAT_OSC_CELLS;
   const nC=burn*1000/(MW_C+y*MW_H+z*MW_O),aS=1+y/4-z/2;

@@ -69,15 +69,38 @@ function engineCycle(v){
   if(e._fcyc&&e._fcyc.score===e.score&&e._fcyc.key===key)return e._fcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),rho=envAirRho(),vW=envWind();
   const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
-  let Tc=C.soak;   // the coolant; the oil follows it oilLag behind
+  let Tc=C.soak,tCat=C.soak;   // coolant and catalyst brick start at the 23 C soak
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
-  let fuel=0,x=0,gearSum=0,moving=0,warmAt=null;
+  const ambCat=ENV.tempC!=null?ENV.tempC:C.soak,COLD_END=589;   // WLTC Low phase: 0..588 s
+  let fuel=0,x=0,gearSum=0,moving=0,warmAt=null,lightOffS=null;
+  let emCO=0,emHC=0,emNOx=0,emPM=0,coldKm=0,coldCO=0,coldHC=0,coldNOx=0,coldPM=0,hotKm=0,hotCO=0,hotHC=0,hotNOx=0,hotPM=0;
+  const stepEmit=(i,vm,gs,rpmE,T)=>{
+    const cut=!(gs>0);
+    const tqMax=Math.max(1,Tmax(rpmE));
+    const mapEst=e.ci?(e.mapMax||1):clamp(0.28+clamp(T/tqMax,0,1)*((e.mapMax||1)-0.28),0.25,e.mapMax||1);
+    const lam=e.canAutoAFR?mappedAFR(rpmE,mapEst)/e.stoichAFR:(e.ci?1.8:1.0);
+    const gasC=cut?Math.max(ambCat,Tc):egtAt(rpmE,mapEst,lam)-273.15;
+    const exhKgS=cut?0.008:(gs/1000)*(1+lam*e.stoichAFR);
+    tCat=stepCatTemp(tCat,gasC,exhKgS,ambCat,1);
+    if(lightOffS==null&&e.cat!=='none'&&tCat>=CAT_T50_C)lightOffS=i;
+    if(!cut){
+      const burn=gs/1000/Math.max(1,e.typeBsfc),shortHC=Math.max(0,gs/1000-burn);
+      const em=calcPipeEmissions(rpmE,mapEst,lam,burn,shortHC,Tc,tCat,false);
+      emCO+=em.co;emHC+=em.hc;emNOx+=em.nox;emPM+=em.pm;
+      if(i<COLD_END){coldCO+=em.co;coldHC+=em.hc;coldNOx+=em.nox;coldPM+=em.pm;}
+      else{hotCO+=em.co;hotHC+=em.hc;hotNOx+=em.nox;hotPM+=em.pm;}
+    }
+    if(i<COLD_END)coldKm+=vm/1000;else hotKm+=vm/1000;
+  };
   for(let i=0;i<WLTC_3B.length-1;i++){
     const v0=WLTC_3B[i]/36,v1=WLTC_3B[i+1]/36,vm=(v0+v1)/2,a=v1-v0;x+=vm;
     const oilT=Math.max(C.soak,Tc-C.oilLag);if(warmAt==null&&Tc>=stat)warmAt=i;
     const warm=gs=>{fuel+=gs;if(Tc<stat)Tc=Math.min(stat,Tc+gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);};
-    if(vm<0.1&&a<=0){warm(M.idleGs*(1+0.5*Math.max(0,(80-oilT)/57)));continue;}   // standing: idle (a cold engine idles richer and faster)
+    if(vm<0.1&&a<=0){
+      const gs=M.idleGs*(1+0.5*Math.max(0,(80-oilT)/57));
+      warm(gs);stepEmit(i,vm,gs,Math.max(600,e.idleRpmEff||800),0);continue;
+    }   // standing: idle (a cold engine idles richer and faster)
     let best=null;
     const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
     for(let g=0;g<v.ratios.length;g++){
@@ -87,21 +110,25 @@ function engineCycle(v){
       const F=meff*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G+dn);
       const rpmE=Math.max(rpm,rpmMin),w=rpmE*Math.PI/30;   // below it, first gear's clutch slips at rpmMin
       if(rpm<rpmMin&&g>0)continue;
-      let gs;
+      let gs,tq=0;
       if(F<=0)gs=rpmE>C.cutRpm?0:M.idleGs;   // the overrun: injectors cut, or idling down to the stop
       else{
-        const T=F*vm/eff/w+C.auxW/w;
-        if(T>C.reserve*Tmax(rpmE))continue;
-        gs=engineFuelAt(rpmE,T,oilT);if(!isFinite(gs))continue;
+        tq=F*vm/eff/w+C.auxW/w;
+        if(tq>C.reserve*Tmax(rpmE))continue;
+        gs=engineFuelAt(rpmE,tq,oilT);if(!isFinite(gs))continue;
       }
-      if(!best||gs<best.gs)best={gs,g};
+      if(!best||gs<best.gs)best={gs,g,rpmE,tq};
     }
-    if(!best){best={gs:engineFuelAt(rpmMin,Tmax(rpmMin)*C.reserve,oilT)||M.idleGs*3,g:0};}   // asked more than any gear has: flat out in first
-    warm(best.gs);gearSum+=best.g+1;moving++;
+    if(!best){const tq=Tmax(rpmMin)*C.reserve;best={gs:engineFuelAt(rpmMin,tq,oilT)||M.idleGs*3,g:0,rpmE:rpmMin,tq};}   // asked more than any gear has: flat out in first
+    warm(best.gs);stepEmit(i,vm,best.gs,best.rpmE,best.tq);gearSum+=best.g+1;moving++;
   }
   const km=x/1000,kg=fuel/1000,fp=FUELS[e.fuel]||FUELS.gasoline,L=kg/fp.density;
   // CO2: the carbon in the fuel, burnt to CO2 (petrol ~86.5% carbon by mass, diesel ~86.2%)
-  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,meanGear:gearSum/Math.max(1,moving),warmS:warmAt};
+  const ckm=Math.max(1e-6,coldKm),hkm=Math.max(1e-6,hotKm);
+  const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,meanGear:gearSum/Math.max(1,moving),warmS:warmAt,
+    lightOffS,tCatEnd:tCat,coGkm:emCO/km,hcGkm:emHC/km,noxGkm:emNOx/km,pmGkm:emPM/km,
+    cold:{km:coldKm,coGkm:coldCO/ckm,hcGkm:coldHC/ckm,noxGkm:coldNOx/ckm,pmGkm:coldPM/ckm},
+    hot:{km:hotKm,coGkm:hotCO/hkm,hcGkm:hotHC/hkm,noxGkm:hotNOx/hkm,pmGkm:hotPM/hkm}};
   e._fcyc={score:e.score,key,res};return res;
 }
 function engineCycleLine(v){

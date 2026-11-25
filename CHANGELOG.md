@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Cylinder deactivation on HEAD & VALVES (build 463)
+### Cylinder deactivation on HEAD & VALVES (build 464)
 
 - **CYLINDER DEACTIVATION** on the HEAD & VALVES card (`NONE`, `HALF CYLINDERS (ACT / AFM)`). Defaults to `NONE`, so
   existing engines and presets are unchanged; disabled on <4 or odd cylinders, diesels, two-strokes, and rotaries.
@@ -27,6 +27,15 @@ they are accurate about *what* shipped but not about the day it shipped.
   halved valvetrain and gas-ring friction (`mechFrictionMEP`). Adds +0.5 kg/cyl actuator mass and $(450 + 50·cyl) cost.
 - On the 5.0 V8 NA Muscle, peak power is unchanged (391 hp / 508 Nm), WLTP drops 10.55 → 9.70 L/100 km (−8.0%), and
   steady 22 m/s Eco Run fuel drops −16.3%. Plan E3 in `plans/engine-systems.md`.
+
+### Catalyst light-off and cold-start emissions (build 463)
+
+- **Catalyst brick thermal model (`state.tCat`)**: cordierite monolith substrate (~950 J/(kg·K), 0.5 kg/L brick) heats
+  from exhaust gas temperature (EGT) and exhaust mass flow in `AUTO THERMAL` mode and cools toward ambient when off.
+- **Physical light-off curve**: ~0% conversion below light-off, ramping smoothly around T50 = 275 °C (published
+  three-way catalyst 250–300 °C) to full conversion when hot; steady-state hot conversion (450 °C) is unchanged.
+- **WLTP cold-start emissions**: `engineCycle()` starts the catalyst at the 23 °C soak, crosses light-off in the Low
+  phase, and reports cold-phase vs hot-phase CO, HC, and NOx (g/km). Added a `CATALYST` (`°C COLD`/`LIT`) tile on LIVE.
 
 ### Water / methanol injection on AIR & BOOST (build 462)
 
