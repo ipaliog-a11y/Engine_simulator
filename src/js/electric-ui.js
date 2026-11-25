@@ -405,6 +405,7 @@ function setLiveLabels(ev){
   }
   EV_ONLY_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=ev?'':'none';});
   {const el=document.getElementById('statLambda');if(el)el.style.display=ev?'none':'';}   // no exhaust, no lambda sensor
+  {const el=document.getElementById('statCat');if(el)el.style.display=ev?'none':'';}      // no exhaust, no catalyst
   const em=document.getElementById('liveEmRows');if(em)em.hidden=!!ev;   // no exhaust analyser on a pure EV (build 257)
   const sg=document.getElementById('evSocGroup');if(sg)sg.hidden=!ev;   // the pack's charge, set by hand (build 198)
   // what a motor has no use for leaves the panel: mixture, intake air, the engine's coolant and oil, the alternator's

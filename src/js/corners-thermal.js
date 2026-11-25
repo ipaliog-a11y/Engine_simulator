@@ -200,6 +200,16 @@ function stepThermal(dt){
   let oilTarget=clamp(state.coolant+oilDelta,40,170);
   state.coolant+=(coolantTarget-state.coolant)*(1-Math.exp(-0.08*dt));
   state.oil+=(oilTarget-state.oil)*(1-Math.exp(-0.05*dt));
+  const ambCat=typeof envTempC==='function'?envTempC():state.iat;
+  if(engine.cat!=='none'){
+    const map=liveMap(),T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
+    const airMass=state.firing!==false&&state.rpm>50?(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*Math.max(0.05,state.ve))/(287*T_k)*(1-egrRate(state.rpm,map)):0;
+    const fuelKgS=state.fuelCut||state.firing===false?0:(state.fuelFlowLph||0)*(engine.fuelDensity||0.745)/3600;
+    const gasC=fuelKgS>0?egtAt(state.rpm,map)-273.15:(state.firing!==false?Math.max(ambCat,state.coolant):ambCat);
+    state.tCat=stepCatTemp(state.tCat!=null?state.tCat:ambCat,gasC,airMass+fuelKgS,ambCat,dt);
+  }else{
+    state.tCat=ambCat;
+  }
   dynoCache=null;
   document.getElementById('coolant').value=Math.round(state.coolant);
   document.getElementById('oil').value=Math.round(state.oil);

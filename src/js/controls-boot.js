@@ -46,7 +46,7 @@ function bindControls(){
   document.getElementById('btnReset').addEventListener('click',()=>{
     state.firing=true;state.ignOn=true;state.crank=0;setAutoThermal(false);
     state.engineHealth=1.0;state.blown=false;state.wearCause='';obdReset();
-    state.coolant=90;state.oil=100;state.batterySOC=1.0;
+    state.coolant=90;state.oil=100;state.tCat=450;state.batterySOC=1.0;
     state.nitrousCharge=1.0;state.nitrousActive=false;
     const nb=document.getElementById('btnNitrous');if(nb){nb.classList.remove('on');nb.setAttribute('aria-pressed','false');}
     if(isElectric()){const tc=(engine.motor&&engine.motor.cool?engine.motor.cool.tCool:40);state.mT={w:tc,c:tc,r:tc};state.soc=0.9;state.battI=0;state.battKW=0;}

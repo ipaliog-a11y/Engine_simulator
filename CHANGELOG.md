@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Catalyst light-off and cold-start emissions (build 462)
+
+- **Catalyst brick thermal model (`state.tCat`)**: cordierite monolith substrate (~950 J/(kg·K), 0.5 kg/L brick) heats
+  from exhaust gas temperature (EGT) and exhaust mass flow in `AUTO THERMAL` mode and cools toward ambient when off.
+- **Physical light-off curve**: ~0% conversion below light-off, ramping smoothly around T50 = 275 °C (published
+  three-way catalyst 250–300 °C) to full conversion when hot; steady-state hot conversion (450 °C) is unchanged.
+- **WLTP cold-start emissions**: `engineCycle()` starts the catalyst at the 23 °C soak, crosses light-off in the Low
+  phase, and reports cold-phase vs hot-phase CO, HC, and NOx (g/km). Added a `CATALYST` (`°C COLD`/`LIT`) tile on LIVE.
+
 ### Altitude on the TRACK tab, and the live engine breathes it (build 461)
 
 - **ALTITUDE m** (0-3000) beside AIR °C sets the shared ISO 2533 atmosphere that build 456 added but nothing could set.
