@@ -161,7 +161,7 @@ const r = await page.evaluate(() => {
 
   // 6b. EV in Race and Skidpad (alpha recorded + motorSoundState + screechSlide)
   loadVehiclePreset(FACTORY_CARS.find(c => c.name.includes('Tesla Model 3')));
-  const motRaceEv = motorSoundState(motorSoundConfig());
+  const motRaceEv = motorSoundState(motorSoundConfig(engine));
   out.raceAudioEv = motRaceEv;
   if (!motRaceEv || !Number.isFinite(motRaceEv.rpm) || !Number.isFinite(motRaceEv.T)) {
     fails.push('race EV motorSoundState missing: ' + JSON.stringify(motRaceEv));
@@ -173,7 +173,7 @@ const r = await page.evaluate(() => {
   chalResult = skidRes;
   chalUI.phase = 'live';
   chalMooseT0 = performance.now() - 500;
-  const motSkidEv = motorSoundState(motorSoundConfig());
+  const motSkidEv = motorSoundState(motorSoundConfig(engine));
   const scrSkid = screechSlide();
   out.skidEv = {
     ok: skidRes.ok,
@@ -202,7 +202,7 @@ const r = await page.evaluate(() => {
   chalUI.phase = 'live';
   chalMooseT0 = performance.now() - 500;
   const hySrc = soundSource();
-  const hyMot = motorSoundState(motorSoundConfig());
+  const hyMot = motorSoundState(motorSoundConfig(engine));
   const hyMutedInChal = vizMode === 'dyno' && hybBenchEngineOff();
   out.hybridDrift = { hasSrc: !!hySrc, rpm: hySrc && hySrc.rpm, hasMot: !!hyMot, mutedInChal: hyMutedInChal };
   if (!hySrc || !(hySrc.rpm > 0) || hyMutedInChal) fails.push('hybrid drift audio muted or missing: ' + JSON.stringify(out.hybridDrift));
