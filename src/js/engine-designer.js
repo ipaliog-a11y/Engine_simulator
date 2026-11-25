@@ -48,6 +48,8 @@ const ICD_FIELDS={
     trade:'Above it the valves bounce: power falls and the engine can be damaged. Keep it above the redline: lighter valves or stiffer springs raise it.'},
   edEgr:{adv:true,guide:'backpressure',what:'Cooled exhaust gas fed back into the intake.',
     trade:'It dilutes the charge, which slows and cools the burn: it holds off knock and cuts NOx. Where it is on it costs a little power.'},
+  edCylDeact:{adv:true,guide:'valvetrain',what:'Deactivates half the cylinders at light load by closing their intake and exhaust valves.',
+    trade:'Active cylinders run at higher load with less throttling loss and halved valvetrain friction, cutting cruise fuel use without hurting peak power.'},
   edIntake:{what:'How the air gets in: drawn in by the pistons, or pushed in by a turbo or a supercharger.',
     trade:'Boost packs more air into the same displacement, so more power, but brings knock closer and loads the internals. A turbo runs on exhaust energy and can lag; a supercharger is driven by the crank and answers at once.'},
   edBoost:{guide:'wastegate',what:'The pressure the turbo or supercharger aims for, above the air outside.',
@@ -125,7 +127,7 @@ const ICD_FIELDS={
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
-  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
+  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
@@ -187,7 +189,7 @@ function icdSummary(c,r){
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
       ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
-    case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
+    case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
