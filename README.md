@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 458
+# PIXEL POWERTRAIN v0.8 build 459
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -1002,12 +1002,19 @@ documented in the GUIDE at the point where it matters:
 - **Brake temperatures are a flat-out driver's.** The lap brakes at the limit into every corner, so a heavy,
   fast car on a long fast circuit (a Hellcat or an E46 M3 at Spa) runs its rotors to 750–900 °C and fades.
   Measured track-day figures are lower (450–600 °C rotor core, DBA) because most drivers brake earlier and
-  softer; light cars and small brakes land inside the measured range.
-- **Balance is a limit, not a motion.**
+  softer; light cars and small brakes land inside the measured range. One named gap (test76, build 419): the
+  Golf GTI Mk7's brakes run 711 °C at Spa, 1 °C over the 710 °C line for light cars. The stepped car (driving and
+  challenges) has its own rotor heat and fade per wheel since build 450.
+- **On the TRACK lap, balance is a limit, not a motion.**
   - **What is modelled (build 157):** each axle's grip is its own, so cars understeer or oversteer.
-  - **What is not:** yaw inertia, slip-angle build-up and transient load transfer. A car is never caught out by
-    lift-off oversteer, and it never slides or spins. Chicanes are a little optimistic, about 1–3% by the usual
-    comparison of quasi-steady and transient lap sims.
+  - **What is not, on the lap:** yaw inertia, slip-angle build-up and transient load transfer. The lap car is never
+    caught out by lift-off oversteer, and it never slides or spins. Chicanes are a little optimistic, about 1–3% by
+    the usual comparison of quasi-steady and transient lap sims.
+  - **The stepped car does move** (builds 319–389): yaw rate, slip angles, roll and an ESP that judges a spin by the
+    yaw rate. The moose, sine-with-dwell (FMVSS 126), lift-off and drift runs can end in a slide or a spin. Its
+    named gaps: the Mustang GT's diff locks on the coast as on drive, so it runs wide on a lift-off (test204, the
+    real unit is a Torsen with no published bias ratio); the test driver follows the lap's planned speeds and
+    strays up to 4.8–4.9 m off the line in the Civic Type R and the GT3 (test170).
   - **Unpublished inputs:** the cars' factory roll balance and their real tyre load sensitivity per axle are not
     published. Every car starts at NEUTRAL roll balance, though a real road car's factory setup understeers a
     little more.
@@ -1028,11 +1035,12 @@ documented in the GUIDE at the point where it matters:
   intake pressure ~1.1, where real petrol turbos run ~1.5-2), so matching to back-pressure would spool them
   earlier still; and VGT rings are the size class's, not the engine's (test49's diesel step). See
   `tests/proto/README.md`.
-- **A turbo cannot fail from overspeed.** The shaft has a tip-speed limit and the model respects it
-  as a *cap*, but nothing breaks. A grossly over-flowed frame therefore ends up running steadily at
-  an expansion ratio that would have destroyed it — a 2.0 four at 2.5 bar on a small frame reaches
-  7.4 bar of exhaust manifold pressure and simply becomes gutless, where the real outcome is a
-  scrapped cartridge.
+- **A turbo only fails by wearing out the engine.** Since build 451 a compressor wheel at its tip-speed limit
+  (520 m/s) is flagged, and the ENGINE bench charges it as wear (`TURBO OVERSPEED`, surge too) until the engine
+  blows. The turbo is not a part of its own that breaks: on the lap and dyno sweeps the limit is still only a
+  *cap*, so a grossly over-flowed frame runs steadily at an expansion ratio that would have destroyed it — a 2.0
+  four at 2.5 bar on a small frame reaches 7.4 bar of exhaust manifold pressure and simply becomes gutless, where
+  the real outcome is a scrapped cartridge.
 - **A TRACK lap is a single best-case hot lap** — no tyre wear, no fuel burn, no traffic, no driver error, the
   brakes after one preparation lap. The RACE tab adds those, as rules where they are rules (above).
 - **Imported circuits have modelled width, not surveyed width**, derived from the layout.
@@ -1040,18 +1048,28 @@ documented in the GUIDE at the point where it matters:
   zones (its own overrun torque, in the gear the driver has worked down to). On the power at the rev limiter
   the drive is cut to zero but nothing drags back, so a steep descent can carry a car a km/h or so past the
   speed its top gear allows.
-- **Known gaps the tests name:** the ported engines still use a hand-set exhaust share, so the Renesis (~842 °C)
-  and the 500cc two-stroke (~764 °C) read cool; each is budgeted by name in test46/47 at a floor it may not fall
-  below. Boosted low-rpm torque against the makers: the RS3 is ~46% short at 1700 rpm (its real compressor wheel is
-  not published; the preset uses the 71 mm upper bound) and the EcoBoost ~44% at 1400 (no published wheel either).
-  Older turbo engines with no ECU torque limit (Supra, STI, Evo) read 8–14% over the makers in the mid-range.
+- **Known gaps the tests name** (each may only shrink):
+  - The ported engines still use a hand-set exhaust share, so the Renesis (~842 °C) and the 500cc two-stroke
+    (~764 °C) read cool; each has a floor in test46/47.
+  - 0–100 km/h: the Supra RZ (+14%) and the WRX STI (+10%) in test41, older turbo engines with no ECU torque
+    limit; the Supra is also 20% off at its 2–3 upshift in test48.
+  - Rated power: the Dino 246 GT is +28% (test115), the missing top-end fade on two-valve heads.
+  - Aero (test116, build 415): the Radical corners at 1.93 g against its maker's 2 g, and the Huracán STO makes
+    ~361 kg at 280 km/h against Lamborghini's 420; the kit wings' angle and camber are not published.
+  - Electric motors (test96): the Model 3 makes 481 Nm against 430 measured, the Leaf peaks at 113 kW against a
+    rated 80, and its best efficiency at 5000–9000 rpm is 95.4% against ORNL's >97%.
+  - Boosted low-rpm torque: when last measured (builds 133–136) the RS3 was ~46% short at 1700 rpm and the 1.0
+    EcoBoost ~44% at 1400, neither with a published compressor wheel. No test holds these, and they have not been
+    re-measured since the RS3's sourced valves (build 425).
 - **Power at the rev limiter.** test46 names the archetypes allowed to peak there: the 1.6 Sport NA I4 (a plateau,
-  ~1 hp over its last 400 rpm: the missing top-end fade test60 also names for the 4A-GE and the F140), the 2.0
-  Turbo Diesel I4 (a plateau; a real TDI's late fall is its torque-limit calibration, which ECU TORQUE LIMIT can
-  now set) and the 2.0 Turbo Hot-Hatch. A boosted engine with no ECU boost taper holds full boost to the limiter
-  by its calibration (build 131) and is not counted. Any naturally-aspirated preset joining the list fails.
-- **The whole suite passes** (56 tests, build 150), each re-baselined check carrying its reason in the test and
-  the changelog.
+  ~1 hp over its last 400 rpm), the 2.0 Turbo Diesel I4 (a plateau; a real TDI's late fall is its torque-limit
+  calibration, which ECU TORQUE LIMIT can now set) and the 2.0 Turbo Hot-Hatch. A boosted engine with no ECU boost
+  taper holds full boost to the limiter by its calibration (build 131) and is not counted. Any naturally-aspirated
+  archetype joining the list fails. Among the real engines, test60 names the 4A-GE, the F140 (812 Superfast and
+  Enzo), and since builds 425–427, on their sourced valves, the RS3, LS3, Coyote 5.0 and BAC Mono's Duratec 2.3: all
+  peak at the limiter because the model has no top-end fade.
+- **The full suite** (254 tests at build 459, ~70 minutes) runs locally; CI runs only the tests a PR touches. Each
+  re-baselined check carries its reason in the test and the changelog.
 - **The VE bell is gone from every poppet-valve petrol engine, and kept for the rest.** It took three
   attempts. The third (builds 82–84) found the bell had been covering for two errors: the trapping
   calculation closed every intake valve 16–24° early, and the intake ram put its tuning peak 22–57%
