@@ -32,6 +32,15 @@ const AIR_FILTER={
   restrictive:{label:'RESTRICTIVE',  kPa:6.5, housing:'airbox',media:'paper',clogged:true}
 };
 
+// Piston ring pack options (E13): end-gap orifice area, boundary friction (Patton/Heywood SAE 890836),
+// and oil film carryover. Stock is the baseline (1.0x); gapless interlocking top rings cut gap leakage
+// at a small friction/cost penalty; low-tension rings cut boundary friction at higher blow-by & oil use.
+const RING_SPEC={
+  stock:     {label:'STOCK RINGS',    gapMult:1.00,fricMult:1.00,oilMult:1.00,cost:0},
+  gapless:   {label:'GAPLESS / RACE', gapMult:0.25,fricMult:1.05,oilMult:0.65,cost:280},
+  lowtension:{label:'LOW-TENSION',    gapMult:1.35,fricMult:0.75,oilMult:1.30,cost:180}
+};
+
 // The engine build spec. Everything downstream derives from this object, so new
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
 // Default is a modern 1.6 L naturally-aspirated sport four (high compression, DI, VVT,
@@ -41,7 +50,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,eTurbo:'none',nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,rings:'stock',valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',railPress:'stock',pilotSplit:false,glowPlugs:false,ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false

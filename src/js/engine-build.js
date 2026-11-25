@@ -17,6 +17,7 @@ function readEngineFromForm(){
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     balShaft:g('edBalShaft').value==='yes',
     drySump:g('edDrySump').value==='dry',
+    rings:g('edRings')?g('edRings').value:'stock',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -88,6 +89,7 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edBalShaft').value=e.balShaft?'yes':'no';
   g('edDrySump').value=e.drySump?'dry':'wet';
+  if(g('edRings'))g('edRings').value=(typeof RING_SPEC!=='undefined'&&RING_SPEC[e.rings])?e.rings:'stock';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -160,6 +162,7 @@ function syncDesignEnable(){
   g('edBalShaft').disabled=!balOk;
   if(type==='twostroke')g('edDrySump').value='wet';
   g('edDrySump').disabled=(type==='twostroke');
+  if(g('edRings')){if(type==='rotary')g('edRings').value='stock';g('edRings').disabled=(type==='rotary');}
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -348,7 +351,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.eTurboW=0;state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.blowbyKgS=0;state.blowbyLpm=0;state.crankcaseKpa=0;state.oilConsMlh=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.eTurboW=0;state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a

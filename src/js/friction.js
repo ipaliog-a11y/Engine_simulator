@@ -187,7 +187,8 @@ function mechFrictionMEP(N,map,actFrac=1){
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
   const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
   const crank=1.22e5*Dm/(B2S*nc)+brg(Dm,nMain)+1.35e-10*Dm*Dm*N*N*nMain/nc;
-  const recip=2.94e2*Sp/B+4.06e4*bnd/(B*B)+brg(Dp,nPin);
+  const ringFricMult=(typeof RING_SPEC!=='undefined'&&engine.rings&&RING_SPEC[engine.rings])?RING_SPEC[engine.rings].fricMult:1;
+  const recip=2.94e2*Sp/B+4.06e4*bnd*ringFricMult/(B*B)+brg(Dp,nPin);
   const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp))*actFrac;
   const valve=244*N*nCam/(B2S*nc)+(4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
