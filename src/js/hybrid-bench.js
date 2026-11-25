@@ -306,14 +306,24 @@ function hybStartStop(){
 // ---- the LIVE tab's hybrid panel: the power-flow diagram, the battery gauge, the drive mode and the manual controls ----
 // Colours (decision 17): orange the engine driving, blue the pack driving, green regeneration, purple the engine charging.
 const HYB_FLOW_COL={eng:'#ff9a3c',bat:'#4aa3ff',regen:'#00ff88',charge:'#b48cff',idle:'#3a3a4a'};
+function hybFrontPeakKW(hy){
+  if(!hy||!hy.front)return 0;
+  if(hy.front._pkKW!=null)return hy.front._pkKW;
+  const fm=hy.front.motor,V=hybBusV(hy);let P=0;
+  for(let r=200;r<=fm.nMax;r+=200)P=Math.max(P,motorMaxTorque(fm,r,V,60)*r*Math.PI/30);
+  const pb=packMaxPower(hy.pack,HYB_SOC)*(hy.front.shareF||0.5);
+  return (hy.front._pkKW=Math.min(P,pb)/1000);
+}
 function updateHybridPanel(){
   const panel=document.getElementById('hybridPanel');if(!panel)return;
   const show=isHybrid()&&(vizMode==='engine'||vizMode==='dyno');
   panel.hidden=!show;if(!show)return;
   const H=hybBenchState(),hy=engine.hy,ps=hy.mode==='ps',ser=hy.mode==='series',g=id=>document.getElementById(id);
-  // the gauge: the charge in its window, the pack's power and heat
-  const soc=H.soc*100,fill=g('hySocFill');
-  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<HYB_BENCH.socLo?'#ff5555':H.soc>HYB_BENCH.socHi?'#ffcc00':'#00ff88';}
+  // the gauge: the charge in its window (from hybTune so PHEVs like 12-95% aren't falsely flagged), the pack's power and heat
+  const tu=hybTune(engine),socLo=tu.socLo/100,socHi=tu.socHi/100;
+  const soc=H.soc*100,fill=g('hySocFill'),win=panel.querySelector('.hy-soc-win');
+  if(win){win.style.left=tu.socLo+'%';win.style.width=Math.max(0,tu.socHi-tu.socLo)+'%';}
+  if(fill){fill.style.width=soc.toFixed(1)+'%';fill.style.background=H.soc<socLo?'#ff5555':H.soc>socHi?'#ffcc00':'#00ff88';}
   const meter=g('hySoc');if(meter)meter.setAttribute('aria-valuenow',Math.round(soc));
   const sl=g('hySocSet');if(sl&&document.activeElement!==sl)sl.value=Math.round(soc);
   if(g('valHySoc'))g('valHySoc').textContent=Math.round(soc);
@@ -321,7 +331,16 @@ function updateHybridPanel(){
   if(g('hyPack'))g('hyPack').textContent=tr('PACK')+' '+(Math.abs(pb)<0.05?'0.0 kW':(pb>0?tr('DISCHARGING')+' ':tr('CHARGING')+' ')+Math.abs(pb).toFixed(1)+' kW')+' • '+Math.round(H.tB.b)+'°C';
   if(g('hyReadout'))g('hyReadout').textContent=tr('ENGINE')+' '+(H.engOn?Math.round(H.ne)+' rpm '+H.Pe.toFixed(1)+' kW':tr('OFF'))+
     ' • '+(ps?'MG2':tr('MOTOR'))+' '+(H.Pm>=0?'+':'')+H.Pm.toFixed(1)+' kW'+(ps||ser?' • '+(ps?'MG1':tr('GEN'))+' '+(H.P1>=0?'+':'')+H.P1.toFixed(1)+' kW':'')+
+    (hy.front?' • '+tr('FRONT EV')+' '+Math.round(hybFrontPeakKW(hy))+' kW':'')+
     ' • '+tr('SHAFT')+' '+Math.round(H.n)+' rpm '+H.Psys.toFixed(1)+' kW';
+  const tEl=g('hyTemp');
+  if(tEl&&H.mT){
+    const mT=H.mT,tLim=hy.motor.mag.Tmax,mDer=motorDerate({motor:hy.motor},mT),pDer=packDerate(H.tB.b);
+    const warn=mDer<0.999||pDer<0.999,hot=mT.w>165||mT.r>tLim-10||H.tB.b>=55;
+    tEl.textContent=tr('WINDING')+' '+Math.round(mT.w)+'°C • '+tr('CORE')+' '+Math.round(mT.c)+'°C • '+tr(rotorWord(hy.motor))+' '+Math.round(mT.r)+'°C'+
+      (warn?' • '+tr('THERMAL DERATE')+' '+Math.round(Math.min(mDer,pDer)*100)+'%':'');
+    tEl.style.color=hot?'#ff5555':(warn||mT.w>140||mT.r>tLim-25||H.tB.b>=45)?'#ffcc00':'';
+  }
   const ds=g('hyDrive');if(ds&&document.activeElement!==ds&&ds.value!==H.mode)ds.value=H.mode;
   panel.classList.toggle('manual',H.mode==='manual');panel.classList.toggle('ps',ps||ser);   // an engine-speed target for both (build 193)
   if(g('valHyCmd'))g('valHyCmd').textContent=Math.round(H.cmd*100);
@@ -359,8 +378,10 @@ function drawHybridFlow(H){
     c.font=F(5);c.fillStyle='#e0e0e0';c.textAlign=horiz?'center':'left';c.textBaseline=horiz?'bottom':'middle';
     c.fillText(a.toFixed(1),horiz?mx:mx+wd/2+3*S,horiz?my-wd/2-2*S:my);
   };
+  const frontLink=(x1,y1,x2,y2)=>{c.save();c.strokeStyle=state.ignOn!==false&&H.soc>0.02?C.bat:C.idle;c.lineWidth=1.5*S;c.setLineDash([3*S,2*S]);c.beginPath();c.moveTo(x1*S,y1*S);c.lineTo(x2*S,y2*S);c.stroke();c.restore();};
   const motCol=H.Pm>=0?(H.Pb>0.2?C.bat:C.eng):(H.engOn&&H.Pe>0.5?C.charge:C.regen);
   const batCol=H.Pb>=0?C.bat:(H.engOn&&H.Pe>0.5?C.charge:C.regen);
+  const fOn=state.ignOn!==false&&H.soc>0.02,fSub=hy.front?Math.round(hybFrontPeakKW(hy))+' kW':'';
   if(hy.mode==='series'){
     // ENGINE - GENERATOR, then the bus to the MOTOR - BRAKE; the PACK on the bus between them (build 193)
     const Pmot=H.P1+H.Pb-HYB_BENCH.auxW/1000;
@@ -375,17 +396,23 @@ function drawHybridFlow(H){
     box(160,20,58,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(238,20,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(124,104,52,30,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(176,119,228,119);box(228,104,64,30,tr('FRONT EV'),fSub,fOn);}
   }else if(!ps){
     // ENGINE -clutch- MOTOR - BRAKE in a row, the PACK under the motor
-    c.fillStyle=H.engOn?'#8a8aa0':'#3a3a4a';c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((H.engOn?108:110)*S,28*S,3*S,18*S);
-    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle='#888';c.fillText(tr(H.engOn?'CLOSED':'OPEN'),108*S,58*S);
-    flow([[72,37],[118,37]],H.engOn?H.Pe:0,C.eng);
-    flow([[182,37],[228,37]],H.Psys,H.engOn&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
+    const run=!!(H.engOn&&H.fired);
+    const clutchState=run?'CLOSED':(H.engOn?'CRANKING':'OPEN');
+    c.fillStyle=run?'#8a8aa0':(H.engOn?'#ffcc00':'#3a3a4a');
+    c.fillRect(104*S,28*S,3*S,18*S);c.fillRect((run?108:110)*S,28*S,3*S,18*S);
+    c.font=F(4.5);c.textAlign='center';c.textBaseline='top';c.fillStyle=H.engOn&&!run?'#ffcc00':'#888';
+    c.fillText(tr(clutchState),108*S,58*S);
+    flow([[72,37],[118,37]],run?H.Pe:0,C.eng);
+    flow([[182,37],[228,37]],H.Psys,run&&H.Pe>0.5?(H.Pm>0.2?C.bat:C.eng):(H.Psys>=0?C.bat:C.regen));
     flow([[150,100],[150,54]],H.Pb,batCol);
     box(8,20,64,34,tr('ENGINE'),H.engOn?Math.round(H.ne)+' rpm':tr('OFF'),H.engOn);
     box(118,20,64,34,tr('MOTOR'),(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(228,20,64,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(118,100,64,34,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(182,117,228,117);box(228,100,64,34,tr('FRONT EV'),fSub,fOn);}
   }else{
     // the shafts in a row (ENGINE -> the planetary -> BRAKE), MG1 above the planetary, MG2 under the ring shaft; the
     // electrical bus down the middle joins MG1, MG2 and the PACK
@@ -402,6 +429,7 @@ function drawHybridFlow(H){
     box(238,46,58,34,tr('BRAKE'),Math.round(H.n)+' rpm',H.n>1);
     box(196,96,52,26,'MG2',(H.Tm>=0?'+':'')+Math.round(H.Tm)+' Nm',Math.abs(H.Pm)>0.2);
     box(96,112,52,26,tr('PACK'),Math.round(H.soc*100)+'%',Math.abs(H.Pb)>0.2);
+    if(hy.front){frontLink(96,125,68,125);box(4,112,64,26,tr('FRONT EV'),fSub,fOn);}
   }
   c.textAlign='left';c.textBaseline='alphabetic';c.font=F(5);c.fillStyle='#888';
   c.fillText(tr((HYBRID_MODES[hy.mode]||{}).label||'')+' • '+tr(HYB_DRIVE[H.mode].label),6*S,(Hh/S-4)*S);

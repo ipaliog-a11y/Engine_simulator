@@ -202,20 +202,40 @@ function garageDelete(id){
 // What VIEW opens: the spec the entry will load, read from its record (not from what is built now).
 const garageOpen=new Set();
 function garageDetail(g){
-  const e=g.build.engine||{},v=g.build.vehicle,row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
-  const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
-  const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
-  const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
-  let h=row(tr('Engine'),typ+' • '+unit)+
-    row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
-    row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
-    row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
-    row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
-  const st=g.stats||{};
-  if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  const e=g.build.engine||{},v=g.build.vehicle,st=g.stats||{},row=(k,x)=>'<b>'+k+'</b> '+esc(x)+'<br>';
+  const isEv=e.type==='electric';
+  let h='';
+  if(isEv){
+    const chem=CHEM[e.evChem]||CHEM.nca,ser=e.evSeries||96;
+    const vNom=Math.round(ser*chem.ocv.reduce((a,b)=>a+b,0)/chem.ocv.length);
+    const mType=e.evMotorType==='im'?tr('INDUCTION MOTOR'):tr('PERMANENT-MAGNET MOTOR');
+    const rear=(e.evRearCount===2?'2× ':'1× ')+tr('rear')+' '+(e.evMotorType==='im'?'IM':'PM');
+    const front=e.evFront==='pm'||e.evFront==='im'?' + 1× '+tr('front')+' '+(e.evFront==='im'?'IM':'PM'):'';
+    const layout=(e.evFront==='pm'||e.evFront==='im'?'AWD':(v&&v.drive?String(v.drive).toUpperCase():'RWD'))+' ('+rear+front+')';
+    const inv=(INVERTER[e.evInverter]||INVERTER.igbt).label;
+    h=row(tr('Motor'),mType+' • '+(e.evRotorD||150)+'×'+(e.evStack||134)+' mm • '+(e.evPoles||6)+'-'+tr('pole'))+
+      row(tr('Drive'),layout+' • '+(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'))+
+      row(tr('Inverter'),inv+' • '+(e.evAmps||950)+' A')+
+      row(tr('Battery'),tr(chem.label)+' • '+(e.evKWh||75)+' kWh • '+vNom+' V ('+ser+'s)');
+    if(st.hp){
+      const kw=Math.round(st.hp*0.7457);
+      h+=row(tr('Output'),kw+' kW ('+st.hp+' hp)'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+    }
+  }else{
+    const typ=(ENGINE_TYPE[e.type]||ENGINE_TYPE.petrol4).label;
+    const unit=e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl '+(LAYOUT_LABEL[e.layout]||'');
+    const ind=e.intake==='na'?'NA':(e.intake==='turbo'?'turbo':'supercharged')+(e.boost_bar?' '+(+e.boost_bar).toFixed(2)+' bar':'');
+    h=row(tr('Engine'),typ+' • '+unit)+
+      row(tr('Bore × stroke'),e.type==='rotary'?'R '+e.bore_mm+' × W '+e.stroke_mm+' mm, e '+(e.ecc_mm||'—'):e.bore_mm+' × '+e.stroke_mm+' mm')+
+      row(tr('Compression'),(+e.compression).toFixed(1)+' • '+tr('redline')+' '+e.redline)+
+      row(tr('Induction'),ind+(e.intake==='turbo'?' • '+(e.turboSize||'')+' '+(e.turboConfig||'')+(e.vgt?' VGT':''):''))+
+      row(tr('Fuel'),(e.fuel||'gasoline')+(e.octane?' • '+e.octane+' RON':''));
+    if(st.hp)h+=row(tr('Output'),st.hp+' hp'+(st.hpRpm?' @ '+st.hpRpm:'')+' • '+st.tq+' Nm'+(st.tqRpm?' @ '+st.tqRpm:''));
+  }
   if(v){
     const b=v.body;
-    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+v.gears+'-speed '+(v.gearbox||''))+
+    const tx=isEv?(e.evGearbox==='2spd'?'2-speed EV':'1-speed EV'):(v.gears+'-speed '+(v.gearbox||''));
+    h+=row(tr('Car'),(b?b.name:tr((CHASSIS[v.chassis]||{}).label||v.chassis))+' • '+String(v.drive||'').toUpperCase()+' • '+tx)+
       row(tr('Tyres'),(TIRE_TYPE[v.tireType]||{}).label+' '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia+' • '+(SPEED_RATING[v.speedRating]||{label:'—'}).label)+
       row(tr('Speed limiter'),v.governor>0?v.governor+' km/h':tr('removed'))+
       row(tr('Traction control'),v.tc===false?tr('off'):tr('on'));
