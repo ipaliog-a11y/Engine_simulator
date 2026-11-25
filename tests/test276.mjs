@@ -35,10 +35,10 @@ const r = await page.evaluate(() => {
   load('500cc 2-Stroke Twin', { exhaust: 'race' });
   const tsRacePeak = engine.scavPeakRpm;
   const tsRaceGain = twoStrokePipeGain(tsRacePeak);
-  const tsRaceHp = getDynoData().peakHP;
+  const tsRaceHp = wotPull().peakHP;
   load('500cc 2-Stroke Twin', { exhaust: 'stock' });
   const tsStockGain = twoStrokePipeGain(6000);
-  const tsStockHp = getDynoData().peakHP;
+  const tsStockHp = wotPull().peakHP;
   // Shorter custom pipe tunes higher than longer custom pipe
   load('500cc 2-Stroke Twin', { exhaust: 'race' });
   const shortRep = exhaustReport(normPart({ kind: 'exhaust', build: 'equal', primD_mm: 38, primL_mm: 550, pipes: 2, sysD_mm: 40, sysL_m: 1.5, silencer: 'straight' }));
@@ -70,14 +70,14 @@ const r = await page.evaluate(() => {
   const dpAbs = silencerDp(0.08, 'absorptive', 0.4);
   const dpStr = silencerDp(0.08, 'straight', 0.4);
   load('Honda B18C spec R (Integra Type R DC2)', { exhaust: 'sport', silencer: 'straight' });
-  const bpStr = backPressureBar(8000, 1050), hpStr = getDynoData().peakHP;
+  const bpStr = backPressureBar(8000, 1050), hpStr = wotPull().peakHP;
   const repStr = exhaustReport(partFromFactory('sport', 'exhaust')).silBpKPa;
   load('Honda B18C spec R (Integra Type R DC2)', { exhaust: 'sport', silencer: 'absorptive' });
   const bpAbs = backPressureBar(8000, 1050);
   load('Honda B18C spec R (Integra Type R DC2)', { exhaust: 'sport', silencer: 'chambered' });
   const bpChm = backPressureBar(8000, 1050);
   load('Honda B18C spec R (Integra Type R DC2)', { exhaust: 'sport', silencer: 'baffled' });
-  const bpBaf = backPressureBar(8000, 1050), hpBaf = getDynoData().peakHP;
+  const bpBaf = backPressureBar(8000, 1050), hpBaf = wotPull().peakHP;
   const repBaf = exhaustReport(partFromFactory('sport', 'exhaust')).silBpKPa;
   out.silencer = { dpBaf, dpChm, dpAbs, dpStr, bpStr, bpAbs, bpChm, bpBaf, hpStr, hpBaf, repStr, repBaf };
 
