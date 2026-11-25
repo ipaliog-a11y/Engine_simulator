@@ -4,12 +4,33 @@
 // wrapped in a minimal one-page PDF. Everything is drawn with the Canvas 2D API already in use;
 // no libraries, so it still works completely offline.
 const RPT={W:1240,H:1754,ink:'#111',rule:'#c8c8d0',faint:'#eceef2',hp:'#c1121f',tq:'#1d4e89',accent:'#0a0a14'};
-// The engine spec, as label/value pairs — the block a real sheet prints under the graph.
+// The engine (or electric drive) spec, as label/value pairs — the block a real sheet prints under the graph.
 function reportSpecRows(){
-  const e=engine,d=e.displacement_L;
+  const e=engine;
+  if(isElectric()){
+    const m=e.motor,mp=m.parts?m.parts[0].m:m,b=e.pack;
+    const kind=mp.im?'Induction (IM)':'Permanent magnet ('+mp.mag.label+')';
+    const cfg=(e.evRearCount===2?'Dual rear':'Single rear')+(e.evFront&&e.evFront!=='none'?' + front '+e.evFront.toUpperCase():'');
+    const packCool=b.cool&&b.cool.label?b.cool.label:'liquid plate';
+    return [
+      ['Drive type','Electric ('+(mp.im?'IM':'PM')+')'],
+      ['Motor',kind],
+      ['Configuration',cfg],
+      ['Rotor / stator','Ø'+Math.round(mp.D*1000)+' / '+Math.round(mp.OD*1000)+' × '+Math.round(mp.L*1000)+' mm, '+mp.poles+' poles'],
+      ['Winding',mp.N+' turns, '+(mp.wire?mp.wire.label:'copper')],
+      ['Inverter',(mp.inv?mp.inv.label:'IGBT')+' — '+mp.Imax+' A peak'],
+      ['Motor cooling',mp.cool?mp.cool.label:'water jacket'],
+      ['Max speed',e.redline+' rpm (knee '+(e.score?e.score.knee:0)+' rpm)'],
+      ['Battery pack',b.chem.label+' — '+b.series+'s, '+b.kWh+' kWh ('+Math.round(b.Vnom)+' V nom)'],
+      ['Pack cooling',packCool+', '+Math.round(b.ambT!=null?b.ambT:25)+' °C ambient'],
+      ['Motor / pack mass',Math.round(m.mass)+' kg / '+Math.round(b.mass)+' kg'],
+      ['Est. installed mass',engineMass()+' kg']
+    ];
+  }
+  const d=e.displacement_L;
   const unit=e.type==='rotary'?e.cylinders+'-ROTOR':e.cylinders+'-CYL '+(LAYOUT_LABEL[e.layout]||'');
   let ind;
-  const ic=e.intercooler==='none'?', no intercooler':', '+(e.intercooler==='large'?'large':'small')+' intercooler';
+  const ic=e.icPart?', '+(e.icPart.name||'custom')+(e.icPart.type==='water'?' water-to-air':'')+' intercooler':(e.intercooler==='none'?', no intercooler':', '+(e.intercooler==='large'?'large':'small')+' intercooler');
   if(e.intake==='na')ind='Naturally aspirated';
   else if(e.intake==='turbo')ind=(TURBO_CONFIG[e.turboConfig]||{label:''}).label+' turbo, '+e.turboSize+' frame @ '+e.boost_bar.toFixed(2)+' bar'+ic+(e.vgt?', variable geometry':'')+(e.antilag?', anti-lag':'');
   else ind=(SC_TYPE[e.scType]||{label:''}).label+' supercharger @ '+e.boost_bar.toFixed(2)+' bar'+ic;
@@ -38,6 +59,20 @@ function reportSpecRows(){
 // The measurement conditions block — the equivalent of a real sheet's correction/ambient box.
 function reportCondRows(){
   const s=engine.score||{};
+  if(isElectric()){
+    const t=state.mT||{w:60,r:60},tB=state.tB?state.tB.b:PACK_T_REF;
+    return [
+      ['State of charge',Math.round((state.soc||0)*100)+' % ('+state.systemVoltage.toFixed(0)+' V bus)'],
+      ['Winding / rotor',Math.round(t.w)+' / '+Math.round(t.r)+' °C'],
+      ['Pack temperature',Math.round(tB)+' °C'],
+      ['Rated peak',(s.peakKW||0)+' kW ('+(s.peakHP||0)+' hp) @ '+(s.peakHPrpm||0)+' rpm'],
+      ['Continuous power',(s.contKW||0)+' kW (peak holds '+(s.holdS||0)+' s)'],
+      ['Best efficiency',(s.thEff||0)+' %'],
+      ['Specific power',(s.kWkg||0)+' kW/kg'],
+      ['Design grade',(s.grade||'—')+' ('+(s.overall||0)+'/100)'],
+      ['Correction','Rated at 50 % SOC, 60 °C magnets; curve at live state']
+    ];
+  }
   return [
     ['Intake air temp',Math.round(state.iat)+' °C'],
     ['Coolant / oil',Math.round(state.coolant)+' / '+Math.round(state.oil)+' °C'],
@@ -52,9 +87,14 @@ function reportCondRows(){
     ['Correction','None applied — simulated STD conditions']
   ];
 }
+function reportDiagRows(){
+  if(typeof diagnoseEngine!=='function')return [];
+  const d=diagnoseEngine();
+  return (d&&d.findings)||[];
+}
 function dynoReportCanvas(scale){
   scale=scale||2;
-  const W=RPT.W,H=RPT.H;
+  const ev=isElectric(),W=RPT.W,H=RPT.H;
   const cv=document.createElement('canvas');cv.width=Math.round(W*scale);cv.height=Math.round(H*scale);
   const g=cv.getContext('2d');g.scale(scale,scale);
   g.textBaseline='alphabetic';
@@ -65,7 +105,7 @@ function dynoReportCanvas(scale){
   // ---- Header band ----
   g.fillStyle=RPT.accent;g.fillRect(0,0,W,96);
   g.fillStyle='#ffcc00';g.font=px(20);g.fillText('PIXEL POWERTRAIN',40,44);
-  g.fillStyle='#fff';g.font=px(11);g.fillText('DYNAMOMETER REPORT',40,72);
+  g.fillStyle='#fff';g.font=px(11);g.fillText(ev?'ELECTRIC MOTOR DYNO REPORT':'DYNAMOMETER REPORT',40,72);
   const now=new Date();
   g.fillStyle='#9aa';g.font=sans(13);
   const stamp=now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5);
@@ -73,19 +113,21 @@ function dynoReportCanvas(scale){
   g.fillText('SIMULATED RUN — NOT A MEASUREMENT',W-40,68);
   g.textAlign='left';
   // ---- Engine title ----
-  const name=engine.name||((engine.displacement_L<1?engine.displacement_L.toFixed(2):engine.displacement_L.toFixed(1))+'L '+(engine.type==='rotary'?engine.cylinders+'-rotor':engine.cylinders+'-cyl'));
+  const specRows=reportSpecRows(),condRows=reportCondRows(),diagRows=reportDiagRows();
+  const name=engine.name||(ev?((engine.score?engine.score.peakKW:0)+' kW Electric Drive'):((engine.displacement_L<1?engine.displacement_L.toFixed(2):engine.displacement_L.toFixed(1))+'L '+(engine.type==='rotary'?engine.cylinders+'-rotor':engine.cylinders+'-cyl')));
   g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(name,40,142);
   g.fillStyle='#667';g.font=sans(15);
-  g.fillText(reportSpecRows()[1][1]+'  •  '+reportSpecRows()[2][1]+'  •  '+reportSpecRows()[6][1],40,168);
+  g.fillText(ev?(specRows[1][1]+'  •  '+specRows[2][1]+'  •  '+specRows[8][1]):(specRows[1][1]+'  •  '+specRows[2][1]+'  •  '+specRows[6][1]),40,168);
   // ---- Chart ----
-  const data=getDynoData();
+  const data=ev?motorDynoData():getDynoData();
+  const pVal=p=>ev?p.powerKW:p.powerHP;
   const gX=96,gY=210,gW=W-96-96,gH=560;
   let maxT=0,maxP=0,pkT={r:0,v:0},pkP={r:0,v:0};
-  data.forEach(p=>{if(p.torque>maxT){maxT=p.torque;pkT={r:p.rpm,v:p.torque};}if(p.powerHP>maxP){maxP=p.powerHP;pkP={r:p.rpm,v:p.powerHP};}});
-  dynoPulls.forEach(pl=>pl.pts.forEach(p=>{maxT=Math.max(maxT,p.torque);maxP=Math.max(maxP,p.powerHP);}));
+  data.forEach(p=>{const pv=pVal(p);if(p.torque>maxT){maxT=p.torque;pkT={r:p.rpm,v:p.torque};}if(pv>maxP){maxP=pv;pkP={r:p.rpm,v:pv};}});
+  dynoPulls.forEach(pl=>pl.pts.forEach(p=>{maxT=Math.max(maxT,p.torque);maxP=Math.max(maxP,ev?(p.powerKW!=null?p.powerKW:p.powerHP*0.7457):p.powerHP);}));
   const niceMax=v=>{const s=Math.pow(10,Math.floor(Math.log10(v)));return Math.ceil(v/(s/2))*(s/2);};
   maxP=niceMax(Math.max(maxP*1.12,20));maxT=niceMax(Math.max(maxT*1.12,20));
-  const r0=1000,r1=engine.redline;
+  const r0=ev?0:1000,r1=engine.redline;
   const X=r=>gX+(r-r0)/(r1-r0)*gW, YP=v=>gY+gH-v/maxP*gH, YT=v=>gY+gH-v/maxT*gH;
   // grid
   g.strokeStyle=RPT.faint;g.lineWidth=1;
@@ -104,49 +146,63 @@ function dynoReportCanvas(scale){
   // previously logged pulls, faded, for comparison
   dynoPulls.forEach(pl=>{
     g.strokeStyle=pl.color;g.globalAlpha=0.30;g.lineWidth=2;
-    g.beginPath();pl.pts.forEach((p,i)=>i?g.lineTo(X(p.rpm),YP(p.powerHP)):g.moveTo(X(p.rpm),YP(p.powerHP)));g.stroke();
+    g.beginPath();pl.pts.forEach((p,i)=>{const pv=ev?(p.powerKW!=null?p.powerKW:p.powerHP*0.7457):p.powerHP;i?g.lineTo(X(p.rpm),YP(pv)):g.moveTo(X(p.rpm),YP(pv));});g.stroke();
     g.beginPath();pl.pts.forEach((p,i)=>i?g.lineTo(X(p.rpm),YT(p.torque)):g.moveTo(X(p.rpm),YT(p.torque)));g.stroke();
     g.globalAlpha=1;
   });
+  // EV knee line & efficiency curve
+  const s=engine.score||{};
+  if(ev&&s.knee>0&&s.knee<r1){
+    const kx=X(s.knee);
+    g.strokeStyle='#99a';g.lineWidth=1.5;g.setLineDash([4,4]);
+    g.beginPath();g.moveTo(kx,gY);g.lineTo(kx,gY+gH);g.stroke();g.setLineDash([]);
+    g.fillStyle='#667';g.font=sans(11);g.textAlign='left';g.fillText('KNEE '+s.knee+' rpm',kx+6,gY+gH-10);
+  }
+  if(ev){
+    const YE=f=>gY+gH-clamp((f-0.7)/0.3,0,1)*gH;
+    g.strokeStyle='#1a7f37';g.lineWidth=1.8;g.setLineDash([5,4]);
+    g.beginPath();data.forEach((p,i)=>i?g.lineTo(X(p.rpm),YE(p.eff||0)):g.moveTo(X(p.rpm),YE(p.eff||0)));g.stroke();
+    g.setLineDash([]);
+    g.fillStyle='#1a7f37';g.font=sans(11,true);g.textAlign='right';g.fillText('EFFICIENCY 70–100%',gX+gW-10,gY+18);
+  }
   // this run
   g.lineWidth=3.5;g.lineJoin='round';
   g.strokeStyle=RPT.tq;g.beginPath();data.forEach((p,i)=>i?g.lineTo(X(p.rpm),YT(p.torque)):g.moveTo(X(p.rpm),YT(p.torque)));g.stroke();
-  g.strokeStyle=RPT.hp;g.beginPath();data.forEach((p,i)=>i?g.lineTo(X(p.rpm),YP(p.powerHP)):g.moveTo(X(p.rpm),YP(p.powerHP)));g.stroke();
+  g.strokeStyle=RPT.hp;g.beginPath();data.forEach((p,i)=>i?g.lineTo(X(p.rpm),YP(pVal(p))):g.moveTo(X(p.rpm),YP(pVal(p))));g.stroke();
   // peak callouts
   const dot=(x,y,c)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,5,0,6.284);g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.stroke();};
   dot(X(pkP.r),YP(pkP.v),RPT.hp);dot(X(pkT.r),YT(pkT.v),RPT.tq);
   g.font=sans(13,true);g.textAlign='center';
-  g.fillStyle=RPT.hp;g.fillText(pkP.v.toFixed(1)+' hp @ '+pkP.r+' rpm',clamp(X(pkP.r),gX+90,gX+gW-90),YP(pkP.v)-14);
+  g.fillStyle=RPT.hp;g.fillText(pkP.v.toFixed(1)+(ev?' kW':' hp')+' @ '+pkP.r+' rpm',clamp(X(pkP.r),gX+90,gX+gW-90),YP(pkP.v)-14);
   g.fillStyle=RPT.tq;g.fillText(pkT.v.toFixed(1)+' Nm @ '+pkT.r+' rpm',clamp(X(pkT.r),gX+90,gX+gW-90),YT(pkT.v)+26);
   // axis titles
   g.save();g.translate(30,gY+gH/2);g.rotate(-Math.PI/2);
-  g.fillStyle=RPT.hp;g.font=sans(14,true);g.textAlign='center';g.fillText('POWER (hp)',0,0);g.restore();
+  g.fillStyle=RPT.hp;g.font=sans(14,true);g.textAlign='center';g.fillText(ev?'POWER (kW)':'POWER (hp)',0,0);g.restore();
   g.save();g.translate(W-26,gY+gH/2);g.rotate(Math.PI/2);
   g.fillStyle=RPT.tq;g.textAlign='center';g.fillText('TORQUE (Nm)',0,0);g.restore();
-  g.fillStyle='#667';g.font=sans(13);g.textAlign='center';g.fillText('ENGINE SPEED (rpm)',gX+gW/2,gY+gH+46);
+  g.fillStyle='#667';g.font=sans(13);g.textAlign='center';g.fillText(ev?'MOTOR SPEED (rpm)':'ENGINE SPEED (rpm)',gX+gW/2,gY+gH+46);
   g.textAlign='left';
   // ---- Peak result band ----
   const by=gY+gH+70;
   g.fillStyle='#f4f5f8';g.fillRect(40,by,W-80,92);
   g.strokeStyle=RPT.rule;g.lineWidth=1;g.strokeRect(40,by,W-80,92);
-  const kW=pkP.v*0.7457, lbft=pkT.v*0.73756;
+  const kW=ev?pkP.v:pkP.v*0.7457, hp=ev?pkP.v/0.7457:pkP.v, lbft=pkT.v*0.73756;
   const big=(x,lbl,val,sub,col)=>{
     g.fillStyle='#667';g.font=sans(12);g.fillText(lbl,x,by+26);
     g.fillStyle=col;g.font=sans(34,true);g.fillText(val,x,by+64);
     g.fillStyle='#889';g.font=sans(12);g.fillText(sub,x,by+82);
   };
-  big(70,'PEAK POWER',pkP.v.toFixed(1)+' hp',Math.round(kW)+' kW  @ '+pkP.r+' rpm',RPT.hp);
+  big(70,'PEAK POWER',ev?pkP.v.toFixed(1)+' kW':pkP.v.toFixed(1)+' hp',ev?Math.round(hp)+' hp  @ '+pkP.r+' rpm':Math.round(kW)+' kW  @ '+pkP.r+' rpm',RPT.hp);
   big(490,'PEAK TORQUE',pkT.v.toFixed(1)+' Nm',Math.round(lbft)+' lb-ft  @ '+pkT.r+' rpm',RPT.tq);
-  const s=engine.score||{};
-  big(890,'GRADE',(s.grade||'—'),(s.overall||0)+'/100  •  '+(s.hpPerL||0)+' hp/L',RPT.ink);
-  // ---- Spec + conditions tables ----
+  big(890,'GRADE',(s.grade||'—'),(s.overall||0)+'/100  •  '+(ev?(s.kWkg||0)+' kW/kg':(s.hpPerL||0)+' hp/L'),RPT.ink);
+  // ---- Spec + conditions + diagnostics tables ----
   const ty=by+126;
-  const col=(x,w,title,rows)=>{
-    g.fillStyle=RPT.accent;g.fillRect(x,ty,w,26);
-    g.fillStyle='#fff';g.font=px(9);g.fillText(title,x+10,ty+18);
+  const col=(x,y0,w,title,rows)=>{
+    g.fillStyle=RPT.accent;g.fillRect(x,y0,w,26);
+    g.fillStyle='#fff';g.font=px(9);g.fillText(title,x+10,y0+18);
     g.font=sans(13);
     rows.forEach((r,i)=>{
-      const y=ty+26+22*(i+1);
+      const y=y0+26+22*(i+1);
       if(i%2===0){g.fillStyle=RPT.faint;g.fillRect(x,y-16,w,22);}
       g.fillStyle='#667';g.fillText(r[0],x+10,y);
       g.fillStyle=RPT.ink;g.font=sans(13,true);
@@ -155,23 +211,50 @@ function dynoReportCanvas(scale){
       if(v!==String(r[1]))v+='…';
       g.fillText(v,x+160,y);g.font=sans(13);
     });
-    return ty+26+22*(rows.length+1);
+    return y0+26+22*(rows.length+1);
   };
-  const specRows=reportSpecRows(),condRows=reportCondRows();
-  const endA=col(40,580,'ENGINE SPECIFICATION',specRows);
-  const endB=col(640,560,'RUN CONDITIONS & RESULT',condRows);
+  const endA=col(40,ty,580,ev?'ELECTRIC DRIVE SPECIFICATION':'ENGINE SPECIFICATION',specRows);
+  const endB=col(640,ty,560,'RUN CONDITIONS & RESULT',condRows);
+  // Diagnostics block (Build 441 + EV): sits under RUN CONDITIONS & RESULT
+  const diagY=endB+8;
+  g.fillStyle=RPT.accent;g.fillRect(640,diagY,560,26);
+  g.fillStyle='#fff';g.font=px(9);g.fillText('DIAGNOSTICS & WARNINGS',650,diagY+18);
+  const maxDiag=6,showDiag=diagRows.slice(0,maxDiag);
+  let endDiag=diagY+26;
+  if(!showDiag.length){
+    g.fillStyle='#1a7f37';g.font=sans(13,true);g.fillText('No faults or warnings.',650,diagY+48);
+    endDiag=diagY+58;
+  }else{
+    showDiag.forEach((f,i)=>{
+      const y=diagY+26+22*(i+1);
+      if(i%2===0){g.fillStyle=RPT.faint;g.fillRect(640,y-16,560,22);}
+      g.fillStyle=f.sev==='err'?'#c1121f':f.sev==='warn'?'#b86b00':'#445';
+      g.font=sans(12,true);
+      const tag='['+String(f.sev||'info').toUpperCase()+'] '+f.title+': ';
+      g.fillText(tag,650,y);
+      const tw=g.measureText(tag).width;
+      g.fillStyle=RPT.ink;g.font=sans(12);
+      let det=String(f.detail||'');
+      while(g.measureText(det).width>540-tw&&det.length>4)det=det.slice(0,-2);
+      if(det!==String(f.detail||''))det+='…';
+      g.fillText(det,650+tw,y);
+    });
+    endDiag=diagY+26+22*(showDiag.length+1);
+  }
   // ---- Run data table: the tabulated pull a real sheet prints beside the graph ----
-  const dy=Math.max(endA,endB)+20;
+  const dy=Math.max(endA,endDiag)+16;
   const at=r=>{                                    // interpolate the sampled curve at an rpm
+    if(!data.length)return {powerHP:0,powerKW:0,torque:0,eff:0};
     if(r<=data[0].rpm)return data[0];
     for(let i=1;i<data.length;i++)if(r<=data[i].rpm){
       const a=data[i-1],b=data[i],t=(r-a.rpm)/(b.rpm-a.rpm);
-      return {powerHP:a.powerHP+(b.powerHP-a.powerHP)*t,torque:a.torque+(b.torque-a.torque)*t};
+      return {powerHP:a.powerHP+(b.powerHP-a.powerHP)*t,powerKW:(a.powerKW||0)+((b.powerKW||0)-(a.powerKW||0))*t,
+        torque:a.torque+(b.torque-a.torque)*t,eff:(a.eff||0)+((b.eff||0)-(a.eff||0))*t};
     }
     return data[data.length-1];
   };
   const dStep=Math.max(100,Math.round((r1-r0)/33/50)*50);
-  const samples=[];for(let r=r0;r<=r1;r+=dStep)samples.push(r);
+  const samples=[];for(let r=ev?dStep:r0;r<=r1;r+=dStep)samples.push(r);
   if(samples[samples.length-1]!==r1)samples.push(r1);
   const nCol=3,perCol=Math.ceil(samples.length/nCol),cw=(W-80)/nCol;
   g.fillStyle=RPT.accent;g.fillRect(40,dy,W-80,26);
@@ -180,20 +263,20 @@ function dynoReportCanvas(scale){
   for(let c=0;c<nCol;c++){
     const x=40+c*cw;
     g.fillStyle='#667';g.font=sans(11,true);
-    g.fillText('RPM',x+10,dy+44);g.fillText('HP',x+95,dy+44);g.fillText('Nm',x+175,dy+44);g.fillText('lb-ft',x+255,dy+44);
+    g.fillText('RPM',x+10,dy+44);g.fillText(ev?'kW':'HP',x+95,dy+44);g.fillText('Nm',x+175,dy+44);g.fillText(ev?'EFF %':'lb-ft',x+255,dy+44);
     g.font=sans(12);
     for(let i=0;i<perCol;i++){
       const idx=c*perCol+i;if(idx>=samples.length)break;
       const r=samples[idx],v=at(r),y=dy+44+18*(i+1);
       if(i%2===0){g.fillStyle=RPT.faint;g.fillRect(x,y-13,cw-8,18);}
       g.fillStyle='#667';g.fillText(String(r),x+10,y);
-      g.fillStyle=RPT.hp;g.fillText(v.powerHP.toFixed(1),x+95,y);
+      g.fillStyle=RPT.hp;g.fillText((ev?v.powerKW:v.powerHP).toFixed(1),x+95,y);
       g.fillStyle=RPT.tq;g.fillText(v.torque.toFixed(1),x+175,y);
-      g.fillStyle='#889';g.fillText((v.torque*0.73756).toFixed(1),x+255,y);
+      g.fillStyle='#889';g.fillText(ev?((v.eff||0)*100).toFixed(1):(v.torque*0.73756).toFixed(1),x+255,y);
     }
   }
   // ---- Footer ----
-  const fy=dy+44+18*(perCol+1)+16;
+  const fy=Math.min(H-74,dy+44+18*(perCol+1)+16);
   g.strokeStyle=RPT.rule;g.lineWidth=1;
   g.beginPath();g.moveTo(40,fy);g.lineTo(W-40,fy);g.stroke();
   g.fillStyle='#889';g.font=sans(12);
@@ -214,7 +297,6 @@ function downloadBlob(blob,fn){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
 }
 function exportDynoPNG(){
-  if(isElectric()){flash(tr(EV_REPORT_NOTE),'warn');return;}
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   const cv=dynoReportCanvas(2),fn=reportFileName('png');
   cv.toBlob(b=>{if(!b){flash(tr('REPORT FAILED'),'err');return;}downloadBlob(b,fn);flash(tr('SAVED REPORT:')+' '+fn);},'image/png');
@@ -222,7 +304,6 @@ function exportDynoPNG(){
 // A minimal single-page PDF holding the report as a JPEG. PDF supports JPEG natively via the
 // DCTDecode filter, so the canvas bytes can be dropped straight in — no encoder, no library.
 function exportDynoPDF(){
-  if(isElectric()){flash(tr(EV_REPORT_NOTE),'warn');return;}
   if(!engine.score){flash(tr('BUILD AN ENGINE FIRST'),'warn');return;}
   canvasToPDF(dynoReportCanvas(2),reportFileName('pdf'));
 }
@@ -419,16 +500,28 @@ function exportRacePDF(){
 // Same paper stock as the dyno report: A4, white, dark ink, drawn offscreen and exported as PNG
 // or wrapped in the same library-free PDF.
 function lapVehicleRows(){
-  const v=vehicle,e=engine,s=e.score||{};
+  const v=vehicle,e=engine,s=e.score||{},ev=isElectric();
   const dl={fwd:'Front-wheel drive',rwd:'Rear-wheel drive',awd:'All-wheel drive'}[v.drive]||v.drive;
+  let engRow,pwrRow,gbRow;
+  if(ev){
+    const m=e.motor,mp=m.parts?m.parts[0].m:m,b=e.pack;
+    const cfg=(e.evRearCount===2?'Dual rear':'Single rear')+(e.evFront&&e.evFront!=='none'?' + front '+e.evFront.toUpperCase():'');
+    engRow=['Drive',(mp.im?'IM':'PM')+' ('+cfg+'), '+b.kWh+' kWh '+b.chem.label];
+    pwrRow=['Peak power',(s.peakKW||0)+' kW ('+(s.peakHP||0)+' hp) @ '+(s.peakHPrpm||0)+' rpm'];
+    gbRow=['Gearbox',(v.gears>1?v.gears+'-speed EV, ':'Single-speed EV, ')+v.finalDrive.toFixed(2)+':1 final'];
+  }else{
+    engRow=['Engine',(e.displacement_L<1?e.displacement_L.toFixed(2):e.displacement_L.toFixed(1))+' L '+(e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl')+(e.intake==='na'?' NA':e.intake==='turbo'?' turbo':' supercharged')];
+    pwrRow=['Peak power',(s.peakHP||0)+' hp @ '+(s.peakHPrpm||0)+' rpm'];
+    gbRow=['Gearbox',tr(v.gbLabel)+', '+v.gears+'-speed, '+v.finalDrive.toFixed(2)+':1 final'];
+  }
   return [
-    ['Engine',(e.displacement_L<1?e.displacement_L.toFixed(2):e.displacement_L.toFixed(1))+' L '+(e.type==='rotary'?e.cylinders+'-rotor':e.cylinders+'-cyl')+(e.intake==='na'?' NA':e.intake==='turbo'?' turbo':' supercharged')],
-    ['Peak power',(s.peakHP||0)+' hp @ '+(s.peakHPrpm||0)+' rpm'],
+    engRow,
+    pwrRow,
     ['Peak torque',(s.peakTQ||0)+' Nm @ '+(s.peakTQrpm||0)+' rpm'],
     ['Chassis',v.chLabel],
     ['Kerb weight',Math.round(v.mass)+' kg  ('+v.powerToWeight.toFixed(0)+' hp/tonne)'],
     ['Drivetrain',dl],
-    ['Gearbox',tr(v.gbLabel)+', '+v.gears+'-speed, '+v.finalDrive.toFixed(2)+':1 final'],
+    gbRow,
     ['Differential',tr(v.diffLabel)],
     ['Tyres',(TIRE_TYPE[v.tireType]||{}).label+'  '+v.tireWidth+'/'+v.tireAspect+'R'+v.wheelDia],
     ['Grip coefficient','μ '+v.mu.toFixed(2)],
@@ -438,6 +531,12 @@ function lapVehicleRows(){
     ['Aero',(v.clA>0.01?'ClA '+v.clA.toFixed(2)+' m²':'no downforce')+'  ·  CdA '+v.cdA.toFixed(2)+' m²'],
     ['Build cost',fmtCost(v.cost+(e.cost||0))]
   ];
+}
+function lapCondSummary(L){
+  const cond=(L&&L.cond)||{weather:'dry',wet:0,air:22,tyre:'own'};
+  const wx=typeof trackWeatherLabel==='function'?trackWeatherLabel(cond.weather):({dry:'Dry',damp:'Damp',wet:'Wet',heavy:'Heavy rain'}[cond.weather]||'Dry');
+  const tyreTag=cond.tyre==='inter'?' · Inters':cond.tyre==='wet'?' · Full wet':'';
+  return wx+' '+cond.air+' °C'+tyreTag;
 }
 function hotLapReportCanvas(scale){
   scale=scale||2;
@@ -458,12 +557,12 @@ function hotLapReportCanvas(scale){
   g.fillText(now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5),W-40,44);
   g.fillText('SIMULATED LAP — NOT A MEASUREMENT',W-40,68);
   g.textAlign='left';
-  // ---- Title: circuit + car ----
+  // ---- Title: circuit + conditions + car ----
   const T=L.track;
   g.fillStyle=RPT.ink;g.font=sans(30,true);g.fillText(T.label,40,142);
   g.fillStyle='#667';g.font=sans(15);
-  g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.wLabel+' wide  ·  '+T.corners+' corners      '+
-    engineLabel()+'  in  '+vehicle.chLabel,40,168);
+  g.fillText((T.length/1000).toFixed(2)+' km  ·  '+T.wLabel+' wide  ·  '+T.corners+' corners  ·  '+
+    lapCondSummary(L)+'      '+engineLabel()+'  in  '+vehicle.chLabel,40,168);
   // ---- Lap + sector band ----
   const by=186;
   g.fillStyle='#f4f5f8';g.fillRect(40,by,W-80,86);
