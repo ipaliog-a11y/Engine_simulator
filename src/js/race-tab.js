@@ -209,6 +209,20 @@ function raceWeatherText(w){
   const x=w/RACE.wetFull;
   return x<0.02?'☀ '+tr('DRY'):x<0.5?'🌦 '+tr('DAMP')+' '+Math.round(x*100)+'%':'🌧 '+tr('WET')+' '+Math.round(x*100)+'%';
 }
+function fmtRaceClock(sec){
+  const s=Math.max(0,Math.ceil(sec));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+  const p=n=>String(n).padStart(2,'0');
+  return h>0?p(h)+':'+p(m)+':'+p(ss):p(m)+':'+p(ss);
+}
+function raceStatusClock(R,S,t,sep){
+  const lapNow=Math.max(1,S[0].laps.length+(S[0].fin?0:1));
+  if(R.cfg&&R.cfg.durationSec>0){
+    const rem=Math.max(0,R.cfg.durationSec-t);
+    return fmtRaceClock(rem)+(sep||' • ')+tr('LAP')+' '+lapNow;
+  }
+  return tr('LAP')+' '+Math.min(R.cfg.laps,lapNow)+'/'+R.cfg.laps+(sep||' • ')+fmtLap(t);
+}
 // ---- the panel: controls, the timing tower, the cars' telemetry, the result ----
 function renderRacePanel(force){
   const R=raceUI.run;if(!R||raceUI.phase!=='live')return;
@@ -216,10 +230,9 @@ function renderRacePanel(force){
   raceTopInfo();
   const t=raceUI.t,S=raceStandings(R,t),fl=raceFastest(R,t),done=t>=R.t-1e-6;
   const sc=document.getElementById('raceScrub');if(sc&&!raceUI.scrubbing)sc.value=Math.round(t/R.t*1000);
-  const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   const wNow=S[0].s.wet;
   const trkLabel=(TRACKS[R.cfg.track]||{}).label||R.cfg.track;
-  document.getElementById('raceHead').innerHTML='<b>'+esc(trkLabel)+'</b> • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(t)+
+  document.getElementById('raceHead').innerHTML='<b>'+esc(trkLabel)+'</b> • '+raceStatusClock(R,S,t,' • ')+
     (fl?' • '+tr('FASTEST')+' <span class="race-fl">'+fmtLap(fl.t)+'</span>':'')+
     '<br>'+raceWeatherText(wNow)+' • '+tr('AIR')+' '+R.cfg.air+'°C • '+tr('TRACK')+' '+Math.round(raceTrackTemp(R.cfg.air,wNow))+'°C';
   const row=x=>{
@@ -300,7 +313,6 @@ function drawRace(){
   }
   const t=raceUI.t,S=raceStandings(R,t),topBar=40,botBar=34;
   // the clock and the lap, in the title bar
-  const lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
   const T=buildTrack(R.cfg.track);
   if(trackView.key!==T.label){trackView.key=T.label;trackView.z=1;trackView.x=0;trackView.y=0;}
   sceneBind(T);
@@ -335,7 +347,7 @@ function drawRace(){
   ctx.textAlign='right';ctx.font='7px "Press Start 2P"';ctx.fillStyle='#99a';
   const spd=raceUI.speed+'×'+(raceUI.playing?'':' ❚❚');ctx.fillText(spd,W-44,19);
   const sw=ctx.measureText(spd).width+14;
-  ctx.fillStyle=C.green;ctx.font='10px "Press Start 2P"';ctx.fillText(tr('LAP')+' '+lapNow+'/'+R.cfg.laps+'  '+fmtLap(t),W-44-sw,19);
+  ctx.fillStyle=C.green;ctx.font='10px "Press Start 2P"';ctx.fillText(raceStatusClock(R,S,t,'  '),W-44-sw,19);
   ctx.textAlign='left';
   ctx.font='6px "Press Start 2P"';ctx.fillStyle='#88aacc';ctx.textAlign='right';
   ctx.fillText(raceWeatherText(S[0].s.wet)+'  '+R.cfg.air+'°C',W-44,topBar-2);ctx.textAlign='left';
@@ -423,8 +435,8 @@ function raceTopInfo(){
   const el=document.getElementById('raceTopInfo');if(!el)return;
   const R=raceUI.run;
   if(!R||raceUI.phase!=='live'){el.textContent=raceUI.phase==='computing'?raceUI.progTxt:tr('Set up the race');return;}
-  const S=raceStandings(R,raceUI.t),lapNow=Math.min(R.cfg.laps,Math.max(1,S[0].laps.length+(S[0].fin?0:1)));
-  el.textContent=((TRACKS[R.cfg.track]||{}).label||R.cfg.track)+' • '+tr('LAP')+' '+lapNow+'/'+R.cfg.laps+' • '+fmtLap(raceUI.t)+' • '+raceWeatherText(S[0].s.wet);
+  const S=raceStandings(R,raceUI.t);
+  el.textContent=((TRACKS[R.cfg.track]||{}).label||R.cfg.track)+' • '+raceStatusClock(R,S,raceUI.t,' • ')+' • '+raceWeatherText(S[0].s.wet);
 }
 function bindRacePage(){
   document.getElementById('raceBack').addEventListener('click',()=>setTab(racePage.from));

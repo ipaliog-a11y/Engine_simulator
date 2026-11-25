@@ -59,7 +59,7 @@ function skidRun(car,v,sample){
       ayS+=Math.abs(s.ayF);vS+=s.speed;stS+=Math.abs(s.delta||0);n++;
       if(sample&&s.t>=nextT){
         o.samples.push({t:s.t,x:s.x,y:s.y,psi:s.psi,v:s.speed,beta,yaw:s.yaw,delta:s.delta||0,thr:u.throttle,brk:u.brake||0,
-          gear:s.gear,rpm:s.rpm,ax:s.ax||0,ay:s.ay||0,e});
+          gear:s.gear,rpm:s.rpm,ax:s.ax||0,ay:s.ay||0,e,alpha:s.alpha.slice()});
         nextT=s.t+0.04;
       }
       if(ang>=4*Math.PI){o.lapT=s.t-tJ;break;}
@@ -95,6 +95,6 @@ function simulateSkidpadChallenge(){
   const D=typeof mooseDims==='function'?mooseDims():{w:(car.tF+car.tR)/2+0.3,ovF:0.35*(car.a+car.b),ovR:0.35*(car.a+car.b)};
   return{ok:true,kind:'skidpad',outcome:R.outcome,speedKmh:R.vMean*3.6,targetKmh:v*3.6,gLap:R.gLap,ayMean:R.ayMean,lapT:R.lapT,
     betaMax:R.betaMax*180/Math.PI,steerDeg:R.steer*180/Math.PI,eMin:R.eMin,eMax:R.eMax,failBy:F.outcome,
-    lift2:R.lift2,tipMax:R.tipMax,ssf:(car.tF+car.tR)/4/car.h,
+    lift2:R.lift2,tipMax:R.tipMax,ssf:(car.tF+car.tR)/4/car.h,mu:car.mu,
     radius:SKID_R,tol:SKID_TOL,samples:R.samples,trackW:D.w,body:{f:car.a+D.ovF,r:car.b+D.ovR},drive:car.drive};
 }
