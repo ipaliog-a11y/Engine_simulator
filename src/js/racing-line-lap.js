@@ -296,7 +296,7 @@ function carLineKey(){
   return [v.mass,v.muRef,v.FzRef,v.clA,v.cdA,v.aeroBal,v.drivenAero,v.drivenWt,v.track,v.tireWidth,v.cg,v.wb,v.fWt,
     v.finalDrive,(v.ratios||[]).join('/'),v.driveEff,v.drive,v.diff,v.brakeDecelCap,v.governor,v.tc,v.camber,v.rollGrad,
     v.trackF,v.trackR,v.lltdF,v.FzRefF,v.camRecF,v.camRecR,v.camberF,v.camberR,v.roughF,v.roughR,v.warpK,v.warpC,
-    s.peakHP,s.peakTQ,pt.maxRpm()].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
+    s.peakHP,s.peakTQ,pt.maxRpm(),ENV.alt_m,ENV.tempC,ENV.headwind_ms].map(x=>typeof x==='number'?+x.toFixed(4):x).join('|');
 }
 function lineFor(T,key){
   const k=carLineKey();
@@ -348,8 +348,9 @@ function simulateLapCore(key,opts){
   const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner*espGripF;   // vv: the speed, for the downforce's share of N and the road's bumps
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
   const airC=opts&&opts.air!=null?opts.air:null;
-  const rho=airC!=null?AIR_RHO*(273.15+22)/(273.15+airC):AIR_RHO;   // ideal gas at sea level, anchored to AIR_RHO at 22 C
-  const down=v=>0.5*rho*vehicle.clA*v*v;
+  const rho=airC!=null?AIR_RHO*pAmbAtm(opts&&opts.alt_m)*(273.15+22)/Math.max(200,273.15+airC):envAirRho(opts);
+  const vWind=envWind(opts),vAir=v=>Math.max(0,v+vWind);
+  const down=v=>aeroDownforce(vehicle,vAir(v),rho).F;
   // Normal load at a point: weight resolved onto the slope + downforce − vertical-curvature term.
   // The vertical term is capped at ±0.6 g: real suspension runs out of travel and hits the bump
   // stops, so a deep compression stops adding grip long before the maths says it should — and
@@ -360,8 +361,8 @@ function simulateLapCore(key,opts){
   const KVCAP=0.6*m*G;
   const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
   const normalLoad=(i,vv)=>loadAt(p[i],vv);
-  const drag=v=>0.5*rho*vehicle.cdA*v*v;
-  const rollF=v=>crrAt(vehicle.crr,v)*m*G;
+  const drag=v=>{const va=vAir(v);return 0.5*rho*vehicle.cdA*va*va;};
+  const rollF=(v,cosT)=>crrAt(vehicle.crr,v)*(m*G*(cosT==null?1:cosT)+down(v));
   // Best gear at a road speed = the one giving the most wheel torque without over-revving.
   // Every gear that would over-rev is skipped — INCLUDING the top one. That last part is the rev
   // limiter, and leaving it out is not a small error: exempting top gear (so the car could keep
@@ -407,6 +408,7 @@ function simulateLapCore(key,opts){
   // saturates tyre load capacity, lateral force is bounded by muLat * Nmax so extreme-aero cars do not jump to VMAX in corners.
   const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
   const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
+  const aeroCap=(vehicle.aeroBumpCapF>0?vehicle.aeroBumpCapF:Infinity)+(vehicle.aeroBumpCapR>0?vehicle.aeroBumpCapR:Infinity);
   function ceilAt(q){
     // Two passes: solve the closed form ignoring the cap, then re-solve with the vertical term
     // evaluated (and clamped) at that speed. Converges immediately because the cap only binds
@@ -424,6 +426,8 @@ function simulateLapCore(key,opts){
       const num=muLat*m*G*q.cosT+extra;
       const vCap=Math.min(VMAX,Math.sqrt(Math.max(0,muLat*Nmax*q.r/m)));
       vv=denom>1e-6?Math.min(vCap,Math.sqrt(Math.max(0,num/denom))):vCap;
+      if(0.5*rho*vehicle.clA*vAir(vv)*vAir(vv)>aeroCap)
+        vv=Math.min(vv,Math.sqrt(Math.max(0,muLat*(m*G*q.cosT+aeroCap+extra/Math.max(1e-6,muLat))*q.r/m)));
     }
     muLat=muLatAt(Math.min(Nmax,loadAt(q,vv)),vv*vv/q.r,vv,q);
     }
@@ -521,7 +525,7 @@ function simulateLapCore(key,opts){
     // Diff traction is evaluated at the lateral load transfer actually happening here, so an
     // open diff falls apart on a fast corner exit while a locked one doesn't.
     const g0=gear>=0?inGear(vi,gear):gearAt(vi),bg=boostShare!==1?{gear:g0.gear,F:g0.F*boostShare,tqFrac:g0.tqFrac*boostShare}:g0;
-    const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
+    const R=(drag(vi)+rollF(vi,q.cosT)+corneringDrag(m,aLat,N))/m+G*q.sinT;
     let kk;
     if(vehicle.drive==='awd'){
       // AWD centre coupling (centreCoupling -> awdTractionCap): open/sport/lock split limits combined front/rear exit grip
@@ -600,7 +604,7 @@ function simulateLapCore(key,opts){
       if(!doneS){
         let c;
         if(cutL>0){
-          const R=(drag(vs)+rollF(vs)*q.cosT+corneringDrag(m,vs*vs/q.r,loadAt(q,vs)))/m+G*q.sinT;
+          const R=(drag(vs)+rollF(vs,q.cosT)+corneringDrag(m,vs*vs/q.r,loadAt(q,vs)))/m+G*q.sinT;
           const dtS=q.ds3/Math.max(1,vs),f=Math.min(1,cutL/dtS);
           let sq=vs*vs-2*R*q.ds3;
           if(f<1){const a=accFrom(q,vs,bs).cap;sq=f*sq+(1-f)*a*a;}
@@ -620,7 +624,7 @@ function simulateLapCore(key,opts){
     if(fromRest&&j===0)continue;   // the launch does not arrive back at its own start
     let cap;
     if(cut>0){
-      const R=(drag(v[i])+rollF(v[i])*p[i].cosT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m+G*p[i].sinT;
+      const R=(drag(v[i])+rollF(v[i],p[i].cosT)+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m+G*p[i].sinT;
       // The shift ends part-way along its last step: coast that share of it, drive the rest. Cutting
       // whole 5 m steps made a 0.35 s shift last anything up to 0.5 s, by where the steps happened to fall.
       const dtS=p[i].ds3/Math.max(1,v[i]),f=Math.min(1,cut/dtS);
@@ -682,7 +686,7 @@ function simulateLapCore(key,opts){
   const engineBrakeA=(g,vv)=>overrunTq(clamp(rpmIn(g,vv),idle,rl))*ratios[g]*fd/(rT*eff*m);
   // what the tyres slow the car by at i (brakes and engine; not the air, rolling, cornering drag or the hill)
   const mechAt=i=>{const j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
-    return -a-(drag(v[i])+rollF(v[i])*p[i].cosT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m-G*p[i].sinT;};
+    return -a-(drag(v[i])+rollF(v[i],p[i].cosT)+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])))/m-G*p[i].sinT;};
   const brakingAt=i=>mechAt(i)>0.3;
   // The axles at i under a deceleration at (m/s2) of which ea is the engine's (build 150): the engine's share on
   // the driven axle, the brakes' in the hydraulic split, ABS moving the excess off an axle at its grip onto the
@@ -753,7 +757,7 @@ function simulateLapCore(key,opts){
       for(let i=0;i<n;i++){
         const j=(i+1)%n,va=Math.max(2,(v[i]+v[j])/2),dt=p[i].ds3/va;
         const aLong=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
-        const mech=-aLong-(drag(v[i])+rollF(v[i])*p[i].cosT)/m-G*p[i].sinT;   // what the brakes did
+        const mech=-aLong-(drag(v[i])+rollF(v[i],p[i].cosT))/m-G*p[i].sinT;   // what the brakes did
         // the engine's share is not the rotors' (build 149); the brakes' own split by axle (build 150)
         brakeHeatStep(st,th,Math.max(0,mech-ebA[i]),va,dt,undefined,mech>1e-6?axleUse(i,mech,ebA[i]).fr:undefined);
         TF[i]=st.F;TR[i]=st.R;
@@ -839,7 +843,7 @@ function simulateLapCore(key,opts){
       // (mid-shift on a manual it is 0.35, as the standing-start run lifts for it; flat on a spark-cut box)
       const thrS=driverPedal(i=>{
         const j=(i+1)%n,g=holdAt[i]>=0?inGear(v[i],holdAt[i]):gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
-        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
+        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i],p[i].cosT)+m*G*p[i].sinT
                    +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
         return need<=0?0:need/Math.max(1,g.F*boostShare[i]);
       },0.35);
@@ -873,7 +877,7 @@ function simulateLapCore(key,opts){
       const sh=boostShare;
       const thrS=driverPedal(i=>{
         const j=(i+1)%n,g=holdAt[i]>=0?inGear(v[i],holdAt[i]):gearAt(v[i]),a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
-        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT
+        const need=vehicleMassEff(ratios[g.gear]*fd)*a+drag(v[i])+rollF(v[i],p[i].cosT)+m*G*p[i].sinT
                    +corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
         return need<=0?0:need/Math.max(1,g.F*(sh?sh[i]:1));
       },0.35);
@@ -903,7 +907,7 @@ function simulateLapCore(key,opts){
       for(let i=0;i<n;i++){
         const j=(i+1)%n,a=(v[j]*v[j]-v[i]*v[i])/(2*p[i].ds3);
         dt[i]=p[i].ds3/Math.max(2,(v[i]+v[j])/2);rpm[i]=clamp(v[i]*tot/rT*60/TWO_PI,0,rl);
-        const need=vehicleMassEff(tot)*a+drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
+        const need=vehicleMassEff(tot)*a+drag(v[i])+rollF(v[i],p[i].cosT)+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i]));
         tq[i]=need>0?(accKind[i]==='power'?tqAt(rpm[i]):Math.min(need*rT/(tot*eff),tqAt(rpm[i]))):-ebA[i]*m*rT*eff/tot;
       }
       return {dt,rpm,tq};};
@@ -990,7 +994,7 @@ function simulateLapCore(key,opts){
     for(let i=0;i<n;i++){
       const j=(i+1)%n,h=(i-1+n)%n;tAt[i]=tc;
       tc+=p[i].ds3/Math.max(2,(v[i]+v[j])/2);
-      const resist=drag(v[i])+rollF(v[i])*p[i].cosT+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])), need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
+      const resist=drag(v[i])+rollF(v[i],p[i].cosT)+m*G*p[i].sinT+corneringDrag(m,v[i]*v[i]/p[i].r,loadAt(p[i],v[i])), need=vehicleMassEff(ratios[gears[i]]*fd)*aL[i]+resist;
       // what the driver aims the pedal at (driverPedal, below, turns it into a foot's movement): full where the engine
       // or the driven tyres are the limit (on the tyres' limit the pedal is down and the traction control trims the
       // torque to the grip, as on a road car at a track day)
@@ -1032,7 +1036,12 @@ function simulateLapCore(key,opts){
     balance.margin+=(B.muR-B.muF)/Math.max(1e-6,B.mu)*p[i].ds3;   // + = the rear has grip to spare
   }
   balance.margin/=Math.max(1,balance.under+balance.over);
-  return {track:T,lap:t,sectors:sect,v,lim,balance,vMin:vMin*3.6,vMax:vMax*3.6,
+  let aeroBottomed=false;
+  for(let i=0;i<n;i++){
+    const kvPos=Math.max(0,clamp(m*v[i]*v[i]*p[i].kv,-KVCAP,KVCAP));
+    if(aeroDownforce(vehicle,vAir(v[i]),rho,kvPos*fWt,kvPos*(1-fWt)).bottomed){aeroBottomed=true;break;}
+  }
+  return {track:T,lap:t,sectors:sect,v,lim,balance,vMin:vMin*3.6,vMax:vMax*3.6,aeroBottomed,
     avg:p.length_/t*3.6,shifts,shiftLoss,counts,gears,climb,zMin,zMax,length:T.length,lineLength:p.length_,
     // The peak the power readout is measured against: the curve this lap drives (best-power mixture), which
     // can sit a little above the as-tuned figure quoted on DYNO.

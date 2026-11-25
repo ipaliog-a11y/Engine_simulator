@@ -65,9 +65,9 @@ function engineFuelAt(rpm,T,oilT){
 }
 // The car over the cycle. Returns litres per 100 km, CO2 (g/km), the fuel's mass and the gear and speed it chose.
 function engineCycle(v){
-  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak].join('|');
+  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,ENV.alt_m,ENV.tempC,ENV.headwind_ms].join('|');
   if(e._fcyc&&e._fcyc.score===e.score&&e._fcyc.key===key)return e._fcyc.res;
-  const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap();
+  const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),rho=envAirRho(),vW=envWind();
   const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
   let Tc=C.soak;   // the coolant; the oil follows it oilLag behind
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
@@ -79,11 +79,12 @@ function engineCycle(v){
     const warm=gs=>{fuel+=gs;if(Tc<stat)Tc=Math.min(stat,Tc+gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);};
     if(vm<0.1&&a<=0){warm(M.idleGs*(1+0.5*Math.max(0,(80-oilT)/57)));continue;}   // standing: idle (a cold engine idles richer and faster)
     let best=null;
+    const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
     for(let g=0;g<v.ratios.length;g++){
       const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);
       if(rpm>e.redline)continue;
       const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
-      const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G;
+      const F=meff*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G+dn);
       const rpmE=Math.max(rpm,rpmMin),w=rpmE*Math.PI/30;   // below it, first gear's clutch slips at rpmMin
       if(rpm<rpmMin&&g>0)continue;
       let gs;
@@ -131,9 +132,9 @@ const HYB_CYCLE={warmC:50,socLo:0.35,socHi:0.85,splits:[0,0.25,0.5,0.75,1],split
 // (grade included), started warm; nothing cached, no plug-in cycles. Without it the cycle is exactly as before.
 function hybridCycle(v,prof){
   const e=engine,hy=e.hy,C=FUEL_CYCLE,H=HYB_CYCLE;
-  const key=[v.mass,v.finalDrive,v.cdA,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug].join('|');
+  const key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,e.hyDeploy,hy.mode,JSON.stringify(e.hyTune||null),!!e.hyPlug,ENV.alt_m,ENV.tempC,ENV.headwind_ms].join('|');
   if(!prof&&e._hcyc&&e._hcyc.score===e.score&&e._hcyc.key===key)return e._hcyc.res;
-  const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor;
+  const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),pack=hy.pack,mot=hy.motor,rho=envAirRho(),vW=envWind();
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
   const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
@@ -230,7 +231,8 @@ function hybridCycle(v,prof){
         if(!q){
           const tot=fd,n2=vm/r*tot*60/(2*Math.PI);
           const meff=m+(v.wheelI||0)/(r*r)+(mot.J||0.01)*(tot/r)**2;
-          const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
+          const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
+          const F=meff*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G*cosT+dn)+m*G*sinT;
           const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at MG2's shaft
           q=segC[i]=T<=0?{T,n2,Tm:Math.max(T,-motDn(n2)*kRegen)}:{T,n2,ev:T<=motUp(n2)&&evOk(vm,T*n2*Math.PI/30),c:psCands(T,n2,false)};
         }
@@ -243,10 +245,11 @@ function hybridCycle(v,prof){
       }else{
         let gs0=segC[i];
         if(!gs0){gs0=segC[i]=[];
+          const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
           for(let g=0;g<v.ratios.length;g++){
             const tot=v.ratios[g]*fd,rpm=vm/r*tot*60/(2*Math.PI);if(rpm>e.redline)continue;
             const meff=m+(v.wheelI||0)/(r*r)+(e.inertia||0.15)*(tot/r)**2;
-            const F=meff*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT;
+            const F=meff*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G*cosT+dn)+m*G*sinT;
             const T=F>0?F*r/(tot*eff):F*r*eff/tot;   // at the gearbox input: what the wheels need, or what braking gives back
             if(T<=0){gs0.push({rpm,T,Tm:Math.max(T,-motDn(rpm)*kRegen)});continue;}
             const q={rpm,T,ev:T<=motUp(rpm)&&evOk(vm,T*rpm*Math.PI/30),c:[]};gs0.push(q);
@@ -277,7 +280,8 @@ function hybridCycle(v,prof){
         // and MG2 at speed; a parallel's engine plus motor). The engine gives it on its best line up to 90% of its top,
         // the pack the rest up to its power (above its floor) through a 90% electrical path (as the charge correction
         // below). Energy is charged in full; only those limits are set aside. Time spent so: limitShare (named gap).
-        const Pw=Math.max(0,(m*a+0.5*AIR_RHO*v.cdA*vm*vm+crrAt(v.crr,vm)*m*G*cosT+m*G*sinT)*vm/eff),O=psOol();
+        const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
+        const Pw=Math.max(0,(m*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G*cosT+dn)+m*G*sinT)*vm/eff),O=psOol();
         const Pe=Math.min(Pw,O.Pmax*C.reserve),Pp=soc>socLo?Math.min(Pbat,Pw-Pe):0;
         best={gs:psOolAt(Pe).gs,J:Pp/0.9+C.auxW,on:true};fbS+=dt;
       }

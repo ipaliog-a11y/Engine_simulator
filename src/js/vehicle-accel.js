@@ -159,7 +159,11 @@ function buildVehicle(){
   {const qF=quarterCar(vehicle,'F'),qR=quarterCar(vehicle,'R'),cF=quarterCoef(qF),cR=quarterCoef(qR);
    vehicle.roughF=cF.F;vehicle.roughR=cR.F;vehicle.rideF=cF.A;vehicle.rideR=cR.A;
    vehicle.zetaF=qF.cs/(2*Math.sqrt(qF.ks*qF.ms));vehicle.zetaR=qR.cs/(2*Math.sqrt(qR.ks*qR.ms));
-   vehicle.hopHz=Math.sqrt((qF.kt+qF.ks)/qF.mu)/(2*Math.PI);}
+   vehicle.hopHz=Math.sqrt((qF.kt+qF.ks)/qF.mu)/(2*Math.PI);
+   // Axle bump travel & static aero load to reach bump stops (2*ks*bump per axle, Milliken & Milliken RCVD ch. 16)
+   const bF=(SUSP_GEO[vehicle.suspFront]||{}).bump||0.08,bR=(SUSP_GEO[vehicle.suspRear]||{}).bump||0.08;
+   vehicle.bumpF=bF;vehicle.bumpR=bR;vehicle.aeroBumpCapF=2*qF.ks*bF;vehicle.aeroBumpCapR=2*qR.ks*bR;
+   vehicle.aeroBottomed=false;}
   // The car twisted on a kerb (build 217): front and rear roll stiffness in series, K_F K_R / (K_F + K_R), and the dampers'
   // roll damping, each axle's c t^2/2, in series likewise (at the low rates a kerb ramp is driven at:
   // (K_R^2 C_F + K_F^2 C_R) / (K_F + K_R)^2).
@@ -242,8 +246,10 @@ function simulateBraking(v0,T0,wet){
   // each axle's grip (N) while the tyres slow the car at a (m/s2), with downforce dn
   const grip=(a,dn)=>{const W=m*G+dn,Nf=clamp(m*G*fWt+dn*aeroF+m*a*hL,0,W),Nr=W-Nf;
     return [Nf>0?tyreMuX(Nf/2,vehicle.FzRefF)*wetF*Nf:0,Nr>0?tyreMuX(Nr/2)*wetF*Nr:0];};
+  const rho=envAirRho(),vWind=envWind();
   while(v>0.15&&t<25){
-    const dn=0.5*AIR_RHO*vehicle.clA*v*v;
+    const vAir=Math.max(0,v+vWind);
+    const dn=aeroDownforce(vehicle,vAir,rho).F;
     const cF=vehicle.brakeDecelCap*brakeFadeAt(st.F,th)*m*fH,cR=vehicle.brakeDecelCap*brakeFadeAt(st.R,th)*m*(1-fH);
     let fF,fR;
     if(abs){for(let k=0;k<4;k++){const g=grip(aL,dn);fF=Math.max(0,Math.min(g[0],cF));fR=Math.max(0,Math.min(g[1],cR));aL=(fF+fR)/m;}}
@@ -252,7 +258,7 @@ function simulateBraking(v0,T0,wet){
       let lo=0,hi=cF/m;if(ok(hi))lo=hi;else for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(ok(mid))lo=mid;else hi=mid;}
       fF=Math.max(0,lo*m);fR=Math.max(0,Math.min(valve(lo),cR/m)*m);aL=(fF+fR)/m;}
     const rise=Math.min(1,t/BRAKE_RISE_S),mech=aL*rise;   // rising to it over the pressure build-up time
-    const aero=(0.5*AIR_RHO*vehicle.cdA*v*v)/m;                    // drag also decelerates
+    const aero=(0.5*rho*vehicle.cdA*vAir*vAir)/m;                    // drag also decelerates
     brakeHeatStep(st,th,mech,v,dt,undefined,aL>0?fF/(fF+fR):undefined);   // the work, into each axle's rotors
     v=Math.max(0,v-(mech+aero)*dt);x+=v*dt;t+=dt;
   }
@@ -329,9 +335,14 @@ function operatingPoint(kind){
 function buildTorqueCurve(){
   const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';   // use the fixed best-power AFR below
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;state.systemVoltage=14.0;state.nitrousActive=false;
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=ENV.tempC;state.systemVoltage=14.0;state.nitrousActive=false;
   state.afr=engine.ci?engine.stoichAFR*SMOKE_LAMBDA_CI:engine.stoichAFR*0.88;
-  const pts=[];for(let r=1000;r<=engine.redline;r+=100)pts.push({rpm:r,tq:calcAtRpm(r).torque});
+  const pAtm=pAmbAtm();
+  const pts=[];
+  for(let r=1000;r<=engine.redline;r+=100){
+    const map=pAtm===1?undefined:(engine.intake==='na'?pAtm:(engine.intake==='supercharger'?pAtm*(1+boostAvail(r)):pAtm+boostAvail(r)));
+    pts.push({rpm:r,tq:calcAtRpm(r,map).torque});
+  }
   engine.afrMode=savedAfrMode;
   Object.assign(state,sv);   // restore the exact live state (correct keys — no accidental heal)
   return pts;
@@ -346,7 +357,7 @@ function buildTorqueGrid(){
   const sv={afr:state.afr,coolant:state.coolant,oil:state.oil,engineHealth:state.engineHealth,
             blown:state.blown,iat:state.iat,systemVoltage:state.systemVoltage,nitrousActive:state.nitrousActive};
   const savedAfrMode=engine.afrMode;engine.afrMode='fixed';
-  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=20;
+  state.coolant=90;state.oil=100;state.engineHealth=1;state.blown=false;state.iat=ENV.tempC;
   state.systemVoltage=14.0;state.nitrousActive=false;
   state.afr=engine.ci?engine.stoichAFR*SMOKE_LAMBDA_CI:engine.stoichAFR*0.88;
   const rpms=[];for(let r=1000;r<=engine.redline;r+=100)rpms.push(r);
@@ -354,7 +365,8 @@ function buildTorqueGrid(){
   // no shaft of its own to spin up, and an NA engine has none at all.
   const laggy=engine.intake==='turbo'&&engine.maxBoost>0;
   const boosts=laggy?Array.from({length:9},(_,i)=>engine.maxBoost*i/8):[engine.maxBoost||0];
-  const tq=boosts.map(b=>rpms.map(r=>calcAtRpm(r,1+b).torque));
+  const pAtm=pAmbAtm();
+  const tq=boosts.map(b=>rpms.map(r=>calcAtRpm(r,engine.intake==='supercharger'?pAtm*(1+b):pAtm+b).torque));
   engine.afrMode=savedAfrMode;Object.assign(state,sv);
   return{rpms,boosts,tq,laggy};
 }
@@ -364,7 +376,8 @@ let _lapGrid=null,TURBO_ITERS=2;
 function lapTorqueGrid(){
   // keyed on the builder too (build 131), so a harness that swaps buildTorqueGrid for a scaled one gets its own
   const fn=window.buildTorqueGrid;
-  if(!_lapGrid||_lapGrid.score!==engine.score||_lapGrid.fn!==fn)_lapGrid={score:engine.score,fn,g:fn()};
+  if(!_lapGrid||_lapGrid.score!==engine.score||_lapGrid.fn!==fn||_lapGrid.alt!==ENV.alt_m||_lapGrid.temp!==ENV.tempC)
+    _lapGrid={score:engine.score,fn,alt:ENV.alt_m,temp:ENV.tempC,g:fn()};
   return _lapGrid.g;
 }
 function gridTorque(g,rpm,boost){
@@ -498,7 +511,9 @@ function simulateAccelRun(){
       const adv=pt.advanceShaft(shaftE,engineRpm,boostNow,cutNow?0.35:1,dt);
       shaftE=adv.shaftE;boostNow=adv.boost;
     }
-    const down=0.5*AIR_RHO*vehicle.clA*v*v,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
+    const rho=envAirRho(),vWind=envWind(),vAir=Math.max(0,v+vWind);
+    const ad=aeroDownforce(vehicle,vAir,rho),down=ad.F,Wtot=m*G+down,transfer=m*a*vehicle.cg/vehicle.wb;
+    if(ad.bottomed)M.aeroBottomed=true;
     let drivenN,gripBase;
     if(vehicle.drive==='awd'){
       drivenN=Wtot;
@@ -526,7 +541,7 @@ function simulateAccelRun(){
     // most of it, a spool all of it. This only bites while the car is traction-limited.
     const tqFrac=(driveF*r)/axleTqMax;                       // how hard the axle is being driven
     const trac=gripBase*diffTractionAt(df,0,vehicle.cg,tqFrac,gripBase*r);
-    const drag=0.5*AIR_RHO*vehicle.cdA*v*v,roll=v>0.2?crrAt(vehicle.crr,v)*m*G:0,res=drag+roll;
+    const drag=0.5*rho*vehicle.cdA*vAir*vAir,roll=v>0.2?crrAt(vehicle.crr,v)*(m*G+down):0,res=drag+roll;
     // A road-speed governor cuts fuel at its set speed: past it the engine gives only what holds it.
     if(vGov>0&&v>=vGov)driveF=Math.min(driveF,res);
     // Spinning parts (build 106), now on their own equation (build 154). The driven wheels, and the engine
@@ -587,22 +602,25 @@ function simulateAccelRun(){
   // top gear from walking pace — it gets there through the lower gears), and a peaky or
   // over-geared car genuinely reaches its top speed one gear down, on the cam, rather than
   // bogging in top.
-  let vTop=0;
+  let vTop=0,topBottomed=false;
+  const rhoTop=envAirRho(),vWindTop=envWind();
   for(const gr of ratios){
     const tot=gr*fd,vLim=rl*TWO_PI*r/60/tot;
     for(let vv=Math.min(vLim,160);vv>vTop;vv-=0.5){
-      const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl);
-      const F=tqAt(rpm)*tot*eff/r+frontF(vv),drag=0.5*AIR_RHO*vehicle.cdA*vv*vv;
-      if(F>drag+crrAt(vehicle.crr,vv)*m*G){vTop=vv;break;}
+      const rpm=clamp(vv*tot/r*60/TWO_PI,idle,rl),vAir=Math.max(0,vv+vWindTop),ad=aeroDownforce(vehicle,vAir,rhoTop);
+      const F=tqAt(rpm)*tot*eff/r+frontF(vv),drag=0.5*rhoTop*vehicle.cdA*vAir*vAir;
+      if(F>drag+crrAt(vehicle.crr,vv)*(m*G+ad.F)){vTop=vv;topBottomed=ad.bottomed;break;}
     }
   }
   const vFree=vTop;
   // The governor caps what the car could otherwise hold; it cannot add speed the car does not have.
   const governed=vGov>0&&vFree>vGov, topSpeed=(governed?vGov:vFree)*3.6;
+  const aeroBottomed=!!(M.aeroBottomed||topBottomed);
+  vehicle.aeroBottomed=aeroBottomed;
   Object.assign(state,svLive);
   // gripT / lagT: seconds of the 0-100 spent traction-limited, and on throttle below 90% of target
   // boost — WHY a car takes the time it takes, so a claim about what limits it can be checked.
   return {t100:M.t100,q400:M.q400,q800:M.q800,q1000:M.q1000,topSpeed,governed,freeSpeed:vFree*3.6,mass:m,ptw:vehicle.powerToWeight,
     gripT:M.gripT,lagT:M.lagT,spinT:M.spinT,launchRpm:M.launchRpm,shifts:M.shifts.map(x=>({g:x.g,v:x.v,rpm:x.rpm,rpmTo:x.rpmTo})),
-    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null,t60:M.t60,rollout:M.roll};
+    t200:M.v200?M.v200.t:null,x200:M.v200?M.v200.x:null,t60:M.t60,rollout:M.roll,aeroBottomed};
 }

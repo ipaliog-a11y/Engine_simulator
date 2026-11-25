@@ -1,3 +1,23 @@
+// Global ambient environment (ISO 2533 International Standard Atmosphere, troposphere h <= 11 km):
+//   p(h) = P0 * (1 - L/T0 * h)^(g*M/(R*L)), P0 = 1.01325 bar, L/T0 = 2.25577e-5 /m, exp = 5.25588.
+// airRho is anchored at 1.20 kg/m³ at sea level (alt_m = 0) and 20 °C so sea-level defaults stay identical.
+const ISA_P0=1.01325, ISA_LAPSE_K=2.25577e-5, ISA_EXP=5.25588;
+const ENV={alt_m:0,tempC:20,headwind_ms:0};
+function pAmbBar(alt_m){
+  const h=clamp(alt_m==null?ENV.alt_m:alt_m,-500,11000);
+  return ISA_P0*Math.pow(1-ISA_LAPSE_K*h,ISA_EXP);
+}
+const pAmbAtm=alt_m=>pAmbBar(alt_m)/ISA_P0;
+function airRho(alt_m,tempC){
+  const p=pAmbBar(alt_m),T=273.15+(tempC==null?ENV.tempC:tempC);
+  return 1.20*(p/ISA_P0)*(293.15/Math.max(200,T));
+}
+function envAirRho(opts){
+  const alt=opts&&opts.alt_m!=null?opts.alt_m:ENV.alt_m;
+  const temp=opts&&opts.tempC!=null?opts.tempC:ENV.tempC;
+  return airRho(alt,temp);
+}
+function envWind(opts){return opts&&opts.headwind_ms!=null?opts.headwind_ms:(ENV.headwind_ms||0);}
 const RAD_CAP={small:0.75,stock:1.0,large:1.35};   // relative heat-rejection capacity
 const IMEP_K=13.2;   // bar — ONLY scales the dyno brake's reference torque now (loadRefTq); torque itself comes from fuel
 // Dynamic (throttle-driven) model tuning:
@@ -188,7 +208,7 @@ const INDUCER_RATIO=0.72;      // inducer/exducer, near-constant across a maker'
 // Flow rating = the inducer choking. Checked against quoted ratings for real frames: derived comes
 // out 9-33% above quoted, and the sign is right, because makers quote usable flow at the edge of
 // the efficiency island rather than hard choke.
-const compChokeFlow=exd=>COMP_BLOCKAGE*(101325/(287*298))
+const compChokeFlow=(exd,alt_m)=>COMP_BLOCKAGE*(pAmbBar(alt_m)*1e5/(287*298))
   *(Math.PI/4*Math.pow(INDUCER_RATIO*exd,2))*Math.sqrt(1.4*287*298)*132.28;   // lb/min
 const ISLAND_FLOW=0.62;    // best efficiency sits near 62% of choke flow
 const ISLAND_PEAK=0.78;    // island-centre efficiency for an automotive centrifugal wheel

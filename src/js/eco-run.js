@@ -17,11 +17,12 @@ function ecoMinTime(line,speedCap,eco){
   const df=vehicle.df||DIFF.open,dCorner=df.corner!=null?df.corner:1;
   const muLatAt=(N,ay,vv,q)=>latBalance(N,ay,down(vv),0,vv,q).mu*dCorner;
   const axleTqMax=Math.max(1,curve.reduce((a,q)=>Math.max(a,q.tq),0)*ratios[0]*fd*(vehicle.gb&&vehicle.gb.mult||1));
-  const down=v=>0.5*AIR_RHO*vehicle.clA*v*v;
+  const rho=envAirRho(),vW=envWind(),vAir=v=>Math.max(0,v+vW);
+  const down=v=>aeroDownforce(vehicle,vAir(v),rho).F;
   const KVCAP=0.6*m*G;
   const loadAt=(q,vv)=>Math.max(m*G*0.15,m*G*q.cosT+down(vv)+clamp(m*vv*vv*q.kv,-KVCAP,KVCAP));
-  const drag=v=>0.5*AIR_RHO*vehicle.cdA*v*v;
-  const rollF=v=>crrAt(vehicle.crr,v)*m*G;
+  const drag=v=>{const va=vAir(v);return 0.5*rho*vehicle.cdA*va*va;};
+  const rollF=(v,cosT)=>crrAt(vehicle.crr,v)*(m*G*(cosT==null?1:cosT)+down(v));
   const VMAX0=vehicle.governor>0?Math.min(140,vehicle.governor/3.6):140;
   const VMAX=speedCap>0?Math.min(VMAX0,speedCap):VMAX0;
   function gearAt(v){
@@ -36,16 +37,19 @@ function ecoMinTime(line,speedCap,eco){
   }
   const wF=vehicle.tireWidthF>0?vehicle.tireWidthF:vehicle.tireWidth;
   const Nmax=Math.max(m*G,2*(vehicle.tyreRatedKg||500)*(1+wF/Math.max(1,vehicle.tireWidth))*G);
+  const aeroCap=(vehicle.aeroBumpCapF>0?vehicle.aeroBumpCapF:Infinity)+(vehicle.aeroBumpCapR>0?vehicle.aeroBumpCapR:Infinity);
   function ceilAt(q){
     let vv=0,muLat=vehicle.mu*dCorner;
     for(let outer=0;outer<3;outer++){
       for(let it=0;it<2;it++){
         const kvTerm=it===0?-m*q.kv*muLat:0;
         const extra=it===0?0:clamp(m*vv*vv*q.kv,-KVCAP,KVCAP)*muLat;
-        const denom=m/q.r-0.5*AIR_RHO*vehicle.clA*muLat+kvTerm;
+        const denom=m/q.r-0.5*rho*vehicle.clA*muLat+kvTerm;
         const num=muLat*m*G*q.cosT+extra;
         const vCap=Math.min(VMAX,Math.sqrt(Math.max(0,muLat*Nmax*q.r/m)));
         vv=denom>1e-6?Math.min(vCap,Math.sqrt(Math.max(0,num/denom))):vCap;
+        if(0.5*rho*vehicle.clA*vAir(vv)*vAir(vv)>aeroCap)
+          vv=Math.min(vv,Math.sqrt(Math.max(0,muLat*(m*G*q.cosT+aeroCap+extra/Math.max(1e-6,muLat))*q.r/m)));
       }
       muLat=muLatAt(Math.min(Nmax,loadAt(q,vv)),vv*vv/q.r,vv,q);
     }
@@ -74,7 +78,7 @@ function ecoMinTime(line,speedCap,eco){
     const uFa=clamp(m*aLat*fWt/Math.max(1,B.capF*dCorner),0,1),uRa=clamp(m*aLat*(1-fWt)/Math.max(1,B.capR*dCorner),0,1);
     const uD=vehicle.drive==='fwd'?uFa:vehicle.drive==='rwd'?uRa:Math.max(uFa,uRa);
     const bg=gearAt(vi);
-    const R=(drag(vi)+rollF(vi)*q.cosT+corneringDrag(m,aLat,N))/m+G*q.sinT;
+    const R=(drag(vi)+rollF(vi,q.cosT)+corneringDrag(m,aLat,N))/m+G*q.sinT;
     const nD=vehicle.drive==='awd'?4:2;
     const kk=tyreMuX(N0/nD,vehicle.drive==='fwd'?vehicle.FzRefF:vehicle.FzRef)*diffTractionAt(df,aLat,vehicle.cg,bg.tqFrac,0)*Math.sqrt(Math.max(0,1-uD*uD));
     const mE=vehicleMassEff(ratios[bg.gear]*fd);
@@ -89,7 +93,7 @@ function ecoMinTime(line,speedCap,eco){
   const v=vC.slice();
   // Eco limits: slow by lifting (overrun, or regen on an EV) plus s × a 12 m/s² brake; drive at the best-efficiency
   // force plus s × 30 m/s² (the car's own grip and power still cap both, through brakeCap and accCap).
-  const Rq=(q,vv)=>(drag(vv)+rollF(vv)*q.cosT)/m+G*q.sinT;
+  const Rq=(q,vv)=>(drag(vv)+rollF(vv,q.cosT))/m+G*q.sinT;
   for(let pass=0;pass<2;pass++)for(let i=n-2;i>=0;i--){
     const cap=brakeCap(p[i],v[i],v[i+1]);if(cap<v[i])v[i]=cap;
     if(eco){const vn=v[i+1],aL=ecoTabAt(eco.tab.lift,vn)/eco.tab.mEff+Rq(p[i],vn)+eco.s*12;
@@ -204,12 +208,13 @@ function ecoFuelRule(){
 function ecoFuelKg(line,v,stats){
   if(isElectric())return null;
   const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,e=engine;
-  const X=ecoFuelRule(),mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15;
+  const X=ecoFuelRule(),mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15,rho=envAirRho(),vW=envWind();
   let fuel=0,rpmT=0,tDrive=0,topG=0;
   for(let i=0;i<n-1;i++){
     const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
-    const F0=mBase*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*p[i].cosT+m*G*p[i].sinT;
+    const va=Math.max(0,vm+vW),dn=0.5*rho*(vehicle.clA||0)*va*va;
+    const F0=mBase*a+0.5*rho*vehicle.cdA*va*va+crrAt(vehicle.crr,vm)*(m*G*p[i].cosT+dn)+m*G*p[i].sinT;
     const q=X.at(vm,F0,null,a,Ie),gs=q.gs!=null?q.gs:X.M.idleGs*3;
     fuel+=gs*dt;
     if(q.F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
@@ -225,7 +230,7 @@ function ecoTimeOf(line,v){
 function ecoEnergyJ(line,v){
   if(!isElectric()||!engine.motor||!engine.pack)return null;
   const e=engine,C=EV_CYCLE,m=vehicle.mass+C.massAdd,r=vehicle.rTire,fd=vehicle.finalDrive,eff=vehicle.driveEff;
-  const V=motorRatedV(e),temp=Object.assign({},C.temp),regen=evRegenTable(e,e.redline);
+  const V=motorRatedV(e),temp=Object.assign({},C.temp),regen=evRegenTable(e,e.redline),rho=envAirRho(),vW=envWind();
   // Losses memoised on a 10 rpm × 1 Nm grid (build 352): a long road repeats the same points, and motorLosses is slow.
   const memo=new Map(),loss=(T,rpm)=>{const kr=Math.round(rpm/10),kt=Math.round(T),k=kr*100000+kt;let L=memo.get(k);
     if(L===undefined){L=motorLosses(e.motor,kt,Math.max(kr*10,1),V,temp).total;memo.set(k,L);}return L;};
@@ -234,7 +239,8 @@ function ecoEnergyJ(line,v){
   for(let i=0;i<line.length-1;i++){
     const ds=line[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
-    const F=meff*a+0.5*AIR_RHO*vehicle.cdA*vm*vm+crrAt(vehicle.crr,vm)*m*G*line[i].cosT+m*G*line[i].sinT;
+    const va=Math.max(0,vm+vW),dn=0.5*rho*(vehicle.clA||0)*va*va;
+    const F=meff*a+0.5*rho*vehicle.cdA*va*va+crrAt(vehicle.crr,vm)*(m*G*line[i].cosT+dn)+m*G*line[i].sinT;
     const rpm=vm/r*fd*60/(2*Math.PI),w=rpm*Math.PI/30;
     let T=0;
     if(F>0)T=F*r/(fd*eff);
@@ -316,8 +322,8 @@ function ecoDP(line,env,target){
   const S=B.length-1;
   let vTop=0;for(const x of env)vTop=Math.max(vTop,x);
   const nS=Math.ceil(vTop/dv)+1,T=ecoCostTable(nS,dv),nF=T.nF,m=T.m,meff=T.meff;
-  const nJ=2*nS+1,aero=new Float64Array(nJ),roll=new Float64Array(nJ);
-  for(let j=0;j<nJ;j++){const vm=j*dv/2;aero[j]=0.5*AIR_RHO*vehicle.cdA*vm*vm;roll[j]=crrAt(vehicle.crr,vm)*m*G;}
+  const nJ=2*nS+1,aero=new Float64Array(nJ),roll=new Float64Array(nJ),rho=envAirRho(),vW=envWind();
+  for(let j=0;j<nJ;j++){const vm=j*dv/2,va=Math.max(0,vm+vW),dn=0.5*rho*(vehicle.clA||0)*va*va;aero[j]=0.5*rho*vehicle.cdA*va*va+crrAt(vehicle.crr,vm)*dn;roll[j]=crrAt(vehicle.crr,vm)*m*G;}
   const rate=(j,F)=>{
     if(!T.ev&&F<=0)return -F>=T.glide[j]?0:T.idle[j];
     const lo=T.Fmin[j],x=(Math.max(F,lo)-lo)/Math.max(1e-9,T.Fmax[j]-lo)*(nF-1),q=Math.min(nF-2,Math.floor(x)),f=x-q,o=j*nF+q;

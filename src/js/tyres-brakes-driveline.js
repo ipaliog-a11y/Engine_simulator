@@ -75,7 +75,9 @@ const AERO_FLOOR={none:{cl:0,cd:0},undertray:{cl:0.35,cd:0.006,front:0.5},diffus
 // Theory), times a section's form factor 1 + 2 t/c + 60 (t/c)^4 (Hoerner, Fluid-Dynamic Drag, ch. 6); the plates add
 // their own skin. The model's ClA and CdA do not change with speed, so the Reynolds number is taken at WING_V.
 // Not modelled: the body's flow the wing sits in (it is taken in clean air), what it does to the body's own lift and
-// drag, its overhang behind the axle, and the fall of lift past the stall (the lift is held at WING_CLMAX there).
+// drag, and its overhang behind the axle. Past stall (want > WING_CLMAX), upper-surface separation drops CL smoothly
+// toward a post-stall plateau (~0.55 CLmax, Abbott & von Doenhoff NACA 4412; Katz ch. 3) and adds separated wake drag
+// (Hoerner, Fluid-Dynamic Drag, ch. 3: flat-plate normal drag 1.28 sin²Δα + separation ramp).
 const WING_A0=2*Math.PI;
 const WING_CLMAX=1.5;   // a single cambered element's stall: NACA 4412, about 1.5 at Re 3e6 (Abbott & von Doenhoff, Theory of Wing Sections; probable at a car wing's lower Re)
 const WING_TC=0.12;     // the section's thickness over its chord: the 12% of the common NACA 4412 / 6412 family, taken for every wing
@@ -90,10 +92,27 @@ const AIR_NU=1.5e-5;    // m2/s, air's kinematic viscosity at 20 C
 function wingGround(b,hg){if(!(hg>0))return 1;const x=Math.pow(16*hg/b,2);return x/(1+x);}
 function wingAero(p){
   const b=p.span_mm/1000,c=p.chord_mm/1000,h=p.plate_mm/1000,S=b*c,AR0=b/c,ge=wingGround(b,(p.height_mm||0)/1000),AR=AR0*(1+1.9*h/b)/ge;
-  const a=WING_A0/(1+WING_A0/(Math.PI*AR)),want=a*(p.angle_deg*Math.PI/180+2*p.camber_pct/100),CL=clamp(want,0,WING_CLMAX);
+  const a=WING_A0/(1+WING_A0/(Math.PI*AR)),want=a*(p.angle_deg*Math.PI/180+2*p.camber_pct/100),stalled=want>WING_CLMAX;
+  const dAlpha=stalled?(want-WING_CLMAX)/a:0;
+  const CL=stalled?WING_CLMAX*(0.55+0.45*Math.exp(-dAlpha/0.14)):Math.max(0,want);
   const Cf=0.074*Math.pow(WING_V*c/AIR_NU,-0.2),cd0=2*Cf*(1+2*WING_TC+60*Math.pow(WING_TC,4)),cdi=CL*CL/(Math.PI*AR);
+  const cdStall=stalled?1.1*Math.sin(dAlpha)+1.28*Math.pow(Math.sin(dAlpha),2):0;
   const plates=4*Cf*h*c;   // two plates, two faces each, a chord long
-  return {S,AR0,AR,ge,slope:a,CL,want,stalled:want>WING_CLMAX,cd0,cdi,clA:CL*S,cdA:(cd0+cdi)*S+plates};
+  return {S,AR0,AR,ge,slope:a,CL,want,stalled,cd0,cdi,cdStall,clA:CL*S,cdA:(cd0+cdi+cdStall)*S+plates};
+}
+// Aerodynamic downforce at airspeed vAir (m/s) and density rho (kg/m³), checked against available axle bump travel
+// (Milliken & Milliken, RCVD ch. 16; Katz, Race Car Aerodynamics, ch. 5). Once aero + dynamic vertical load compresses
+// an axle onto its bump stops (2*ks*bump), ground-effect downforce gain caps and flags bottoming.
+function aeroDownforce(v,vAir,rho,extraF,extraR){
+  const clA=v&&v.clA||0;
+  if(!(clA>0)||!(vAir>0))return {F:0,Ff:0,Fr:0,bottomed:false,botF:false,botR:false};
+  const Fraw=0.5*(rho!=null?rho:envAirRho())*clA*vAir*vAir;
+  const aF=v.aeroBal!=null?v.aeroBal:0.5,FfRaw=Fraw*aF,FrRaw=Fraw*(1-aF);
+  const capF=v.aeroBumpCapF>0?Math.max(0,v.aeroBumpCapF-Math.max(0,extraF||0)):Infinity;
+  const capR=v.aeroBumpCapR>0?Math.max(0,v.aeroBumpCapR-Math.max(0,extraR||0)):Infinity;
+  const botF=FfRaw>capF,botR=FrRaw>capR;
+  const Ff=botF?capF:FfRaw,Fr=botR?capR:FrRaw;
+  return {F:Ff+Fr,Ff,Fr,bottomed:botF||botR,botF,botR};
 }
 // The geometry of the kit wing a car carries (build 415): the car's own, else its class's, else the starting wing of the
 // PARTS page (as wide as the track, 250 mm chord, 8 degrees (front 6), 6% camber; the front 100 mm off the road).

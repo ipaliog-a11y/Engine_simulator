@@ -14,9 +14,10 @@ const numOr=(v,fallback)=>{const n=parseFloat(v);return Number.isFinite(n)?n:fal
 // Speed at which drag and rolling resistance consume exactly the power available at the wheels.
 // Bracketed bisection rather than a fixed point: the residual is monotonic in v, so this either
 // brackets the crossing or returns the bracket edge, and cannot quietly return a non-solution.
-function dragLimitedV(kW,cdA,crr,mass){
+function dragLimitedV(kW,cdA,crr,mass,clA){
   if(!(kW>0)||!(cdA>0))return 0;
-  const need=v=>(0.5*AIR_RHO*cdA*v*v*v+crrAt(crr,v)*mass*G*v)/1000;
+  const rho=envAirRho(),vW=envWind(),cl=clA||0;
+  const need=v=>{const va=Math.max(0,v+vW),dn=0.5*rho*cl*va*va;return (0.5*rho*cdA*va*va*v+crrAt(crr,v)*(mass*G+dn)*v)/1000;};
   let lo=1,hi=200;
   if(need(hi)<kW)return hi;
   for(let i=0;i<60;i++){const m=(lo+hi)/2;if(need(m)<kW)lo=m;else hi=m;}
@@ -32,7 +33,7 @@ function matchedFinalDrive(){
   const topGear=vehicle.ratios[vehicle.ratios.length-1];
   if(!s||!(s.peakHP>0)||!(s.peakHPrpm>0)||!(topGear>0)||!(vehicle.rTire>0))
     return lerp(4.9,2.6,vehicle.gearing/100);
-  const vMax=dragLimitedV(s.peakHP*0.7457*vehicle.driveEff,vehicle.cdA,vehicle.crr,vehicle.mass);
+  const vMax=dragLimitedV(s.peakHP*0.7457*vehicle.driveEff,vehicle.cdA,vehicle.crr,vehicle.mass,vehicle.clA);
   if(!(vMax>1))return lerp(4.9,2.6,vehicle.gearing/100);
   const fd=s.peakHPrpm*2*Math.PI*vehicle.rTire/60/(vMax*topGear);
   return clamp(fd*bias,FD_MIN,FD_MAX);
