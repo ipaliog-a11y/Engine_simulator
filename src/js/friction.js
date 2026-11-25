@@ -63,7 +63,9 @@ function deriveFriction(){
     Dm:FRIC_MAIN_D*e.bore_mm,Dp:FRIC_PIN_D*e.bore_mm};
 }
 // Rubbing + auxiliary friction mean effective pressure (bar) at N rpm and intake pressure map (bar absolute).
-function mechFrictionMEP(N,map){
+// actFrac (1 by default, 0.5 with half-cylinder deactivation) scales combustion gas ring load and
+// valve/follower actuation (cam bearings still spin, while collapsed lifters/lobes have zero lift).
+function mechFrictionMEP(N,map,actFrac=1){
   const f=engine.fric;
   if(!f)return (0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
   N=Math.max(N,300);
@@ -71,9 +73,9 @@ function mechFrictionMEP(N,map){
   const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
   const crank=1.22e5*Dm/(B2S*nc)+brg(Dm,nMain)+1.35e-10*Dm*Dm*N*N*nMain/nc;
   const recip=2.94e2*Sp/B+4.06e4*bnd/(B*B)+brg(Dp,nPin);
-  const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp));
-  const valve=244*N*nCam/(B2S*nc)+4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
-             +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc);
+  const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp))*actFrac;
+  const valve=244*N*nCam/(B2S*nc)+(4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
+             +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
   return (crank+recip+gas+valve+aux)/100;
 }

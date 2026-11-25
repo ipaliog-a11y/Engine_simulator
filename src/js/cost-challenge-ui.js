@@ -30,6 +30,7 @@ function computeCost(){
   c+={none:0,perf:200,stock:60,restrictive:30}[engine.airFilter]||0;
   c+={stock:0,sport:700,race:1600}[engine.cam]||0;
   if(engine.vvt)c+=1200;
+  if(engine.cylDeact)c+=450+50*engine.cylinders;
   if(engine.injector==='direct')c+=900;
   c+={distributor:150,wasted:400,coil:900}[engine.ignitionType]||0;
   if(engine.timingMode==='auto')c+=600;

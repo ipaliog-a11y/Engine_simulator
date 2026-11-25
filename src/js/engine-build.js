@@ -33,6 +33,7 @@ function readEngineFromForm(){
     intakeSys:g('edIntakeSys').value,
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
+    cylDeact:g('edCylDeact').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
     valvetrain:g('edValvetrain').value,
     valveMat:g('edValveMat').value,
@@ -88,7 +89,7 @@ function applyEngineToForm(e){
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
-  g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
+  g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';g('edCylDeact').value=e.cylDeact?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   const specTag=(+e.cylinders||4)+'/'+(+e.bore_mm)+'/'+(+e.stroke_mm)+'/'+(+e.redline)+'/'+e.intake+'/'+(e.intake==='na'?0:(+e.boost_bar||0));
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm>0?e.springRpm+'@'+specTag:'0';
@@ -159,6 +160,9 @@ function syncDesignEnable(){
   g('edSilencer').disabled=g('edExhaust').value.startsWith('part:');   // a designed exhaust carries its own silencer
   g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
+  const cdaOk=!tp.ports&&!tp.ci&&(+cylSel.value)>=4&&(+cylSel.value)%2===0;
+  if(!cdaOk)g('edCylDeact').value='no';
+  g('edCylDeact').disabled=!cdaOk;
   ['edValves','edValvetrain','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).
   g('edIgnType').disabled=tp.ci;
@@ -209,6 +213,7 @@ function buildEngineCore(prevStoich,quiet){
   // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
   engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
   if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ports||engine.ci||engine.cylinders<4||engine.cylinders%2!==0)engine.cylDeact=false;
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;

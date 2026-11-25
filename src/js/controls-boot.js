@@ -344,7 +344,7 @@ function bindControls(){
     const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);
     g('edCR').value=tp.crDef;g('edRedline').value=tp.redlineDef;
     if(e.target.value==='rotary'&&+g('edCyl').value>(tp.maxCyl||12))g('edCyl').value=2;
-    if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';}
+    if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';g('edCylDeact').value='no';}
     syncDesignEnable();
   });
   // Editable ECU fuel map: click a cell to select it, then nudge its target richer/leaner.

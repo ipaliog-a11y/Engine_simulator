@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Cylinder deactivation on HEAD & VALVES (build 463)
+
+- **CYLINDER DEACTIVATION** on the HEAD & VALVES card (`NONE`, `HALF CYLINDERS (ACT / AFM)`). Defaults to `NONE`, so
+  existing engines and presets are unchanged; disabled on <4 or odd cylinders, diesels, two-strokes, and rotaries.
+- When warm (coolant ≥ 60 °C) in the VW ACT / GM AFM light-load window (1100–4000 rpm, MAP ≤ 0.75 bar<sub>abs</sub> at sea
+  level), half the cylinders close their valves: zero fuel/air flow, zero gas-exchange pumping (`pumpingMEP`), and
+  halved valvetrain and gas-ring friction (`mechFrictionMEP`). Adds +0.5 kg/cyl actuator mass and $(450 + 50·cyl) cost.
+- On the 5.0 V8 NA Muscle, peak power is unchanged (391 hp / 508 Nm), WLTP drops 10.55 → 9.70 L/100 km (−8.0%), and
+  steady 22 m/s Eco Run fuel drops −16.3%. Plan E3 in `plans/engine-systems.md`.
+
 ### Water / methanol injection on AIR & BOOST (build 462)
 
 - **WATER / METH INJ** on the AIR & BOOST card (`NONE`, `WATER (H2O)`, `50/50 WATER-METH`). Defaults to `NONE`, so

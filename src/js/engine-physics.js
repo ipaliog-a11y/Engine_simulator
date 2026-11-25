@@ -963,7 +963,19 @@ function sparkRetardAt(rpm,map){
 // pumping work is real: this model's imep is a lumped correlation proportional to map, so it
 // already carries some of the pressure-level effect. Handing a supercharged engine +0.5 bar on top
 // of that would be a much larger claim than the missing exhaust term this change is fixing.
-function pumpingMEP(rpm,map){
+// Cylinder deactivation (VW ACT / GM AFM): on 4-stroke SI engines with >= 4 even cylinders,
+// when warm (coolant >= 60 C for oil-actuated lifters/cam lobes), in the 1100-4000 rpm
+// light-load window (MAP <= 0.75 * pAmbAtm(), i.e. <= ~35-40% full-load torque, never WOT),
+// half the cylinders close their valves (zero fuel, zero pumping, halved valvetrain/gas-ring friction).
+// Sources: Middendorf et al., MTZ Worldwide 73(4), 2012 (VW 1.4 TSI ACT: 1400-4000 rpm, <=100 Nm);
+// GM Active Fuel Management (SAE 2005-01-0762, ~800-3500 rpm light load, warm oil/coolant).
+function cylDeactActive(rpm,map){
+  const e=engine;
+  if(!e.cylDeact||e.ports||e.ci||e.cylinders<4||e.cylinders%2!==0)return false;
+  if(state.nitrousActive||state.coolant<60)return false;
+  return rpm>=1100&&rpm<=4000&&map<=0.75*pAmbAtm();
+}
+function pumpingMEP(rpm,map,actFrac=1){
   const Tex=egtAt(rpm,map);
   const prev=engine.boostNow;engine.boostNow=map;                  // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
@@ -972,17 +984,17 @@ function pumpingMEP(rpm,map){
   // pushes out against p_exh and is pushed down by p_int. CI diesels are unthrottled (quality-governed),
   // so there is no intake throttle plate vacuum loss (Heywood §13.3).
   if(engine.ci)return pExh-Math.max(1,map);
-  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map);
+  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map))*actFrac;
 }
 // Friction + pumping mean effective pressure.
-function pumpFrictionMEP(rpm,map,oilFrictionMult){
-  let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
+function pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac=1){
+  let fmep=mechFrictionMEP(rpm,map,actFrac)*oilFrictionMult;       // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
     const dP=Math.max(SC_BYPASS_FRAC*Math.max(0.2,engine.maxBoost),map-1.0+icDpBar(airFlowAt(rpm,map),map));
     fmep+=0.18*sc.drag*dP*(0.4+0.6*rpm/engine.redline);            // parasitic drive (by type), off-boost bypass floor (Eaton TVS) + intercooler drop
   }
-  fmep+=pumpingMEP(rpm,map);
+  fmep+=pumpingMEP(rpm,map,actFrac);
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
 }
@@ -1219,9 +1231,10 @@ function calcAtRpm(rpm,mapOverride){
     const ignF=sparkTimingFactor(rpm,map);
     imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
   }
-  imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
+  const actFrac=cylDeactActive(rpm,map)?0.5:1;
+  imep=dieselImepLimit(imep)*actFrac;  // diesel peak-cylinder-pressure / smoke ceiling; half cylinders if CDA active
 
-  let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
+  let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac));
 
   const Vd=engine.displacement_L/1000;
   let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm,map));   // power strokes/rev per type, minus alternator load
@@ -1236,6 +1249,7 @@ function calcAtRpm(rpm,mapOverride){
 // vacuum (engine braking). fuelCut zeroes combustion for the rev limiter / overrun.
 function brakeTorqueRaw(rpm,map,fuelCut){
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
+  const actFrac=(!fuelCut&&cylDeactActive(rpm,map))?0.5:1;
   let imep=0;
   if(!fuelCut){
     const ve=computeVE(rpm,map);
@@ -1244,11 +1258,11 @@ function brakeTorqueRaw(rpm,map,fuelCut){
       const ignF=sparkTimingFactor(rpm,map);
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
-    imep=dieselImepLimit(imep);
+    imep=dieselImepLimit(imep)*actFrac;
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
-  const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
+  const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac);
   return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm,map);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
@@ -1718,7 +1732,8 @@ function nitrousFuelKgS(rpm){
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
+  const actFrac=cylDeactActive(state.rpm,map)?0.5:1;
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map))*actFrac;
   return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);
 }
 function updateEnginePhysics(){
