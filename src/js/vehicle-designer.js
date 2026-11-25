@@ -23,6 +23,8 @@ const VCD_FIELDS={
     trade:'Weight moves to the rear under acceleration, so the rear wheels can put down more than the front. AWD uses all four tyres, for more mass, cost and driveline loss.'},
   vhDiff:{guide:'traction',what:'How the differential splits the drive between the two wheels on an axle.',
     trade:'An open diff lets the lighter-loaded wheel spin; a limited-slip diff sends the torque to the wheel that grips. A spool locks them together: the most traction, the worst in tight corners.'},
+  vhAwdMode:{guide:'traction',what:'How the centre differential splits torque between front and rear axles on an AWD car.',
+    trade:'AUTO varies the split with grip; SPORT biases 30:70 to the rear for livelier turn-in; OPEN holds 40:60; LOCK fixes 50:50 for loose surfaces at the cost of tight-corner binding.'},
   vhTC:{guide:'traction',what:'Whether the ECU holds the driven tyres at their best slip when they would spin.',
     trade:'On, the launch stays at the limit of grip. Off, the launch is the driver\'s, and a powerful car spins its tyres.'},
   vhAbs:{guide:'brakes',what:'Whether the ECU releases a braked wheel before it locks.',
@@ -138,18 +140,22 @@ function vcdCompute(){
   const V=vehicle,p=perf;if(!V||!p||!V.ratios)return null;
   return {t100:p.t100,top:p.topSpeed,free:p.freeSpeed,governed:p.governed,q400:p.q400?p.q400.t:null,b100:p.brake100?p.brake100.dist:null,
     mass:V.mass,ptw:V.powerToWeight,mu:V.mu,cost:V.cost,rated:V.ratedKmh,gov:V.governor,gripT:p.gripT||0,lagT:p.lagT||0,spinT:p.spinT||0,
-    fd:V.finalDrive,eff:V.driveEff,ev:!!V.ev,tw:V.tireWidth,twF:V.tireWidthF,ta:V.tireAspect,wheel:V.wheelDia,rTire:V.rTire,...vcdForce(V,p.topSpeed)};
+    fd:V.finalDrive,eff:V.driveEff,ev:!!V.ev,tw:V.tireWidth,twF:V.tireWidthF,ta:V.tireAspect,wheel:V.wheelDia,rTire:V.rTire,
+    rotor:V.rotor||0,track:V.track||0,cg:V.cg||0,wb:V.wb||2.6,fWt:V.fWt||0.55,tyreRatedKg:V.tyreRatedKg||0,
+    brakeFrontShare:V.brakeFrontShare||0.7,brakeOnset:V.brakeTh?V.brakeTh.onset:0,b200tF:p.brake200?p.brake200.tF:0,
+    aeroBottomed:!!V.aeroBottomed,...vcdForce(V,p.topSpeed)};
 }
 // Drive force at the wheels in the best gear, against drag and rolling, over road speed (kN): the gear window's force
 // graph (src/js/gear-window.js), one line. They cross at the top speed. The dotted line is the driven tyres' grip at rest.
 function vcdForce(V,top){
   const pt=powertrain(),curve=pt.torqueCurve(),rl=pt.maxRpm(),idle=V.ev?0:(pt.idleRpm()||800),fd=V.finalDrive,r=V.rTire,eff=V.driveEff;
+  const frontF=vv=>pt.frontForce?pt.frontForce(vv):0;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
   const grip=V.mu*V.mass*G*V.drivenWt/1000,xMax=Math.max(100,(top||0)*1.15),pts=[];
   for(let vk=2;vk<=xMax;vk+=2){
     const v=vk/3.6;let best=0;
     V.ratios.forEach((g,i)=>{const rpm=v*g*fd/r*60/(2*Math.PI);if(rpm>rl||rpm<idle&&i)return;best=Math.max(best,tq(Math.max(rpm,idle))*g*fd*eff/r);});
-    pts.push({x:vk,a:best/1000,b:(0.5*AIR_RHO*V.cdA*v*v+crrAt(V.crr,v)*V.mass*G)/1000,a0:grip});
+    pts.push({x:vk,a:(best+frontF(v))/1000,b:(0.5*AIR_RHO*V.cdA*v*v+crrAt(V.crr,v)*V.mass*G)/1000,a0:grip});
   }
   return {pts,xMax};
 }
@@ -160,7 +166,7 @@ function vcdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'chassis':return o('vhChassis')+' · '+o('vhDrive')+' · '+o('vhDiff')+(r?' · '+f(r.mass)+' kg':'');
-    case 'dims':return o('vhDims')+' · '+g('vhWb')+' m · '+g('vhCg')+' m · '+g('vhFwt')+'% '+tr('front')+(+g('vhBallast').value>0?' · +'+g('vhBallast')+' kg':'');
+    case 'dims':return o('vhDims')+' · '+g('vhWb')+' m · '+g('vhCg')+' m · '+g('vhFwt')+'% '+tr('front')+(+g('vhBallast')>0?' · +'+g('vhBallast')+' kg':'');
     case 'gearbox':return (r&&r.ev?tr('SINGLE-SPEED'):o('vhGearbox')+' · '+g('vhGears')+' '+tr('speeds'))+(r?' · '+tr('final drive')+' '+f(r.fd,2):'');
     case 'tyres':return o('vhTire')+' · '+g('vhTireW')+'/'+g('vhTireA')+' R'+g('vhWheel')+' · '+g('vhRating').replace('YY','(Y)');
     case 'aero':return [o('vhAeroF'),o('vhAeroR'),o('vhAeroFl')].join(' / ')+' · '+o('vhWeight');
@@ -206,6 +212,20 @@ const VCD=new DesignCards({
   summary:vcdSummary,
   warnings:r=>{const w={};
     if(vcdTyresShort(r))w.vhRating=tr('The car reaches {v} km/h, past this rating.').replace('{v}',dcFmt(r.top));
+    if(r.rotor>0&&r.wheel>0&&r.rotor>r.wheel*25.4-60)
+      w.vhRotor=tr('The {d} mm rotor will not clear a {w}" wheel — fit a larger rim or smaller disc.').replace('{d}',dcFmt(r.rotor)).replace('{w}',dcFmt(r.wheel));
+    if(r.track>0&&r.cg>0&&r.track/(2*r.cg)<r.mu)
+      w.vhCg=tr('Rollover risk: track/(2·CG) ({s}) is below tyre grip ({m}) — lower the CG or widen the track.').replace('{s}',dcFmt(r.track/(2*r.cg),2)).replace('{m}',dcFmt(r.mu,2));
+    if(r.tyreRatedKg>0&&r.mass>4*r.tyreRatedKg)
+      w.vhTireW=tr('Vehicle mass ({m} kg) exceeds the tyres\' combined load rating ({c} kg) — fit wider or taller tyres.').replace('{m}',dcFmt(r.mass)).replace('{c}',dcFmt(4*r.tyreRatedKg));
+    if(typeof brakeLockOrder==='function'&&r.wb>0&&r.cg>0){
+      const lo=brakeLockOrder(r.brakeFrontShare,r.mu,r.fWt,r.cg/r.wb);
+      if(lo.zc<0.799)w.vhBrakeBal=tr('Rear brakes lock before the front past {z} g (below 0.80 g R13-H) — move bias forward.').replace('{z}',dcFmt(Math.max(0,lo.zc),2));
+    }
+    if(r.brakeOnset>0&&r.b200tF>r.brakeOnset)
+      w.vhBrake=tr('200–0 stop heats the front rotors to {t} °C, past the {o} °C fade onset — fit bigger or better-cooled brakes.').replace('{t}',dcFmt(r.b200tF)).replace('{o}',dcFmt(r.brakeOnset));
+    if(r.aeroBottomed)
+      w.vhSusp=tr('Downforce bottoms out the springs at high speed — fit stiffer suspension or reduce aero load.');
     return w;},
   drawViz:(dc,r)=>{vcdDrawTyre(dc,r);vcdDrawAids(dc,r);},
   compare:{fields:{vhWheel:{pic:1,h:150,u:' in'},vhTireW:{pic:1,h:150,u:' mm'},vhTireA:{pic:1,h:150,u:'%'}},

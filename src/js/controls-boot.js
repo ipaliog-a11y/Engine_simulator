@@ -183,11 +183,12 @@ function bindControls(){
   for(const[id,k,c]of[['trkTc','tc',false],['trkEsp','esp',false],['raceTc','tc',false],['raceEsp','esp',false],['chalTc','tc',true],['chalEsp','esp',true]]){
     const el=document.getElementById(id);if(el)el.addEventListener('change',e=>setAid(k,e.target.value,c));
   }
-  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+  for(const id of['vhAwdMode','trkAwdMode','chalAwdMode','raceAwdMode']){
     const el=document.getElementById(id);
     if(el)el.addEventListener('change',e=>{
       if(AWD_DIFF_MODES.includes(e.target.value)){
         vehicle.awdMode=e.target.value;syncDriveAidsUI();
+        if(id==='vhAwdMode'&&typeof vcdRefresh==='function')vcdRefresh();
         if(id==='chalAwdMode'&&chalUI.phase==='live')refreshChallenge();
       }
     });
@@ -315,13 +316,15 @@ function bindControls(){
   // the race page's own ⛶: its stage resizes going in and out of full screen
   document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();if(trackPage.open)sizeTrackStage();});
 
-  document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
-  document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
-  document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
-  document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
-  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186); changing the layout,
-  // from that layout's (build 189: a power-split's MG2 and pack are the Prius's).
-  document.getElementById('edHyDeploy').addEventListener('change',syncDesignEnable);   // ASSIST RPM only for ABOVE and BELOW (build 192)
+  for(const id of['edIntake','edFuel','edTiming','edIntakeSys','edCyl','edLayout','edTurboSize','edTaperRpm','edHyDeploy']){
+    const el=document.getElementById(id);if(el)el.addEventListener('change',syncDesignEnable);
+  }
+  {const bEl=document.getElementById('edBore');if(bEl)bEl.addEventListener('change',()=>{
+    if(document.getElementById('edType').value==='rotary'){
+      const eEl=document.getElementById('edEcc'),m=Math.max(8,Math.floor((+bEl.value||105)/5));
+      eEl.max=m;if(+eEl.value>m)eEl.value=m;
+    }
+  });}
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
     if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'||v==='mhev'||v==='p3'||v==='p4'))

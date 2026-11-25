@@ -16,7 +16,10 @@ function computeCost(){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
   }
   if(engine.intake!=='na'){
-    c+={none:0,small:450,large:950}[engine.intercooler]||0;
+    if(engine.icPart){
+      const base=({small:450,large:950}[engine.intercooler]||650);
+      c+=engine.icPart.type==='water'?base+600:base+150;          // custom core; W2A adds pump, reservoir & heat exchanger
+    }else c+={none:0,small:450,large:950}[engine.intercooler]||0;
     c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
   }
   c+={none:0,small:500,large:900}[engine.nitrous]||0;
@@ -97,8 +100,8 @@ function renderChallenge(){
   if((ch.targets&&ch.targets.length)||ch.budget){
     const ev=evalChallenge(ch,m);
     if(ch.budget){
-      const over=m.cost>ch.budget,frac=clamp(m.cost/ch.budget,0,1.15);
-      html+='<div class="ch-budget"><div class="ch-bud-lbl">'+tr('BUDGET')+' '+fmtCost(m.cost)+' / '+fmtCost(ch.budget)+(over?' — '+tr('OVER'):'')+'</div>'
+      const over=ev.cost>ch.budget,frac=clamp(ev.cost/ch.budget,0,1.15);
+      html+='<div class="ch-budget"><div class="ch-bud-lbl">'+tr('BUDGET')+' '+fmtCost(ev.cost)+' / '+fmtCost(ch.budget)+(over?' — '+tr('OVER'):'')+'</div>'
         +'<div class="ch-bar"><div class="ch-bar-fill" style="width:'+Math.min(100,frac*100)+'%;background:'+(over?'#ff4444':'#00ff88')+'"></div></div></div>';
     }
     ev.results.forEach(r=>{
@@ -136,7 +139,8 @@ function updateDesignSummary(){
   const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">'+tr('Note:')+' '+tr(LAYOUT_LABEL[engine.layout])+' '+tr('bank visuals are simplified for now.')+'</span>':'';
   const unitWord=engine.type==='rotary'?(engine.cylinders+tr('-ROTOR')):(engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]));
   let induction;
-  const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
+  const icTxt=engine.icPart?' ('+esc(engine.icPart.name||tr('custom'))+(engine.icPart.type==='water'?' W2A':'')+' IC)'
+    :(engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)');
   if(engine.intake==='na')induction=tr('Naturally aspirated');
   else if(engine.intake==='turbo'){
     induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(boostHalfRpm())+' rpm';

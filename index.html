@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 459</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 460</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -3735,6 +3735,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 </select></div>
 <div class="field"><label for="vhDrive">DRIVETRAIN</label><select id="vhDrive"><option value="fwd">FWD</option><option value="rwd">RWD</option><option value="awd">AWD</option></select></div>
 <div class="field"><label for="vhDiff">DIFFERENTIAL</label><select id="vhDiff"><option value="open">OPEN</option><option value="visc">VISCOUS LSD</option><option value="clsd">CLUTCH-PLATE LSD</option><option value="spool">SPOOL / LOCKED</option></select></div>
+<div class="field" style="display:none"><label for="vhAwdMode">AWD DIFF</label><select id="vhAwdMode"><option value="auto">AUTO</option><option value="sport">SPORT 30:70</option><option value="open">OPEN 40:60</option><option value="lock">LOCK 50:50</option></select></div>
 <div class="field"><label for="vhLimiter">SPEED LIMITER</label><select id="vhLimiter"><option value="off">OFF (REMOVED)</option><option value="on">ON</option></select></div>
 <div class="field"><label for="vhLimitKmh">LIMIT (km/h)</label><input type="number" id="vhLimitKmh" min="80" max="400" step="5" value="250"></div>
 </div></section>
@@ -10357,25 +10358,39 @@ function syncDesignEnable(){
   g('lblStroke').textContent=tr(type==='rotary'?'ROTOR W (mm)':'STROKE (mm)');
   g('edLayout').disabled=type==='rotary';
   g('edEcc').disabled=type!=='rotary';
+  if(type==='rotary'){
+    const eccMax=Math.max(8,Math.floor((+g('edBore').value||105)/5));
+    g('edEcc').max=eccMax;
+    if(+g('edEcc').value>eccMax)g('edEcc').value=eccMax;
+  }
   // Cylinder / rotor count is capped per type: production Wankels top out at four rotors (Mazda
   // 26B) and two-strokes at six cylinders. Counts above the cap are shown disabled rather than
   // silently clamped at build time, which used to turn a 12-rotor choice into 3 with no word said.
   const maxCyl=tp.maxCyl||12, cylSel=g('edCyl');
   [...cylSel.options].forEach(o=>{o.disabled=+o.value>maxCyl;});
   if(+cylSel.value>maxCyl)cylSel.value=String(Math.min(maxCyl,4));
+  // Block physically invalid bank/cylinder combinations: odd 1/3/5-cyl cannot be V or Boxer; 12-cyl cannot be Inline.
+  if(type!=='rotary'){
+    const cyl=+cylSel.value, laySel=g('edLayout'), odd=cyl%2===1;
+    [...laySel.options].forEach(o=>{
+      o.disabled=(odd&&(o.value==='v'||o.value==='boxer'))||(cyl===12&&o.value==='inline');
+    });
+    if(odd&&(laySel.value==='v'||laySel.value==='boxer'))laySel.value='inline';
+    else if(cyl===12&&laySel.value==='inline')laySel.value='v';
+  }
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
   g('edGovRpm').disabled=!tp.ci;                           // a governor is a diesel's (build 172)
   // Boost / intercooler only matter for forced induction; turbo size only for turbos.
   const intake=g('edIntake').value,na=intake==='na';
-  g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na;g('edTqLimit').disabled=na;
+  g('edBoost').disabled=na;g('edTaperRpm').disabled=na;g('edTaperPct').disabled=na||!(+g('edTaperRpm').value>0);g('edTqLimit').disabled=na;
   g('edIntercooler').disabled=na;
-  const turbo=intake==='turbo';
-  g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo;
+  const turbo=intake==='turbo', turboCustom=turbo&&g('edTurboSize').value.startsWith('part:');
+  g('edTurboSize').disabled=!turbo;g('edCompWheel').disabled=!turbo||turboCustom;
   g('edTurboConfig').disabled=!turbo;
-  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168)
-  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||g('edVGT').value==='yes';
+  // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168); a custom turboPart sets its own too
+  g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||turboCustom||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
@@ -10699,7 +10714,10 @@ function computeCost(){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
   }
   if(engine.intake!=='na'){
-    c+={none:0,small:450,large:950}[engine.intercooler]||0;
+    if(engine.icPart){
+      const base=({small:450,large:950}[engine.intercooler]||650);
+      c+=engine.icPart.type==='water'?base+600:base+150;          // custom core; W2A adds pump, reservoir & heat exchanger
+    }else c+={none:0,small:450,large:950}[engine.intercooler]||0;
     c+=engine.boost_bar*900;                                     // fuelling/plumbing for boost
   }
   c+={none:0,small:500,large:900}[engine.nitrous]||0;
@@ -10780,8 +10798,8 @@ function renderChallenge(){
   if((ch.targets&&ch.targets.length)||ch.budget){
     const ev=evalChallenge(ch,m);
     if(ch.budget){
-      const over=m.cost>ch.budget,frac=clamp(m.cost/ch.budget,0,1.15);
-      html+='<div class="ch-budget"><div class="ch-bud-lbl">'+tr('BUDGET')+' '+fmtCost(m.cost)+' / '+fmtCost(ch.budget)+(over?' — '+tr('OVER'):'')+'</div>'
+      const over=ev.cost>ch.budget,frac=clamp(ev.cost/ch.budget,0,1.15);
+      html+='<div class="ch-budget"><div class="ch-bud-lbl">'+tr('BUDGET')+' '+fmtCost(ev.cost)+' / '+fmtCost(ch.budget)+(over?' — '+tr('OVER'):'')+'</div>'
         +'<div class="ch-bar"><div class="ch-bar-fill" style="width:'+Math.min(100,frac*100)+'%;background:'+(over?'#ff4444':'#00ff88')+'"></div></div></div>';
     }
     ev.results.forEach(r=>{
@@ -10819,7 +10837,8 @@ function updateDesignSummary(){
   const note=(engine.layout==='v'||engine.layout==='boxer')?'<br><span style="color:#886">'+tr('Note:')+' '+tr(LAYOUT_LABEL[engine.layout])+' '+tr('bank visuals are simplified for now.')+'</span>':'';
   const unitWord=engine.type==='rotary'?(engine.cylinders+tr('-ROTOR')):(engine.cylinders+tr('-CYL')+' '+tr(LAYOUT_LABEL[engine.layout]));
   let induction;
-  const icTxt=engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)';
+  const icTxt=engine.icPart?' ('+esc(engine.icPart.name||tr('custom'))+(engine.icPart.type==='water'?' W2A':'')+' IC)'
+    :(engine.intercooler==='none'?' ('+tr('no IC')+')':' ('+(engine.intercooler==='large'?'LG':'SM')+' IC)');
   if(engine.intake==='na')induction=tr('Naturally aspirated');
   else if(engine.intake==='turbo'){
     induction=tr(TURBO_CONFIG[engine.turboConfig].label)+' '+tr('TURBO')+' ('+tr(engine.turboSize.toUpperCase())+', A/R '+(engine.turbineAR||0).toFixed(2)+')'+(engine.vgt?' VGT':'')+(engine.antilag?' +ALS':'')+' @ '+engine.boost_bar.toFixed(2)+' bar'+icTxt+', '+tr('50% boost @')+' '+Math.round(boostHalfRpm())+' rpm';
@@ -14119,7 +14138,7 @@ function readVehicleFromForm(){
     // rear tyres may slide before the stability control works, as a multiple of the slip angle they peak at.
     aids:{abs:g('vhAbs').value!=='off',absSlip:[clamp(numOr(g('vhAbsF').value,DRIVE_AIDS.absSlip[0]),1,3),clamp(numOr(g('vhAbsR').value,DRIVE_AIDS.absSlip[1]),1,3)],
       tcSlip:clamp(numOr(g('vhTcSlip').value,1),0.5,3),esp:g('vhEsp').value!=='off',espSlide:clamp(numOr(g('vhEspSlide').value,1),1,3),espCut:g('vhEspCut').value!=='off'},
-    awdMode:g('trkAwdMode')&&AWD_DIFF_MODES.includes(g('trkAwdMode').value)?g('trkAwdMode').value:'auto',
+    awdMode:g('vhAwdMode')&&AWD_DIFF_MODES.includes(g('vhAwdMode').value)?g('vhAwdMode').value:(g('trkAwdMode')&&AWD_DIFF_MODES.includes(g('trkAwdMode').value)?g('trkAwdMode').value:'auto'),
     // Gear spacing (build 169): CLOSE / STANDARD / WIDE, STOCK (a real car's own box) or CUSTOM. The hand-set ratios
     // and a hand-set final drive (0 = matched to the engine) live beside the form, like the body.
     spacing:g('vhSpacing').value,ratioSet:vehRatioSet?vehRatioSet.slice():null,finalDriveSet:vehFinalDriveSet,
@@ -14185,7 +14204,7 @@ function applyVehicleToForm(v){
    if(D){g('vhWb').value=D.wb;g('vhTrackF').value=D.trackF;g('vhTrackR').value=D.trackR;g('vhCg').value=D.cg;g('vhFwt').value=+(D.fWt*100).toFixed(4);}
    g('vhBallast').value=v.ballastKg||0;g('vhBallastPos').value=v.ballastPos!=null?+(v.ballastPos*100).toFixed(2):50;g('vhBallastH').value=v.ballastH||0.15;}
   updateGearingLabel();
-  {const am=g('trkAwdMode');if(am)am.value=v.awdMode||'auto';}
+  for(const id of['vhAwdMode','trkAwdMode']){const am=g(id);if(am)am.value=v.awdMode||'auto';}
   if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode=v.awdMode||'auto';
   if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
 }
@@ -14213,17 +14232,18 @@ function applyChassisFit(key,body){
   {const fg=factoryGeo({chassis:key,body});g('vhGeoF').value=fg.f;g('vhGeoR').value=fg.r;}
   g('vhDims').value='factory';g('vhBallast').value=0;   // the factory's chassis numbers, without ballast (build 250)
   updateGearingLabel();
-  {const am=g('trkAwdMode');if(am)am.value='auto';}
+  for(const id of['vhAwdMode','trkAwdMode']){const am=g(id);if(am)am.value='auto';}
   if(typeof vehicle!=='undefined'&&vehicle)vehicle.awdMode='auto';
   if(typeof syncDriveAidsUI==='function')syncDriveAidsUI();
   return ch;
 }
-// The GEARING slider is a final-drive ratio: 0 = shortest (4.90:1 — quick acceleration, low top
-// speed), 100 = tallest (2.60:1 — relaxed revs, higher top speed). Show the ratio it means.
+// The GEARING slider biases the car's final-drive ratio around its baseline (matched or stock).
+// Show the actual vehicle.finalDrive once built (falling back to the legacy lerp before first build).
 function updateGearingLabel(){
   const el=document.getElementById('vhGearing'),out=document.getElementById('valGearing');
   if(!el||!out)return;
-  out.textContent=el.value+' · '+lerp(4.9,2.6,(+el.value)/100).toFixed(2)+':1';
+  const fd=(typeof vehicle!=='undefined'&&vehicle&&vehicle.finalDrive>0)?vehicle.finalDrive:lerp(4.9,2.6,(+el.value)/100);
+  out.textContent=el.value+' · '+fd.toFixed(2)+':1';
   // a final drive set in the GEAR RATIOS window (build 170) overrides the slider
   el.disabled=vehFinalDriveSet>0;if(vehFinalDriveSet>0)out.textContent=tr('SET BY HAND')+' · '+vehFinalDriveSet.toFixed(2)+':1';
 }
@@ -15056,6 +15076,7 @@ function buildVehicle(){
   vehicle.ecvt=!!powertrain().direct;
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
   if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
+  if(typeof updateGearingLabel==='function')updateGearingLabel();
   syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
   hybFrontSetup(vehicle);   // a hybrid's front axle motor: its reduction and its force at each speed (build 195)
   vehicle.cost=computeVehicleCost(ch,tt,wr);
@@ -37562,7 +37583,7 @@ function syncDriveAidsUI(){
   const cTc=document.getElementById('chalTc'),cEsp=document.getElementById('chalEsp');
   if(cTc)cTc.value=(isDrift?(chalDriftTc===true):tcOn)?'on':'off';
   if(cEsp)cEsp.value=(isDrift?(chalDriftEsp===true):espOn)?'on':'off';
-  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+  for(const id of['vhAwdMode','trkAwdMode','chalAwdMode','raceAwdMode']){
     const el=document.getElementById(id);
     if(el){el.value=awdM;const row=el.closest('.field');if(row)row.style.display=isAwd?'':'none';}
   }
@@ -39368,7 +39389,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator'};
-const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust'];   // their change enables or disables other fields
+const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only
 // a description ("3.0 Turbo I6 (2JZ)" -> "2JZ") or a hybrid's ("Toyota 2ZR-FXE 1.8 + power-split (Prius)" -> "Prius").
@@ -39404,6 +39425,8 @@ function icdCompute(){
       safety:s.safety,knock:100-s.safety,cost:e.cost,redline:e.redline,float:e.floatRpm||0,ports:!!e.ports,rotary:e.type==='rotary',
       piston:2*e.stroke_mm/1000*e.redline/60,pts,bore:e.bore_mm,stroke:e.stroke_mm,cr:e.compression,cyl:e.cylinders,boost:e.intake==='na'?0:e.boost_bar,
       pMax:e.peakPmax||0,pMaxLim:cylPmaxLimit(),preIgn:e.peakPreIgn||0,knockCut:knockBoostCutInfo(),
+      turbo:e.intake==='turbo',turboLoad:e.turboLoad||0,compEff:e.compEff||0,spoolRpm:e.intake==='turbo'?Math.round(boostHalfRpm()):0,
+      peakEgtC:e.peakEgt?Math.round(e.peakEgt-273):0,peakEgtGas:e.peakEgtGas||0,vgtShut:e.vgtShut||0,
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -39423,7 +39446,7 @@ function icdSummary(c,r){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
       ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
-    case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig'):o('edScType')))+
+    case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
     case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
@@ -39443,7 +39466,9 @@ const ICD=new DesignCards({
   stats:(r,d)=>[['PEAK POWER',dcFmt(r.hp),'hp',d('hp',1,0)],['TORQUE',dcFmt(r.tq),'Nm',d('tq',1,0)],['DISPLACEMENT',dcFmt(r.disp,2),'L',''],
     ['GRADE',r.grade,' '+r.overall,d('overall',1,0)],['RELIABILITY',dcFmt(r.rel),'',d('rel',1,0)],['COST','$'+dcFmt(r.cost/1000,1),'k',d('cost',-1,0)]],
   slowText:r=>tr('Peak power at {p} rpm, peak torque at {t} rpm').replace('{p}',dcFmt(r.hpRpm)).replace('{t}',dcFmt(r.tqRpm))+
-    (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1))),
+    (r.rotary?'':' · '+tr('mean piston speed at the redline {v} m/s').replace('{v}',dcFmt(r.piston,1)))+
+    (r.peakEgtC>0?' · '+tr('peak EGT {e} °C').replace('{e}',dcFmt(r.peakEgtC)):'')+
+    (r.turbo?' · '+tr('50% boost @ {s} rpm · turbo load {l}% ({c}% eff)').replace('{s}',dcFmt(r.spoolRpm)).replace('{l}',dcFmt(Math.round(r.turboLoad*100))).replace('{c}',dcFmt(Math.round(r.compEff*100))):''),
   legend:[['p','power (hp)'],['t','torque (Nm)']],curveLabel:'Power and torque against engine speed',
   curve:r=>({xMax:r.redline,mark:null,pts:r.pts}),
   // what holds it back: the valvetrain against the redline, knock, and peak cylinder pressure
@@ -39452,6 +39477,7 @@ const ICD=new DesignCards({
     if(r.float>0)groups.push({head:'REVS',rows:[['valve float',r.float],['redline',r.redline]],lit:icdFloatShort(r)?0:1,fmt:v=>dcFmt(v/1000,1)+'k'});
     groups.push({head:'KNOCK',rows:[['knock',r.knock],['limit',KNOCK_TARGET]],lit:icdKnockOver(r)||icdPreIgn(r)?0:1,fmt:v=>dcFmt(v)});
     if(r.pMax>0)groups.push({head:'CYL PRESSURE',rows:[['peak',r.pMax],['limit',r.pMaxLim]],lit:icdPmaxOver(r)?0:1,fmt:v=>dcFmt(v)+' bar'});
+    if(r.turbo&&r.turboLoad>0)groups.push({head:'TURBO',rows:[['load',Math.round(r.turboLoad*100)],['comp eff',Math.round(r.compEff*100)]],lit:r.turboLoad>1?0:1,fmt:v=>dcFmt(v)+'%'});
     let v;
     if(icdFloatShort(r))v=tr('The valves float at {f} rpm, before the {r} rpm redline: stiffer springs, lighter valves or a lower redline.')
       .replace('{f}',dcFmt(Math.round(r.float/100)*100)).replace('{r}',dcFmt(r.redline));
@@ -39473,6 +39499,8 @@ const ICD=new DesignCards({
     else if(icdPmaxOver(r)){w.edCR=tr('Peak cylinder pressure ({p} bar) exceeds the {l} bar limit.').replace('{p}',dcFmt(Math.round(r.pMax))).replace('{l}',dcFmt(r.pMaxLim));if(r.boost>0)w.edBoost=w.edCR;}
     else if(icdKnockOver(r)){w.edCR=tr('It knocks past what the ECU can hold off.');if(document.getElementById('edTiming').value==='fixed')w.edIgnAdv=w.edCR;}
     else if(r.knockCut){w.edCR=tr('ECU is cutting boost by {c} bar to stop knock.').replace('{c}',r.knockCut.maxCut.toFixed(2));w.edBoost=w.edCR;}
+    if(r.turbo&&r.turboLoad>1)w.edTurboSize=tr('Off the compressor map ({l}% load) — fit a bigger turbo frame.').replace('{l}',dcFmt(Math.round(r.turboLoad*100)));
+    if(r.vgtShut>0&&r.peakEgtGas>VANE_T_LIMIT+1)w.edVGT=tr('Exhaust gas ({t} °C) exceeds VGT vane limit.').replace('{t}',dcFmt(Math.round(r.peakEgtGas-273)));
     return w;},
   drawViz:(dc,r)=>icdDrawCylinder(dc,r),
   // low against high: the cylinder for what it shapes, the power curve for all four
@@ -39555,6 +39583,8 @@ const VCD_FIELDS={
     trade:'Weight moves to the rear under acceleration, so the rear wheels can put down more than the front. AWD uses all four tyres, for more mass, cost and driveline loss.'},
   vhDiff:{guide:'traction',what:'How the differential splits the drive between the two wheels on an axle.',
     trade:'An open diff lets the lighter-loaded wheel spin; a limited-slip diff sends the torque to the wheel that grips. A spool locks them together: the most traction, the worst in tight corners.'},
+  vhAwdMode:{guide:'traction',what:'How the centre differential splits torque between front and rear axles on an AWD car.',
+    trade:'AUTO varies the split with grip; SPORT biases 30:70 to the rear for livelier turn-in; OPEN holds 40:60; LOCK fixes 50:50 for loose surfaces at the cost of tight-corner binding.'},
   vhTC:{guide:'traction',what:'Whether the ECU holds the driven tyres at their best slip when they would spin.',
     trade:'On, the launch stays at the limit of grip. Off, the launch is the driver\'s, and a powerful car spins its tyres.'},
   vhAbs:{guide:'brakes',what:'Whether the ECU releases a braked wheel before it locks.',
@@ -39670,18 +39700,22 @@ function vcdCompute(){
   const V=vehicle,p=perf;if(!V||!p||!V.ratios)return null;
   return {t100:p.t100,top:p.topSpeed,free:p.freeSpeed,governed:p.governed,q400:p.q400?p.q400.t:null,b100:p.brake100?p.brake100.dist:null,
     mass:V.mass,ptw:V.powerToWeight,mu:V.mu,cost:V.cost,rated:V.ratedKmh,gov:V.governor,gripT:p.gripT||0,lagT:p.lagT||0,spinT:p.spinT||0,
-    fd:V.finalDrive,eff:V.driveEff,ev:!!V.ev,tw:V.tireWidth,twF:V.tireWidthF,ta:V.tireAspect,wheel:V.wheelDia,rTire:V.rTire,...vcdForce(V,p.topSpeed)};
+    fd:V.finalDrive,eff:V.driveEff,ev:!!V.ev,tw:V.tireWidth,twF:V.tireWidthF,ta:V.tireAspect,wheel:V.wheelDia,rTire:V.rTire,
+    rotor:V.rotor||0,track:V.track||0,cg:V.cg||0,wb:V.wb||2.6,fWt:V.fWt||0.55,tyreRatedKg:V.tyreRatedKg||0,
+    brakeFrontShare:V.brakeFrontShare||0.7,brakeOnset:V.brakeTh?V.brakeTh.onset:0,b200tF:p.brake200?p.brake200.tF:0,
+    aeroBottomed:!!V.aeroBottomed,...vcdForce(V,p.topSpeed)};
 }
 // Drive force at the wheels in the best gear, against drag and rolling, over road speed (kN): the gear window's force
 // graph (src/js/gear-window.js), one line. They cross at the top speed. The dotted line is the driven tyres' grip at rest.
 function vcdForce(V,top){
   const pt=powertrain(),curve=pt.torqueCurve(),rl=pt.maxRpm(),idle=V.ev?0:(pt.idleRpm()||800),fd=V.finalDrive,r=V.rTire,eff=V.driveEff;
+  const frontF=vv=>pt.frontForce?pt.frontForce(vv):0;
   const tq=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let k=1;k<curve.length;k++)if(rpm<=curve[k].rpm){const a=curve[k-1],b=curve[k];return a.tq+(b.tq-a.tq)*(rpm-a.rpm)/(b.rpm-a.rpm);}return curve[curve.length-1].tq;};
   const grip=V.mu*V.mass*G*V.drivenWt/1000,xMax=Math.max(100,(top||0)*1.15),pts=[];
   for(let vk=2;vk<=xMax;vk+=2){
     const v=vk/3.6;let best=0;
     V.ratios.forEach((g,i)=>{const rpm=v*g*fd/r*60/(2*Math.PI);if(rpm>rl||rpm<idle&&i)return;best=Math.max(best,tq(Math.max(rpm,idle))*g*fd*eff/r);});
-    pts.push({x:vk,a:best/1000,b:(0.5*AIR_RHO*V.cdA*v*v+crrAt(V.crr,v)*V.mass*G)/1000,a0:grip});
+    pts.push({x:vk,a:(best+frontF(v))/1000,b:(0.5*AIR_RHO*V.cdA*v*v+crrAt(V.crr,v)*V.mass*G)/1000,a0:grip});
   }
   return {pts,xMax};
 }
@@ -39692,7 +39726,7 @@ function vcdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'chassis':return o('vhChassis')+' · '+o('vhDrive')+' · '+o('vhDiff')+(r?' · '+f(r.mass)+' kg':'');
-    case 'dims':return o('vhDims')+' · '+g('vhWb')+' m · '+g('vhCg')+' m · '+g('vhFwt')+'% '+tr('front')+(+g('vhBallast').value>0?' · +'+g('vhBallast')+' kg':'');
+    case 'dims':return o('vhDims')+' · '+g('vhWb')+' m · '+g('vhCg')+' m · '+g('vhFwt')+'% '+tr('front')+(+g('vhBallast')>0?' · +'+g('vhBallast')+' kg':'');
     case 'gearbox':return (r&&r.ev?tr('SINGLE-SPEED'):o('vhGearbox')+' · '+g('vhGears')+' '+tr('speeds'))+(r?' · '+tr('final drive')+' '+f(r.fd,2):'');
     case 'tyres':return o('vhTire')+' · '+g('vhTireW')+'/'+g('vhTireA')+' R'+g('vhWheel')+' · '+g('vhRating').replace('YY','(Y)');
     case 'aero':return [o('vhAeroF'),o('vhAeroR'),o('vhAeroFl')].join(' / ')+' · '+o('vhWeight');
@@ -39738,6 +39772,20 @@ const VCD=new DesignCards({
   summary:vcdSummary,
   warnings:r=>{const w={};
     if(vcdTyresShort(r))w.vhRating=tr('The car reaches {v} km/h, past this rating.').replace('{v}',dcFmt(r.top));
+    if(r.rotor>0&&r.wheel>0&&r.rotor>r.wheel*25.4-60)
+      w.vhRotor=tr('The {d} mm rotor will not clear a {w}" wheel — fit a larger rim or smaller disc.').replace('{d}',dcFmt(r.rotor)).replace('{w}',dcFmt(r.wheel));
+    if(r.track>0&&r.cg>0&&r.track/(2*r.cg)<r.mu)
+      w.vhCg=tr('Rollover risk: track/(2·CG) ({s}) is below tyre grip ({m}) — lower the CG or widen the track.').replace('{s}',dcFmt(r.track/(2*r.cg),2)).replace('{m}',dcFmt(r.mu,2));
+    if(r.tyreRatedKg>0&&r.mass>4*r.tyreRatedKg)
+      w.vhTireW=tr('Vehicle mass ({m} kg) exceeds the tyres\' combined load rating ({c} kg) — fit wider or taller tyres.').replace('{m}',dcFmt(r.mass)).replace('{c}',dcFmt(4*r.tyreRatedKg));
+    if(typeof brakeLockOrder==='function'&&r.wb>0&&r.cg>0){
+      const lo=brakeLockOrder(r.brakeFrontShare,r.mu,r.fWt,r.cg/r.wb);
+      if(lo.zc<0.799)w.vhBrakeBal=tr('Rear brakes lock before the front past {z} g (below 0.80 g R13-H) — move bias forward.').replace('{z}',dcFmt(Math.max(0,lo.zc),2));
+    }
+    if(r.brakeOnset>0&&r.b200tF>r.brakeOnset)
+      w.vhBrake=tr('200–0 stop heats the front rotors to {t} °C, past the {o} °C fade onset — fit bigger or better-cooled brakes.').replace('{t}',dcFmt(r.b200tF)).replace('{o}',dcFmt(r.brakeOnset));
+    if(r.aeroBottomed)
+      w.vhSusp=tr('Downforce bottoms out the springs at high speed — fit stiffer suspension or reduce aero load.');
     return w;},
   drawViz:(dc,r)=>{vcdDrawTyre(dc,r);vcdDrawAids(dc,r);},
   compare:{fields:{vhWheel:{pic:1,h:150,u:' in'},vhTireW:{pic:1,h:150,u:' mm'},vhTireA:{pic:1,h:150,u:'%'}},
@@ -41156,11 +41204,12 @@ function bindControls(){
   for(const[id,k,c]of[['trkTc','tc',false],['trkEsp','esp',false],['raceTc','tc',false],['raceEsp','esp',false],['chalTc','tc',true],['chalEsp','esp',true]]){
     const el=document.getElementById(id);if(el)el.addEventListener('change',e=>setAid(k,e.target.value,c));
   }
-  for(const id of['trkAwdMode','chalAwdMode','raceAwdMode']){
+  for(const id of['vhAwdMode','trkAwdMode','chalAwdMode','raceAwdMode']){
     const el=document.getElementById(id);
     if(el)el.addEventListener('change',e=>{
       if(AWD_DIFF_MODES.includes(e.target.value)){
         vehicle.awdMode=e.target.value;syncDriveAidsUI();
+        if(id==='vhAwdMode'&&typeof vcdRefresh==='function')vcdRefresh();
         if(id==='chalAwdMode'&&chalUI.phase==='live')refreshChallenge();
       }
     });
@@ -41288,13 +41337,15 @@ function bindControls(){
   // the race page's own ⛶: its stage resizes going in and out of full screen
   document.addEventListener('fullscreenchange',()=>{if(racePage.open)sizeRaceStage();if(trackPage.open)sizeTrackStage();});
 
-  document.getElementById('edIntake').addEventListener('change',syncDesignEnable);
-  document.getElementById('edFuel').addEventListener('change',syncDesignEnable);
-  document.getElementById('edTiming').addEventListener('change',syncDesignEnable);
-  document.getElementById('edIntakeSys').addEventListener('change',syncDesignEnable);
-  // Fitting a hybrid system starts from a hybrid's motor and pack, not an electric car's (build 186); changing the layout,
-  // from that layout's (build 189: a power-split's MG2 and pack are the Prius's).
-  document.getElementById('edHyDeploy').addEventListener('change',syncDesignEnable);   // ASSIST RPM only for ABOVE and BELOW (build 192)
+  for(const id of['edIntake','edFuel','edTiming','edIntakeSys','edCyl','edLayout','edTurboSize','edTaperRpm','edHyDeploy']){
+    const el=document.getElementById(id);if(el)el.addEventListener('change',syncDesignEnable);
+  }
+  {const bEl=document.getElementById('edBore');if(bEl)bEl.addEventListener('change',()=>{
+    if(document.getElementById('edType').value==='rotary'){
+      const eEl=document.getElementById('edEcc'),m=Math.max(8,Math.floor((+bEl.value||105)/5));
+      eEl.max=m;if(+eEl.value>m)eEl.value=m;
+    }
+  });}
   document.getElementById('edHybrid').addEventListener('change',e=>{
     const v=e.target.value,hybPrev=engine&&engine.type!=='electric'&&engine.hyMode||'none';
     if(v!=='none'&&(+document.getElementById('evKWh').value>10||hybPrev!=='none'&&hybPrev!==v||v==='ps'||v==='series'||v==='mhev'||v==='p3'||v==='p4'))

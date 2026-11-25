@@ -18,16 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### README's known limits brought up to date (build 459)
+### README's known limits brought up to date (build 460)
 
 - The list still described build ~150–300. Re-checked each entry against the code and the tests' named gaps.
 - Corrected: turbo overspeed now wears the engine out (build 451); the TRACK lap's "never spins" is scoped to the
   lap, since the stepped car has yaw and ESP (builds 319–389); the stepped car's rotor fade (build 450) noted; the
-  suite count (56 → 254 tests).
+  suite count (56 → 255 tests).
 - Added named gaps from the tests: test60's limiter engines (RS3, LS3, Coyote, BAC Mono, 4A-GE, F140), test41,
   test48, test76, test96, test115, test116, test170, test204.
 - Left open: the RS3 and EcoBoost low-rpm torque figures date from builds 133–136 and were not re-measured
   (preset checks are paused); the README now says so. Documentation only; no code or numbers moved.
+
+### Vehicle and engine designer fixes, setup safety warnings, and layout validation (build 459)
+
+- **Vehicle Designer & challenge UI fixes**: fixed the ballast summary in `vcdSummary` (`+g('vhBallast') > 0`), updated `updateGearingLabel()` to show the actual `vehicle.finalDrive` instead of a dummy lerp, added hybrid front-axle motor force (`pt.frontForce(v)`) to the `vcdForce` drive-force curve, and fixed circuit challenge budget bars in `renderChallenge()` to use total car cost (`ev.cost`) instead of engine-only cost (`m.cost`).
+- **AWD diff selector & Vehicle Designer safety warnings**: added `#vhAwdMode` to the `CHASSIS & DRIVE` card (synced with Track, Race, and Challenge AWD selectors), and added setup safety warnings for rotor-in-wheel clearance, rollover hazard (`track/(2·CG) < μ`), tyre load-rating overload, rear-before-front brake lockup (`zc < 0.80 g`), 200–0 brake fade, and high-speed aero spring bottoming.
+- **Engine Designer validation, disabled states & readouts**: blocked invalid cylinder/layout combinations (odd 1/3/5-cyl V/Boxer and 12-cyl Inline) in `syncDesignEnable()`, synced rotary `edEcc` max to `Math.floor(bore / 5)`, disabled `edCompWheel`/`edHousing` when a custom `turboPart` is active and `edTaperPct` when `edTaperRpm === 0`, surfaced `turboLoad`, spool RPM (`boostHalfRpm()`), `compEff`, and peak EGT readouts in Engine Designer, and accounted for `engine.icPart` in `computeCost()` and `updateDesignSummary()`.
+- **Regression test**: added `tests/test279.mjs`. Zero physics or preset changes.
 
 ### Canvas/HUD layout fixes, challenge replay controls, and GPX track deletion (build 458)
 

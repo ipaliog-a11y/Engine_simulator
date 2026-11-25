@@ -209,6 +209,7 @@ function buildVehicle(){
   vehicle.ecvt=!!powertrain().direct;
   if(vehicle.ev)electricDriveline(vehicle);   // one fixed reduction, no gearbox (build 180)
   if(vehicle.ecvt)psDriveline(vehicle);       // a power-split's: one reduction from MG2 (build 189)
+  if(typeof updateGearingLabel==='function')updateGearingLabel();
   syncEvVehicleForm(vehicle.ev||vehicle.ecvt);
   hybFrontSetup(vehicle);   // a hybrid's front axle motor: its reduction and its force at each speed (build 195)
   vehicle.cost=computeVehicleCost(ch,tt,wr);

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 459
+# PIXEL POWERTRAIN v0.8 build 460
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -1068,7 +1068,7 @@ documented in the GUIDE at the point where it matters:
   archetype joining the list fails. Among the real engines, test60 names the 4A-GE, the F140 (812 Superfast and
   Enzo), and since builds 425–427, on their sourced valves, the RS3, LS3, Coyote 5.0 and BAC Mono's Duratec 2.3: all
   peak at the limiter because the model has no top-end fade.
-- **The full suite** (254 tests at build 459, ~70 minutes) runs locally; CI runs only the tests a PR touches. Each
+- **The full suite** (255 tests at build 460, ~70 minutes) runs locally; CI runs only the tests a PR touches. Each
   re-baselined check carries its reason in the test and the changelog.
 - **The VE bell is gone from every poppet-valve petrol engine, and kept for the rest.** It took three
   attempts. The third (builds 82–84) found the bell had been covering for two errors: the trapping
