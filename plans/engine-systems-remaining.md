@@ -1,5 +1,7 @@
 # Plan: remaining engine systems & gap closers (from build 474)
 
+> **Superseded at build 474 by [plans/v1-scope.md](v1-scope.md)**, which recalibrates what is left for v1.0.
+
 Follows [plans/engine-systems.md](engine-systems.md) after builds **461–473** shipped all 13 non-`⚠` items (`E1–E7`, `E9–E14`).
 
 Every build here follows `AGENTS.md`: one change, one build, one PR, one new test, a `CHANGELOG.md` entry, and wording passed through `tr()` (no new Greek while Greek is paused). All builds below are marked **⚠** because they move existing cars' numbers and require owner approval + a before/after fingerprint report.

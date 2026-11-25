@@ -1,5 +1,7 @@
 # Plan: from build 405 to the v1.0 gate
 
+> **Superseded at build 474 by [plans/v1-scope.md](v1-scope.md)**, which recalibrates what is left for v1.0.
+
 Written at build 407 for the groups of *Leftovers to v1.0* in `plans/road-to-v1.md` that are still open: 1 (engine),
 2 (vehicle parts), 7 (data), 8 (known gaps) and 10 (the gate). Groups 4–6 were done in `plans/small-physics.md`
 (builds 364–405). Group 9 (game) ends with the guided build's three builds (G8–G10), already running.
