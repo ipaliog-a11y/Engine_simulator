@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 464</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 465</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1072,6 +1072,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edOilCooler">OIL COOLER</label><select id="edOilCooler"><option value="no">NO</option><option value="yes">YES</option></select></div>
 <div class="field"><label for="edThermostat">THERMOSTAT (°C)</label><input type="number" id="edThermostat" min="71" max="95" step="1" value="88"></div>
 <div class="field"><label for="edAlternator">ALTERNATOR</label><select id="edAlternator"><option value="60">60 A</option><option value="120">120 A</option><option value="180">180 A (HD)</option></select></div>
+<div class="field"><label for="edStartStop">START-STOP</label><select id="edStartStop"><option value="no">NO</option><option value="yes">YES (12 V AGM)</option></select></div>
 </div></section>
 </div>
 <aside class="evd-side" id="icdSide"></aside>
@@ -1879,12 +1880,14 @@ The engine makes its own electricity. A belt from the crank spins an <b>alternat
 <div class="guide-body" data-gk="electricalGame">
 <b>ELEC LOAD</b> on the LIVE tab is the accessories (lights, air conditioning, audio). Pick the <b>ALTERNATOR</b> size on the ENGINE tab: 60, 120 or 180 A. Watch the battery voltage at idle with the load turned up.<br>A <b>hybrid</b> has no alternator: its 12 V side runs off the traction pack through a DC-DC converter, as on every real hybrid, so its engine carries no belt drag or charging load. The ALTERNATOR field is hidden for a hybrid, and the 12 V load (300 W) comes out of the pack.
 </div>
+<p class="guide-body"><b>START-STOP</b> (non-hybrid cars): shuts the engine off when standing still on the WLTP or eco cycles once the coolant reaches 50 °C, cutting idle fuel and emissions to zero. Adds +6 kg and $350 for the reinforced starter and 12 V AGM battery.</p>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="electricalPhys">
 The alternator gives about 35% of its rating at idle, rising to full output by 2500 rpm. Demand is a 12 A baseline (ECU, pump, ignition), up to 55 A of accessories and 22 A for an electric fan when the coolant is hot. The battery integrates the difference, and system voltage follows its state of charge. The spark's strength scales with voltage between 9.5 and 13 V, and the ignition's dwell limit falls with it, so a flat battery and a distributor misfire early. The power drawn costs crank torque:
 <span class="geq">T<sub>alt</sub> = I · 14 V / 0.55 / ω</span>
 </div>
+<p class="guide-body"><b>Start-stop restart energy</b> is derived from the 12 V starter (0.5 kW/L petrol, 1.0 kW/L diesel, η<sub>starter</sub> = 0.60, 0.5 s warm crank) and recharged by the alternator (η<sub>alt</sub> = 0.55, AGM charge acceptance 0.90) on the next driving seconds.</p>
 </div>
 <div class="guide-see">See also: <a data-gp="ignition">Ignition &amp; spark timing</a> · <a data-gp="friction">Friction, oil &amp; pumping</a></div>
 </section>
@@ -6122,7 +6125,7 @@ const DEFAULT_ENGINE={
   cam:'stock',vvt:true,cylDeact:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
-  alternator:'120'
+  alternator:'120',startStop:false
 };
 // Ready-made popular builds (deltas over DEFAULT_ENGINE). Loaded from the DESIGN dropdown.
 const PRESETS=[
@@ -10320,7 +10323,8 @@ function readEngineFromForm(){
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
-    alternator:g('edAlternator').value
+    alternator:g('edAlternator').value,
+    startStop:g('edStartStop')?g('edStartStop').value==='yes':false
   };
   {const sv=g('edSilencer').value;if(EXHAUST_SILENCER[sv])e.silencer=sv;}   // a factory exhaust's own silencer (build 325); '' = as the header
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
@@ -10369,6 +10373,7 @@ function applyEngineToForm(e){
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
+  if(g('edStartStop'))g('edStartStop').value=e.startStop?'yes':'no';
   applyElectricToForm(e);
   if(g('edHybrid'))g('edHybrid').value=e.type!=='electric'&&HYBRID_MODES[e.hyMode]?e.hyMode:'none';
   if(g('edHyDeploy'))g('edHyDeploy').value=HYBRID_DEPLOY[e.hyDeploy]?e.hyDeploy:'full';
@@ -10449,6 +10454,7 @@ function syncDesignEnable(){
   g('edAfrMode').disabled=!efi;
   const hyOn=!!g('edHybrid')&&g('edHybrid').value!=='none';
   g('edAlternator').disabled=hyOn;   // a hybrid's 12 V comes from its pack through a DC-DC converter (build 246)
+  if(g('edStartStop'))g('edStartStop').disabled=hyOn;   // hybrids already shut off via the traction pack
   if(typeof icdSync==='function')icdSync(true);   // the engine's cards follow the form (build 239)
 }
 function buildEngine(){
@@ -10604,6 +10610,7 @@ function buildEngineCore(prevStoich,quiet){
   // the belt's drag nor the charging torque. The hybrid's own code already draws the 12 V load from the pack (300 W
   // in the drive cycle, src/js/fuel-cycle.js; 14 V on the LIVE bench, src/js/hybrid-bench.js).
   engine.dcdc=!!engine.hyMode&&engine.hyMode!=='none';
+  if(engine.dcdc)engine.startStop=false;
   engine.altMaxA=engine.dcdc?0:alt.maxA;engine.altDragMEP=engine.dcdc?0:alt.drag;
   engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
   // Engine "note" character: how lumpy/lopey the idle & low end sound. Big cams (overlap),
@@ -10773,6 +10780,7 @@ function computeCost(){
   if(engine.oilCooler)c+=500;
   // a hybrid's DC-DC converter in place of the alternator (build 246), priced as the 120 A alternator for want of a source
   c+=engine.dcdc?250:({'60':150,'120':250,'180':450}[engine.alternator]||0);
+  if(engine.startStop&&!engine.dcdc)c+=350;   // 12 V AGM battery + reinforced starter
   return Math.max(500,Math.round(c/50)*50);   // round to nearest $50
 }
 // A lap time for scoring, cached on the engine + vehicle build so it isn't re-solved on every
@@ -12344,6 +12352,15 @@ function starterTorque(rpm){
 function starterAmps(rpm){
   const T=starterTorque(rpm),v=11.4+1.6*state.batterySOC;
   return T>0?T*Math.max(rpm,STARTER_FREE_RPM/2)*Math.PI/30/(STARTER_EFF*v):0;   // at a stall it still draws its half-speed current
+}
+// Warm start-stop restart mechanical crank work (J) to recharge the 12 V AGM battery via the alternator.
+// Derived from the 12 V starter above: P_mech = (0.5 kW/L SI, 1.0 kW/L CI), eta_starter = STARTER_EFF (0.6),
+// warm restart crank time 0.5 s (Bosch Start-Stop spec: 0.4-0.6 s), alternator efficiency 0.55
+// (electricalDragTorque), and AGM battery charge acceptance efficiency 0.90.
+const START_STOP_CRANK_S=0.5, START_STOP_WARM_C=50, ALT_EFF=0.55, AGM_CHG_EFF=0.90;
+function starterCrankMechJ(e){
+  const kw=(e.ci?1.0:0.5)*e.displacement_L;
+  return (kw*1000/STARTER_EFF)*START_STOP_CRANK_S/(ALT_EFF*AGM_CHG_EFF);
 }
 function engineStart(){state.ignOn=true;if(!state.firing)state.crank=STARTER_SECONDS;}
 function engineOff(){state.ignOn=false;state.crank=0;}
@@ -14135,6 +14152,7 @@ function engineMass(){
   else if(engine.intake==='supercharger')m+=25;
   if(engine.layout==='v'||engine.layout==='boxer')m+=10;
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);
+  if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   if(engine.cylDeact)m+=0.5*engine.cylinders;
   return Math.round(m);
 }
@@ -35823,7 +35841,7 @@ function engineFuelAt(rpm,T,oilT){
 }
 // The car over the cycle. Returns litres per 100 km, CO2 (g/km), the fuel's mass and the gear and speed it chose.
 function engineCycle(v){
-  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,ENV.alt_m,ENV.tempC,ENV.headwind_ms].join('|');
+  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,ENV.alt_m,ENV.tempC,ENV.headwind_ms,e.startStop?1:0].join('|');
   if(e._fcyc&&e._fcyc.score===e.score&&e._fcyc.key===key)return e._fcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),rho=envAirRho(),vW=envWind();
   const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
@@ -35831,7 +35849,9 @@ function engineCycle(v){
   const curve=buildTorqueCurve(),Tmax=rpm=>{if(rpm<=curve[0].rpm)return curve[0].tq;for(let i=1;i<curve.length;i++)if(rpm<=curve[i].rpm)return curve[i-1].tq+(curve[i].tq-curve[i-1].tq)*(rpm-curve[i-1].rpm)/(curve[i].rpm-curve[i-1].rpm);return 0;};
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
   const ambCat=ENV.tempC!=null?ENV.tempC:C.soak,COLD_END=589;   // WLTC Low phase: 0..588 s
+  const ssOn=!!(e.startStop&&!e.dcdc);
   let fuel=0,x=0,gearSum=0,moving=0,warmAt=null,lightOffS=null;
+  let ssOff=false,ssOffS=0,ssStarts=0,crankDebtJ=0;
   let emCO=0,emHC=0,emNOx=0,emPM=0,coldKm=0,coldCO=0,coldHC=0,coldNOx=0,coldPM=0,hotKm=0,hotCO=0,hotHC=0,hotNOx=0,hotPM=0;
   const stepEmit=(i,vm,gs,rpmE,T)=>{
     const cut=!(gs>0);
@@ -35839,7 +35859,7 @@ function engineCycle(v){
     const mapEst=e.ci?(e.mapMax||1):clamp(0.28+clamp(T/tqMax,0,1)*((e.mapMax||1)-0.28),0.25,e.mapMax||1);
     const lam=e.canAutoAFR?mappedAFR(rpmE,mapEst)/e.stoichAFR:(e.ci?1.8:1.0);
     const gasC=cut?Math.max(ambCat,Tc):egtAt(rpmE,mapEst,lam)-273.15;
-    const exhKgS=cut?0.008:(gs/1000)*(1+lam*e.stoichAFR);
+    const exhKgS=rpmE<=0?0:cut?0.008:(gs/1000)*(1+lam*e.stoichAFR);
     tCat=stepCatTemp(tCat,gasC,exhKgS,ambCat,1);
     if(lightOffS==null&&e.cat!=='none'&&tCat>=CAT_T50_C)lightOffS=i;
     if(!cut){
@@ -35856,9 +35876,11 @@ function engineCycle(v){
     const oilT=Math.max(C.soak,Tc-C.oilLag);if(warmAt==null&&Tc>=stat)warmAt=i;
     const warm=gs=>{fuel+=gs;if(Tc<stat)Tc=Math.min(stat,Tc+gs/1000*(fp0.LHV||44)*1e6*C.toCoolant/heatC);};
     if(vm<0.1&&a<=0){
+      if(ssOn&&Tc>=START_STOP_WARM_C){ssOff=true;ssOffS++;stepEmit(i,vm,0,0,0);continue;}
       const gs=M.idleGs*(1+0.5*Math.max(0,(80-oilT)/57));
       warm(gs);stepEmit(i,vm,gs,Math.max(600,e.idleRpmEff||800),0);continue;
-    }   // standing: idle (a cold engine idles richer and faster)
+    }   // standing: idle (a cold engine idles richer and faster), or off with start-stop once warm
+    if(ssOff){ssOff=false;ssStarts++;crankDebtJ+=starterCrankMechJ(e);}
     let best=null;
     const va=Math.max(0,vm+vW),dn=0.5*rho*(v.clA||0)*va*va;
     for(let g=0;g<v.ratios.length;g++){
@@ -35868,23 +35890,28 @@ function engineCycle(v){
       const F=meff*a+0.5*rho*v.cdA*va*va+crrAt(v.crr,vm)*(m*G+dn);
       const rpmE=Math.max(rpm,rpmMin),w=rpmE*Math.PI/30;   // below it, first gear's clutch slips at rpmMin
       if(rpm<rpmMin&&g>0)continue;
-      let gs,tq=0;
+      let gs,tq=0,pChg=0;
       if(F<=0)gs=rpmE>C.cutRpm?0:M.idleGs;   // the overrun: injectors cut, or idling down to the stop
       else{
-        tq=F*vm/eff/w+C.auxW/w;
-        if(tq>C.reserve*Tmax(rpmE))continue;
+        pChg=crankDebtJ>0?Math.min(crankDebtJ,1000):0;   // recharge 12 V AGM crank debt via alternator
+        tq=F*vm/eff/w+(C.auxW+pChg)/w;
+        if(tq>C.reserve*Tmax(rpmE)){
+          if(pChg>0){pChg=0;tq=F*vm/eff/w+C.auxW/w;}
+          if(tq>C.reserve*Tmax(rpmE))continue;
+        }
         gs=engineFuelAt(rpmE,tq,oilT);if(!isFinite(gs))continue;
       }
-      if(!best||gs<best.gs)best={gs,g,rpmE,tq};
+      if(!best||gs<best.gs)best={gs,g,rpmE,tq,pChg};
     }
-    if(!best){const tq=Tmax(rpmMin)*C.reserve;best={gs:engineFuelAt(rpmMin,tq,oilT)||M.idleGs*3,g:0,rpmE:rpmMin,tq};}   // asked more than any gear has: flat out in first
+    if(!best){const tq=Tmax(rpmMin)*C.reserve;best={gs:engineFuelAt(rpmMin,tq,oilT)||M.idleGs*3,g:0,rpmE:rpmMin,tq,pChg:0};}   // asked more than any gear has: flat out in first
+    if(best.pChg>0)crankDebtJ=Math.max(0,crankDebtJ-best.pChg);
     warm(best.gs);stepEmit(i,vm,best.gs,best.rpmE,best.tq);gearSum+=best.g+1;moving++;
   }
   const km=x/1000,kg=fuel/1000,fp=FUELS[e.fuel]||FUELS.gasoline,L=kg/fp.density;
   // CO2: the carbon in the fuel, burnt to CO2 (petrol ~86.5% carbon by mass, diesel ~86.2%)
   const ckm=Math.max(1e-6,coldKm),hkm=Math.max(1e-6,hotKm);
   const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,meanGear:gearSum/Math.max(1,moving),warmS:warmAt,
-    lightOffS,tCatEnd:tCat,coGkm:emCO/km,hcGkm:emHC/km,noxGkm:emNOx/km,pmGkm:emPM/km,
+    lightOffS,tCatEnd:tCat,ssOffS,ssStarts,coGkm:emCO/km,hcGkm:emHC/km,noxGkm:emNOx/km,pmGkm:emPM/km,
     cold:{km:coldKm,coGkm:coldCO/ckm,hcGkm:coldHC/ckm,noxGkm:coldNOx/ckm,pmGkm:coldPM/ckm},
     hot:{km:hotKm,coGkm:hotCO/hkm,hcGkm:hotHC/hkm,noxGkm:hotNOx/hkm,pmGkm:hotPM/hkm}};
   e._fcyc={score:e.score,key,res};return res;
@@ -36498,20 +36525,21 @@ function ecoFuelRule(){
     const rpmE=Math.max(rpm,rpmMin);out.push({g,tot,rpm,rpmE,w:rpmE*Math.PI/30,Tm:Tmax(rpmE)});}return out;};
   // {gs (g/s), rpm, g (1-based), F} at mean speed vm (m/s) and wheel force F (N); when a and Ie are given,
   // each candidate gear adds its own reflected rotational inertia Ie*(tot/r)^2*a (as fuel-cycle.js).
-  const at=(vm,F,gears,a,Ie)=>{
+  const at=(vm,F,gears,a,Ie,auxExtra)=>{
     gears=gears||gearsAt(vm);
     let gs=null,rpm=0,g=0,Fb=F;
+    const aux=C.auxW+(auxExtra||0);
     for(const q of gears){
       const Fq=a?F+Ie*(q.tot/r)**2*a:F;
       let x;
       if(Fq<=0)x=q.rpmE>C.cutRpm&&ovAt(q.rpm)*q.tot/r<=-Fq?0:M.idleGs;
-      else{const T=Fq*vm/eff/q.w+C.auxW/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
+      else{const T=Fq*vm/eff/q.w+aux/q.w;if(T>C.reserve*q.Tm)continue;x=engineFuelAtMap(M,q.rpmE,T);if(!isFinite(x))continue;}
       if(gs==null||x<gs){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
     if(gs==null)for(const q of gears){
       const Fq=a?F+Ie*(q.tot/r)**2*a:F;
       if(!(Fq>0))continue;
-      const T=Fq*vm/eff/q.w+C.auxW/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
+      const T=Fq*vm/eff/q.w+aux/q.w,Tt=Math.min(T,q.Tm,topAt(q.rpmE)*0.999),x=Tt>0?engineFuelAtMap(M,q.rpmE,Tt)*T/Tt:NaN;
       if(isFinite(x)&&(gs==null||x<gs)){gs=x;rpm=q.rpmE;g=q.g+1;Fb=Fq;}
     }
     return{gs,rpm,g,F:Fb};
@@ -36524,13 +36552,18 @@ function ecoFuelKg(line,v,stats){
   if(isElectric())return null;
   const p=line,n=p.length,m=vehicle.mass+FUEL_CYCLE.massAdd,r=vehicle.rTire,e=engine;
   const X=ecoFuelRule(),mBase=m+(vehicle.wheelI||0)/(r*r),Ie=e.inertia||0.15,rho=envAirRho(),vW=envWind();
-  let fuel=0,rpmT=0,tDrive=0,topG=0;
+  const ssOn=!!(e.startStop&&!e.dcdc);
+  let fuel=0,rpmT=0,tDrive=0,topG=0,ssOff=false,crankDebtJ=0;
   for(let i=0;i<n-1;i++){
     const ds=p[i].ds3,v0=v[i],v1=v[i+1],vm=Math.max(0.5,(v0+v1)/2),dt=ds/vm;
+    if(ssOn&&v0<0.1&&v1<0.1){ssOff=true;continue;}
+    if(ssOff){ssOff=false;crankDebtJ+=starterCrankMechJ(e);}
     const a=(v1*v1-v0*v0)/(2*Math.max(0.05,ds));
     const va=Math.max(0,vm+vW),dn=0.5*rho*(vehicle.clA||0)*va*va;
     const F0=mBase*a+0.5*rho*vehicle.cdA*va*va+crrAt(vehicle.crr,vm)*(m*G*p[i].cosT+dn)+m*G*p[i].sinT;
-    const q=X.at(vm,F0,null,a,Ie),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    const pChg=crankDebtJ>0&&F0>0?Math.min(crankDebtJ/dt,1000):0;
+    const q=X.at(vm,F0,null,a,Ie,pChg),gs=q.gs!=null?q.gs:X.M.idleGs*3;
+    if(pChg>0&&q.F>0)crankDebtJ=Math.max(0,crankDebtJ-pChg*dt);
     fuel+=gs*dt;
     if(q.F>0&&q.rpm){rpmT+=q.rpm*dt;tDrive+=dt;topG=Math.max(topG,q.g);}
   }
@@ -39556,7 +39589,9 @@ const ICD_FIELDS={
   edThermostat:{adv:true,what:'The temperature at which the thermostat opens.',
     trade:'A cooler setting holds the engine cooler, a little further from knock; a warmer one wastes less heat.'},
   edAlternator:{guide:'electrical',what:'How much current the alternator can give. A hybrid has none: its 12 V side runs off the pack through a DC-DC converter.',
-    trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'}
+    trade:'A bigger alternator keeps the battery up under a heavy electrical load, and takes more power from the crank while it charges.'},
+  edStartStop:{guide:'electrical',what:'Shuts the engine off when standing still once warm, and restarts it on the 12 V starter when moving off. Not used on hybrids.',
+    trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
@@ -39565,7 +39600,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
-  edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator'};
+  edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator',edStartStop:'startStop'};
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
 // The factory combustion engines behind the ticks, by their own name ("GM LS3"), or their car's where the name is only

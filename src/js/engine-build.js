@@ -52,7 +52,8 @@ function readEngineFromForm(){
     fan:g('edFan').value,
     oilCooler:g('edOilCooler').value==='yes',
     thermostat:clamp(Math.round(+g('edThermostat').value||88),71,95),
-    alternator:g('edAlternator').value
+    alternator:g('edAlternator').value,
+    startStop:g('edStartStop')?g('edStartStop').value==='yes':false
   };
   {const sv=g('edSilencer').value;if(EXHAUST_SILENCER[sv])e.silencer=sv;}   // a factory exhaust's own silencer (build 325); '' = as the header
   Object.assign(e,partsFromForm());   // the factory exhaust and runners, or designed ones (builds 205, 206)
@@ -101,6 +102,7 @@ function applyEngineToForm(e){
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
   g('edAlternator').value=e.alternator||'120';
+  if(g('edStartStop'))g('edStartStop').value=e.startStop?'yes':'no';
   applyElectricToForm(e);
   if(g('edHybrid'))g('edHybrid').value=e.type!=='electric'&&HYBRID_MODES[e.hyMode]?e.hyMode:'none';
   if(g('edHyDeploy'))g('edHyDeploy').value=HYBRID_DEPLOY[e.hyDeploy]?e.hyDeploy:'full';
@@ -181,6 +183,7 @@ function syncDesignEnable(){
   g('edAfrMode').disabled=!efi;
   const hyOn=!!g('edHybrid')&&g('edHybrid').value!=='none';
   g('edAlternator').disabled=hyOn;   // a hybrid's 12 V comes from its pack through a DC-DC converter (build 246)
+  if(g('edStartStop'))g('edStartStop').disabled=hyOn;   // hybrids already shut off via the traction pack
   if(typeof icdSync==='function')icdSync(true);   // the engine's cards follow the form (build 239)
 }
 function buildEngine(){
@@ -336,6 +339,7 @@ function buildEngineCore(prevStoich,quiet){
   // the belt's drag nor the charging torque. The hybrid's own code already draws the 12 V load from the pack (300 W
   // in the drive cycle, src/js/fuel-cycle.js; 14 V on the LIVE bench, src/js/hybrid-bench.js).
   engine.dcdc=!!engine.hyMode&&engine.hyMode!=='none';
+  if(engine.dcdc)engine.startStop=false;
   engine.altMaxA=engine.dcdc?0:alt.maxA;engine.altDragMEP=engine.dcdc?0:alt.drag;
   engine.dwellLimit=DWELL_RPM[engine.ignitionType]||6800;
   // Engine "note" character: how lumpy/lopey the idle & low end sound. Big cams (overlap),
