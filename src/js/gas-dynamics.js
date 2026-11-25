@@ -520,9 +520,27 @@ function scavengeGain(rpm,T){
   // through to the exhaust and is not trapped. (It was a flat +25% cap.)
   return clamp(A*u*(e.overlap/(6*Math.max(500,rpm)))/(e.dispCyl_L/1000),-0.25,1/Math.max(2,e.compression-1));
 }
+// 2-stroke exhaust expansion-chamber resonant stuffing wave (Blair, Design and Simulation of Two-Stroke Engines,
+// SAE R-161, ch. 4): a tuned expansion chamber of effective length L_pipe (piston face to baffle-cone reflection
+// plane) resonates at fundamental frequency f = c / (2 * L_pipe), returning a positive plugging wave before exhaust
+// port close (typical tuned port duration TWO_STROKE_EX_DUR ~ 170 deg) to stuff escaped fresh charge back into the
+// cylinder, boosting trapped delivery ratio independent of 4-stroke valve overlap. Stock cast/box exhausts (sigma >= 0.35)
+// have no coherent reflection cone and return 0.
+const TWO_STROKE_EX_DUR=170;
+function twoStrokePipeGain(rpm,e=engine,T){
+  if(!e||e.type!=='twostroke'||e.intake==='turbo'||!(e.primL>0))return 0;
+  const q=clamp(1-(e.exhSigma??0.35)/0.35,0,1);
+  if(q<=0)return 0;
+  const c=sonic(T>0?T:exhaustGasT(1.0,rpm));
+  const f=c/(2*e.primL);                                     // fundamental round-trip frequency, Hz
+  const rpmTune=f*TWO_STROKE_EX_DUR/6;                       // RPM where plugging wave arrives at exhaust port close
+  const ratio=rpm/Math.max(500,rpmTune);
+  const bw=0.18+0.6*(e.exhSigma??0.12);                      // sharper powerband for equal/race cones, broader for sport
+  return 0.28*q*Math.exp(-Math.pow((ratio-1)/bw,2))-0.08*q*Math.exp(-Math.pow((ratio-0.55)/0.20,2));
+}
 // Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
-// after the collector, plus the cat as a porous plug. Raises the pressure the piston works against
-// AND leaves more residual in the cylinder, both of which cost VE.
+// after the collector, plus the cat as a porous plug and the silencer's chamber/baffle restriction.
+// Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
 function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
@@ -530,9 +548,11 @@ function backPressureBar(rpm,T){
   const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
   const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
+  const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
              +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
-             +e.catRestrict*0.5*rho*vS*vS*350)/1e5;
+             +e.catRestrict*0.5*rho*vS*vS*350
+             +silPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
   // sits upstream of all of it and restricts far harder, so manifold pressure is set there and the
   // pipe is a small addition downstream of it. Modelling only the pipe left every turbo engine in
@@ -1224,10 +1244,18 @@ function deriveGasDynamics(){
   else if(P){
     // the length is the part's; the order is the one whose tuned speed lies nearest the speed it was cut for
     e.primL=P.primL_mm/1000;e.primK=0;
-    if(P.build!=='cast'){const n1=(cam.dur/2+90)*sonic(T)/(12*e.primL);let best=1e9;
-      for(let k=1;k<=9;k+=2){const d=Math.abs(n1/k-tgtRpm);if(d<best){best=d;e.primK=k;}}}
+    if(P.build!=='cast'){
+      if(e.type==='twostroke'){e.primK=1;}
+      else{const n1=(cam.dur/2+90)*sonic(T)/(12*e.primL);let best=1e9;
+        for(let k=1;k<=9;k+=2){const d=Math.abs(n1/k-tgtRpm);if(d<best){best=d;e.primK=k;}}}
+    }
   }
   else if(ex.fixedL){e.primL=ex.fixedL;e.primK=0;}
+  else if(e.type==='twostroke'){
+    // Blair ch. 4: fundamental (k=1) 2-stroke expansion chamber tuned length L = theta_ex * c / (12 * N_tune).
+    e.primL=clamp(TWO_STROKE_EX_DUR*sonic(T)/(12*Math.max(1500,tgtRpm)),0.50,1.35);
+    e.primK=1;
+  }
   else{
     const theta=cam.dur/2+90, tgt=tgtRpm;
     e.primL=0;e.primK=3;
@@ -1259,9 +1287,10 @@ function deriveGasDynamics(){
   }
   let bestS=-9;e.scavPeakRpm=0;
   for(let n=Math.max(1200,e.idleRpmEff||1200);n<=e.redline;n+=25){
-    const g=scavengeGain(n,T);
+    const g=scavengeGain(n,T)+twoStrokePipeGain(n,e,T);
     if(g>bestS){bestS=g;e.scavPeakRpm=n;}
   }
+  if(bestS<=0)e.scavPeakRpm=0;
   e.scavPeakGain=bestS;
   e.egtPeak=T-273;
 }

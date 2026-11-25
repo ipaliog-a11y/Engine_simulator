@@ -18,6 +18,14 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### 2-stroke expansion chamber, unthrottled diesel, silencer back-pressure, and oil pressure (build 453)
+
+- Added a 2-stroke tuned expansion-chamber resonant stuffing-wave model (`twoStrokePipeGain` in `src/js/gas-dynamics.js`, wired into `calcVE` and `deriveGasDynamics`; Blair SAE R-161 ch. 4): sport/race pipes tune `primL` to return a positive plugging wave before exhaust port close (~170° duration), while stock cast/box exhausts (`sigma >= 0.35`) return zero.
+- Implemented unthrottled quality-governed CI diesel operation on the LIVE bench (`mapTarget`, `pumpingMEP`, `withCiLoad`, `mappedAFR`, `stepEngineOnce`, `updateEnginePhysics`, `buildEngineCore`): intake stays at atmospheric + boost (`>= 1.0 bar`) with no intake throttle-plate vacuum pumping loss, and part-load torque is governed by fuel quantity (leaning out toward idle λ ~ 5–15, Heywood §1.5, §13.3).
+- Added exhaust silencer back-pressure (`silencerDp` and `EXHAUST_SILENCER` `K` loss factors in `src/js/parts.js`: `baffled` 4.2, `chambered` 2.2, `absorptive` 0.35, `straight` 0; Idelchik §11, Munjal ch. 2), wired into `backPressureBar()` and `exhaustReport()`, and exposed the `baffled` option in `src/shell.html` and `src/js/parts-art-3d.js`.
+- Added a derived oil-pressure model (`oilPressureBar` in `src/js/engine-physics.js`, `state.oilP` in `src/js/app-state.js`; Bosch Automotive Handbook + Sandoval & Heywood SAE 2003-01-0725 Vogel viscosity for SAE 10W-30) with spring relief-valve ceiling (4.8–5.2 bar), 0 bar on premix 2-strokes, and `LOW OIL PRESSURE` bearing wear in `stepWear()`.
+- Added `tests/test276.mjs` covering all four models.
+
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
 - Added battery pack cooling options (`PACK_COOLING` in `src/js/electric.js`: `liquid` 2.0 W/K/kWh default, `air_forced` 0.8, `air_passive` 0.35; Pesaran NREL/CP-540-31018) and ambient/starting pack temperature (`evAmbT`, `-10..45 °C`, default `25 °C`), and extended `evPackGain` (`src/js/electric-car.js`) down to `-15 °C` so cold-weather Arrhenius impedance rise genuinely derates cold packs.
