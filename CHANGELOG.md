@@ -18,6 +18,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Championship completion, timed-race countdown, and cross-mode audio (build 453)
+
+- Added five championship series (`kei_cup`, `muscle_cup`, `touring_cup`, `proto_cup`, `hybrid_cup`) covering the previously unreachable `kei_cup`, `muscle`, `touring`, `proto`, and `hyb_cup` classes, unlocked by default in `champCareer()`.
+- Added player team class eligibility checks (`champSeatDescriptor`, `champSeatEligible`, `champCheckTeamEligibility`) enforced in `champNewSeason()` and surfaced via `#champEligNote` on the CHAMP hub, along with track preview redraws on `#champSeries` change, `"WATCH REPLAY"` wired to `raceUI.run`, and Instant Season progress bar updates across rounds.
+- Wired `S.economy.tyres` dry/wet set consumption across stints and distinguished `CAREER` mode progression (persisting credits to `pes.champ.career`, scaling season tyre allocations, and charging `CHAMP.tyreSetCost` for extra sets) from sandbox seasons.
+- Replaced `LAP X/est` with a remaining countdown clock (`MM:SS` / `HH:MM:SS` via `fmtRaceClock` / `raceStatusClock`) in `#raceHead`, `#raceTopInfo`, and the race canvas header when `cfg.durationSec > 0`.
+- Extended cross-mode audio (`src/js/sound.js`, `src/js/skidpad-run.js`): recorded per-wheel slip angles `alpha` and `mu` in `skidpad-run.js`, wired `motorSoundState` and `soundSource`/`screechSlide` to Drift, Skidpad, Spiral, Figure 8, and the focused car on the Race tab, and restricted hybrid bench-off muting to `vizMode === 'dyno'` so Hybrids remain audible in Drift and Race replays.
+- Added `tests/test278.mjs` covering the new series, class eligibility, tyre consumption and career economy, WATCH REPLAY, timed-race countdown, and cross-mode audio.
+
 ### EV and hybrid architecture expansion (cooling, inverter thermal, 2-speed EV, MHEV/P4) (build 452)
 
 - Added battery pack cooling options (`PACK_COOLING` in `src/js/electric.js`: `liquid` 2.0 W/K/kWh default, `air_forced` 0.8, `air_passive` 0.35; Pesaran NREL/CP-540-31018) and ambient/starting pack temperature (`evAmbT`, `-10..45 °C`, default `25 °C`), and extended `evPackGain` (`src/js/electric-car.js`) down to `-15 °C` so cold-weather Arrhenius impedance rise genuinely derates cold packs.

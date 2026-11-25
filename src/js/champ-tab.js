@@ -38,6 +38,7 @@ function champRenderHub(){
       '<option value="instant">'+tr('INSTANT SEASON')+'</option>'+
       '<option value="career">'+tr('CAREER')+'</option></select></div></div>';
     html+='<label class="race-check"><input type="checkbox" id="champUseTeam"> <span>'+tr('USE MY TEAM')+'</span></label>';
+    html+='<div class="perf-note" id="champEligNote" hidden style="color:#ff8833"></div>';
     html+='<div class="build-row"><button id="champStart">'+tr('START SEASON')+'</button></div>';
   }
   html+='<div class="design-section">'+tr('TEAM')+'</div>';
@@ -61,6 +62,12 @@ function champRenderHub(){
   box.innerHTML=html;
   if(!S||S.done){
     champFillSeriesSel();
+    const serSel=document.getElementById('champSeries');
+    if(serSel)serSel.addEventListener('change',()=>{drawChamp();champUpdateEligNote();});
+    const modeSel=document.getElementById('champMode');
+    if(modeSel)modeSel.addEventListener('change',champUpdateEligNote);
+    const useT=document.getElementById('champUseTeam');
+    if(useT)useT.addEventListener('change',champUpdateEligNote);
     const rr=document.getElementById('champReroll');
     if(rr)rr.addEventListener('click',()=>{document.getElementById('champSeed').value=1+Math.floor(Math.random()*99999);});
     document.getElementById('champStart').addEventListener('click',champStartSeason);
@@ -72,6 +79,7 @@ function champRenderHub(){
   if(carSel){
     raceFillAdd('champTeamCar');
     if(team.cars[0]&&team.cars[0].ref)carSel.value=team.cars[0].ref;
+    carSel.addEventListener('change',champUpdateEligNote);
   }
   const saveT=document.getElementById('champSaveTeam');
   if(saveT)saveT.addEventListener('click',()=>{
@@ -79,8 +87,23 @@ function champRenderHub(){
     T.name=document.getElementById('champTeamName').value||'PLAYER TEAM';
     T.cars=[{ref:document.getElementById('champTeamCar').value||'cur',
       driver:document.getElementById('champTeamDriver').value||'balanced',number:1}];
-    champSaveTeam(T);flash(tr('TEAM SAVED'));
+    champSaveTeam(T);champUpdateEligNote();flash(tr('TEAM SAVED'));
   });
+  champUpdateEligNote();
+}
+function champUpdateEligNote(){
+  const note=document.getElementById('champEligNote');if(!note)return;
+  const serSel=document.getElementById('champSeries'),modeSel=document.getElementById('champMode'),useT=document.getElementById('champUseTeam');
+  const active=(useT&&useT.checked)||(modeSel&&modeSel.value==='career');
+  if(!active||!serSel){note.hidden=true;return;}
+  const series=champSeries(serSel.value),T=champEnsureTeam();
+  const carSel=document.getElementById('champTeamCar');
+  const teamView=carSel?Object.assign({},T,{cars:[{ref:carSel.value||'cur',driver:(T.cars&&T.cars[0]&&T.cars[0].driver)||'balanced'}]}):T;
+  const chk=champCheckTeamEligibility(teamView,series);
+  if(chk.ok){note.hidden=true;return;}
+  const cls=CHAMP_CLASSES[series.classId];
+  note.textContent=tr('TEAM CAR NOT ELIGIBLE FOR CLASS')+' ('+tr((cls&&cls.label)||series.classId)+'): '+chk.bad.join(', ');
+  note.hidden=false;
 }
 function champStartSeason(){
   const seriesId=document.getElementById('champSeries').value;
@@ -90,7 +113,18 @@ function champStartSeason(){
   const series=champSeries(seriesId);
   const open=champUnlockedIds();
   if(open.indexOf(seriesId)<0){flash(tr('SERIES LOCKED'),'warn');return;}
-  const S=champNewSeason(seriesId,{seed,mode,useTeam,credits:champCareer().credits});
+  if(useTeam||mode==='career'){
+    const chk=champCheckTeamEligibility(champEnsureTeam(),series);
+    if(!chk.ok){
+      const cls=CHAMP_CLASSES[series.classId];
+      flash(tr('TEAM CAR NOT ELIGIBLE FOR CLASS')+' ('+tr((cls&&cls.label)||series.classId)+'): '+chk.bad.join(', '),'warn');
+      return;
+    }
+  }
+  if(mode==='career'&&(champCareer().credits||0)<CHAMP.entryFee){
+    flash(tr('INSUFFICIENT CREDITS'),'warn');return;
+  }
+  const S=champNewSeason(seriesId,{seed,mode,useTeam:useTeam||mode==='career',credits:champCareer().credits});
   if(mode==='instant')champRunInstant(S);
   else champShowSeason(S);
 }
@@ -106,11 +140,26 @@ function champBackHub(){
   document.getElementById('champSeason').hidden=true;
   champRenderHub();
 }
+function champWatchReplay(){
+  const R=champUI.lastRun||raceUI.run;
+  if(!R){flash(tr('NO REPLAY AVAILABLE'),'warn');return;}
+  raceUI.run=R;raceUI.phase='live';raceUI.t=0;raceUI.playing=true;raceUI.follow=-1;
+  const pb=document.getElementById('racePlay');if(pb){pb.textContent=tr('PAUSE');pb.classList.add('on');}
+  setTab('race');
+}
 function champRenderSeason(S){
   const box=document.getElementById('champSeason');if(!box)return;
   const round=S.calendar[S.roundIdx];
   const done=!!S.done||S.roundIdx>=S.calendar.length;
-  let html='<div class="perf-head">'+esc(tr(S.name))+(S.economy?' • '+tr('CREDITS')+' '+Math.round(S.economy.credits):'')+'</div>';
+  const modeTag=S.mode==='career'?tr('CAREER'):tr('SANDBOX');
+  let tyreNote='';
+  if(S.economy&&S.economy.tyres&&S.economy.tyres.length){
+    const team=champTeam(),tid=team&&team.id;
+    const idx=Math.max(0,S.entrants.findIndex(e=>e.teamId&&(!tid||e.teamId===tid)));
+    const ts=S.economy.tyres[idx];
+    if(ts)tyreNote=' • '+tr('TYRES')+' '+ts.dry+'D/'+ts.wet+'W';
+  }
+  let html='<div class="perf-head">'+esc(tr(S.name))+' • '+esc(modeTag)+(S.economy?' • '+tr('CREDITS')+' '+Math.round(S.economy.credits)+tyreNote:'')+'</div>';
   if(!done&&round){
     const trk=(TRACKS[round.track]||{}).label||round.track;
     html+='<div class="perf-note">'+tr('ROUND')+' '+(S.roundIdx+1)+'/'+S.calendar.length+' • '+esc(trk)+
@@ -134,6 +183,7 @@ function champRenderSeason(S){
   html+='<div class="build-row">';
   if(!done)html+='<button id="champNext" '+(champUI.busy?'disabled':'')+'>'+tr('RUN ROUND')+'</button>';
   else html+='<div class="perf-note">'+tr('SEASON COMPLETE')+' — '+(S.standings[0]?esc(S.standings[0].name):'—')+'</div>';
+  if((champUI.lastRun||raceUI.run)&&S.results.length)html+='<button id="champWatch" '+(champUI.busy?'disabled':'')+'>'+tr('WATCH REPLAY')+'</button>';
   html+='<button id="champToHub">'+tr('BACK')+'</button></div>';
   if(S.results.length){
     html+='<div class="design-section">'+tr('RESULTS')+'</div><table class="race-tower"><thead><tr><th>#</th><th>'+
@@ -149,6 +199,8 @@ function champRenderSeason(S){
   const back=document.getElementById('champToHub');if(back)back.addEventListener('click',champBackHub);
   const next=document.getElementById('champNext');
   if(next)next.addEventListener('click',()=>champRunNext(S));
+  const watch=document.getElementById('champWatch');
+  if(watch)watch.addEventListener('click',champWatchReplay);
 }
 function champStandingsTable(rows,isTeam){
   if(!rows||!rows.length)return '<div class="perf-note">—</div>';
@@ -179,12 +231,23 @@ async function champRunNext(S){
   champUI.busy=false;champRenderSeason(champActive()||S);
 }
 async function champRunInstant(S){
+  champUI.busy=true;champUI.prog=0;champUI.progTxt=tr('ROUND')+' 1/'+S.calendar.length;
   champShowSeason(S);
-  champUI.busy=true;
+  const totalRounds=Math.max(1,S.calendar.length);
   try{
     await champSimulateSeason(S,{
-      onProg:(p,txt)=>{champUI.prog=p;champUI.progTxt=tr(txt||'');},
-      onRound:i=>{champUI.progTxt=tr('ROUND')+' '+(i+1);champRenderSeason(S);}
+      onProg:(p,txt)=>{
+        const frac=clamp((S.roundIdx+p)/totalRounds,0,1);
+        champUI.prog=frac;champUI.progTxt=tr('ROUND')+' '+Math.min(S.roundIdx+1,totalRounds)+'/'+totalRounds+(txt?' • '+tr(txt):'');
+        const pg=document.getElementById('champProg');
+        if(pg){pg.hidden=false;pg.querySelector('.race-prog-bar').style.width=Math.round(frac*100)+'%';pg.querySelector('span').textContent=champUI.progTxt;}
+      },
+      onRound:i=>{champUI.prog=i/totalRounds;champUI.progTxt=tr('ROUND')+' '+(i+1)+'/'+totalRounds;champRenderSeason(S);},
+      onRoundDone:R=>{
+        champUI.lastRun=R;
+        raceUI.entrants=S.entrants.map(e=>({name:e.name,build:e.build,strat:e.strat,base:e.base||e.name}));
+        raceUI.run=R;raceUI.t=0;raceUI.playing=true;raceUI.phase='live';raceUI.follow=-1;
+      }
     });
     flash(tr('SEASON COMPLETE')+': '+(S.standings[0]?S.standings[0].name:''));
   }catch(err){flash(tr('SEASON FAILED')+': '+(err&&err.message||err),'err');}
