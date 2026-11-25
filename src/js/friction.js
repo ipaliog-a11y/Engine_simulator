@@ -170,11 +170,15 @@ function deriveFriction(){
 // actFrac (1 by default, 0.5 with half-cylinder deactivation) scales combustion gas ring load and
 // valve/follower actuation (cam bearings still spin, while collapsed lifters/lobes have zero lift).
 function mechFrictionMEP(N,map,actFrac=1){
+  // Dry-sump multi-stage scavenge pump drag: P = Vdot * dp / eta.
+  // 3x over-scavenge of oil flow (~2.5 L/min per L per 1000 rpm) against 1.2 bar crankcase vacuum + cyclone/line drop
+  // at eta = 0.60 (~3.0 kPa FMEP), plus belt/shaft bearing drag (~1.5 kPa at 6000 rpm).
+  const scavKpa=(engine.drySump&&engine.type!=='twostroke')?(3.0+1.5*(N/6000)):0;
   const f=engine.fric;
   if(!f){
     let fm=(0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
     if(engine.balance&&engine.balance.balShaftActive)fm+=0.02*(N/6000);
-    return fm;
+    return fm+scavKpa/100;
   }
   N=Math.max(N,300);
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
@@ -186,5 +190,5 @@ function mechFrictionMEP(N,map,actFrac=1){
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
   const bal=f.balBrg?(brg(f.Db,f.balBrg)*f.balMul+0.0005*N*f.balMul):0;   // balance shaft bearings + chain/gear mesh
-  return (crank+recip+gas+valve+aux+bal)/100;
+  return (crank+recip+gas+valve+aux+bal+scavKpa)/100;
 }

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 466</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 467</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1008,6 +1008,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edCR">COMPRESSION</label><input type="number" id="edCR" min="7" max="24" step="0.1" value="10.5"></div>
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 <div class="field"><label for="edBalShaft">BALANCE SHAFT</label><select id="edBalShaft"><option value="no">NONE</option><option value="yes">BALANCE SHAFT</option></select></div>
+<div class="field"><label for="edDrySump">LUBRICATION</label><select id="edDrySump"><option value="wet">WET SUMP (STOCK)</option><option value="dry">DRY SUMP</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
@@ -4875,11 +4876,15 @@ function deriveFriction(){
 // actFrac (1 by default, 0.5 with half-cylinder deactivation) scales combustion gas ring load and
 // valve/follower actuation (cam bearings still spin, while collapsed lifters/lobes have zero lift).
 function mechFrictionMEP(N,map,actFrac=1){
+  // Dry-sump multi-stage scavenge pump drag: P = Vdot * dp / eta.
+  // 3x over-scavenge of oil flow (~2.5 L/min per L per 1000 rpm) against 1.2 bar crankcase vacuum + cyclone/line drop
+  // at eta = 0.60 (~3.0 kPa FMEP), plus belt/shaft bearing drag (~1.5 kPa at 6000 rpm).
+  const scavKpa=(engine.drySump&&engine.type!=='twostroke')?(3.0+1.5*(N/6000)):0;
   const f=engine.fric;
   if(!f){
     let fm=(0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
     if(engine.balance&&engine.balance.balShaftActive)fm+=0.02*(N/6000);
-    return fm;
+    return fm+scavKpa/100;
   }
   N=Math.max(N,300);
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
@@ -4891,7 +4896,7 @@ function mechFrictionMEP(N,map,actFrac=1){
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
   const bal=f.balBrg?(brg(f.Db,f.balBrg)*f.balMul+0.0005*N*f.balMul):0;   // balance shaft bearings + chain/gear mesh
-  return (crank+recip+gas+valve+aux+bal)/100;
+  return (crank+recip+gas+valve+aux+bal+scavKpa)/100;
 }
 // ================================================================================================
 // PHYSICS CORE — GAS DYNAMICS
@@ -6232,7 +6237,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,cylDeact:false,balShaft:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false
@@ -10363,7 +10368,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,latG:0,sumpStarve:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
 let lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -10397,6 +10402,7 @@ function readEngineFromForm(){
     layout:type==='rotary'?'rotary':g('edLayout').value,
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     balShaft:g('edBalShaft').value==='yes',
+    drySump:g('edDrySump').value==='dry',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -10462,6 +10468,7 @@ function applyEngineToForm(e){
   g('edCyl').value=e.cylinders;g('edLayout').value=(e.layout==='rotary'?'inline':e.layout);g('edBore').value=e.bore_mm;
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edBalShaft').value=e.balShaft?'yes':'no';
+  g('edDrySump').value=e.drySump?'dry':'wet';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -10528,6 +10535,8 @@ function syncDesignEnable(){
   const balOk=type!=='rotary'&&computeEngineBalance({type,cylinders:+cylSel.value||4,layout:g('edLayout').value,bore_mm:86,stroke_mm:86,redline:6000}).balShaftType!=='none';
   if(!balOk)g('edBalShaft').value='no';
   g('edBalShaft').disabled=!balOk;
+  if(type==='twostroke')g('edDrySump').value='wet';
+  g('edDrySump').disabled=(type==='twostroke');
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -10706,7 +10715,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
@@ -10863,6 +10872,7 @@ function computeCost(){
   c+={petrol4:0,diesel:2500,twostroke:-400,rotary:1200}[engine.type]||0;  // cycle-specific build cost
   c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
   if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
+  if(engine.drySump&&engine.type!=='twostroke')c+=2200;          // billet 3-stage scavenge pump, external tank & AN lines
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -11048,7 +11058,7 @@ function updateDesignSummary(){
     '<br>'+tr('Exhaust')+' <b>'+(engine.exhaustPart?esc(engine.exhaustPart.name):trOpt(engine.exhaust.toUpperCase()))+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
     '<br>'+tr('Fuel')+' <b>'+tr(FUELS[engine.fuel].label)+'</b> ('+(engine.ci?'CI':engine.effOctane+' '+tr('oct'))+', '+engine.stoichAFR.toFixed(1)+':1 '+tr('stoich')+(engine.chargeCool?', −'+engine.chargeCool+'°C '+tr('charge'):'')+')'+
     sparkLine+
-    '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
+    '<br>'+tr('Cooling')+' <b>'+trOpt(engine.radiator.toUpperCase())+' '+tr('RAD')+'</b> • <b>'+trOpt(engine.fan.toUpperCase())+' '+tr('FAN')+'</b>'+(engine.oilCooler?' • <b>'+tr('OIL COOLER')+'</b>':'')+(engine.drySump?' • <b>'+tr('DRY SUMP')+'</b>':'')+' • '+tr('Thermostat')+' <b>'+engine.thermostat+'°C</b>'+
     elecLine+note+(engine.hy?hybSummaryLine(engine):'')+   // the hybrid system (build 186)
     scoreLine(engine.score);
 }
@@ -12588,12 +12598,26 @@ const APEX_SPEED_LIMIT=36;
 // SAE 2003-01-0725 Vogel equation for SAE 10W-30 anchored at 100 °C): positive-displacement pump flow (~N) against
 // laminar journal-bearing clearance leakage (~P / mu(T)), clamped by a spring-loaded pressure relief valve (~4.8–5.2 bar).
 // 2-strokes use premix/total-loss crankcase lubrication (no pressurized oil gallery).
-function oilPressureBar(rpm,oilTempC,e=engine){
+// Wet-sump oil pickup starvation under sustained lateral g: oil surface tilt tan(theta) = |ay|/g.
+// For a typical baffled street wet-sump pan (pickup submergence h0 ~ 95 mm, pickup-to-baffle half-span b ~ 90 mm),
+// the free surface reaches the pickup at tan(theta) = h0/b ~ 1.05 g. Sustained cornering drains the baffled pocket
+// (tau ~ 1.2 s; refill ~ 0.4 s) and drops gallery pressure; a dry sump is immune.
+const WET_SUMP_G_THRESH=1.05;
+function stepSumpStarve(starve,latG,dt,e=engine){
+  if(!e||e.drySump||e.type==='twostroke')return 0;
+  const ay=Math.abs(latG||0);
+  const target=ay>WET_SUMP_G_THRESH?clamp((ay-WET_SUMP_G_THRESH)/0.35,0,1):0;
+  const tau=target>starve?1.2:0.4;
+  return clamp(starve+(target-starve)*(1-Math.exp(-dt/tau)),0,1);
+}
+function oilPressureBar(rpm,oilTempC,e=engine,starve=0){
   if(!(rpm>0)||(e&&e.type==='twostroke'))return 0;
   const T=clamp(oilTempC!=null?oilTempC:100,-20,220);
   const muRel=Math.exp(1050/(T+110)-1050/210);                   // Vogel SAE 10W-30 relative viscosity (1.0 at 100 °C)
   const pRelief=(e&&(e.redline>=7500||e.ci))?5.2:4.8;            // relief valve cracking/regulation pressure (bar)
-  return Math.min(pRelief,0.0018*muRel*rpm);
+  const pBase=Math.min(pRelief,0.0018*muRel*rpm);
+  const s=(e&&e.drySump)?0:clamp(starve,0,1);
+  return pBase*(1-0.85*s);
 }
 function stepWear(dt){
   if(isElectric())return stepMotorWear(dt);
@@ -12608,10 +12632,11 @@ function stepWear(dt){
   add(state.coolant>112?(state.coolant-112)/18*0.030:0,'OVERHEAT');
   add(state.oil>OIL_WEAR_C?(state.oil-OIL_WEAR_C)/22*0.025:0,'OIL TEMP');   // the line is sourced (corners-thermal.js); the rate is a game rule
   // Low oil pressure under load: hydrodynamic bearing starvation (Bosch Automotive Handbook: ~0.6 bar floor + 0.35 bar/1000 rpm, capped at 3.0 bar).
-  {const oilP=oilPressureBar(state.rpm,state.oil,engine);state.oilP=oilP;
+  {state.sumpStarve=stepSumpStarve(state.sumpStarve||0,state.latG||0,dt,engine);
+   const oilP=oilPressureBar(state.rpm,state.oil,engine,state.sumpStarve);state.oilP=oilP;
    if(engine.type!=='twostroke'&&state.firing!==false&&state.rpm>=FIRE_RPM){
      const oilMin=Math.min(3.0,0.6+0.35*(state.rpm/1000));
-     if(oilP<oilMin&&(state.powerHP>10||state.bmep>1.5||oilP<0.55))add((oilMin-oilP)/Math.max(0.5,oilMin)*0.045,'LOW OIL PRESSURE');
+     if(oilP<oilMin&&(state.powerHP>10||state.bmep>1.5||oilP<0.55))add((oilMin-oilP)/Math.max(0.5,oilMin)*0.045,state.sumpStarve>0.1?'OIL STARVATION':'LOW OIL PRESSURE');
    }}
   if(engine.floatRpm>0&&state.rpm>engine.floatRpm)add(0.004+0.1*(state.rpm/engine.floatRpm-1),'VALVE FLOAT');
   // Reciprocating inertial limit above PISTON_SPEED_LIMIT (25 m/s, Heywood §2.2) and Wankel apex-seal sliding limit.
@@ -12851,7 +12876,7 @@ function meteredFuelKgS(map){
 }
 function updateEnginePhysics(){
   const map=liveMap();
-  state.oilP=oilPressureBar(state.rpm,state.oil,engine);
+  state.oilP=oilPressureBar(state.rpm,state.oil,engine,state.sumpStarve||0);
   withCiLoad(state.throttle,()=>{
     // AUTO (ECU MAP) mode: the ECU sets the live mixture from its load×rpm map, so the AFR
     // readout, fuel flow, emissions and wear all reflect the mapped value.
@@ -14274,6 +14299,7 @@ function engineMass(){
   if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   if(engine.cylDeact)m+=0.5*engine.cylinders;
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
+  if(engine.drySump&&engine.type!=='twostroke')m+=8;   // external dry-sump tank, 3-stage scavenge pump, belt drive & AN lines
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).
@@ -18245,6 +18271,30 @@ function simulateLapCore(key,opts){
     engTrimM:GW.trim.reduce((a,t,i)=>a+(t?p[i].ds3:0),0),
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
+}
+// Wet-sump oil starvation over a simulated lap (from L.replay.gLat, tAt, rpm).
+// Two passes wrap the start/finish line; returns {drySump, gLatMax, starveMax, starveTime, oilWearPct}.
+function lapSumpReport(L,e=engine){
+  if(!L||!L.replay||!e||e.type==='twostroke'||e.type==='electric')return {drySump:false,gLatMax:0,starveMax:0,starveTime:0,oilWearPct:0};
+  const {tAt,gLat,rpm}=L.replay,n=tAt.length;
+  let starve=0,gLatMax=0,starveMax=0,starveTime=0,wear=0;
+  for(let pass=0;pass<2;pass++){
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n,dt=j>0?Math.max(0.001,tAt[j]-tAt[i]):Math.max(0.001,L.lap-tAt[i]);
+      const ay=Math.abs(gLat[i]||0);
+      starve=stepSumpStarve(starve,ay,dt,e);
+      if(pass===1){
+        if(ay>gLatMax)gLatMax=ay;
+        if(starve>starveMax)starveMax=starve;
+        if(starve>0.1){
+          starveTime+=dt;
+          const r=rpm[i]||0,oilP=oilPressureBar(r,100,e,starve),oilMin=Math.min(3.0,0.6+0.35*(r/1000));
+          if(oilP<oilMin)wear+=(oilMin-oilP)/Math.max(0.5,oilMin)*0.045*dt;
+        }
+      }
+    }
+  }
+  return {drySump:!!e.drySump,gLatMax,starveMax,starveTime,oilWearPct:wear*100};
 }
 // ================================================================================================
 // ---- RACE (build 137): two to eight builds on one circuit, run to a lap count, nobody driving ----
@@ -39625,6 +39675,8 @@ const ICD_FIELDS={
     trade:'More rpm is more power while the engine still breathes there, but the pistons and rods carry more load and the valves may float. VALVE FLOAT, on HEAD & VALVES, says how high the valvetrain can go.'},
   edBalShaft:{adv:true,guide:'firing',what:'Counter-rotating shaft(s) driven off the crank to cancel unbalanced primary/secondary shaking forces (I4, I1) or rocking couples (I3, I5, F4, V6).',
     trade:'Smooths out engine vibration (higher NVH smoothness) at a small cost in parasitic bearing/drive friction, mass and build cost. Disabled on inherently balanced layouts (I6, F6, V8, V12, rotary).'},
+  edDrySump:{adv:true,guide:'friction',what:'Oil system: a baffled wet sump pan under the crank (stock), or a dry sump with an external tank and multi-stage scavenge pump.',
+    trade:'A wet sump starves the oil pickup under sustained lateral g (>1.05 g) as the oil surface tilts (tan θ = ay/g). Dry sump eliminates cornering starvation at a cost in scavenge pump drag, +8 kg mass and +$2,200.'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
@@ -39721,7 +39773,7 @@ const ICD_FIELDS={
     trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
-const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',
+const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',edDrySump:'drySump',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
@@ -39784,7 +39836,7 @@ function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
-      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'');
+      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'')+(g('edDrySump')==='dry'?' · '+tr('DRY SUMP'):'');
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');

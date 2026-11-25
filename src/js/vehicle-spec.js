@@ -11,6 +11,7 @@ function engineMass(){
   if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   if(engine.cylDeact)m+=0.5*engine.cylinders;
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
+  if(engine.drySump&&engine.type!=='twostroke')m+=8;   // external dry-sump tank, 3-stage scavenge pump, belt drive & AN lines
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).

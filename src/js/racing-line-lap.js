@@ -1062,3 +1062,27 @@ function simulateLapCore(key,opts){
     brakeMaxF:Math.max(...BT.TF),brakeMaxR:Math.max(...BT.TR),brakeOnset:th.onset,
     corners:T.corners,width:T.width,wLabel:T.wLabel};
 }
+// Wet-sump oil starvation over a simulated lap (from L.replay.gLat, tAt, rpm).
+// Two passes wrap the start/finish line; returns {drySump, gLatMax, starveMax, starveTime, oilWearPct}.
+function lapSumpReport(L,e=engine){
+  if(!L||!L.replay||!e||e.type==='twostroke'||e.type==='electric')return {drySump:false,gLatMax:0,starveMax:0,starveTime:0,oilWearPct:0};
+  const {tAt,gLat,rpm}=L.replay,n=tAt.length;
+  let starve=0,gLatMax=0,starveMax=0,starveTime=0,wear=0;
+  for(let pass=0;pass<2;pass++){
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n,dt=j>0?Math.max(0.001,tAt[j]-tAt[i]):Math.max(0.001,L.lap-tAt[i]);
+      const ay=Math.abs(gLat[i]||0);
+      starve=stepSumpStarve(starve,ay,dt,e);
+      if(pass===1){
+        if(ay>gLatMax)gLatMax=ay;
+        if(starve>starveMax)starveMax=starve;
+        if(starve>0.1){
+          starveTime+=dt;
+          const r=rpm[i]||0,oilP=oilPressureBar(r,100,e,starve),oilMin=Math.min(3.0,0.6+0.35*(r/1000));
+          if(oilP<oilMin)wear+=(oilMin-oilP)/Math.max(0.5,oilMin)*0.045*dt;
+        }
+      }
+    }
+  }
+  return {drySump:!!e.drySump,gLatMax,starveMax,starveTime,oilWearPct:wear*100};
+}
