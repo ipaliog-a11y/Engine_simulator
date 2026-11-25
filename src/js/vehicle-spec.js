@@ -13,6 +13,8 @@ function engineMass(){
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
   if(engine.partFilter)m+=2.0+1.5*(engine.displacement_L||1.6);   // cordierite/SiC filter substrate + canning
   if(engine.drySump&&engine.type!=='twostroke')m+=8;   // external dry-sump tank, 3-stage scavenge pump, belt drive & AN lines
+  if(engine.ci&&typeof dieselRailBar==='function'&&dieselRailBar(engine)>0)m+=4;   // CP3/CP4 high-pressure pump & rail
+  if(engine.ci&&engine.glowPlugs)m+=1;   // ceramic glow plugs & preheat controller
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).

@@ -211,10 +211,12 @@ function renderDynoResult(force){
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
   const diag=diagnoseEngine();
   const bal=engine.balance;
+  const crNoiseDb=engine.ci&&typeof dieselCombNoiseDbDelta==='function'?dieselCombNoiseDbDelta(engine):0;
   const balNote=bal?('<br><b>'+tr('BALANCE & NVH')+'</b> — '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+
     (bal.totalForce_N>0?' · '+tr('unbalanced shaking force')+' '+Math.round(bal.totalForce_N)+' N':'')+
     (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
-    (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')):'';
+    (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
+    (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+

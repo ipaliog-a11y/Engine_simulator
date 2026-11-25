@@ -44,6 +44,9 @@ function readEngineFromForm(){
     fuel,
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
+    railPress:tp.ci&&g('edRailPress')?g('edRailPress').value:'stock',
+    pilotSplit:tp.ci&&g('edPilotSplit')?g('edPilotSplit').value==='yes':false,
+    glowPlugs:tp.ci&&g('edGlowPlugs')?g('edGlowPlugs').value==='yes':false,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
     ignitionType:g('edIgnType').value,
     timingMode:g('edTiming').value,
@@ -103,6 +106,9 @@ function applyEngineToForm(e){
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edPartFilter').value=e.partFilter?'yes':'no';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  if(g('edRailPress'))g('edRailPress').value=e.railPress||'stock';
+  if(g('edPilotSplit'))g('edPilotSplit').value=e.pilotSplit?'yes':'no';
+  if(g('edGlowPlugs'))g('edGlowPlugs').value=e.glowPlugs?'yes':'no';
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
@@ -187,6 +193,14 @@ function syncDesignEnable(){
   const sys=INTAKE_SYS[g('edIntakeSys').value]||INTAKE_SYS.efi;
   if(tp.ci)g('edInjector').value='direct';
   g('edInjector').disabled=tp.ci||!sys.di;
+  if(!tp.ci){
+    if(g('edRailPress'))g('edRailPress').value='stock';
+    if(g('edPilotSplit'))g('edPilotSplit').value='no';
+    if(g('edGlowPlugs'))g('edGlowPlugs').value='no';
+  }
+  if(g('edRailPress'))g('edRailPress').disabled=!tp.ci;
+  if(g('edPilotSplit'))g('edPilotSplit').disabled=!tp.ci;
+  if(g('edGlowPlugs'))g('edGlowPlugs').disabled=!tp.ci;
   // The AUTO (ECU MAP) mixture needs electronic fuel injection; carbs/mech injection are manual.
   const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
   if(!efi)g('edAfrMode').value='fixed';
@@ -228,6 +242,7 @@ function buildEngineCore(prevStoich,quiet){
   if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ports||engine.ci||engine.cylinders<4||engine.cylinders%2!==0)engine.cylDeact=false;
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
+  else{engine.railPress='stock';engine.pilotSplit=false;engine.glowPlugs=false;}
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;

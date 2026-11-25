@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 469</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 470</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1063,6 +1063,9 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edFuel">FUEL TYPE</label><select id="edFuel"><option value="gasoline">PUMP GAS</option><option value="race">RACE GAS</option><option value="e85">E85</option><option value="methanol">METHANOL</option><option value="diesel">DIESEL</option></select></div>
 <div class="field"><label for="edOctane">FUEL OCTANE (RON)</label><input type="number" id="edOctane" min="87" max="110" step="1" value="95"></div>
 <div class="field"><label for="edInjector">INJECTOR</label><select id="edInjector"><option value="port">PORT (PFI)</option><option value="direct">DIRECT (DI)</option></select></div>
+<div class="field"><label for="edRailPress">COMMON RAIL</label><select id="edRailPress"><option value="stock">STOCK (UNIT / VE)</option><option value="1600">1600 BAR (CRDI GEN 1)</option><option value="2000">2000 BAR (CRDI GEN 3)</option><option value="2500">2500 BAR (PIEZO CRDI)</option></select></div>
+<div class="field"><label for="edPilotSplit">PILOT INJECTION</label><select id="edPilotSplit"><option value="no">NONE (SINGLE)</option><option value="yes">PILOT + MAIN SPLIT</option></select></div>
+<div class="field"><label for="edGlowPlugs">GLOW PLUGS</label><select id="edGlowPlugs"><option value="no">NONE (STOCK)</option><option value="yes">CERAMIC / RAPID GLOW</option></select></div>
 <div class="field"><label for="edIgnType">IGNITION TYPE</label><select id="edIgnType"><option value="distributor">DISTRIBUTOR</option><option value="wasted">WASTED SPARK</option><option value="coil">COIL-ON-PLUG</option></select></div>
 <div class="field"><label for="edTiming">IGNITION CONTROL</label><select id="edTiming"><option value="fixed">FIXED (LOCKED)</option><option value="auto">AUTO (ECU / KNOCK-LIMITED)</option></select></div>
 <div class="field"><label for="edIgnAdv">IGNITION ADV (° BTDC)</label><input type="number" id="edIgnAdv" min="5" max="40" step="1" value="22"></div>
@@ -4883,11 +4886,14 @@ function mechFrictionMEP(N,map,actFrac=1){
   // 3x over-scavenge of oil flow (~2.5 L/min per L per 1000 rpm) against 1.2 bar crankcase vacuum + cyclone/line drop
   // at eta = 0.60 (~3.0 kPa FMEP), plus belt/shaft bearing drag (~1.5 kPa at 6000 rpm).
   const scavKpa=(engine.drySump&&engine.type!=='twostroke')?(3.0+1.5*(N/6000)):0;
+  // Common-rail high-pressure pump (Bosch CP3/CP4): P = Vdot * dp / eta_pump (eta_pump = 0.70, rho_fuel = 835 kg/m3, ~1.2x metered flow).
+  const pRail=typeof dieselRailBar==='function'?dieselRailBar(engine):0;
+  const crKpa=pRail>0?(9.36e-3*pRail*Math.max(0.5,map)):0;
   const f=engine.fric;
   if(!f){
     let fm=(0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
     if(engine.balance&&engine.balance.balShaftActive)fm+=0.02*(N/6000);
-    return fm+scavKpa/100;
+    return fm+(scavKpa+crKpa)/100;
   }
   N=Math.max(N,300);
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
@@ -4899,7 +4905,7 @@ function mechFrictionMEP(N,map,actFrac=1){
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
   const bal=f.balBrg?(brg(f.Db,f.balBrg)*f.balMul+0.0005*N*f.balMul):0;   // balance shaft bearings + chain/gear mesh
-  return (crank+recip+gas+valve+aux+bal+scavKpa)/100;
+  return (crank+recip+gas+valve+aux+bal+scavKpa+crKpa)/100;
 }
 // ================================================================================================
 // PHYSICS CORE — GAS DYNAMICS
@@ -6258,7 +6264,7 @@ const DEFAULT_ENGINE={
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
   intakeSys:'efi',airFilter:'perf',
   cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
-  fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
+  fuel:'gasoline',octane:95,injector:'direct',railPress:'stock',pilotSplit:false,glowPlugs:false,ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false
 };
@@ -10450,6 +10456,9 @@ function readEngineFromForm(){
     fuel,
     octane:clamp(Math.round(+g('edOctane').value||95),87,110),
     injector:g('edInjector').value,
+    railPress:tp.ci&&g('edRailPress')?g('edRailPress').value:'stock',
+    pilotSplit:tp.ci&&g('edPilotSplit')?g('edPilotSplit').value==='yes':false,
+    glowPlugs:tp.ci&&g('edGlowPlugs')?g('edGlowPlugs').value==='yes':false,
     ignitionAdv:clamp(Math.round(+g('edIgnAdv').value||22),5,40),
     ignitionType:g('edIgnType').value,
     timingMode:g('edTiming').value,
@@ -10509,6 +10518,9 @@ function applyEngineToForm(e){
   g('edCamSpec').value=e.camDur_deg>0?e.camDur_deg+'/'+e.camLsa_deg+'/'+e.camLift_mm+'@'+(e.cam||'stock'):'';
   g('edFuel').value=e.fuel||'gasoline';
   partsToForm(e);g('edSilencer').value=EXHAUST_SILENCER[e.silencer]?e.silencer:'';g('edCat').value=e.cat||'stock';g('edPartFilter').value=e.partFilter?'yes':'no';g('edOctane').value=e.octane;g('edInjector').value=e.injector;
+  if(g('edRailPress'))g('edRailPress').value=e.railPress||'stock';
+  if(g('edPilotSplit'))g('edPilotSplit').value=e.pilotSplit?'yes':'no';
+  if(g('edGlowPlugs'))g('edGlowPlugs').value=e.glowPlugs?'yes':'no';
   g('edIgnAdv').value=e.ignitionAdv;g('edIgnType').value=e.ignitionType;g('edTiming').value=e.timingMode||'fixed';g('edAfrMode').value=e.afrMode||'fixed';
   g('edRadiator').value=e.radiator||'stock';g('edRadHp').value=e.radHp>0?e.radHp+'@'+specTag:'0';g('edFan').value=e.fan||'electric';
   g('edOilCooler').value=e.oilCooler?'yes':'no';g('edThermostat').value=e.thermostat||88;
@@ -10593,6 +10605,14 @@ function syncDesignEnable(){
   const sys=INTAKE_SYS[g('edIntakeSys').value]||INTAKE_SYS.efi;
   if(tp.ci)g('edInjector').value='direct';
   g('edInjector').disabled=tp.ci||!sys.di;
+  if(!tp.ci){
+    if(g('edRailPress'))g('edRailPress').value='stock';
+    if(g('edPilotSplit'))g('edPilotSplit').value='no';
+    if(g('edGlowPlugs'))g('edGlowPlugs').value='no';
+  }
+  if(g('edRailPress'))g('edRailPress').disabled=!tp.ci;
+  if(g('edPilotSplit'))g('edPilotSplit').disabled=!tp.ci;
+  if(g('edGlowPlugs'))g('edGlowPlugs').disabled=!tp.ci;
   // The AUTO (ECU MAP) mixture needs electronic fuel injection; carbs/mech injection are manual.
   const efi=g('edIntakeSys').value==='efi'||g('edIntakeSys').value==='itb';
   if(!efi)g('edAfrMode').value='fixed';
@@ -10634,6 +10654,7 @@ function buildEngineCore(prevStoich,quiet){
   if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
   if(engine.ports||engine.ci||engine.cylinders<4||engine.cylinders%2!==0)engine.cylDeact=false;
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
+  else{engine.railPress='stock';engine.pilotSplit=false;engine.glowPlugs=false;}
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
   engine.fuelDensity=fp.density;engine.fuelLHV=fp.LHV;engine.stoichAFR=fp.stoich;
@@ -10921,6 +10942,11 @@ function computeCost(){
   if(engine.vvt)c+=1200;
   if(engine.cylDeact)c+=450+50*engine.cylinders;
   if(engine.injector==='direct')c+=900;
+  if(engine.ci){
+    c+=({1600:600,2000:950,2500:1400}[engine.railPress]||0);
+    if(engine.pilotSplit)c+=250;
+    if(engine.glowPlugs)c+=120+35*engine.cylinders;
+  }
   c+={distributor:150,wasted:400,coil:900}[engine.ignitionType]||0;
   if(engine.timingMode==='auto')c+=600;
   c+={gasoline:0,race:0,e85:300,methanol:500}[engine.fuel]||0;
@@ -12209,13 +12235,45 @@ function rotaryLostWork(cr){
   const pis=wiebePhasingEff(SI_BURN_DEG,SI_CA50-x50*SI_BURN_DEG,cr,pistonVol);
   return Math.max(0,1-rot/pis);       // share of the piston-referenced work the rotary does not do
 }
+// Diesel common-rail & glow-plug physics (Bosch Automotive Handbook: rail pressures 1600-2500 bar,
+// injector orifice flow m_dot ~ sqrt(dp), glow-plug power ~100-150 W/cyl cold-crank preheat).
+const CR_REF_BAR=1350, GLOW_W_PER_CYL=120;
+function dieselRailBar(e){
+  if(!e||!e.ci||!e.railPress||e.railPress==='stock')return 0;
+  const p=+e.railPress;return Number.isFinite(p)&&p>0?p:0;
+}
+function dieselBurnTimeFactor(e){
+  const p=dieselRailBar(e);
+  return p>0?Math.pow(CR_REF_BAR/p,0.20):1;
+}
+function dieselIgnDelayFactor(e){
+  if(!e||!e.ci)return 1;
+  let f=1;
+  const p=dieselRailBar(e);
+  if(p>0)f*=Math.pow(CR_REF_BAR/p,0.35);
+  if(e.pilotSplit)f*=0.65;
+  return clamp(f,0.45,1.0);
+}
+function dieselCombNoiseDbDelta(e){
+  const f=dieselIgnDelayFactor(e);
+  return f<1?20*Math.log10(f):0;
+}
+function glowPreheatTime(tempC,e){
+  if(!e||!e.ci||!e.glowPlugs||!(tempC<40))return 0;
+  return clamp((40-tempC)/8.5,0.5,10.0);
+}
+function glowPreheatEnergyJ(tempC,e){
+  const t=glowPreheatTime(tempC,e);
+  return t>0?(e.cylinders||4)*GLOW_W_PER_CYL*t:0;
+}
 function buildBurnTable(){
   const e=engine;
   e.burnTab=null;
   e.rotaryLost=e.type==='rotary'?rotaryLostWork(e.compression):0;
   if(!e.ci)return;
   const ref=wiebePhasingEff(6*BURN_REF_RPM*BURN_T_CI,SOC_CI,e.compression),tab=[];
-  for(let r=0;r<=e.redline*1.3+200;r+=100)tab.push(wiebePhasingEff(6*Math.max(r,300)*BURN_T_CI,SOC_CI,e.compression)/ref);
+  const burnT=BURN_T_CI*dieselBurnTimeFactor(e);
+  for(let r=0;r<=e.redline*1.3+200;r+=100)tab.push(wiebePhasingEff(6*Math.max(r,300)*burnT,SOC_CI,e.compression)/ref);
   e.burnTab=tab;
 }
 function burnPhasing(rpm){
@@ -12788,7 +12846,7 @@ function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
     phiHC+=Math.max(0,engine.overlap||0)/90*0.04+meterSlop*0.05+cold*0.08;
     phiHC+=Math.max(0,lam-1.06)*0.15+Math.max(0,1.0-lam)*0.02;
   }
-  if(engine.ci){const fuelling=clamp((1.7-lam)/1.0,0,1);phiHC+=fuelling*0.02+cold*0.04;}
+  if(engine.ci){const fuelling=clamp((1.7-lam)/1.0,0,1);phiHC+=fuelling*0.02+cold*0.04*(engine.glowPlugs?0.65:1);}
   phiHC=clamp(phiHC,0,0.45);
   let mHC=(phiHC*burn+shortHC)*1000;                // g/s as fuel mass
   const cFrac=MW_C/(MW_C+y*MW_H+z*MW_O);
@@ -12815,8 +12873,14 @@ function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
   let noxIdx,pmIdx=0;
   if(engine.ci){
     const fuelling=clamp((1.7-lam)/1.0,0,1);
-    noxIdx=8+130*clamp(tempF*0.62,0,1.4);
-    pmIdx=2+Math.pow(fuelling,1.6)*80+meterSlop*30;
+    const pRail=dieselRailBar(engine);
+    // Common-rail NOx/soot trade-off (Bosch Automotive Handbook): finer atomization cuts PM (~(p_ref/p)^1.1)
+    // while higher peak local flame T raises NOx (~(p/p_ref)^0.35); pilot split softens premixed spike (-12% NOx, +8% PM).
+    const railPmMul=pRail>0?Math.pow(CR_REF_BAR/pRail,1.1):1;
+    const railNoxMul=pRail>0?Math.pow(pRail/CR_REF_BAR,0.35):1;
+    const pilotNoxMul=engine.pilotSplit?0.88:1, pilotPmMul=engine.pilotSplit?1.08:1;
+    noxIdx=(8+130*clamp(tempF*0.62,0,1.4))*railNoxMul*pilotNoxMul;
+    pmIdx=(2+Math.pow(fuelling,1.6)*80+meterSlop*30)*railPmMul*pilotPmMul;
     mCO+=(3+fuelling*9)/300*burn*1000*0.15;         // small diesel CO EI on top of majors
   }else if(engine.type==='twostroke')noxIdx=2+42*Math.exp(-Math.pow((lam-1.08)/0.13,2))*tempF;
   else if(engine.type==='rotary')noxIdx=2+55*Math.exp(-Math.pow((lam-1.08)/0.12,2))*tempF;
@@ -14384,6 +14448,8 @@ function engineMass(){
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
   if(engine.partFilter)m+=2.0+1.5*(engine.displacement_L||1.6);   // cordierite/SiC filter substrate + canning
   if(engine.drySump&&engine.type!=='twostroke')m+=8;   // external dry-sump tank, 3-stage scavenge pump, belt drive & AN lines
+  if(engine.ci&&typeof dieselRailBar==='function'&&dieselRailBar(engine)>0)m+=4;   // CP3/CP4 high-pressure pump & rail
+  if(engine.ci&&engine.glowPlugs)m+=1;   // ceramic glow plugs & preheat controller
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).
@@ -20327,7 +20393,7 @@ function soundDrive(dt,s=state){
   // How hard it rings is how much fuel goes up at once: for a diesel that is the fuel injected during the
   // delay, which is not the load; for a detonating petrol charge it is the end gas, which is.
   const cool=Number.isFinite(s.coolant)?s.coolant:90,kr=Number.isFinite(s.knockRisk)?s.knockRisk:0;
-  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1);}
+  if(e.ci){knockProb=1;knockAmp=0.025*clamp(1+(80-cool)/50,1,2)*clamp(1.3-strength,0.3,1)*(typeof dieselIgnDelayFactor==='function'?dieselIgnDelayFactor(e):1);}
   else{knockProb=clamp((kr-KNOCK_TARGET)/60,0,1);knockAmp=0.06*Math.min(2,strength);}
   // blow-off: the charge pipe holds the boost the compressor made while the throttle was open; when the
   // throttle shuts on it, however gently, the valve vents it, once (a diesel has no throttle to shut)
@@ -31219,10 +31285,12 @@ function renderDynoResult(force){
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
   const diag=diagnoseEngine();
   const bal=engine.balance;
+  const crNoiseDb=engine.ci&&typeof dieselCombNoiseDbDelta==='function'?dieselCombNoiseDbDelta(engine):0;
   const balNote=bal?('<br><b>'+tr('BALANCE & NVH')+'</b> — '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+
     (bal.totalForce_N>0?' · '+tr('unbalanced shaking force')+' '+Math.round(bal.totalForce_N)+' N':'')+
     (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
-    (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')):'';
+    (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
+    (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
@@ -36135,7 +36203,7 @@ function engineFuelAt(rpm,T,oilT){
 }
 // The car over the cycle. Returns litres per 100 km, CO2 (g/km), the fuel's mass and the gear and speed it chose.
 function engineCycle(v){
-  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,ENV.alt_m,ENV.tempC,ENV.headwind_ms,e.startStop?1:0,e.partFilter?1:0].join('|');
+  const e=engine,C=FUEL_CYCLE,key=[v.mass,v.finalDrive,v.cdA,v.clA||0,v.crr,v.rTire,v.driveEff,v.ratios.join(','),C.soak,ENV.alt_m,ENV.tempC,ENV.headwind_ms,e.startStop?1:0,e.partFilter?1:0,e.railPress||'stock',e.pilotSplit?1:0,e.glowPlugs?1:0].join('|');
   if(e._fcyc&&e._fcyc.score===e.score&&e._fcyc.key===key)return e._fcyc.res;
   const m=v.mass+C.massAdd,r=v.rTire,fd=v.finalDrive,eff=v.driveEff,M=engineFuelMap(),rho=envAirRho(),vW=envWind();
   const fp0=FUELS[e.fuel]||FUELS.gasoline,heatC=engineMass()*460+6*3600+5*1900,stat=e.thermostat||88;
@@ -36144,8 +36212,9 @@ function engineCycle(v){
   const rpmMin=Math.max(e.idleRpmEff*C.idleMargin,e.ci?C.minRpmCI:C.minRpm);
   const ambCat=ENV.tempC!=null?ENV.tempC:C.soak,COLD_END=589;   // WLTC Low phase: 0..588 s
   const ssOn=!!(e.startStop&&!e.dcdc);
+  const glowPreheatS=glowPreheatTime(ambCat,e),glowEnergyJ=glowPreheatEnergyJ(ambCat,e);
   let fuel=0,x=0,gearSum=0,moving=0,warmAt=null,lightOffS=null;
-  let ssOff=false,ssOffS=0,ssStarts=0,crankDebtJ=0;
+  let ssOff=false,ssOffS=0,ssStarts=0,crankDebtJ=glowEnergyJ>0?glowEnergyJ/(ALT_EFF*AGM_CHG_EFF):0;
   let emCO=0,emHC=0,emNOx=0,emPM=0,coldKm=0,coldCO=0,coldHC=0,coldNOx=0,coldPM=0,hotKm=0,hotCO=0,hotHC=0,hotNOx=0,hotPM=0;
   const stepEmit=(i,vm,gs,rpmE,T)=>{
     const cut=!(gs>0);
@@ -36205,7 +36274,7 @@ function engineCycle(v){
   // CO2: the carbon in the fuel, burnt to CO2 (petrol ~86.5% carbon by mass, diesel ~86.2%)
   const ckm=Math.max(1e-6,coldKm),hkm=Math.max(1e-6,hotKm);
   const res={km,l100:L/km*100,co2:kg*0.865*44/12*1000/km,kg,meanGear:gearSum/Math.max(1,moving),warmS:warmAt,
-    lightOffS,tCatEnd:tCat,ssOffS,ssStarts,coGkm:emCO/km,hcGkm:emHC/km,noxGkm:emNOx/km,pmGkm:emPM/km,
+    lightOffS,tCatEnd:tCat,ssOffS,ssStarts,glowPreheatS,glowEnergyJ,coGkm:emCO/km,hcGkm:emHC/km,noxGkm:emNOx/km,pmGkm:emPM/km,
     cold:{km:coldKm,coGkm:coldCO/ckm,hcGkm:coldHC/ckm,noxGkm:coldNOx/ckm,pmGkm:coldPM/ckm},
     hot:{km:hotKm,coGkm:hotCO/hkm,hcGkm:hotHC/hkm,noxGkm:hotNOx/hkm,pmGkm:hotPM/hkm}};
   e._fcyc={score:e.score,key,res};return res;
@@ -39872,6 +39941,12 @@ const ICD_FIELDS={
     trade:'Higher octane resists knock: more compression, boost or spark advance before it knocks.'},
   edInjector:{guide:'fuelmap',what:'Where the fuel is sprayed: into the port, or straight into the cylinder.',
     trade:'Direct injection cools the charge as the fuel evaporates, which holds off knock and fills the cylinder a little better. It needs fuel injection.'},
+  edRailPress:{guide:'fuels',what:'Diesel common-rail injection pressure (1600–2500 bar). Orifice flow scales as √Δp.',
+    trade:'Higher rail pressure atomizes fuel finer, cutting soot (PM) and combustion noise and slightly speeding the burn, at higher NOx and high-pressure pump drag.'},
+  edPilotSplit:{guide:'fuels',what:'Injects a small ~1–2 mg pilot charge before the main injection to pre-heat the cylinder.',
+    trade:'Shortens ignition delay, cutting diesel clatter/NVH and NOx, with a small soot trade-off.'},
+  edGlowPlugs:{guide:'electrical',what:'Ceramic/rapid glow plugs (~120 W/cyl) that pre-heat the combustion chamber before a cold crank.',
+    trade:'Sets cold-start preheat time and draws 12 V battery energy (recharged by the alternator), while cutting cold-start unburned HC.'},
   edIgnType:{adv:true,guide:'electrical',what:'How the spark reaches the plugs.',
     trade:'Coil-on-plug gives the strongest spark at high rpm and at low voltage; a distributor is the first to misfire when the battery runs down.'},
   edTiming:{what:'Whether the spark timing is fixed, or set by the ECU against knock.',
@@ -39899,7 +39974,7 @@ const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'st
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edPartFilter:'partFilter',edFuel:'fuel',edOctane:'octane',
-  edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
+  edInjector:'injector',edRailPress:'railPress',edPilotSplit:'pilotSplit',edGlowPlugs:'glowPlugs',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',
   edFan:'fan',edOilCooler:'oilCooler',edThermostat:'thermostat',edAlternator:'alternator',edStartStop:'startStop'};
 const ICD_DEPS=['edIntake','edFuel','edTiming','edIntakeSys','edVGT','edExhaust','edCyl','edLayout','edTurboSize','edTaperRpm'];   // their change enables or disables other fields
 
@@ -39962,7 +40037,8 @@ function icdSummary(c,r){
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat')+' · '+o('edPartFilter');
-    case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming');
+    case 'fuel':return o('edFuel')+(document.getElementById('edOctane').disabled?'':' · '+g('edOctane')+' RON')+' · '+o('edTiming')+
+      (g('edRailPress')!=='stock'?' · '+g('edRailPress')+' bar CR':'')+(g('edPilotSplit')==='yes'?' · '+tr('pilot split'):'')+(g('edGlowPlugs')==='yes'?' · '+tr('glow plugs'):'');
     case 'cool':return o('edRadiator')+' · '+o('edFan')+' · '+(document.getElementById('edAlternator').disabled?tr('12 V: DC-DC from the pack'):o('edAlternator'));
   }
   return '';
