@@ -45,7 +45,7 @@ const r = await page.evaluate(() => {
     };
 
     // 2. Dynamic aero ride-height & pitch sensitivity in driveAeroAt and stepCar
-    loadCar('GT3 RS');
+    loadCar('911 GT3');
     const carAero = driveCar();
     const a0 = driveAeroAt(carAero, 0, 0, 60, 1.20);
     const aLow = driveAeroAt(carAero, -0.04, 0, 60, 1.20);
