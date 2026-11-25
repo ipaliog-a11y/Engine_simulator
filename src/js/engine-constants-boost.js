@@ -284,6 +284,24 @@ function scAdiabaticEff(scType,pr,rpmFrac){
   return clamp(0.74*ideal-0.08*Math.pow(Math.max(0,PR-2.0),1.5),0.35,0.65);
 }
 const NITROUS_BAR={none:0,small:2.2,large:4.2};   // extra IMEP (bar) from a nitrous shot
+// Water / methanol injection (E2): port/plenum mist under boost cools the intake charge by evaporation
+// and (when methanol is blended) adds chemical knock resistance.
+// Derived from:
+//   · latent heat of vaporization: water h_fg = 2257 kJ/kg (at 100 °C, NIST / Moran & Shapiro),
+//     methanol h_fg = 1100 kJ/kg (NIST / Heywood), dry air c_p = 1.005 kJ/(kg·K);
+//   · BMW M4 GTS (S55, Bosch WaterBoost) reference: 5.0 L trunk tank, ~10-15% of WOT fuel mass flow
+//     (~1.2% of air mass), ~25 °C charge cooling at full load, ~80% port evaporation effectiveness.
+//   · 50/50 by mass: h_fg = 0.5*2257 + 0.5*1100 = 1678.5 kJ/kg, density = 1/(0.5/1.0 + 0.5/0.792) = 0.884 kg/L;
+//     methanol RON 109 (FUELS.methanol) blended at ~15% of fuel mass raises effective octane.
+const HFG_WATER=2257, HFG_METHANOL=1100, CP_AIR_KJ=1.005, WM_EVAP_EFF=0.80;
+const WM_PUMP_AMPS=10;        // high-pressure diaphragm/Bosch pump current draw at 14 V (~140 W) when spraying
+const WM_ONSET_MAP=1.10;      // bar abs (0.10 bar boost): progressive controller onset
+const WM_FULL_MAP=1.40;       // bar abs (0.40 bar boost): full injection flow ratio
+const WATER_METH={
+  none: {label:'NONE',             flowRatio:0,     waterFrac:0,   methFrac:0,   hfg:0,      density:1.000, tankL:0,   cost:0,   massKg:0},
+  water:{label:'WATER (H2O)',      flowRatio:0.012, waterFrac:1.0, methFrac:0.0, hfg:2257,   density:1.000, tankL:5.0, cost:850, massKg:8.0},
+  wm50: {label:'50/50 WATER-METH', flowRatio:0.015, waterFrac:0.5, methFrac:0.5, hfg:1678.5, density:0.884, tankL:5.0, cost:950, massKg:7.5}
+};
 // Intercooler core: heat = residual charge-heat added per bar of boost (°C). A bigger core
 // cools the charge far better (denser air, more knock margin) but its extra volume adds a
 // little turbo spool lag (more plumbing to pressurise). None = no intercooler.

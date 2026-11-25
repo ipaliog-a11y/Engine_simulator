@@ -54,6 +54,8 @@ const ICD_FIELDS={
     trade:"Each bar of boost adds about another engine's worth of air. More boost needs more octane or less compression, and costs reliability."},
   edIntercooler:{guide:'intercooler',what:'A radiator that cools the air after the compressor.',
     trade:'Cooler air is denser and knocks less. A larger core cools more, for a little pressure loss.'},
+  edWaterMeth:{guide:'intercooler',adv:true,what:'Sprays water or a 50/50 water-methanol mist into the intake under boost.',
+    trade:'Evaporation cools the charge (water 2257 kJ/kg, methanol 1100 kJ/kg), holding off knock so the ECU can add timing or boost. Costs a 5 L tank, a pump (~10 A) and refills.'},
   edTurboSize:{what:'The size of the turbocharger.',
     trade:'A small turbo spools early and runs out of breath at high rpm; a large one makes more at the top and comes on later.'},
   edTurboConfig:{what:'How many turbos, and how they are arranged.',
@@ -122,7 +124,7 @@ const ICD_FIELDS={
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
-  edIntercooler:'intercooler',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
+  edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
   edInjector:'injector',edIgnType:'ignitionType',edTiming:'timingMode',edIgnAdv:'ignitionAdv',edAfrMode:'afrMode',edRadiator:'radiator',

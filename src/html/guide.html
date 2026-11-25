@@ -1075,6 +1075,7 @@ Compressing air heats it: a turbo at 1 bar of boost can send air out at 100 °C 
 <div class="guide-body" data-gk="intercoolerGame">
 <b>INTERCOOLER</b>: none, a small core or a large one, each sized for the engine it is fitted to; or one you design on the PARTS tab. A bigger core cools better and drops less pressure, but holds more air, so the turbo takes a little longer to fill it (more lag). A designed core can be <b>water-to-air</b>: a coolant loop with a pump and its own radiator at the front. It sits beside the throttle, so there is little charge to fill, but its loop warms over a lap and the charge with it.
 </div>
+<p class="guide-body"><b>WATER / METH INJ</b>: an optional port mist system (100% water or 50/50 water-methanol) that sprays under boost from a 5 L tank, cooling the charge and raising knock margin. Refill it from the live bench's MORE menu.</p>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="intercoolerPhys">
@@ -1085,6 +1086,7 @@ Since build 256 ε comes from the core itself. Each side's film coefficient is a
 A core cools better at low flow, since each kilogram meets the same metal for longer. The factory SMALL core is 250 × 150 × 80 mm and the LARGE 600 × 250 × 75 mm, made taller when the engine's full flow is more than Garrett's rating for that end (its 600 hp core: 0.5 kg/s through 203 × 89 mm). The charge also loses pressure through the fins and the pipe, and the compressor makes it up: it delivers the boost <i>plus</i> the drop, so the charge leaves it hotter and the turbo works harder. The charge volume (the core's charge side plus the ducting) is what the turbo has to fill when boost rises (see <a data-gp="lag">Turbo lag</a>).<br>
 A <b>water-to-air</b> core is two exchangers in a loop: the core (charge to coolant, the coolant in plain tubes, Nu = 7.54 laminar) and a radiator (coolant to air, the same louvred fins). Each has its ε from its NTU; settled, the loop gives back <span class="geq">ε = (a/C<sub>c</sub>) / (1 + a/b − a/C<sub>w</sub>)</span> where a and b are each exchanger's ε·C<sub>min</sub> and C<sub>w</sub> the coolant's flow times its heat capacity. A dyno pull starts with the loop at the air's temperature (ε = a/C<sub>c</sub>); on a lap the loop's coolant and metal warm in time, and the drive falls with the charge's density.
 </div>
+<p class="guide-body"><b>Water / methanol injection</b> cools the intake charge by latent heat of vaporization (water 2257 kJ/kg, methanol 1100 kJ/kg; air c<sub>p</sub> = 1.005 kJ/(kg·K)): <span class="geq">ΔT = η<sub>evap</sub> · (ṁ<sub>inj</sub> / ṁ<sub>air</sub>) · h<sub>fg</sub> / c<sub>p</sub></span> (modeled after BMW M4 GTS / Bosch WaterBoost at ~1.2% of air mass, ~22 °C drop). A 50/50 blend also adds methanol's 109 RON octane resistance, while the 10 A pump draws ~250 W from the alternator.</p>
 </div>
 <div class="guide-see">See also: <a data-gp="compmap">Compressor maps &amp; rated flow</a> · <a data-gp="knock">Compression &amp; knock</a> · <a data-gp="lag">Turbo lag</a></div>
 </section>
