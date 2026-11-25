@@ -25,7 +25,7 @@ Items 1–3 (valves, 49 of 93 engines), 5 (the four V8s), 6 (water-to-air model)
 12 (springs, bars, dampers), and the first passes of 13–15 (data). Item 10 (floor, splitter) was moved after v1.0 by the
 owner at build 417.
 
-## The v1.0 scope (about 10 builds)
+## The v1.0 scope (about 12 builds)
 
 ### Phase 1: re-baseline (no physics change)
 
@@ -44,40 +44,47 @@ owner at build 417.
    Coyote).
 4. **Water-to-air intercoolers per car** (`v1-finish` 7; decisions 17, 22 put it before v1.0). Presets whose maker
    publishes a water-to-air charge cooler move to the part built in build 429.
-5. **`catRampTop` research** (`v1-finish` 8; decision 5). One search build: a measured brick + silencer back pressure
-   closes it; none found → owner's ruling (open question 2 below).
-6. **Fixes from build 1's review**, one build each, only those the owner picks. Expected: few.
+5. **`catRampTop` closed** (`v1-finish` 8; decision 5; owner: before v1.0). A measured brick + silencer back pressure
+   if one is found; if not, derive the brick's loss from its substrate (laminar flow in square channels from cell
+   density and wall thickness, as the DPF's Darcy model in build 469) and the silencer's from build 454's model.
+6. **G2 · turbine A/R matching** (owner: before v1.0). After build 1's baseline: residual-gas knock if missing, then
+   `stock` A/R sized from exhaust flow at rated power; report boost-threshold RMS against `tests/proto/housing.mjs`.
+7. **E8 · variable compression (VC-T)** (owner: before v1.0). Nissan's 8–14:1 schedule on the KR15DDT preset; an
+   optional part, off by default for custom builds.
+8. **Fixes from build 1's review**, one build each, only those the owner picks. Expected: few.
 
 ### Phase 3: the gate (`v1-finish` 17–20)
 
-7. **The sweep for absurd builds**: random and extreme designs (including the new parts: W/M injection, MGU-H, VC-T if
-   in, DPF, start-stop, cylinder deactivation, dry sump) through every simulator; nothing NaN, negative or impossible.
-8. **Guide and README pass**: every page matches the code at that build (the post-441 and engine-systems builds added a
+9. **The sweep for absurd builds**: random and extreme designs (including the new parts: W/M injection, MGU-H, VC-T, DPF, start-stop, cylinder deactivation, dry sump) through every simulator; nothing NaN, negative or impossible.
+10. **Guide and README pass**: every page matches the code at that build (the post-441 and engine-systems builds added a
    lot of behaviour; check each has its guide text).
-9. **The full suite green on `main`** (~80 min, locally).
-10. **The final scoreboard** (build 1 rerun) with the finish line applied.
+11. **The full suite green on `main`** (~80 min, locally).
+12. **The final scoreboard** (build 1 rerun) with the finish line applied.
 
 Then the owner checks the finish line and tags v1.0.
 
-## Proposed to move after v1.0
+## After v1.0
 
 | Item | Why it can wait |
 |---|---|
-| **G2 · turbine A/R matching** | Moves boost threshold and mid-range torque on every fixed-geometry turbo preset; it is a model change, not a bug, and the gap is named (`tests/proto/housing.mjs`). Revisit if build 1 shows boosted cars over 10% for this cause. |
-| **E8 · variable compression (VC-T)** | A new system for one preset (Nissan KR15DDT, whose valves are not even sourced). Not a v1.0 promise. |
-| **Valves, batch 4** (`v1-finish` 4) | 44 engines remain on `EV_RATIO`; batches 2–3 found sources for ever fewer (16, then 3). Ship them named on the ratio (open question 3 below); close the register entry as signed off. |
+| **Valves, batch 4** (`v1-finish` 4) | 44 engines remain on `EV_RATIO`; batches 2–3 found sources for ever fewer (16, then 3). Owner (build 474): they ship named on the ratio; `EV_RATIO` is signed off at v1.0. |
 | **Data leftovers** (`v1-finish` 13–15) | 73 overhang splits, 7 tyre sizes, 12 pit lanes: makers do not publish them. Named gaps at v1.0; source opportunistically. |
 | **`AERO_FLOOR`, splitter** | Already after v1.0 (build 417). |
 | **Camless valves, HCCI** | Already deferred (no sourced production data). |
 
-## Questions for the owner
+## Owner's answers (build 474)
 
-1. **The finish line's wording** (open since build 363). Proposed: register empty or signed off; every car under 10%
-   on each published figure, or on a named list with its reason.
-2. **`catRampTop`**: if no measured back pressure turns up in build 5, it stays a rule until after v1.0?
-3. **Valves**: may the 44 unsourced engines stay on the ratio, named, at v1.0 (signing `EV_RATIO` off)?
-4. **`AERO_FRONT/REAR`**: the wing part shipped (build 415); the entry stays open only for the splitter, which is after
-   v1.0. Sign it off at v1.0?
-5. **G2 and E8 after v1.0**: agreed?
-6. **Water-to-air per car**: still before v1.0 (decision 22), or after?
-7. **Decision 23**: record it as reversed (H′ and I shipped in builds 450 and 456)?
+| # | Question | Answer |
+|---|---|---|
+| 1 | Finish line | **Register empty or signed off; every car under 10% on each published figure, or on a named list with its reason.** |
+| 2 | `catRampTop` | **Closed before v1.0** (build 5 above), not left a rule. |
+| 3 | Valves | **Unsourced engines stay on the ratio, named; `EV_RATIO` signed off at v1.0.** |
+| 4 | `AERO_FRONT/REAR` | **Signed off at v1.0**; the splitter follows the floor after v1.0. |
+| 5 | G2 and E8 | **Before v1.0** (builds 6 and 7 above). |
+| 6 | Water-to-air per car | **Before v1.0** (decision 22 stands). |
+
+## Still open
+
+1. **Decision 23** (`plans/road-to-v1.md`): at build 407 the owner moved driving-sim H′ (tyre heat and wear, brake fade
+   in time) and I (aero by ride height and pitch) after v1.0. Builds 450 and 456 shipped them anyway. Record it as
+   reversed, so the guide and README describe them as part of v1.0?
