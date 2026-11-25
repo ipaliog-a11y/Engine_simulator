@@ -1595,7 +1595,7 @@ const MW_C=12.011,MW_H=1.008,MW_O=16.00,MW_CO2=44.01,MW_CO=28.01,MW_H2O=18.015,M
 // NOx ~15 g/kg near SI peak (Heywood ch.11 order); diesel PM ~4 g/kg near smoke without a DPF.
 const EI_NOX_REF=15,EI_PM_REF=4;
 function zeroEmissions(){
-  state.emCO=0;state.emHC=0;state.emNOx=0;state.emPM=0;state.emCO2=0;state.emO2=0;state.emRating=100;
+  state.emCO=0;state.emHC=0;state.emNOx=0;state.emPM=0;state.pfSootRate=0;state.emCO2=0;state.emO2=0;state.emRating=100;
 }
 // Fuel as CH_y O_z (y=fuelHC, z=fuelOC). Returns moles of each product per mole of fuel-C,
 // then mass rates in g/s from burn kg/s.
@@ -1717,10 +1717,49 @@ function calcPipeEmissions(rpm,map,lam,burn,shortHC,coolantC,tCatC,liveOsc){
   }
   const dCO=mCO*oxEff,dHC=mHC*oxEff;
   mCO-=dCO;mHC-=dHC;mNOx*=(1-redEff);mPM*=(1-pmEff);
+  // Wall-flow DPF/GPF (E10): 96% mechanical PM trapping (Majewski & Khair 2006), independent of cat light-off.
+  const gdiSoot=(!engine.ci&&engine.injector==='direct'&&mPM===0)?0.02*burn:0;
+  const pmTrapped=engine.partFilter?(mPM+gdiSoot)*PF_TRAP_EFF:0;
+  if(engine.partFilter)mPM*=(1-PF_TRAP_EFF);
   const mCO2=prod.co2+dCO*(MW_CO2/MW_CO)+dHC*cFrac*(MW_CO2/MW_C);
   // Oxidation consumes O2 when lean/stoich spare O2 is present.
   const mO2=Math.max(0,prod.o2-dCO*(0.5*MW_O2/MW_CO)-dHC*cFrac*(MW_O2/MW_C));
-  return{co:mCO,hc:mHC,nox:mNOx,pm:mPM,co2:mCO2,o2:mO2};
+  return{co:mCO,hc:mHC,nox:mNOx,pm:mPM,pmTrapped,co2:mCO2,o2:mO2};
+}
+// ---- Particulate filter (DPF / GPF) soot loading & regeneration (E10) ----
+// Wall-flow filtration efficiency ~96% (Majewski & Khair, SAE 2006). Active regen triggers at
+// ~6 g/L soot loading and burns down to ~0.5 g/L via post-injection (+8% fuel penalty, raising
+// brick temp to ~620 °C). Soot-O2 oxidation follows Arrhenius kinetics (Ea/R ≈ 18000 K,
+// ~150 kJ/mol; Stanmore et al., Carbon 2001) around 550–600 °C.
+const PF_TRAP_EFF=0.96,PF_REGEN_FUEL_PENALTY=0.08,PF_REGEN_TARGET_C=620;
+const pfVolL=()=>((engine&&engine.ci)?1.5:0.8)*((engine&&engine.displacement_L)||1.6);
+const pfMaxSootG=()=>6.0*pfVolL();
+function stepPartFilter(dt){
+  if(!engine||engine.type==='electric'||!engine.partFilter){
+    state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;return;
+  }
+  if(!(dt>0))return;
+  const vL=pfVolL(),sHi=6.0*vL,sLo=0.5*vL,sCap=12.0*vL;
+  let soot=Math.max(0,state.pfSootG||0);
+  if(state.firing!==false&&state.rpm>=FIRE_RPM&&!state.fuelCut){
+    soot=Math.min(sCap,soot+(state.pfSootRate||0)*dt);
+  }
+  if(!state.pfRegen&&soot>=sHi&&state.coolant>=65&&state.firing!==false&&state.rpm>=FIRE_RPM){
+    state.pfRegen=true;
+  }
+  if(state.pfRegen&&(state.firing===false||state.rpm<FIRE_RPM)){
+    state.pfRegen=false;
+  }
+  const map=liveMap(),lam=state.afr/engine.stoichAFR;
+  const tGasC=state.firing!==false&&state.rpm>=FIRE_RPM&&!state.fuelCut?(egtAt(state.rpm,map)-273.15):state.coolant;
+  let tPfC=autoThermal?(state.tCat!=null?state.tCat:tGasC):Math.max(state.tCat!=null?state.tCat:450,tGasC);
+  if(state.pfRegen)tPfC=Math.max(tPfC,PF_REGEN_TARGET_C);
+  const o2Avail=engine.ci?1:(state.fuelCut?1:clamp((lam-0.98)/0.05,0.15,1));
+  const arrh=Math.exp(18000*(1/873.15-1/Math.max(300,tPfC+273.15)));
+  const burnGs=soot*0.08*arrh*o2Avail;
+  soot=Math.max(0,soot-burnGs*dt);
+  if(state.pfRegen&&soot<=sLo)state.pfRegen=false;
+  state.pfSootG=soot;
 }
 function computeEmissions(){
   if(!engine||engine.type==='electric'){zeroEmissions();return state.emRating;}
@@ -1734,7 +1773,7 @@ function computeEmissions(){
   const shortHC=Math.max(0,metered-burn);                           // 2-stroke short-circuit etc.
   if(burn<1e-9&&shortHC<1e-9){zeroEmissions();return state.emRating;}
   const em=calcPipeEmissions(state.rpm,map,lam,burn,shortHC,state.coolant,state.tCat,true);
-  state.emCO=em.co;state.emHC=em.hc;state.emNOx=em.nox;state.emPM=em.pm;state.emCO2=em.co2;state.emO2=em.o2;
+  state.emCO=em.co;state.emHC=em.hc;state.emNOx=em.nox;state.emPM=em.pm;state.pfSootRate=em.pmTrapped||0;state.emCO2=em.co2;state.emO2=em.o2;
   // Cleanliness from emission indices (g/kg fuel) so large and small engines share a scale.
   // Denominators: cruise-dirty references after a failed/decat tune (g/kg).
   const fkg=Math.max(burn,1e-9);
@@ -1824,7 +1863,8 @@ function updateEnginePhysics(){
     // Imprecise metering (carbs / mechanical injection) wastes fuel; the cycle's thirst factor
     // (typeBsfc) captures combustion/scavenging losses — a 2-stroke short-circuits fresh charge
     // out the exhaust (>1, thirsty). A diesel is 1: its torque is computed from this same fuel.
-    const meteredFuel=meteredFuelKgS(map);
+    const regenMult=(engine.partFilter&&state.pfRegen)?(1+PF_REGEN_FUEL_PENALTY):1;
+    const meteredFuel=meteredFuelKgS(map)*regenMult;
     state.fuelFlowLph=(meteredFuel*3600)/engine.fuelDensity;
     state.heatFuelLph=state.fuelFlowLph*(state.burnFrac!=null?state.burnFrac:1);   // what was burned, on the limiter too (build 235)
     const fuelPower=meteredFuel*engine.fuelLHV*1e6/1000;
@@ -1835,7 +1875,7 @@ function updateEnginePhysics(){
 }
 function getDynoData(){
   if(isElectric())return motorDynoData();
-  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil),state.turboBlown?1:0].join('|');
+  const key=[buildRev,engine.afrMode==='auto'?'auto':state.afr.toFixed(1),state.iat,Math.round(state.coolant),Math.round(state.oil),state.turboBlown?1:0,engine.partFilter?(state.pfSootG||0).toFixed(1):0].join('|');
   if(dynoCache&&dynoCacheKey===key)return dynoCache;
   const pts=[],rMax=engine.redline,step=Math.max(50,Math.round((rMax-1000)/70/50)*50);
   for(let rpm=1000;rpm<=rMax;rpm+=step)pts.push(calcAtRpm(rpm));

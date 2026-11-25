@@ -11,6 +11,7 @@ function engineMass(){
   if(engine.startStop&&!engine.dcdc)m+=6;   // reinforced starter + 12 V AGM battery
   if(engine.cylDeact)m+=0.5*engine.cylinders;
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
+  if(engine.partFilter)m+=2.0+1.5*(engine.displacement_L||1.6);   // cordierite/SiC filter substrate + canning
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).

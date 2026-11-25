@@ -27,6 +27,7 @@ function computeCost(){
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')c+=(WATER_METH[engine.waterMeth]?.cost||0);
   c+=engine.exhaustPart?EXHAUST_BUILD[engine.exhaustPart.build].cost:({stock:0,sport:550,race:1400}[engine.exhaust]||0);
   c+={none:0,sport:500,stock:300}[engine.cat]||0;
+  if(engine.partFilter)c+=engine.ci?800:450;
   c+={carb1:200,carb2:350,carb4:600,sidedraft:1400,mech:1900,efi:1200,itb:2600}[engine.intakeSys]||0;
   c+={none:0,perf:200,stock:60,restrictive:30}[engine.airFilter]||0;
   c+={stock:0,sport:700,race:1600}[engine.cam]||0;
