@@ -6,6 +6,7 @@ function computeCost(){
   let c=900*engine.cylinders+350*engine.displacement_L;          // block, machining, internals
   c+={petrol4:0,diesel:2500,twostroke:-400,rotary:1200}[engine.type]||0;  // cycle-specific build cost
   c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
+  if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -179,10 +180,12 @@ function updateDesignSummary(){
   const elecLine=engine.ci?
     '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('glow-plug start (no spark)'):
     '<br>'+tr('Electrical')+' <b>'+supply+'</b> • '+tr('Ignition misfire above')+' <b>~'+engine.dwellLimit+'</b> rpm ('+ignTxt+')';
+  const bal=engine.balance;
+  const balLine=bal?' • '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+(bal.balShaftActive?' • <b>'+tr('BALANCE SHAFT')+'</b>':''):'';
   document.getElementById('designSummary').innerHTML=
     '<b>'+tr(ENGINE_TYPE[engine.type].label)+'</b> • <b>'+unitWord+'</b>'+
     '<br><b>'+engine.cylinders+' × '+engine.bore_mm+'×'+engine.stroke_mm+dimLabel+'</b> → <b>'+disp+' L</b>'+
-    '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+
+    '<br>'+tr('Compression')+' <b>'+engine.compression.toFixed(1)+':1</b> • '+tr('Redline')+' <b>'+engine.redline+'</b> rpm'+balLine+
     '<br>'+tr('Induction')+' <b>'+induction+'</b>'+
     '<br>'+tr('Intake')+' <b>'+tr(INTAKE_SYS[engine.intakeSys].label)+'</b> • '+tr('Filter')+' <b>'+tr(AIR_FILTER[engine.airFilter].label)+'</b>'+
     '<br>'+tr('Exhaust')+' <b>'+(engine.exhaustPart?esc(engine.exhaustPart.name):trOpt(engine.exhaust.toUpperCase()))+'</b> • '+tr('Cat')+' <b>'+trOpt(CAT[engine.cat].label.split(' ')[0])+'</b>'+valveLine+
