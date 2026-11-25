@@ -18,6 +18,18 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Wet vs dry sump lubrication & lateral-g oil starvation (build 468)
+
+- **Wet-sump pickup starvation (`stepSumpStarve`, `oilPressureBar`, `stepWear`, `lapSumpReport`)**: oil surface tilt
+  $\tan\theta = |a_y|/g$ uncovers a baffled street wet-sump pickup above `WET_SUMP_G_THRESH` ($1.05\text{ g}$,
+  $h_0/b \approx 95/90\text{ mm}$). Sustained cornering ($\tau_{\text{drain}} = 1.2\text{ s}$) drops gallery oil
+  pressure and charges `OIL STARVATION` bearing wear.
+- **Optional `LUBRICATION` (`WET SUMP (STOCK)` vs `DRY SUMP`) on BLOCK**: defaults to wet sump (0 g dyno,
+  straight-line, and preset numbers unchanged); disabled on 2-strokes. Dry sump eliminates lateral-g starvation at a
+  derived scavenge-pump drag ($P = \dot{V}\cdot\Delta p/\eta$, $3.0 + 1.5\,(N/6000)\text{ kPa}$ FMEP), $+8\text{ kg}$
+  mass, and $+\$2,200$ build cost.
+- **Checks**: added `tests/test289.mjs` (`289` and `276` pass).
+
 ### Turbo as a breakable part (build 467)
 
 - **Independent turbo cartridge health**: sustained compressor overspeed past `TIP_LIMIT` (520 m/s) or compressor surge now degrades `state.turboHealth` (`TURBO OVERSPEED` / `TURBO SURGE`) independently of `state.engineHealth`.
