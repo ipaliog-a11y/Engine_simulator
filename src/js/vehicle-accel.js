@@ -301,7 +301,8 @@ function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
   const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
-  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T)*(1-egrRate(rpm,map));
+  const actFrac=cylDeactActive(rpm,map)?0.5:1;
+  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T)*(1-egrRate(rpm,map))*actFrac;
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }

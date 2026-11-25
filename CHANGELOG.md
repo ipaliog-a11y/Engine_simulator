@@ -18,6 +18,16 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Cylinder deactivation on HEAD & VALVES (build 464)
+
+- **CYLINDER DEACTIVATION** on the HEAD & VALVES card (`NONE`, `HALF CYLINDERS (ACT / AFM)`). Defaults to `NONE`, so
+  existing engines and presets are unchanged; disabled on <4 or odd cylinders, diesels, two-strokes, and rotaries.
+- When warm (coolant ≥ 60 °C) in the VW ACT / GM AFM light-load window (1100–4000 rpm, MAP ≤ 0.75 bar<sub>abs</sub> at sea
+  level), half the cylinders close their valves: zero fuel/air flow, zero gas-exchange pumping (`pumpingMEP`), and
+  halved valvetrain and gas-ring friction (`mechFrictionMEP`). Adds +0.5 kg/cyl actuator mass and $(450 + 50·cyl) cost.
+- On the 5.0 V8 NA Muscle, peak power is unchanged (391 hp / 508 Nm), WLTP drops 10.55 → 9.70 L/100 km (−8.0%), and
+  steady 22 m/s Eco Run fuel drops −16.3%. Plan E3 in `plans/engine-systems.md`.
+
 ### Catalyst light-off and cold-start emissions (build 463)
 
 - **Catalyst brick thermal model (`state.tCat`)**: cordierite monolith substrate (~950 J/(kg·K), 0.5 kg/L brick) heats

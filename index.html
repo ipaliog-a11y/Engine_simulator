@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 463</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 464</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1018,6 +1018,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edSpring">HEAD &amp; SPRINGS</label><select id="edSpring"><option value="stock">STOCK</option><option value="perf">PERFORMANCE</option><option value="race">RACE</option></select><input type="hidden" id="edSpringRpm" value="0"><input type="hidden" id="edValveSpec" value=""><input type="hidden" id="edCamSpec" value=""></div>
 <div class="field"><label>VALVE FLOAT</label><span class="val" id="valFloat">—</span></div>
 <div class="field"><label for="edEgr">EGR</label><select id="edEgr"><option value="none">NONE</option><option value="cooled">COOLED, OFF AT FULL LOAD</option><option value="cooled-full">COOLED, TO FULL LOAD</option></select></div>
+<div class="field"><label for="edCylDeact">CYLINDER DEACTIVATION</label><select id="edCylDeact"><option value="no">NONE</option><option value="yes">HALF CYLINDERS (ACT / AFM)</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-air" data-card="air"><div class="evd-fields">
 <div class="field"><label for="edIntake">INTAKE TYPE</label><select id="edIntake"><option value="na">NATURALLY ASP.</option><option value="turbo">TURBO</option><option value="supercharger">SUPERCHARGER</option></select></div>
@@ -1658,7 +1659,7 @@ A "big" race cam opens the valves wider and longer: at high rpm the air has mome
 </div>
 <div class="gtier gt-game"><div class="gtier-h">LV2 · IN THE GAME</div>
 <div class="guide-body" data-gk="valvetrain">
-<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. To set the valve's size, the port's throat or the springs' load yourself, design a cylinder head on the PARTS tab. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev.
+<b>Valvetrain</b> — wilder cams move power up top &amp; idle lumpy; VVT restores the bottom end. <b>Valves per cylinder</b>, <b>valve material</b> and <b>springs</b> are now modelled from real geometry rather than assumed. Four valves flow about 22% more than two for the same bore (and five flow no more than four — which is why nobody builds them any more). The app derives the valve diameter your bore can physically fit, works out what that valve weighs, and tells you the <b>valve float</b> rpm — the speed at which the spring can no longer pull the valve back down and it stops following the cam. <span style="color:#ff6b6b">If that number is below your redline, the engine cannot use the rev range it claims.</span> Fit stiffer springs, lighter titanium valves, less lift, or lower the redline. To set the valve's size, the port's throat or the springs' load yourself, design a cylinder head on the PARTS tab. Big-bore two-valve engines also choke on inlet airflow near the limiter, which is the real reason a big pushrod V8 makes its power low and a four-valve screamer can rev. Optional <b>cylinder deactivation</b> (4+ even cylinders, four-stroke petrol) closes half the cylinders' valves at warm light load (1100–4000 rpm) to cut pumping and valvetrain losses on WLTP and eco runs without affecting peak power.
 </div>
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
@@ -1671,7 +1672,7 @@ Overlap is not an input, it falls out of the grind: with <i>θ</i> the duration 
 <tr><td>race</td><td>284°</td><td>106°</td><td>72°</td><td>68°</td><td>0.28</td></tr></table></div>
 Valve size comes from what fits in the bore: one valve at 0.50 bore, two at 0.39, three at 0.31, so total intake area is 0.250, 0.304 and 0.288 of the bore area: five valves flow <i>less</i> than four. The open area is the lesser of the curtain and the throat behind it,
 <span class="geq">A = min(π·D·L, (π/4)(0.85·D)²)</span>
-so past L/D ≈ 0.18 more lift buys no flow. Valve mass comes from the head disc and a fixed stem in steel (7800 kg/m³) or titanium (4500), and the float rpm from the spring equation on <a data-gp="redline">Why engines have a redline</a>. Above float the valve reaches only <i>(N<sub>float</sub>/N)²</i> of its lift. On a real engine the STOCK springs are its maker's, carrying the seat load that floats the valves 5% past its own redline (no factory engine floats inside its rev range); PERFORMANCE and RACE carry 1.6× and 2.2× that load. A design of your own starts from a generic 250 N spring.
+so past L/D ≈ 0.18 more lift buys no flow. Valve mass comes from the head disc and a fixed stem in steel (7800 kg/m³) or titanium (4500), and the float rpm from the spring equation on <a data-gp="redline">Why engines have a redline</a>. Above float the valve reaches only <i>(N<sub>float</sub>/N)²</i> of its lift. On a real engine the STOCK springs are its maker's, carrying the seat load that floats the valves 5% past its own redline (no factory engine floats inside its rev range); PERFORMANCE and RACE carry 1.6× and 2.2× that load. A design of your own starts from a generic 250 N spring. With cylinder deactivation enabled (VW ACT / GM AFM window: coolant ≥ 60 °C, 1100–4000 rpm, MAP ≤ 0.75 bar<sub>abs</sub> at sea level), half the cylinders hold their valves shut (zero fuel, zero pumping, halved valvetrain and gas-ring friction), doubling the load on the firing cylinders.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="vvt">Variable valve timing</a> · <a data-gp="waves">Intake runner waves</a> · <a data-gp="header">Exhaust headers &amp; scavenging</a> · <a data-gp="redline">Why engines have a redline</a></div>
@@ -4763,7 +4764,9 @@ function deriveFriction(){
     Dm:FRIC_MAIN_D*e.bore_mm,Dp:FRIC_PIN_D*e.bore_mm};
 }
 // Rubbing + auxiliary friction mean effective pressure (bar) at N rpm and intake pressure map (bar absolute).
-function mechFrictionMEP(N,map){
+// actFrac (1 by default, 0.5 with half-cylinder deactivation) scales combustion gas ring load and
+// valve/follower actuation (cam bearings still spin, while collapsed lifters/lobes have zero lift).
+function mechFrictionMEP(N,map,actFrac=1){
   const f=engine.fric;
   if(!f)return (0.55+1.8e-8*N*N)*(1+(engine.stroke_mm-86)/320);   // rotary / two-stroke: the old curve (see above)
   N=Math.max(N,300);
@@ -4771,9 +4774,9 @@ function mechFrictionMEP(N,map){
   const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
   const crank=1.22e5*Dm/(B2S*nc)+brg(Dm,nMain)+1.35e-10*Dm*Dm*N*N*nMain/nc;
   const recip=2.94e2*Sp/B+4.06e4*bnd/(B*B)+brg(Dp,nPin);
-  const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp));
-  const valve=244*N*nCam/(B2S*nc)+4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
-             +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc);
+  const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp))*actFrac;
+  const valve=244*N*nCam/(B2S*nc)+(4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
+             +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
   const aux=6.23+5.22e-3*N-1.79e-7*N*N;
   return (crank+recip+gas+valve+aux)/100;
 }
@@ -6116,7 +6119,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120'
@@ -10298,6 +10301,7 @@ function readEngineFromForm(){
     intakeSys:g('edIntakeSys').value,
     cam:g('edCam').value,egr:g('edEgr').value,
     vvt:g('edVVT').value==='yes',
+    cylDeact:g('edCylDeact').value==='yes',
     valves:clamp(Math.round(+g('edValves').value||4),2,5),
     valvetrain:g('edValvetrain').value,
     valveMat:g('edValveMat').value,
@@ -10353,7 +10357,7 @@ function applyEngineToForm(e){
   g('edAntilag').value=e.antilag?'yes':'no';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
-  g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';
+  g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';g('edCylDeact').value=e.cylDeact?'yes':'no';
   g('edValves').value=String(e.valves||4);g('edValvetrain').value=VALVETRAIN[e.valvetrain]?e.valvetrain:valvetrainDefault(e.valves);g('edValveMat').value=e.valveMat||'steel';
   const specTag=(+e.cylinders||4)+'/'+(+e.bore_mm)+'/'+(+e.stroke_mm)+'/'+(+e.redline)+'/'+e.intake+'/'+(e.intake==='na'?0:(+e.boost_bar||0));
   g('edSpring').value=e.valveSpring||'stock';g('edSpringRpm').value=e.springRpm>0?e.springRpm+'@'+specTag:'0';
@@ -10424,6 +10428,9 @@ function syncDesignEnable(){
   g('edSilencer').disabled=g('edExhaust').value.startsWith('part:');   // a designed exhaust carries its own silencer
   g('edCam').disabled=tp.ports;g('edEgr').disabled=tp.ports||tp.ci;   // the spark engines' cooled EGR (build 204)
   g('edVVT').disabled=tp.ports;
+  const cdaOk=!tp.ports&&!tp.ci&&(+cylSel.value)>=4&&(+cylSel.value)%2===0;
+  if(!cdaOk)g('edCylDeact').value='no';
+  g('edCylDeact').disabled=!cdaOk;
   ['edValves','edValvetrain','edValveMat','edSpring'].forEach(id=>{g(id).disabled=tp.ports;});
   // Spark & timing only exist on spark-ignition engines (diesel is CI).
   g('edIgnType').disabled=tp.ci;
@@ -10474,6 +10481,7 @@ function buildEngineCore(prevStoich,quiet){
   // for three of the shaft). Every air-flow rate below is displacement x rpm x this.
   engine.chargesPerRev=2*Math.PI/engine.strokeDiv;
   if(engine.ports){engine.cam='stock';delete engine.camPart;delete engine.headPart;engine.vvt=false;}   // 2-stroke / rotary: no poppet valvetrain
+  if(engine.ports||engine.ci||engine.cylinders<4||engine.cylinders%2!==0)engine.cylDeact=false;
   if(engine.ci)engine.injector='direct';                   // diesel: direct injection
   // Fuel: energy content, stoichiometry, knock rating and charge cooling.
   const fp=FUELS[engine.fuel]||FUELS.gasoline;
@@ -10755,6 +10763,7 @@ function computeCost(){
   c+={none:0,perf:200,stock:60,restrictive:30}[engine.airFilter]||0;
   c+={stock:0,sport:700,race:1600}[engine.cam]||0;
   if(engine.vvt)c+=1200;
+  if(engine.cylDeact)c+=450+50*engine.cylinders;
   if(engine.injector==='direct')c+=900;
   c+={distributor:150,wasted:400,coil:900}[engine.ignitionType]||0;
   if(engine.timingMode==='auto')c+=600;
@@ -11901,7 +11910,19 @@ function sparkRetardAt(rpm,map){
 // pumping work is real: this model's imep is a lumped correlation proportional to map, so it
 // already carries some of the pressure-level effect. Handing a supercharged engine +0.5 bar on top
 // of that would be a much larger claim than the missing exhaust term this change is fixing.
-function pumpingMEP(rpm,map){
+// Cylinder deactivation (VW ACT / GM AFM): on 4-stroke SI engines with >= 4 even cylinders,
+// when warm (coolant >= 60 C for oil-actuated lifters/cam lobes), in the 1100-4000 rpm
+// light-load window (MAP <= 0.75 * pAmbAtm(), i.e. <= ~35-40% full-load torque, never WOT),
+// half the cylinders close their valves (zero fuel, zero pumping, halved valvetrain/gas-ring friction).
+// Sources: Middendorf et al., MTZ Worldwide 73(4), 2012 (VW 1.4 TSI ACT: 1400-4000 rpm, <=100 Nm);
+// GM Active Fuel Management (SAE 2005-01-0762, ~800-3500 rpm light load, warm oil/coolant).
+function cylDeactActive(rpm,map){
+  const e=engine;
+  if(!e.cylDeact||e.ports||e.ci||e.cylinders<4||e.cylinders%2!==0)return false;
+  if(state.nitrousActive||state.coolant<60)return false;
+  return rpm>=1100&&rpm<=4000&&map<=0.75*pAmbAtm();
+}
+function pumpingMEP(rpm,map,actFrac=1){
   const Tex=egtAt(rpm,map);
   const prev=engine.boostNow;engine.boostNow=map;                  // backPressureBar reads it for the turbine
   const pExh=1+backPressureBar(rpm,Tex);
@@ -11910,17 +11931,17 @@ function pumpingMEP(rpm,map){
   // pushes out against p_exh and is pushed down by p_int. CI diesels are unthrottled (quality-governed),
   // so there is no intake throttle plate vacuum loss (Heywood §13.3).
   if(engine.ci)return pExh-Math.max(1,map);
-  return Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map);
+  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map))*actFrac;
 }
 // Friction + pumping mean effective pressure.
-function pumpFrictionMEP(rpm,map,oilFrictionMult){
-  let fmep=mechFrictionMEP(rpm,map)*oilFrictionMult;               // rubbing + auxiliary, derived (src/js/friction.js)
+function pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac=1){
+  let fmep=mechFrictionMEP(rpm,map,actFrac)*oilFrictionMult;       // rubbing + auxiliary, derived (src/js/friction.js)
   if(engine.intake==='supercharger'){
     const sc=SC_TYPE[engine.scType]||SC_TYPE.roots;
     const dP=Math.max(SC_BYPASS_FRAC*Math.max(0.2,engine.maxBoost),map-1.0+icDpBar(airFlowAt(rpm,map),map));
     fmep+=0.18*sc.drag*dP*(0.4+0.6*rpm/engine.redline);            // parasitic drive (by type), off-boost bypass floor (Eaton TVS) + intercooler drop
   }
-  fmep+=pumpingMEP(rpm,map);
+  fmep+=pumpingMEP(rpm,map,actFrac);
   fmep+=engine.altDragMEP;                                         // alternator belt drag (baseline)
   return fmep;
 }
@@ -12157,9 +12178,10 @@ function calcAtRpm(rpm,mapOverride){
     const ignF=sparkTimingFactor(rpm,map);
     imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
   }
-  imep=dieselImepLimit(imep);          // diesel peak-cylinder-pressure / smoke ceiling
+  const actFrac=cylDeactActive(rpm,map)?0.5:1;
+  imep=dieselImepLimit(imep)*actFrac;  // diesel peak-cylinder-pressure / smoke ceiling; half cylinders if CDA active
 
-  let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult));
+  let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac));
 
   const Vd=engine.displacement_L/1000;
   let torque=Math.max(0,(bmep*1e5*Vd)/engine.strokeDiv-electricalDragTorque(rpm,map));   // power strokes/rev per type, minus alternator load
@@ -12174,6 +12196,7 @@ function calcAtRpm(rpm,mapOverride){
 // vacuum (engine braking). fuelCut zeroes combustion for the rev limiter / overrun.
 function brakeTorqueRaw(rpm,map,fuelCut){
   const {coolF,oilFrictionMult}=tempFactors(state.coolant,state.oil);
+  const actFrac=(!fuelCut&&cylDeactActive(rpm,map))?0.5:1;
   let imep=0;
   if(!fuelCut){
     const ve=computeVE(rpm,map);
@@ -12182,11 +12205,11 @@ function brakeTorqueRaw(rpm,map,fuelCut){
       const ignF=sparkTimingFactor(rpm,map);
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
-    imep=dieselImepLimit(imep);
+    imep=dieselImepLimit(imep)*actFrac;
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
-  const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult);
+  const bmep=imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac);
   return (bmep*1e5*(engine.displacement_L/1000))/engine.strokeDiv-electricalDragTorque(rpm,map);
 }
 // Advance the turbo's actual boost toward what it can make at the current RPM (spool lag).
@@ -12686,7 +12709,8 @@ function nitrousFuelKgS(rpm){
 // The fuel metered at the live speed and manifold pressure, kg/s (state.ve must be current).
 function meteredFuelKgS(map){
   const T_k=effIAT(map,state.rpm)+273.15,MAP_pa=map*1e5,Vd=engine.displacement_L/1000;
-  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map));
+  const actFrac=cylDeactActive(state.rpm,map)?0.5:1;
+  const airMass_kg_s=(MAP_pa*Vd*(state.rpm/60)*engine.chargesPerRev*state.ve)/(287*T_k)*(1-egrRate(state.rpm,map))*actFrac;
   return (airMass_kg_s/curAFR(state.rpm,map))/engine.meteringEff*engine.typeBsfc+nitrousFuelKgS(state.rpm);
 }
 function updateEnginePhysics(){
@@ -14111,6 +14135,7 @@ function engineMass(){
   else if(engine.intake==='supercharger')m+=25;
   if(engine.layout==='v'||engine.layout==='boxer')m+=10;
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);
+  if(engine.cylDeact)m+=0.5*engine.cylinders;
   return Math.round(m);
 }
 // Parse a numeric field, keeping a legitimate 0 (unlike `+v||fallback`).
@@ -15264,7 +15289,8 @@ function steadyBSFC(rpm,map){
   const r=calcAtRpm(rpm,map);
   if(!(r.powerKW>0.5))return {bsfc:Infinity,r};
   const T=effIAT(map,rpm)+273.15, Vd=engine.displacement_L/1000;
-  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T)*(1-egrRate(rpm,map));
+  const actFrac=cylDeactActive(rpm,map)?0.5:1;
+  const air=(map*1e5*Vd*(rpm/60)*engine.chargesPerRev*r.ve)/(287*T)*(1-egrRate(rpm,map))*actFrac;
   const fuel=(air/curAFR(rpm,map))/engine.meteringEff*engine.typeBsfc;
   return {bsfc:fuel*3600*1000/r.powerKW,r};
 }
@@ -39457,6 +39483,8 @@ const ICD_FIELDS={
     trade:'Above it the valves bounce: power falls and the engine can be damaged. Keep it above the redline: lighter valves or stiffer springs raise it.'},
   edEgr:{adv:true,guide:'backpressure',what:'Cooled exhaust gas fed back into the intake.',
     trade:'It dilutes the charge, which slows and cools the burn: it holds off knock and cuts NOx. Where it is on it costs a little power.'},
+  edCylDeact:{adv:true,guide:'valvetrain',what:'Deactivates half the cylinders at light load by closing their intake and exhaust valves.',
+    trade:'Active cylinders run at higher load with less throttling loss and halved valvetrain friction, cutting cruise fuel use without hurting peak power.'},
   edIntake:{what:'How the air gets in: drawn in by the pistons, or pushed in by a turbo or a supercharger.',
     trade:'Boost packs more air into the same displacement, so more power, but brings knock closer and loads the internals. A turbo runs on exhaust energy and can lag; a supercharger is driven by the crank and answers at once.'},
   edBoost:{guide:'wastegate',what:'The pressure the turbo or supercharger aims for, above the air outside.',
@@ -39532,7 +39560,7 @@ const ICD_FIELDS={
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
 const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',
-  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
+  edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
   edIntakeSys:'intakeSys',edAirFilter:'airFilter',edRunner:'runner',edExhaust:'exhaust',edSilencer:'silencer',edCat:'cat',edFuel:'fuel',edOctane:'octane',
@@ -39594,7 +39622,7 @@ function icdSummary(c,r){
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
       ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm';
-    case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
+    case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');
     case 'flow':return o('edIntakeSys')+' · '+o('edRunner')+' · '+o('edExhaust')+' · '+o('edSilencer')+' · '+o('edCat');
@@ -41514,7 +41542,7 @@ function bindControls(){
     const tp=ENGINE_TYPE[e.target.value]||ENGINE_TYPE.petrol4,g=id=>document.getElementById(id);
     g('edCR').value=tp.crDef;g('edRedline').value=tp.redlineDef;
     if(e.target.value==='rotary'&&+g('edCyl').value>(tp.maxCyl||12))g('edCyl').value=2;
-    if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';}
+    if(tp.ports){g('edCam').value='stock';g('edVVT').value='no';g('edCylDeact').value='no';}
     syncDesignEnable();
   });
   // Editable ECU fuel map: click a cell to select it, then nudge its target richer/leaner.
