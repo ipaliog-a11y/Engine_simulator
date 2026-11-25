@@ -28,7 +28,9 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Why**: on a descent past the top-gear redline speed only the air held the car back. A Golf GTI Mk1 (34.7 Nm of
   drag at the limiter) now slows 0.56 m/s² harder 5% past it; on a 2 km 20% descent the open-road solver tops out at
   197.6 km/h (limiter 196.6) instead of 204.1.
-- **What moved**: FINGERPRINT_PLACEHOLDER
+- **What moved** (fingerprint, 186 of 5331 values): only lap times, by −0.005% to +0.024% (F40 +0.024%, Atom
+  +0.020%, RX-8 +0.011%), where a car touches its top-gear limiter; the E46 race's fuel per lap +0.33%. 0–100, top
+  speed and the dyno are unchanged, and `tools/scoreboard.mjs` is identical (0–100 mean error 9.1%, top speed 5.1%).
 - **Left open**: mid-shift and with the clutch slipping there is no drag (clutch open). The README's "known gaps"
   line for this is removed.
 
