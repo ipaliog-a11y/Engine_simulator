@@ -1251,6 +1251,76 @@ function dieselGrossImep(rpm,map,ve){
            *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm)*wallImepFactor(rpm);
   return eta*air/(lam*st)*(e.fuelLHV||42.8)*1e6/1e5;               // bar
 }
+// ---- E13: Piston ring blow-by, crankcase pressure & oil consumption ----
+// Compressible orifice flow through the piston ring end gap (Heywood, Internal Combustion Engine
+// Fundamentals §13.3; Namazian & Heywood SAE 820088). Healthy 4-stroke blow-by is ~0.5–1.0% of
+// intake air mass flow at rated speed/load; radial ring/bore wear widens the end gap and raises
+// crankcase pressure against the PCV/breather orifice.
+const BLOWBY_CD=0.85;           // sharp-edged rectangular ring-gap orifice discharge coeff (Namazian & Heywood)
+const BLOWBY_GAMMA=1.35;        // burned/crevice gas specific heat ratio
+const BLOWBY_T_CREV=450;        // crevice gas temperature cooled by piston/wall (K)
+const BLOWBY_PSI=Math.sqrt(BLOWBY_GAMMA)*Math.pow(2/(BLOWBY_GAMMA+1),(BLOWBY_GAMMA+1)/(2*(BLOWBY_GAMMA-1)));
+const BLOWBY_R_CRIT=Math.pow(2/(BLOWBY_GAMMA+1),BLOWBY_GAMMA/(BLOWBY_GAMMA-1));
+function blowbyOrificeKgS(rpm,map,imepBar,health,ringsKey,e=engine){
+  if(!e||e.type==='electric'||!(rpm>0))return 0;
+  const B=(e.bore_mm||81)/1000, S=(e.stroke_mm||78)/1000, nc=e.cylinders||4;
+  // Nominal hot ring-gap x top-land clearance area scales with B^2 (0.0022*B gap x 0.003*B radial land)
+  const area1=e.type==='rotary'?(1.35e-5*B*S):(9.0e-6*B*B);
+  const ringMult=(typeof RING_SPEC!=='undefined'&&ringsKey&&RING_SPEC[ringsKey])?RING_SPEC[ringsKey].gapMult:1;
+  const wear=clamp(1-(health!=null?health:1),0,1);
+  const wearMult=1+1.5*wear+4.5*wear*wear;
+  const cdA=BLOWBY_CD*nc*area1*ringMult*wearMult;
+  // Effective driving pressure over the high-pressure window (compression + combustion/expansion)
+  const pComp=Math.max(0.2,map)*Math.pow(Math.max(4,e.compression||10),1.32);
+  const pPeak=pComp+Math.max(0,imepBar||0)*3.2;
+  const p1=Math.max(map,0.28*pPeak)*1e5;   // Pa
+  const p2=1.013e5;                        // crankcase ~1 atm (Pa)
+  if(p1<=p2)return 0;
+  if(p2/p1<=BLOWBY_R_CRIT){
+    return cdA*p1*BLOWBY_PSI/Math.sqrt(287*BLOWBY_T_CREV);
+  }
+  const pr=p2/p1, rho1=p1/(287*BLOWBY_T_CREV);
+  const term=(2*BLOWBY_GAMMA/(BLOWBY_GAMMA-1))*(Math.pow(pr,2/BLOWBY_GAMMA)-Math.pow(pr,(BLOWBY_GAMMA+1)/BLOWBY_GAMMA));
+  return cdA*Math.sqrt(Math.max(0,2*rho1*p1*term));
+}
+function blowbyIntakeKgS(rpm,map,ve,e=engine){
+  const T_k=(typeof effIAT==='function'?effIAT(map,rpm):25)+273.15;
+  const Vd=(e.displacement_L||1.6)/1000;
+  return (map*1e5*Vd*(rpm/60)*(e.chargesPerRev||0.5)*(ve||0.85))/(287*T_k);
+}
+function blowbyTrappedFactor(rpm,map,ve,imepBar){
+  const h=state.engineHealth!=null?state.engineHealth:1;
+  const rk=engine.rings||'stock';
+  if(h>=1&&rk==='stock')return 1;
+  const mActual=blowbyOrificeKgS(rpm,map,imepBar,h,rk,engine);
+  const mBase=blowbyOrificeKgS(rpm,map,imepBar,1,'stock',engine);
+  const mAir=Math.max(1e-4,blowbyIntakeKgS(rpm,map,ve,engine));
+  return clamp(1-(mActual-mBase)/mAir,0.70,1.02);
+}
+function blowbyAt(rpm,map,imepBar,health,e=engine){
+  if(!e||e.type==='electric'||!(rpm>0))return {kgS:0,lpm:0,crankcaseKpa:0,oilMlh:0};
+  const kgS=blowbyOrificeKgS(rpm,map,imepBar,health,e.rings||'stock',e);
+  const lpm=(kgS/1.204)*60000;   // volumetric flow at STP (1.204 kg/m3)
+  let crankcaseKpa=0;
+  if(e.type!=='twostroke'){
+    const nc=e.cylinders||4;
+    const pcvCap=map<0.95?nc*1.8e-4*clamp((0.95-map)/0.6,0,1):0;
+    const mNet=Math.max(0,kgS-pcvCap);
+    const cdABreather=0.65*nc*1.5e-5;
+    const dpPa=0.5*Math.pow(mNet/cdABreather,2)/1.0;
+    const vacKpa=pcvCap>0?-2.5*clamp(1-kgS/Math.max(1e-9,pcvCap),0,1):0;
+    crankcaseKpa=vacKpa+dpPa/1000;
+  }
+  const B=(e.bore_mm||81)/1000, S=(e.stroke_mm||78)/1000, nc=e.cylinders||4;
+  const Sp=2*S*rpm/60;
+  const ringOil=(typeof RING_SPEC!=='undefined'&&e.rings&&RING_SPEC[e.rings])?RING_SPEC[e.rings].oilMult:1;
+  const wear=clamp(1-(health!=null?health:1),0,1);
+  const wearOil=1+4*wear+8*wear*wear;
+  // Healthy 4-stroke oil consumption: ring scraping (~B*nc*Sp) + blow-by mist carryover + crankcase seal push
+  const oilBaseMlh=e.type==='twostroke'?0:(1.4*nc*B*Sp+18000*kgS+1.2*Math.max(0,crankcaseKpa));
+  const oilMlh=oilBaseMlh*ringOil*wearOil;
+  return {kgS,lpm,crankcaseKpa,oilMlh};
+}
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
 // it and uses wide-open throttle (steady state) at each RPM.
 function calcAtRpm(rpm,mapOverride){
@@ -1266,6 +1336,7 @@ function calcAtRpm(rpm,mapOverride){
   }
   const actFrac=cylDeactActive(rpm,map)?0.5:1;
   imep=dieselImepLimit(imep)*actFrac;  // diesel peak-cylinder-pressure / smoke ceiling; half cylinders if CDA active
+  imep*=blowbyTrappedFactor(rpm,map,ve,imep);
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac));
 
@@ -1292,6 +1363,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
     imep=dieselImepLimit(imep)*actFrac;
+    imep*=blowbyTrappedFactor(rpm,map,ve,imep);
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
@@ -1896,12 +1968,16 @@ function updateEnginePhysics(){
     if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
       state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
       state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
+      const bb=state.rpm>50?blowbyAt(state.rpm,map,0,state.engineHealth,engine):{kgS:0,lpm:0,crankcaseKpa:0,oilMlh:0};
+      state.blowbyKgS=bb.kgS;state.blowbyLpm=bb.lpm;state.crankcaseKpa=bb.crankcaseKpa;state.oilConsMlh=bb.oilMlh;
       computeEmissions();return;
     }
     state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
     const r=calcAtRpm(state.rpm,map);
     state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
     state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+    {const bb=blowbyAt(state.rpm,map,state.fuelCut?0:r.bmep,state.engineHealth,engine);
+     state.blowbyKgS=bb.kgS;state.blowbyLpm=bb.lpm;state.crankcaseKpa=bb.crankcaseKpa;state.oilConsMlh=bb.oilMlh;}
     if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
     else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
 

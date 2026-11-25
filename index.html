@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 470</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 471</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1009,6 +1009,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edRedline">REDLINE (rpm)</label><input type="number" id="edRedline" min="2000" max="11000" step="50" value="7000"></div>
 <div class="field"><label for="edBalShaft">BALANCE SHAFT</label><select id="edBalShaft"><option value="no">NONE</option><option value="yes">BALANCE SHAFT</option></select></div>
 <div class="field"><label for="edDrySump">LUBRICATION</label><select id="edDrySump"><option value="wet">WET SUMP (STOCK)</option><option value="dry">DRY SUMP</option></select></div>
+<div class="field"><label for="edRings">PISTON RINGS</label><select id="edRings"><option value="stock">STOCK RINGS</option><option value="gapless">GAPLESS / RACE</option><option value="lowtension">LOW-TENSION</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
@@ -4147,6 +4148,7 @@ Most other tests check behaviour that is true of real cars: a bigger turbo spool
 <div class="stat" id="statOilP" style="display:none" title="Oil gallery pressure"><span class="label">OIL PRESSURE</span><div class="value">—</div><span class="unit">bar</span></div>
 <div class="stat" id="statTurbo" style="display:none" title="Turbocharger cartridge health"><span class="label">TURBO</span><div class="value">100</div><span class="unit">%</span></div>
 <div class="stat" id="statPF" style="display:none" title="Particulate filter soot load and regeneration status"><span class="label">DPF / GPF</span><div class="value">0.0</div><span class="unit">g</span></div>
+<div class="stat" id="statBlowby" style="display:none" title="Ring blow-by flow, crankcase pressure and oil consumption"><span class="label">BLOW-BY</span><div class="value">0.0</div><span class="unit">L/min</span></div>
 </div>
 <div id="liveEmRows">
 <div class="gauge-row">
@@ -4899,7 +4901,8 @@ function mechFrictionMEP(N,map,actFrac=1){
   const {B,S,nc,rc,vt,nMain,nPin,nCam,nv,Lv,Dm,Dp}=f,B2S=B*B*S,Sp=2*S*N/60000,bnd=1+500/N;
   const brg=(D,n)=>3.03e-4*N*D*D*D*FRIC_BRG_LD*D*n/(B2S*nc);
   const crank=1.22e5*Dm/(B2S*nc)+brg(Dm,nMain)+1.35e-10*Dm*Dm*N*N*nMain/nc;
-  const recip=2.94e2*Sp/B+4.06e4*bnd/(B*B)+brg(Dp,nPin);
+  const ringFricMult=(typeof RING_SPEC!=='undefined'&&engine.rings&&RING_SPEC[engine.rings])?RING_SPEC[engine.rings].fricMult:1;
+  const recip=2.94e2*Sp/B+4.06e4*bnd*ringFricMult/(B*B)+brg(Dp,nPin);
   const gas=6.89*Math.max(0.2,map)*(0.088*rc+0.182*Math.pow(rc,1.33-2*FRIC_K*Sp))*actFrac;
   const valve=244*N*nCam/(B2S*nc)+(4.12+vt.ff*bnd*nv/(S*nc)+vt.rf*N*nv/(S*nc)
              +vt.oh*Math.pow(Lv,1.5)*Math.sqrt(N)*nv/(B*S*nc)+vt.om*bnd*Lv*nv/(S*nc))*actFrac;
@@ -6254,6 +6257,15 @@ const AIR_FILTER={
   restrictive:{label:'RESTRICTIVE',  kPa:6.5, housing:'airbox',media:'paper',clogged:true}
 };
 
+// Piston ring pack options (E13): end-gap orifice area, boundary friction (Patton/Heywood SAE 890836),
+// and oil film carryover. Stock is the baseline (1.0x); gapless interlocking top rings cut gap leakage
+// at a small friction/cost penalty; low-tension rings cut boundary friction at higher blow-by & oil use.
+const RING_SPEC={
+  stock:     {label:'STOCK RINGS',    gapMult:1.00,fricMult:1.00,oilMult:1.00,cost:0},
+  gapless:   {label:'GAPLESS / RACE', gapMult:0.25,fricMult:1.05,oilMult:0.65,cost:280},
+  lowtension:{label:'LOW-TENSION',    gapMult:1.35,fricMult:0.75,oilMult:1.30,cost:180}
+};
+
 // The engine build spec. Everything downstream derives from this object, so new
 // subsystems (electrical, cooling, etc.) can be added later as more fields here.
 // Default is a modern 1.6 L naturally-aspirated sport four (high compression, DI, VVT,
@@ -6263,7 +6275,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,rings:'stock',valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',railPress:'stock',pilotSplit:false,glowPlugs:false,ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false
@@ -10394,7 +10406,7 @@ let engine=Object.assign({},DEFAULT_ENGINE);
 let buildRev=0;   // bumped each build so the dyno cache invalidates
 
 // throttle & load are the driver inputs; rpm & map are now integrated by the sim.
-let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,latG:0,sumpStarve:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',turboHealth:1.0,turboBlown:false,turboWearCause:'',pfSootG:0,pfRegen:false,pfSootRate:0,fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
+let state={throttle:0.20,load:0.20,elecLoad:0.30,rpm:1000,map:0.45,afr:14.7,iat:25,coolant:90,oil:100,tCat:450,oilP:0,latG:0,sumpStarve:0,blowbyKgS:0,blowbyLpm:0,crankcaseKpa:0,oilConsMlh:0,torque:0,powerHP:0,powerKW:0,bsfc:0,thermalEff:0,fuelFlowLph:0,knockRisk:0,ve:0.85,bmep:0,boostActual:0,batterySOC:1.0,systemVoltage:14.0,engineHealth:1.0,blown:false,wearCause:'',turboHealth:1.0,turboBlown:false,turboWearCause:'',pfSootG:0,pfRegen:false,pfSootRate:0,fuelCut:false,firing:true,ignOn:true,crank:0,nitrousActive:false,nitrousCharge:1.0,wmCharge:1.0,emCO:0,emHC:0,emNOx:0,emPM:0,emCO2:0,emO2:0,emRating:100};
 let lastTime=performance.now();
 let vizMode='engine';
 let autoThermal=false;
@@ -10429,6 +10441,7 @@ function readEngineFromForm(){
     redline:clamp(Math.round(+g('edRedline').value||tp.redlineDef),tp.redMin,tp.redMax),
     balShaft:g('edBalShaft').value==='yes',
     drySump:g('edDrySump').value==='dry',
+    rings:g('edRings')?g('edRings').value:'stock',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -10499,6 +10512,7 @@ function applyEngineToForm(e){
   g('edStroke').value=e.stroke_mm;g('edCR').value=e.compression;g('edRedline').value=e.redline;
   g('edBalShaft').value=e.balShaft?'yes':'no';
   g('edDrySump').value=e.drySump?'dry':'wet';
+  if(g('edRings'))g('edRings').value=(typeof RING_SPEC!=='undefined'&&RING_SPEC[e.rings])?e.rings:'stock';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -10570,6 +10584,7 @@ function syncDesignEnable(){
   g('edBalShaft').disabled=!balOk;
   if(type==='twostroke')g('edDrySump').value='wet';
   g('edDrySump').disabled=(type==='twostroke');
+  if(g('edRings')){if(type==='rotary')g('edRings').value='stock';g('edRings').disabled=(type==='rotary');}
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -10757,7 +10772,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.blowbyKgS=0;state.blowbyLpm=0;state.crankcaseKpa=0;state.oilConsMlh=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a
@@ -10915,6 +10930,7 @@ function computeCost(){
   c+={inline:0,v:700,boxer:1100,rotary:0}[engine.layout]||0;
   if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
   if(engine.drySump&&engine.type!=='twostroke')c+=2200;          // billet 3-stage scavenge pump, external tank & AN lines
+  if(engine.rings&&typeof RING_SPEC!=='undefined'&&RING_SPEC[engine.rings])c+=RING_SPEC[engine.rings].cost;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -12383,6 +12399,76 @@ function dieselGrossImep(rpm,map,ve){
            *faEta(1/lam)/faEta(1/LAMBDA_REF_CI)*burnPhasing(rpm)*wallImepFactor(rpm);
   return eta*air/(lam*st)*(e.fuelLHV||42.8)*1e6/1e5;               // bar
 }
+// ---- E13: Piston ring blow-by, crankcase pressure & oil consumption ----
+// Compressible orifice flow through the piston ring end gap (Heywood, Internal Combustion Engine
+// Fundamentals §13.3; Namazian & Heywood SAE 820088). Healthy 4-stroke blow-by is ~0.5–1.0% of
+// intake air mass flow at rated speed/load; radial ring/bore wear widens the end gap and raises
+// crankcase pressure against the PCV/breather orifice.
+const BLOWBY_CD=0.85;           // sharp-edged rectangular ring-gap orifice discharge coeff (Namazian & Heywood)
+const BLOWBY_GAMMA=1.35;        // burned/crevice gas specific heat ratio
+const BLOWBY_T_CREV=450;        // crevice gas temperature cooled by piston/wall (K)
+const BLOWBY_PSI=Math.sqrt(BLOWBY_GAMMA)*Math.pow(2/(BLOWBY_GAMMA+1),(BLOWBY_GAMMA+1)/(2*(BLOWBY_GAMMA-1)));
+const BLOWBY_R_CRIT=Math.pow(2/(BLOWBY_GAMMA+1),BLOWBY_GAMMA/(BLOWBY_GAMMA-1));
+function blowbyOrificeKgS(rpm,map,imepBar,health,ringsKey,e=engine){
+  if(!e||e.type==='electric'||!(rpm>0))return 0;
+  const B=(e.bore_mm||81)/1000, S=(e.stroke_mm||78)/1000, nc=e.cylinders||4;
+  // Nominal hot ring-gap x top-land clearance area scales with B^2 (0.0022*B gap x 0.003*B radial land)
+  const area1=e.type==='rotary'?(1.35e-5*B*S):(9.0e-6*B*B);
+  const ringMult=(typeof RING_SPEC!=='undefined'&&ringsKey&&RING_SPEC[ringsKey])?RING_SPEC[ringsKey].gapMult:1;
+  const wear=clamp(1-(health!=null?health:1),0,1);
+  const wearMult=1+1.5*wear+4.5*wear*wear;
+  const cdA=BLOWBY_CD*nc*area1*ringMult*wearMult;
+  // Effective driving pressure over the high-pressure window (compression + combustion/expansion)
+  const pComp=Math.max(0.2,map)*Math.pow(Math.max(4,e.compression||10),1.32);
+  const pPeak=pComp+Math.max(0,imepBar||0)*3.2;
+  const p1=Math.max(map,0.28*pPeak)*1e5;   // Pa
+  const p2=1.013e5;                        // crankcase ~1 atm (Pa)
+  if(p1<=p2)return 0;
+  if(p2/p1<=BLOWBY_R_CRIT){
+    return cdA*p1*BLOWBY_PSI/Math.sqrt(287*BLOWBY_T_CREV);
+  }
+  const pr=p2/p1, rho1=p1/(287*BLOWBY_T_CREV);
+  const term=(2*BLOWBY_GAMMA/(BLOWBY_GAMMA-1))*(Math.pow(pr,2/BLOWBY_GAMMA)-Math.pow(pr,(BLOWBY_GAMMA+1)/BLOWBY_GAMMA));
+  return cdA*Math.sqrt(Math.max(0,2*rho1*p1*term));
+}
+function blowbyIntakeKgS(rpm,map,ve,e=engine){
+  const T_k=(typeof effIAT==='function'?effIAT(map,rpm):25)+273.15;
+  const Vd=(e.displacement_L||1.6)/1000;
+  return (map*1e5*Vd*(rpm/60)*(e.chargesPerRev||0.5)*(ve||0.85))/(287*T_k);
+}
+function blowbyTrappedFactor(rpm,map,ve,imepBar){
+  const h=state.engineHealth!=null?state.engineHealth:1;
+  const rk=engine.rings||'stock';
+  if(h>=1&&rk==='stock')return 1;
+  const mActual=blowbyOrificeKgS(rpm,map,imepBar,h,rk,engine);
+  const mBase=blowbyOrificeKgS(rpm,map,imepBar,1,'stock',engine);
+  const mAir=Math.max(1e-4,blowbyIntakeKgS(rpm,map,ve,engine));
+  return clamp(1-(mActual-mBase)/mAir,0.70,1.02);
+}
+function blowbyAt(rpm,map,imepBar,health,e=engine){
+  if(!e||e.type==='electric'||!(rpm>0))return {kgS:0,lpm:0,crankcaseKpa:0,oilMlh:0};
+  const kgS=blowbyOrificeKgS(rpm,map,imepBar,health,e.rings||'stock',e);
+  const lpm=(kgS/1.204)*60000;   // volumetric flow at STP (1.204 kg/m3)
+  let crankcaseKpa=0;
+  if(e.type!=='twostroke'){
+    const nc=e.cylinders||4;
+    const pcvCap=map<0.95?nc*1.8e-4*clamp((0.95-map)/0.6,0,1):0;
+    const mNet=Math.max(0,kgS-pcvCap);
+    const cdABreather=0.65*nc*1.5e-5;
+    const dpPa=0.5*Math.pow(mNet/cdABreather,2)/1.0;
+    const vacKpa=pcvCap>0?-2.5*clamp(1-kgS/Math.max(1e-9,pcvCap),0,1):0;
+    crankcaseKpa=vacKpa+dpPa/1000;
+  }
+  const B=(e.bore_mm||81)/1000, S=(e.stroke_mm||78)/1000, nc=e.cylinders||4;
+  const Sp=2*S*rpm/60;
+  const ringOil=(typeof RING_SPEC!=='undefined'&&e.rings&&RING_SPEC[e.rings])?RING_SPEC[e.rings].oilMult:1;
+  const wear=clamp(1-(health!=null?health:1),0,1);
+  const wearOil=1+4*wear+8*wear*wear;
+  // Healthy 4-stroke oil consumption: ring scraping (~B*nc*Sp) + blow-by mist carryover + crankcase seal push
+  const oilBaseMlh=e.type==='twostroke'?0:(1.4*nc*B*Sp+18000*kgS+1.2*Math.max(0,crankcaseKpa));
+  const oilMlh=oilBaseMlh*ringOil*wearOil;
+  return {kgS,lpm,crankcaseKpa,oilMlh};
+}
 // mapOverride lets the live view pass the integrated manifold pressure; the dyno omits
 // it and uses wide-open throttle (steady state) at each RPM.
 function calcAtRpm(rpm,mapOverride){
@@ -12398,6 +12484,7 @@ function calcAtRpm(rpm,mapOverride){
   }
   const actFrac=cylDeactActive(rpm,map)?0.5:1;
   imep=dieselImepLimit(imep)*actFrac;  // diesel peak-cylinder-pressure / smoke ceiling; half cylinders if CDA active
+  imep*=blowbyTrappedFactor(rpm,map,ve,imep);
 
   let bmep=Math.max(0.05,imep-pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac));
 
@@ -12424,6 +12511,7 @@ function brakeTorqueRaw(rpm,map,fuelCut){
       imep=(sparkGrossImep(rpm,map,ve)*coolF*ignF*ignitionHealth(rpm)+nitrousImep())*healthFactor();
     }
     imep=dieselImepLimit(imep)*actFrac;
+    imep*=blowbyTrappedFactor(rpm,map,ve,imep);
     const knock=computeKnockRisk(rpm,map);
     if(knock>60)imep*=1-0.32*((knock-60)/40);
   }
@@ -13028,12 +13116,16 @@ function updateEnginePhysics(){
     if(state.firing===false&&!isHybrid()){      // stopped, coasting down or cranking: nothing burns
       state.fuelCut=true;state.torque=0;state.powerKW=0;state.powerHP=0;state.bmep=0;state.knockRisk=0;state.cylPmax=0;state.preIgn=0;
       state.fuelFlowLph=0;state.heatFuelLph=0;state.bsfc=999;state.thermalEff=0;
+      const bb=state.rpm>50?blowbyAt(state.rpm,map,0,state.engineHealth,engine):{kgS:0,lpm:0,crankcaseKpa:0,oilMlh:0};
+      state.blowbyKgS=bb.kgS;state.blowbyLpm=bb.lpm;state.crankcaseKpa=bb.crankcaseKpa;state.oilConsMlh=bb.oilMlh;
       computeEmissions();return;
     }
     state.fuelCut=overrunFuelCut()||state.rpm>=engine.redline;
     const r=calcAtRpm(state.rpm,map);
     state.torque=r.torque;state.powerKW=r.powerKW;state.powerHP=r.powerHP;
     state.bmep=r.bmep;state.ve=r.ve;state.knockRisk=r.knock;
+    {const bb=blowbyAt(state.rpm,map,state.fuelCut?0:r.bmep,state.engineHealth,engine);
+     state.blowbyKgS=bb.kgS;state.blowbyLpm=bb.lpm;state.crankcaseKpa=bb.crankcaseKpa;state.oilConsMlh=bb.oilMlh;}
     if(state.fuelCut){state.cylPmax=0;state.preIgn=0;}
     else{const tr=cylTraceAt(state.rpm,map,activeAdvance(state.rpm,map));state.cylPmax=tr.pMax;state.preIgn=tr.Ipre;}
 
@@ -31211,6 +31303,11 @@ function diagnoseEngine(){
     add('err','turboWear',tr('TURBO DAMAGE IN PROGRESS'),
       tr('Turbo health is falling from')+' '+tr(state.turboWearCause)+'.',
       tr('Ease boost or rpm, or fit a larger compressor wheel.'));
+  if(!state.blown&&(state.engineHealth<0.75||(state.crankcaseKpa||0)>4))
+    add(state.engineHealth<0.45?'err':'warn','blowby',tr('EXCESS BLOW-BY / WORN RINGS'),
+      tr('Ring wear raised blow-by to {l} L/min and crankcase pressure to +{p} kPa (oil use {o} L/1000 km).')
+        .replace('{l}',(state.blowbyLpm||0).toFixed(1)).replace('{p}',Math.max(0,state.crankcaseKpa||0).toFixed(1)).replace('{o}',((state.oilConsMlh||0)*0.01).toFixed(2)),
+      tr('Rebuild with BUILD & DYNO, or fit gapless piston rings.'));
   else if(state.coolant>115)
     add('warn','hot',tr('OVERHEAT ON THE BENCH'),
       tr('Coolant is at {t} °C.').replace('{t}',Math.round(state.coolant)),
@@ -31291,6 +31388,11 @@ function renderDynoResult(force){
     (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
     (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
     (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
+  const bbRef=typeof blowbyAt==='function'?blowbyAt(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),at(s.peakHPrpm||engine.redline).tq>0?10:5,state.engineHealth,engine):null;
+  const bbAir=bbRef&&typeof blowbyIntakeKgS==='function'?blowbyIntakeKgS(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),0.9,engine):0;
+  const bbPct=bbRef&&bbAir>1e-5?(bbRef.kgS/bbAir*100):0;
+  const bbNote=bbRef?('<br><b>'+tr('BLOW-BY & RING SEALING')+'</b> — '+bbRef.lpm.toFixed(1)+' L/min ('+bbPct.toFixed(2)+'% '+tr('intake')+')'+
+    (engine.type!=='twostroke'?' · '+tr('crankcase')+' '+(bbRef.crankcaseKpa>=0?'+':'')+bbRef.crankcaseKpa.toFixed(1)+' kPa · '+tr('oil')+' '+(bbRef.oilMlh*0.01).toFixed(2)+' L/1000 km':'')):'';
   box.innerHTML='<h4>'+tr('DYNO RESULT')+'</h4>'+
     '<div class="dr-cards">'+
       card('hp',tr('PEAK POWER')+' — '+tr('BEST-POWER PULL'),s.peakHP+' hp',Math.round(kW(s.peakHP))+' kW @ '+s.peakHPrpm+' rpm')+
@@ -31299,7 +31401,7 @@ function renderDynoResult(force){
     '</div>'+
     '<p class="dr-note"><b>'+tr('BEST-POWER PULL')+'</b> — '+tr('wide open throttle at the best-power mixture, 25 °C intake, 90 °C coolant: the figures the grade and the objectives use, and what MAX POWER on the LIVE tab drives to.')+'<br>'+
     '<b>'+tr('YOUR PULL (AS TUNED)')+'</b> — '+tr('the curve drawn above, at the mixture and conditions set right now')+' ('+tuned+', '+Math.round(state.iat)+' °C). '+
-    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+balNote+'</p>'+
+    tr('It is what the PDF report tabulates.')+(dynoPulls.length?' '+dynoPulls.length+' '+tr('logged pull(s) overlaid on the chart.'):'')+balNote+bbNote+'</p>'+
     dynoDiagHtml(diag)+
     dynoTableToggle(step)+
     '<table class="dr-table" id="dynoTable"'+(dynoTableOpen?'':' hidden')+'><thead><tr><th>RPM</th><th>HP</th><th>kW</th><th>Nm</th><th>lb-ft</th>'+(boosted?'<th>'+tr('BOOST')+' bar</th>':'')+'</tr></thead><tbody>'+
@@ -31504,6 +31606,18 @@ function updateUI(){
         tbEl.querySelector('.value').textContent=state.turboBlown?tr('FAILED'):th;
         tbEl.querySelector('.unit').textContent=state.turboBlown?'':'%';
         tbEl.className='stat'+(state.turboBlown||th<30?' danger':(th<70?' warning':''));
+      }
+    }
+    const bbEl=document.getElementById('statBlowby');
+    if(bbEl){
+      const hasBb=!isElectric();
+      bbEl.style.display=hasBb?'':'none';
+      if(hasBb){
+        const lpm=state.blowbyLpm||0, cc=state.crankcaseKpa||0, oil=(state.oilConsMlh||0)*0.01;
+        bbEl.querySelector('.value').textContent=lpm.toFixed(1);
+        bbEl.querySelector('.unit').textContent='L/min'+(engine.type!=='twostroke'?' · '+(cc>=0?'+':'')+cc.toFixed(1)+' kPa':'');
+        bbEl.title=tr('Blow-by')+': '+lpm.toFixed(1)+' L/min · '+tr('Crankcase')+': '+(cc>=0?'+':'')+cc.toFixed(1)+' kPa · '+tr('Oil')+': '+oil.toFixed(2)+' L/1000 km';
+        bbEl.className='stat'+(cc>5||state.engineHealth<0.45?' danger':cc>2.5||state.engineHealth<0.75?' warning':'');
       }
     }
   }
@@ -39865,6 +39979,8 @@ const ICD_FIELDS={
     trade:'Smooths out engine vibration (higher NVH smoothness) at a small cost in parasitic bearing/drive friction, mass and build cost. Disabled on inherently balanced layouts (I6, F6, V8, V12, rotary).'},
   edDrySump:{adv:true,guide:'friction',what:'Oil system: a baffled wet sump pan under the crank (stock), or a dry sump with an external tank and multi-stage scavenge pump.',
     trade:'A wet sump starves the oil pickup under sustained lateral g (>1.05 g) as the oil surface tilts (tan θ = ay/g). Dry sump eliminates cornering starvation at a cost in scavenge pump drag, +8 kg mass and +$2,200.'},
+  edRings:{adv:true,guide:'friction',what:'Piston ring pack: standard 3-piece rings (stock), interlocking gapless top rings, or thin low-tension eco rings.',
+    trade:'Gapless rings cut end-gap blow-by and oil carryover at a small ring-friction and cost penalty (+$280). Low-tension rings reduce boundary friction for better efficiency at slightly higher blow-by and oil use (+$180).'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
@@ -39969,7 +40085,7 @@ const ICD_FIELDS={
     trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
-const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',edDrySump:'drySump',
+const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',edDrySump:'drySump',edRings:'rings',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
@@ -40032,7 +40148,7 @@ function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
-      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'')+(g('edDrySump')==='dry'?' · '+tr('DRY SUMP'):'');
+      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'')+(g('edDrySump')==='dry'?' · '+tr('DRY SUMP'):'')+(g('edRings')&&g('edRings')!=='stock'?' · '+o('edRings'):'');
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');

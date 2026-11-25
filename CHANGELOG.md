@@ -18,6 +18,12 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Piston ring blow-by & ring sealing (build 471)
+
+- **Derived ring-gap blow-by, crankcase pressure & oil consumption (`blowbyOrificeKgS`, `blowbyAt`, `blowbyTrappedFactor`)**: compressible orifice flow through the piston ring end gap ($\dot{m} = C_d A_{\text{gap}} \Psi p_1 / \sqrt{R T_{\text{crev}}}$ choked or subsonic Saint-Venant, Heywood §13.3 / Namazian & Heywood SAE 820088) gives ~0.78% of intake air flow on a healthy stock 1.6 L I4 at 6000 rpm WOT (`trap = 1.0`, existing healthy/stock power & torque unchanged). As `engineHealth` wears, widened ring gaps raise blow-by, crankcase pressure (PCV vacuum vs breather orifice), oil consumption, and trapped-mass torque loss.
+- **Opt-in `PISTON RINGS` on `BLOCK` (`STOCK RINGS` default, `GAPLESS / RACE`, `LOW-TENSION`) & LIVE/dyno telemetry**: gapless rings cut blow-by (0.25×) and oil carryover (0.65×) at +5% ring boundary friction (+\$280); low-tension rings cut ring boundary friction by 25% (Patton/Heywood SAE 890836) at 1.35× blow-by and 1.30× oil use (+\$180). Surfaced in `#statBlowby`, `diagnoseEngine()`, and the dyno summary.
+- **Checks**: added `tests/test293.mjs` (`293`, `276`, `288` pass).
+
 ### Diesel common rail & glow plugs (build 470)
 
 - **Opt-in `COMMON RAIL` (1600 / 2000 / 2500 bar) & `PILOT INJECTION` (`PILOT + MAIN SPLIT`) on `FUEL & SPARK`** (CI diesel only, default `STOCK (UNIT / VE)` and `NONE` so existing diesel presets do not move): higher rail pressure ($\dot{m} \propto \sqrt{\Delta p}$, $p_{\text{ref}} = 1350\text{ bar}$, Bosch Automotive Handbook) shortens mixing-controlled burn (`dieselBurnTimeFactor`) and ignition delay (`dieselIgnDelayFactor`), cuts combustion noise (`dieselCombNoiseDbDelta`, up to −5.6 dB with 2500 bar + pilot split), and shifts the NOx/PM trade-off (finer atomization cuts PM while higher peak flame temperature raises NOx; pilot split softens the premixed spike for −12% NOx / +8% PM), at a derived CP3/CP4 pump FMEP (`mechFrictionMEP`), +4 kg mass, and +\$600–\$1,400 (+\$250 pilot split).
