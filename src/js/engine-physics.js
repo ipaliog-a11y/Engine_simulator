@@ -1396,8 +1396,11 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
   // Charge-system fill (see bearingCoeff's neighbour): only while boost is climbing, so a lit launch
   // pays nothing; the air to raise the charge volume from b to b2 costs the compressor's work per kg.
   const V=engine.chargeVol||0, T01=(state.iat!=null?state.iat:20)+273.15;
+  const et=engine.intake==='turbo'?E_TURBO[engine.eTurbo]:null;
+  const etActive=!!(et&&et.maxW>0);
+  let eElSum=0;
   for(let k=0;k<sub;k++){
-    const n=Math.sqrt(2*E/J)*60/(2*Math.PI);
+    const w=Math.sqrt(2*E/J), n=w*60/(2*Math.PI);
     // Closing the throttle throttles BOTH sides. Cooling the exhaust while leaving the compressor
     // swallowing full airflow makes a lift actively BRAKE the shaft rather than let it coast.
     // The compressor draws AMBIENT air. This passed the charge temperature after the compressor and the
@@ -1411,7 +1414,8 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     // FALLS only as fast as the engine empties the volume: tau = (air held) / (air swallowed). Letting
     // it fall instantly with every dip in shaft speed, and charging the refill each time, burned
     // energy in a loop — with a real-sized charge volume that stalled spool above 1 bar.
-    const bShaft=clamp(r.pr-1,0,boostTarget(rpm));
+    const tgtB=boostTarget(rpm), rawB=(r.prRaw!=null?r.prRaw:r.pr)-1;
+    const bShaft=clamp(r.pr-1,0,tgtB);
     let b2=bShaft;
     if(bShaft<b){
       const Tch=effIAT(1+b,rpm)+273.15, held=V*(1+b)*1e5/(287*Tch), swallow=Math.max(1e-4,mAirStep);
@@ -1420,25 +1424,45 @@ function advanceShaft(shaftE,rpm,boostNow,throttle,dt,hMax=0.002){
     const dB=Math.max(0,b2-b);
     const pr=1+0.5*(b+b2), dm=V*dB*1e5/(287*(effIAT(pr,rpm)+273.15));
     // one shaft's share of it: the active turbos fill the volume together (build 290)
-    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/unitsAt(rpm);
-    const Enext=E+(r.net-loss)*h-fill;
+    const units=unitsAt(rpm);
+    const fill=dm*1005*T01*(Math.pow(pr,0.286)-1)/clamp(r.eta||0.7,0.3,0.85)/units;
+    // E5: Electric turbo / MGU-H motoring (spool assist off-boost) & generating (exhaust recovery at full load).
+    // Motor torque is capped at T_max = maxW / (baseFrac * wMax) so low-speed torque stays physical;
+    // generation only absorbs surplus turbine power above compressor + bearing loss so boost never sags.
+    let pEm=0, pEl=0;
+    if(etActive&&th>0.25){
+      const wBase=et.baseFrac*wMax, tMax=et.maxW/Math.max(1,wBase);
+      const pCap=Math.min(et.maxW,tMax*Math.max(w,200))/units;
+      if(rawB<tgtB-0.01&&E<Emax){
+        const assistFrac=clamp((tgtB-rawB)/0.15,0,1);
+        pEm=pCap*assistFrac;
+        pEl=-(pEm*units)/et.eta;
+      }else if((r.net-loss)>0&&(rawB>=tgtB-0.01||E>=Emax*0.98)){
+        const pGen=Math.min(pCap,r.net-loss);
+        pEm=-pGen;
+        pEl=(pGen*units)*et.eta;
+      }
+    }
+    eElSum+=pEl*h;
+    const Enext=E+(r.net-loss+pEm)*h-fill;
     // Wastegated turbos dump excess exhaust once r.prRaw reaches 1+boostTarget; only flag overspeed
     // when the wheel hits TIP_LIMIT (520 m/s) while still trying to meet boostTarget.
-    if(Enext>=Emax&&Emax>0&&(r.net-loss)>0&&((r.prRaw!=null?r.prRaw:r.pr)-1)<=boostTarget(rpm)+0.01)overspeed=true;
+    if(Enext>=Emax&&Emax>0&&(r.net-loss+pEm)>0&&rawB<=tgtB+0.01)overspeed=true;
     E=clamp(Enext,0,Emax);
     b=b2;
     if(isCompSurge(compFlowFrac(rpm,mAirStep),1+b))surge=true;
   }
-  return{shaftE:E,boost:b,overspeed,surge};
+  return{shaftE:E,boost:b,overspeed,surge,eGenW:dt>0?eElSum/dt:0};
 }
 function stepBoost(dt){
-  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;return;}
-  if(state.turboBlown){state.shaftE=0;state.boostActual=0;state.turboSurge=false;state.turboOverspeed=false;return;}
+  if(engine.intake!=='turbo'||!engine.shaftJ){state.boostActual=boostAvail(state.rpm);state.turboSurge=false;state.turboOverspeed=false;state.eTurboW=0;return;}
+  if(state.turboBlown){state.shaftE=0;state.boostActual=0;state.turboSurge=false;state.turboOverspeed=false;state.eTurboW=0;return;}
   if(state.shaftE==null)state.shaftE=0;
   const r=advanceShaft(state.shaftE,state.rpm,state.boostActual,
                        state.throttle!=null?state.throttle:1,dt);
   state.shaftE=r.shaftE;state.boostActual=r.boost;
   state.turboSurge=!!r.surge;state.turboOverspeed=!!r.overspeed;
+  state.eTurboW=r.eGenW||0;
 }
 // Upstream pressure (atm abs) in the air ENV sets (ISO 2533, engine-constants-boost.js), as buildTorqueGrid has read it
 // since build 456: a supercharger multiplies the air it draws, a turbo's boost adds to it. pAmbAtm() is exactly 1 at sea
@@ -1593,7 +1617,8 @@ function stepEngineOnce(dt){
 // System voltage tracks state of charge; a flat battery weakens the spark (see ignVFactor).
 function stepElectrical(dt){
   if(isElectric()||isHybrid())return;   // no alternator: the traction pack is the bench's (stepMotorBench, stepHybridBench)
-  const netA=altOutputA(state.rpm)-elecDemandA();
+  const eTurboA=(state.eTurboW||0)/14.0;   // E-Turbo / MGU-H net current onto 12 V / 48 V bus via DC-DC (+ charging, - drawing)
+  const netA=altOutputA(state.rpm)-elecDemandA()+eTurboA;
   state.batterySOC=clamp(state.batterySOC+netA*dt*0.0004,0,1);
   const charging=netA>0&&state.batterySOC<0.999;
   state.systemVoltage=clamp(11.4+1.6*state.batterySOC+(charging?0.6:0),10.5,14.4);

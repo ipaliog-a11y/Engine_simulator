@@ -72,6 +72,17 @@ const TURBO={
 };
 const AR_INCH=0.0254;          // A/R is quoted in inches
 const TURB_WHEEL=0.90;         // turbine wheel as a fraction of the compressor exducer, every factory turbo (a designed turbo sets its own)
+// Electric turbo / MGU-H (E5): coaxial motor-generator on the turbocharger shaft.
+//   e48   Garrett 48 V E-Turbo (e.g. Mercedes-AMG M139l): ~4-6 kW continuous/peak e-assist & recuperation
+//         at ~88% motor + 48 V MOSFET inverter efficiency (Garrett Motion technical specs; SAE 2021).
+//   mguh  HV MGU-H (FIA F1 2014-2025 PU Regs Art. 5.1.4/5.2): unlimited ES-MGU-H transfer, ~90 kW
+//         peak shaft motoring/recovery on HV bus at ~92% PMSM + SiC/IGBT inverter efficiency.
+// baseFrac (0.35 of shaftMax) sets the corner speed for peak motor torque T_max = maxW / (baseFrac * wMax).
+const E_TURBO={
+  none:{label:'NONE',maxW:0,eta:1,vBus:0,baseFrac:0.35,massKg:0,cost:0},
+  e48: {label:'E-TURBO (48 V)',maxW:6000,eta:0.88,vBus:48,baseFrac:0.35,massKg:4.5,cost:1600},
+  mguh:{label:'MGU-H (HV)',maxW:90000,eta:0.92,vBus:400,baseFrac:0.35,massKg:7.0,cost:6500}
+};
 // Turbine throat for a housing A/R. A/R is the volute throat area over the radius to its centroid,
 // so A_throat = (A/R) x R. A vane ring sets its own throat (vaneThroatArea, build 168).
 function setTurbineAR(ar){

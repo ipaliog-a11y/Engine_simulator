@@ -15,6 +15,7 @@ function computeCost(){
     c+=({small:1200,medium:1800,large:2600}[engine.turboSize]||1800)*({single:1,twin:1.8,sequential:2.6,compound:3.0}[engine.turboConfig]||1)
        *(engine.vgt?1.7:1);   // a vane ring, its bearings and an actuator, in nickel alloy
     if(engine.antilag)c+=700;
+    if(engine.eTurbo&&E_TURBO[engine.eTurbo])c+=E_TURBO[engine.eTurbo].cost;
   }else if(engine.intake==='supercharger'){
     c+={roots:2200,screw:3200,centrifugal:2600}[engine.scType]||2200;
   }

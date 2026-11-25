@@ -76,6 +76,8 @@ const ICD_FIELDS={
     trade:'It works like a tight housing low down and a loose one at the top. It costs more, and takes the place of the housing choice.'},
   edAntilag:{adv:true,guide:'lag',what:'Keeps the turbo spinning off the throttle by burning fuel in the exhaust.',
     trade:'No lag after a lift, at the cost of heat in the turbo and the exhaust.'},
+  edETurbo:{adv:true,guide:'lag',what:'A motor-generator on the turbo shaft: spins the wheel up off boost and recovers exhaust energy at full load.',
+    trade:'48 V E-Turbo gives ~6 kW of spool assist and recovery; HV MGU-H gives up to 90 kW into the hybrid pack. Adds mass and cost.'},
   edScType:{guide:'supercharger',what:'The kind of supercharger.',
     trade:'A Roots or a twin-screw gives its boost from low rpm; a centrifugal one builds boost with rpm, like a turbo without the lag.'},
   edTaperRpm:{adv:true,guide:'wastegate',what:'The rpm from which the ECU lets the boost fall. 0 holds it to the limiter.',
