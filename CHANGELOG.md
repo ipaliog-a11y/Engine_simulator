@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Water / methanol injection on AIR & BOOST (build 462)
+
+- **WATER / METH INJ** on the AIR & BOOST card (`NONE`, `WATER (H2O)`, `50/50 WATER-METH`). Defaults to `NONE`, so
+  existing engines and presets are unchanged.
+- Evaporative charge cooling reduces `effIAT` under boost (from latent heat of water 2257 kJ/kg, methanol 1100 kJ/kg,
+  air $c_p$ 1.005 kJ/(kg·K), and BMW M4 GTS Bosch WaterBoost flow ~1.2% of air mass, ~21.6 °C drop for water; ~20.0 °C
+  plus methanol 109 RON octane blending for 50/50).
+- Cooler charge and higher octane raise knock margin, allowing the ECU to advance timing and hold more boost. Includes
+  5 L tank + pump mass (+7.5–8 kg), build cost ($850–$950), 10 A pump alternator load, live tank depletion, and
+  **REFILL WMI** in the live bench's MORE menu. Plan E2 in `plans/engine-systems.md`.
+
 ### Altitude on the TRACK tab, and the live engine breathes it (build 461)
 
 - **ALTITUDE m** (0-3000) beside AIR °C sets the shared ISO 2533 atmosphere that build 456 added but nothing could set.
