@@ -18,6 +18,17 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### README's known limits brought up to date (build 460)
+
+- The list still described build ~150–300. Re-checked each entry against the code and the tests' named gaps.
+- Corrected: turbo overspeed now wears the engine out (build 451); the TRACK lap's "never spins" is scoped to the
+  lap, since the stepped car has yaw and ESP (builds 319–389); the stepped car's rotor fade (build 450) noted; the
+  suite count (56 → 255 tests).
+- Added named gaps from the tests: test60's limiter engines (RS3, LS3, Coyote, BAC Mono, 4A-GE, F140), test41,
+  test48, test76, test96, test115, test116, test170, test204.
+- Left open: the RS3 and EcoBoost low-rpm torque figures date from builds 133–136 and were not re-measured
+  (preset checks are paused); the README now says so. Documentation only; no code or numbers moved.
+
 ### Vehicle and engine designer fixes, setup safety warnings, and layout validation (build 459)
 
 - **Vehicle Designer & challenge UI fixes**: fixed the ballast summary in `vcdSummary` (`+g('vhBallast') > 0`), updated `updateGearingLabel()` to show the actual `vehicle.finalDrive` instead of a dummy lerp, added hybrid front-axle motor force (`pt.frontForce(v)`) to the `vcdForce` drive-force curve, and fixed circuit challenge budget bars in `renderChallenge()` to use total car cost (`ev.cost`) instead of engine-only cost (`m.cost`).
