@@ -118,8 +118,10 @@ const r = await page.evaluate(() => {
   trackKey = 'mixed';
   const T = buildTrack(trackKey);
   sceneBind(T);
-  const cam = sceneChaseV2(T.pts[0].x, T.pts[0].y, T.pts[0].hd, 320, 200, 1);
-  const car = { x: T.pts[0].x, y: T.pts[0].y, hd: T.pts[0].hd, brk: 1, col: '#ff4444' };
+  const p0 = T.pts[0];
+  const hd0 = Math.atan2(p0.ty || 0, p0.tx || 1);
+  const cam = sceneChaseV2(p0.x, p0.y, hd0, 320, 200, 1);
+  const car = { x: p0.x, y: p0.y, hd: hd0, brk: 1, col: '#ff4444' };
   lapReplay.playing = true;
   for (let i = 0; i < 40; i++) scenePaintV2(ctx, cam, { cars: [car] });
   const playingStats = window.sceneV2Stats();
