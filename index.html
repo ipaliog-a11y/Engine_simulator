@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 472</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 473</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1010,6 +1010,7 @@ body.guided-open{overflow:hidden}
 <div class="field"><label for="edBalShaft">BALANCE SHAFT</label><select id="edBalShaft"><option value="no">NONE</option><option value="yes">BALANCE SHAFT</option></select></div>
 <div class="field"><label for="edDrySump">LUBRICATION</label><select id="edDrySump"><option value="wet">WET SUMP (STOCK)</option><option value="dry">DRY SUMP</option></select></div>
 <div class="field"><label for="edRings">PISTON RINGS</label><select id="edRings"><option value="stock">STOCK RINGS</option><option value="gapless">GAPLESS / RACE</option><option value="lowtension">LOW-TENSION</option></select></div>
+<div class="field"><label for="edCrankDamper">CRANK DAMPER</label><select id="edCrankDamper"><option value="stock">STOCK (ELASTOMER)</option><option value="none">NONE (SOLID PULLEY)</option><option value="fluid">FLUID / RACE DAMPER</option></select></div>
 </div></section>
 <section class="evd-card" id="icdCard-head" data-card="head"><div class="evd-fields">
 <div class="field"><label for="edValves">VALVES / CYLINDER</label><select id="edValves"><option value="2">2 (WEDGE)</option><option value="4">4 (PENT-ROOF)</option><option value="5">5</option></select></div>
@@ -4863,6 +4864,88 @@ function deriveBalance(){
   engine.balance=computeEngineBalance(engine);
   if(!engine.balance.balShaftActive)engine.balShaft=false;
 }
+// ---- Crankshaft torsional vibration & damper (E12) ----
+// Sources:
+//   · Taylor, The Internal-Combustion Engine in Theory and Practice, vol. 2, ch. 9 (Torsional Vibration):
+//     slider-crank effective inertia J_recip = 0.5*m_rec*r^2, Carter's equivalent-length throw stiffness,
+//     Holzer multi-DOF natural frequency, and gas-torque harmonic orders k = 0.5, 1, 1.5... (4-stroke) / 1, 2... (2-stroke).
+//   · Nestorides (BICERA), A Handbook on Torsional Vibration, §1.2 (crank throw stiffness) & §2 (damping).
+//   · Bosch Automotive Handbook: steel shear modulus G = 79.3 GPa, density 7850 kg/m^3, elastomer vs fluid dampers.
+// Empirical journal-to-bore ratios (FRIC_MAIN_D=0.65, FRIC_PIN_D=0.56, FRIC_BRG_LD=0.35) are used because
+// per-preset journal dimensions are not stored.
+const CRANK_DAMPERS={
+  none:  {label:'NONE (SOLID PULLEY)', zeta:0.015, noseMult:0.35, massKg:-1.5, cost:-120},
+  stock: {label:'STOCK (ELASTOMER)',   zeta:0.080, noseMult:0.65, massKg:0,    cost:0},
+  fluid: {label:'FLUID / RACE DAMPER', zeta:0.180, noseMult:0.95, massKg:1.5,  cost:450}
+};
+const TORSIONAL_REF=2.5;
+function computeCrankTorsional(spec){
+  const damper=spec&&CRANK_DAMPERS[spec.crankDamper]?spec.crankDamper:'stock';
+  const ds=CRANK_DAMPERS[damper];
+  if(!spec||spec.type==='rotary'||spec.type==='electric'){
+    return {applicable:false,crankTorsionalHz:0,throwStiff_NmRad:0,throwInertia_kgm2:0,damper,damperLabel:ds.label,
+      criticalRpms:[],worstResRpm:0,worstOrder:0,worstMajor:false,resonanceInRange:false,dampedOk:true,severity:0};
+  }
+  const nc=spec.cylinders||4,B=(spec.bore_mm||86)/1000,S=(spec.stroke_mm||86)/1000,r=S/2;
+  const nThrows=spec.layout==='v'?Math.max(1,Math.ceil(nc/2)):nc;
+  const cylPerThrow=nc/nThrows;
+  const Dm=FRIC_MAIN_D*B,Dp=FRIC_PIN_D*B,Lm=FRIC_BRG_LD*Dm,Lp=FRIC_BRG_LD*Dp,Lbay=1.15*B;
+  const tw=Math.min(0.20*B,Math.max(0.08*B,0.5*(Lbay-Lm-Lp))),ww=1.35*Dm;
+  const G_steel=79.3e9,Jm=(Math.PI/32)*Math.pow(Dm,4);
+  const Le=Lm+0.8*Lp*Math.pow(Dm/Dp,4)+(1.5*r*Math.pow(Dm,4))/(tw*Math.pow(ww,3));
+  const K_throw=(G_steel*Jm)/Le;
+
+  const mRec=0.55*Math.pow(B/0.086,2.5)*(spec.ci?1.25:1.0);
+  const mRodRot=0.45*mRec;
+  const J_recipRod=cylPerThrow*(mRodRot+0.5*mRec)*r*r;
+  const rhoSteel=7850;
+  const mPin=rhoSteel*(Math.PI/4)*Dp*Dp*Lp;
+  const J_pin=mPin*r*r;
+  const mWebs=2*rhoSteel*ww*tw*(1.6*r);
+  const J_webs=mWebs*Math.pow(0.55*r,2);
+  const J_throw=J_recipRod+J_pin+J_webs;
+  const J_nose=ds.noseMult*J_throw;
+
+  // Holzer fixed-free first torsional mode via bisection (strictly bracketed below the 2nd mode)
+  const holzer0=w=>{
+    let th=1,T=w*w*(J_throw+J_nose)*th;
+    for(let i=nThrows-1;i>=1;i--){th-=T/K_throw;T+=w*w*J_throw*th;}
+    return th-T/K_throw;
+  };
+  let lo=0,hi=2.02*Math.sqrt(K_throw/J_throw)*Math.sin(Math.PI/(2*(2*nThrows+1)));
+  for(let it=0;it<40;it++){const mid=0.5*(lo+hi);if(holzer0(mid)>0)lo=mid;else hi=mid;}
+  const crankTorsionalHz=0.5*(lo+hi)/(2*Math.PI);
+
+  const twoStroke=spec.type==='twostroke';
+  const kFire=twoStroke?nc:nc/2;
+  const step=twoStroke?1:0.5;
+  const redline=spec.redline||7000;
+  const criticalRpms=[];
+  let worst=null;
+  for(let k=step;k<=12.01;k+=step){
+    const isMajor=Math.abs(k-Math.round(k/kFire)*kFire)<1e-6&&k>=kFire-1e-6;
+    const isHalfMajor=nThrows>=3&&(Math.abs(k-0.5*kFire)<1e-6||Math.abs(k-1.5*kFire)<1e-6);
+    if(!isMajor&&!isHalfMajor)continue;
+    const amp=(isMajor?1.0:0.45)/Math.pow(k,0.85);
+    const rpm=(60*crankTorsionalHz)/k;
+    if(rpm<1200||rpm>redline*1.05)continue;
+    const stress=(amp*(rpm/6000)*Math.pow(nThrows/4,0.35)*Math.sqrt(S/B))/(2*ds.zeta*TORSIONAL_REF);
+    const entry={order:k,rpm:Math.round(rpm),isMajor,amp,stress};
+    criticalRpms.push(entry);
+    if(!worst||stress>worst.stress)worst=entry;
+  }
+  const severity=worst?worst.stress:0;
+  const dampedOk=!(worst&&worst.stress>1.0);
+  return {
+    applicable:true,crankTorsionalHz,throwStiff_NmRad:K_throw,throwInertia_kgm2:J_throw,
+    damper,damperLabel:ds.label,criticalRpms,
+    worstResRpm:worst?worst.rpm:0,worstOrder:worst?worst.order:0,worstMajor:worst?worst.isMajor:false,
+    resonanceInRange:criticalRpms.length>0,dampedOk,severity
+  };
+}
+function deriveTorsional(){
+  engine.torsional=computeCrankTorsional(engine);
+}
 // The engine's fixed geometry for the model, once per build (deriveFriction, after deriveValvetrain).
 function deriveFriction(){
   const e=engine;
@@ -6276,7 +6359,7 @@ const DEFAULT_ENGINE={
   cylinders:4,bore_mm:81,stroke_mm:78,compression:12.5,layout:'inline',redline:7200,
   intake:'na',boost_bar:0,intercooler:'large',turboSize:'medium',compExd_mm:0,taperRpm:0,taperPct:100,tqLimit:0,govRpm:0,turboConfig:'single',housing:'stock',vgt:false,scType:'roots',antilag:false,eTurbo:'none',nitrous:'none',waterMeth:'none',exhaust:'sport',cat:'stock',partFilter:false,
   intakeSys:'efi',airFilter:'perf',
-  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,rings:'stock',valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
+  cam:'stock',vvt:true,cylDeact:false,balShaft:false,drySump:false,rings:'stock',crankDamper:'stock',valves:4,valveMat:'steel',valveSpring:'stock',runner:'medium',
   fuel:'gasoline',octane:95,injector:'direct',railPress:'stock',pilotSplit:false,glowPlugs:false,ignitionAdv:22,ignitionType:'coil',timingMode:'auto',afrMode:'auto',
   radiator:'stock',radHp:0,springRpm:0,ivValve_mm:0,evValve_mm:0,camDur_deg:0,camLsa_deg:0,camLift_mm:0,fan:'electric',oilCooler:false,thermostat:88,
   alternator:'120',startStop:false
@@ -10454,6 +10537,7 @@ function readEngineFromForm(){
     balShaft:g('edBalShaft').value==='yes',
     drySump:g('edDrySump').value==='dry',
     rings:g('edRings')?g('edRings').value:'stock',
+    crankDamper:g('edCrankDamper')?g('edCrankDamper').value:'stock',
     intake,
     boost_bar:intake==='na'?0:clamp(+g('edBoost').value||0,0,2.5),
     taperRpm:clamp(Math.round(+g('edTaperRpm').value||0),0,12000),taperPct:clamp(+g('edTaperPct').value||100,20,100),
@@ -10526,6 +10610,7 @@ function applyEngineToForm(e){
   g('edBalShaft').value=e.balShaft?'yes':'no';
   g('edDrySump').value=e.drySump?'dry':'wet';
   if(g('edRings'))g('edRings').value=(typeof RING_SPEC!=='undefined'&&RING_SPEC[e.rings])?e.rings:'stock';
+  if(g('edCrankDamper'))g('edCrankDamper').value=(typeof CRANK_DAMPERS!=='undefined'&&CRANK_DAMPERS[e.crankDamper])?e.crankDamper:'stock';
   // Builds saved before the eccentricity existed: every production Mazda rotor has R/e = 7.
   g('edEcc').value=e.ecc_mm||+(e.bore_mm/7).toFixed(1);
   // Migrate legacy boolean intercooler (true→large, false→none) from older saved builds.
@@ -10599,6 +10684,7 @@ function syncDesignEnable(){
   if(type==='twostroke')g('edDrySump').value='wet';
   g('edDrySump').disabled=(type==='twostroke');
   if(g('edRings')){if(type==='rotary')g('edRings').value='stock';g('edRings').disabled=(type==='rotary');}
+  if(g('edCrankDamper')){if(type==='rotary')g('edCrankDamper').value='stock';g('edCrankDamper').disabled=(type==='rotary');}
   g('edCR').min=tp.crMin;g('edCR').max=tp.crMax;
   g('edRedline').min=tp.redMin;g('edRedline').max=tp.redMax;
   g('edFuel').disabled=tp.ci;                              // diesel fuel is fixed
@@ -10773,6 +10859,7 @@ function buildEngineCore(prevStoich,quiet){
   deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
   updateGasLabels();
   deriveBalance();          // primary/secondary shaking forces, rocking couples & NVH smoothness (E11)
+  deriveTorsional();        // crank first torsional natural frequency & critical resonance check (E12)
   deriveFriction();         // the friction model's geometry: bearings, cams, valves, balance shaft (build 243)
   deriveCharge();           // the charge path: intercooler, compressor frame, spool
   // Solving the shaft balance costs a few thousand iterations, and boostAvail is called for every
@@ -10946,6 +11033,7 @@ function computeCost(){
   if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
   if(engine.drySump&&engine.type!=='twostroke')c+=2200;          // billet 3-stage scavenge pump, external tank & AN lines
   if(engine.rings&&typeof RING_SPEC!=='undefined'&&RING_SPEC[engine.rings])c+=RING_SPEC[engine.rings].cost;
+  if(engine.crankDamper&&typeof CRANK_DAMPERS!=='undefined'&&CRANK_DAMPERS[engine.crankDamper]&&engine.type!=='rotary')c+=CRANK_DAMPERS[engine.crankDamper].cost;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
@@ -12877,6 +12965,15 @@ function stepWear(dt){
     const mps=2*(engine.stroke_mm/1000)*state.rpm/60;
     add(mps>PISTON_SPEED_LIMIT?(mps-PISTON_SPEED_LIMIT)*0.012:0,'PISTON SPEED');
   }
+  if(engine.torsional&&engine.torsional.applicable&&!engine.torsional.dampedOk&&state.firing!==false&&state.rpm>=FIRE_RPM){
+    let torsW=0;
+    for(const c of engine.torsional.criticalRpms){
+      if(!(c.stress>1.0))continue;
+      const rel=Math.abs(state.rpm-c.rpm)/c.rpm;
+      if(rel<0.08)torsW=Math.max(torsW,Math.min(0.05,0.015*(c.stress-1.0))*(1-(rel/0.08)*(rel/0.08)));
+    }
+    add(torsW,'TORSIONAL RESONANCE');
+  }
   if(!engine.ci)add(Math.max(0,lam-1.05)*Math.max(0,state.map-0.9)*0.14,'LEAN/BOOST');  // burnt pistons (diesels run lean by design)
   // Diesel soot wear: emission index g PM / kg fuel. ~2.5 g/kg is where smoke is obvious near
   // the smoke limit (Heywood ch.11 diesel PM order); was a dimensionless analyser index before build 257.
@@ -14581,6 +14678,7 @@ function engineMass(){
   if(engine.balance&&engine.balance.balShaftActive)m+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?4.5:2.5;
   if(engine.partFilter)m+=2.0+1.5*(engine.displacement_L||1.6);   // cordierite/SiC filter substrate + canning
   if(engine.drySump&&engine.type!=='twostroke')m+=8;   // external dry-sump tank, 3-stage scavenge pump, belt drive & AN lines
+  if(engine.crankDamper&&typeof CRANK_DAMPERS!=='undefined'&&CRANK_DAMPERS[engine.crankDamper]&&engine.type!=='rotary')m+=CRANK_DAMPERS[engine.crankDamper].massKg;
   if(engine.ci&&typeof dieselRailBar==='function'&&dieselRailBar(engine)>0)m+=4;   // CP3/CP4 high-pressure pump & rail
   if(engine.ci&&engine.glowPlugs)m+=1;   // ceramic glow plugs & preheat controller
   return Math.round(m);
@@ -31299,6 +31397,11 @@ function diagnoseEngine(){
           .replace('{v}',mps.toFixed(1)).replace('{l}',PISTON_SPEED_LIMIT),
         tr('A shorter stroke, a lower redline, or accept the reliability cost.'));
   }
+  if(e.torsional&&e.torsional.applicable&&!e.torsional.dampedOk)
+    add('err','torsional',tr('TORSIONAL RESONANCE'),
+      tr('Crank first torsional mode ({f} Hz) hits order {k} at {r} rpm without adequate damping.')
+        .replace('{f}',Math.round(e.torsional.crankTorsionalHz)).replace('{k}',e.torsional.worstOrder).replace('{r}',e.torsional.worstResRpm),
+      tr('Fit a STOCK or FLUID / RACE DAMPER, shorten the stroke, or lower the redline.'));
   // Cooling undersized for the scored peak power (same terms as the reliability index).
   {const coolNeed=clamp(s.peakHP/260,0,1.6);
     const coolHave=e.radCap*Math.max(260,e.radHp||0)/260+(e.oilCooler?0.4:0)+(e.fan==='none'?0:0.2);
@@ -31422,12 +31525,13 @@ function renderDynoResult(force){
   const boosted=engine.intake!=='na';
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
   const diag=diagnoseEngine();
-  const bal=engine.balance;
+  const bal=engine.balance,tors=engine.torsional;
   const crNoiseDb=engine.ci&&typeof dieselCombNoiseDbDelta==='function'?dieselCombNoiseDbDelta(engine):0;
   const balNote=bal?('<br><b>'+tr('BALANCE & NVH')+'</b> — '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+
     (bal.totalForce_N>0?' · '+tr('unbalanced shaking force')+' '+Math.round(bal.totalForce_N)+' N':'')+
     (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
     (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
+    (tors&&tors.applicable?' · '+tr('crank torsional')+' '+Math.round(tors.crankTorsionalHz)+' Hz'+(tors.damper!=='stock'?' ('+tr(tors.damperLabel)+')':''):'')+
     (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
   const bbRef=typeof blowbyAt==='function'?blowbyAt(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),at(s.peakHPrpm||engine.redline).tq>0?10:5,state.engineHealth,engine):null;
   const bbAir=bbRef&&typeof blowbyIntakeKgS==='function'?blowbyIntakeKgS(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),0.9,engine):0;
@@ -40022,6 +40126,8 @@ const ICD_FIELDS={
     trade:'A wet sump starves the oil pickup under sustained lateral g (>1.05 g) as the oil surface tilts (tan θ = ay/g). Dry sump eliminates cornering starvation at a cost in scavenge pump drag, +8 kg mass and +$2,200.'},
   edRings:{adv:true,guide:'friction',what:'Piston ring pack: standard 3-piece rings (stock), interlocking gapless top rings, or thin low-tension eco rings.',
     trade:'Gapless rings cut end-gap blow-by and oil carryover at a small ring-friction and cost penalty (+$280). Low-tension rings reduce boundary friction for better efficiency at slightly higher blow-by and oil use (+$180).'},
+  edCrankDamper:{adv:true,guide:'firing',what:'Harmonic damper on the crank nose: stock elastomer ring, a solid un-damped pulley, or a viscous fluid race damper.',
+    trade:'A solid pulley saves 1.5 kg and $120 but leaves firing-order torsional resonances undamped, wearing crank and bearings at critical RPMs. Fluid dampers (+1.5 kg, +$450) suppress high-order and long-stroke resonances.'},
   edValves:{what:'How many valves each cylinder has.',
     trade:'More valves give more flow area, so better breathing at high rpm. Two valves in a wedge head are cheaper and give their best low down.'},
   edValvetrain:{guide:'friction',what:'How the cams work the valves: two cams over the head or one, or a cam in the block with pushrods, and whether the follower slides or rolls on the cam.',
@@ -40128,7 +40234,7 @@ const ICD_FIELDS={
     trade:'Cuts idle fuel and emissions in stop-start traffic; restarts draw crank energy from the 12 V AGM battery (+6 kg, $350).'}
 };
 // Where a field's value lives on a factory engine, and how a choice is written there.
-const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',edDrySump:'drySump',edRings:'rings',
+const ICD_KEY={edCyl:'cylinders',edLayout:'layout',edBore:'bore_mm',edStroke:'stroke_mm',edEcc:'ecc_mm',edCR:'compression',edRedline:'redline',edBalShaft:'balShaft',edDrySump:'drySump',edRings:'rings',edCrankDamper:'crankDamper',
   edValves:'valves',edValvetrain:'valvetrain',edCam:'cam',edVVT:'vvt',edCylDeact:'cylDeact',edValveMat:'valveMat',edSpring:'valveSpring',edEgr:'egr',edIntake:'intake',edBoost:'boost_bar',
   edIntercooler:'intercooler',edWaterMeth:'waterMeth',edTurboSize:'turboSize',edTurboConfig:'turboConfig',edCompWheel:'compExd_mm',edHousing:'housing',edVGT:'vgt',
   edAntilag:'antilag',edScType:'scType',edTaperRpm:'taperRpm',edTaperPct:'taperPct',edTqLimit:'tqLimit',edGovRpm:'govRpm',edNitrous:'nitrous',
@@ -40174,6 +40280,7 @@ function icdCompute(){
       turbo:e.intake==='turbo',turboLoad:e.turboLoad||0,compEff:e.compEff||0,spoolRpm:e.intake==='turbo'?Math.round(boostHalfRpm()):0,
       peakEgtC:e.peakEgt?Math.round(e.peakEgt-273):0,peakEgtGas:e.peakEgtGas||0,vgtShut:e.vgtShut||0,
       smoothness:e.balance?e.balance.smoothness:100,unbalF:e.balance?Math.round(e.balance.totalForce_N):0,unbalM:e.balance?Math.round(e.balance.totalMoment_Nm):0,
+      crankHz:e.torsional&&e.torsional.applicable?Math.round(e.torsional.crankTorsionalHz):0,
       ci:!!e.ci,mass:powertrain().mass()};   // mass: what the car takes from the engine (vehicle-accel.js), for the guided build's hints
   }finally{
     engine=keep.engine;
@@ -40191,7 +40298,7 @@ function icdSummary(c,r){
   const g=id=>document.getElementById(id).value,o=dcOptText,f=dcFmt;
   switch(c){
     case 'block':return (r&&r.rotary?g('edCyl')+'× '+tr('ROTOR'):g('edCyl')+'× '+o('edLayout'))+(r?' · '+f(r.disp,1)+' L':'')+
-      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'')+(g('edDrySump')==='dry'?' · '+tr('DRY SUMP'):'')+(g('edRings')&&g('edRings')!=='stock'?' · '+o('edRings'):'');
+      ' · '+g('edBore')+'×'+g('edStroke')+' mm · '+g('edCR')+':1 · '+f(+g('edRedline'))+' rpm'+(r?' · '+tr('NVH')+' '+r.smoothness+'/100':'')+(r&&r.crankHz?' · '+r.crankHz+' Hz':'')+(g('edDrySump')==='dry'?' · '+tr('DRY SUMP'):'')+(g('edRings')&&g('edRings')!=='stock'?' · '+o('edRings'):'');
     case 'head':return r&&r.ports?tr('no poppet valves'):o('edValves')+' · '+o('edCam')+(g('edVVT')==='yes'?' · VVT':'')+(g('edCylDeact')==='yes'?' · CDA':'')+(r&&r.float?' · '+tr('float')+' '+f(Math.round(r.float/100)*100)+' rpm':'');
     case 'air':return o('edIntake')+(g('edIntake')==='na'?'':' · '+(+g('edBoost')).toFixed(2)+' bar · '+(g('edIntake')==='turbo'?o('edTurboSize')+' '+o('edTurboConfig')+(r&&r.spoolRpm?' · 50% @ '+f(r.spoolRpm)+' rpm':''):o('edScType')))+
       (g('edNitrous')!=='none'?' · N2O':'');

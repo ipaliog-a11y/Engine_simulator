@@ -92,6 +92,11 @@ function diagnoseEngine(){
           .replace('{v}',mps.toFixed(1)).replace('{l}',PISTON_SPEED_LIMIT),
         tr('A shorter stroke, a lower redline, or accept the reliability cost.'));
   }
+  if(e.torsional&&e.torsional.applicable&&!e.torsional.dampedOk)
+    add('err','torsional',tr('TORSIONAL RESONANCE'),
+      tr('Crank first torsional mode ({f} Hz) hits order {k} at {r} rpm without adequate damping.')
+        .replace('{f}',Math.round(e.torsional.crankTorsionalHz)).replace('{k}',e.torsional.worstOrder).replace('{r}',e.torsional.worstResRpm),
+      tr('Fit a STOCK or FLUID / RACE DAMPER, shorten the stroke, or lower the redline.'));
   // Cooling undersized for the scored peak power (same terms as the reliability index).
   {const coolNeed=clamp(s.peakHP/260,0,1.6);
     const coolHave=e.radCap*Math.max(260,e.radHp||0)/260+(e.oilCooler?0.4:0)+(e.fan==='none'?0:0.2);
@@ -215,12 +220,13 @@ function renderDynoResult(force){
   const boosted=engine.intake!=='na';
   const near=(r,pk)=>Math.abs(r-pk)<step/2;
   const diag=diagnoseEngine();
-  const bal=engine.balance;
+  const bal=engine.balance,tors=engine.torsional;
   const crNoiseDb=engine.ci&&typeof dieselCombNoiseDbDelta==='function'?dieselCombNoiseDbDelta(engine):0;
   const balNote=bal?('<br><b>'+tr('BALANCE & NVH')+'</b> — '+tr('Smoothness')+' <b>'+bal.smoothness+'/100</b>'+
     (bal.totalForce_N>0?' · '+tr('unbalanced shaking force')+' '+Math.round(bal.totalForce_N)+' N':'')+
     (bal.totalMoment_Nm>0?' · '+tr('rocking couple')+' '+Math.round(bal.totalMoment_Nm)+' N·m':'')+
     (bal.balShaftActive?' · '+tr('balance shaft fitted'):'')+
+    (tors&&tors.applicable?' · '+tr('crank torsional')+' '+Math.round(tors.crankTorsionalHz)+' Hz'+(tors.damper!=='stock'?' ('+tr(tors.damperLabel)+')':''):'')+
     (crNoiseDb<0?' · '+tr('combustion noise')+' '+crNoiseDb.toFixed(1)+' dB':'')):'';
   const bbRef=typeof blowbyAt==='function'?blowbyAt(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),at(s.peakHPrpm||engine.redline).tq>0?10:5,state.engineHealth,engine):null;
   const bbAir=bbRef&&typeof blowbyIntakeKgS==='function'?blowbyIntakeKgS(s.peakHPrpm||engine.redline,wotMapAt(s.peakHPrpm||engine.redline),0.9,engine):0;

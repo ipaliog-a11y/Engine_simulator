@@ -9,6 +9,7 @@ function computeCost(){
   if(engine.balance&&engine.balance.balShaftActive)c+=(engine.balance.balShaftType==='2x-force'||engine.balance.balShaftType==='2x-couple')?550:350;
   if(engine.drySump&&engine.type!=='twostroke')c+=2200;          // billet 3-stage scavenge pump, external tank & AN lines
   if(engine.rings&&typeof RING_SPEC!=='undefined'&&RING_SPEC[engine.rings])c+=RING_SPEC[engine.rings].cost;
+  if(engine.crankDamper&&typeof CRANK_DAMPERS!=='undefined'&&CRANK_DAMPERS[engine.crankDamper]&&engine.type!=='rotary')c+=CRANK_DAMPERS[engine.crankDamper].cost;
   if(engine.redline>7500)c+=(engine.redline-7500)*0.9;           // high-rpm valvetrain/internals
   if(engine.compression>11)c+=(engine.compression-11)*250;       // forged high-compression pistons
   if(engine.intake==='turbo'){
