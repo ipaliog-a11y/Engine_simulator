@@ -451,11 +451,11 @@ Some engines are naturally smooth: an <b>inline six</b> and a <b>V12</b> cancel 
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="firingPhys">
-On a four-stroke every cylinder fires once in 720° of crank, so evenly spaced firings are <b>720°/n</b> apart: 180° for a four, 120° for a six, 90° for a V8. The crank-slider's second harmonic (<i>r/l</i> on <a data-gp="live">Watching it run</a>) is why a flat four-cylinder crank leaves an unbalanced shaking force at twice crank speed, even though the pistons are paired.<br>
+On a four-stroke every cylinder fires once in 720° of crank, so evenly spaced firings are <b>720°/n</b> apart: 180° for a four, 120° for a six, 90° for a V8. The crank-slider's second harmonic (<i>r/l</i> on <a data-gp="live">Watching it run</a>) is why a flat four-cylinder crank leaves an unbalanced shaking force at twice crank speed, even though the pistons are paired. Primary and secondary shaking forces and rocking couples are derived from the crankpin phases, bank angle, <i>r/l</i>, and reciprocating mass (Taylor), giving a 0–100 smoothness score; an optional <b>balance shaft</b> cancels the unbalanced force or couple at a small cost in bearing/drive friction and mass.<br>
 The firing order is used for real in two places: the LIVE bank draws each cylinder at its own phase, and the engine sound fires each cylinder's exhaust pulse in that order down its own bank's pipe, so a cross-plane V8's A-B-A-B-B-A-B-A bank sequence produces its beat without anything in the code knowing what a V8 sounds like.
 </div>
 <div class="guide-limit" data-gk="firingLimit">
-Not modelled: vibration and balance. An engine's shaking forces do not cost it power or reliability here.
+Not modelled: crank torsional resonance and engine-mount structural transfer. Shaking forces are reported as smoothness rather than causing wear.
 </div>
 </div>
 <div class="guide-see">See also: <a data-gp="sound">Options, sound &amp; tips</a> · <a data-gp="live">Watching it run</a> · <a data-gp="bottom">Bore, stroke &amp; displacement</a></div>
@@ -2417,7 +2417,7 @@ This is a physics model, and like every model it leaves things out. These are th
 · <b>Some hardware is hand-set to real relative behaviour</b> rather than derived: the induction systems, the supercharger boost laws, the nitrous shot, the MBT spark rule, the friction curve's shape, the cooling-system model (<a data-gp="induction">Induction &amp; throttle</a>, <a data-gp="supercharger">Superchargers</a>, <a data-gp="nitrous">Nitrous oxide</a>, <a data-gp="ignition">Ignition &amp; spark timing</a>, <a data-gp="friction">Friction, oil &amp; pumping</a>, <a data-gp="heat">Heat, cooling &amp; EGT</a>).<br>
 · <b>Designed parts leave two things out</b>: a silencer's own back-pressure, and the intake plenum's volume (<a data-gp="parts">Designing your own parts</a>).<br>
 · <b>Emissions are trend correlations</b>, not chemistry (<a data-gp="emissions">Emissions &amp; the catalyst</a>). <b>Wear rates are game rules</b> (<a data-gp="wear">Wear &amp; reliability</a>). The <b>scorecard's weights</b> are design choices (<a data-gp="scorecard">The scorecard</a>).<br>
-· <b>No vibration or balance</b> is modelled (<a data-gp="firing">Crank &amp; firing order</a>).<br>
+· <b>Crank torsional resonance and engine-mount transfer</b> are not modelled; primary/secondary balance and smoothness are (<a data-gp="firing">Crank &amp; firing order</a>).<br>
 · <b>The lap is quasi-steady</b>: the car is always exactly at the speed grip, power and brakes allow, turning in takes no time (no yaw inertia). Each axle's grip is its own, so a car understeers or oversteers (build 157), but only as a limit: it never slides or spins, the driver never makes a mistake, and the line is the best one near minimum curvature (<a data-gp="trackline">The racing line</a>).<br>
 · <b>A lap is a single hot lap</b>: no tyre wear, no fuel burn, no traffic. A <a data-gp="race">The race</a> adds all three, but its traffic, overtaking and driver errors are rules, and its tyre temperature and wear constants are fitted.<br>
 · <b>Dampers act only through the road's bumps</b>: the tyres' load swing costs grip by load sensitivity and wheel hop; the tyre's lag, the body at turn-in and an aero car's ride height are not modelled, and each circuit's roughness is an estimate by its kind (<a data-gp="dampers">Dampers &amp; the road</a>).<br>
