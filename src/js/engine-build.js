@@ -29,6 +29,7 @@ function readEngineFromForm(){
     turboConfig:g('edTurboConfig').value,
     vgt:g('edVGT').value==='yes',housing:g('edHousing').value,
     antilag:g('edAntilag').value==='yes',
+    eTurbo:g('edETurbo')?g('edETurbo').value:'none',
     scType:g('edScType').value,
     nitrous:g('edNitrous').value,
     cat:g('edCat').value,
@@ -93,6 +94,7 @@ function applyEngineToForm(e){
   g('edTurboSize').value=e.turboSize||'medium';g('edCompWheel').value=e.compExd_mm||0;
   g('edTurboConfig').value=e.turboConfig||'single';g('edVGT').value=e.vgt?'yes':'no';g('edHousing').value=e.housing||'stock';
   g('edAntilag').value=e.antilag?'yes':'no';
+  if(g('edETurbo'))g('edETurbo').value=E_TURBO[e.eTurbo]?e.eTurbo:'none';
   g('edScType').value=e.scType||'roots';g('edNitrous').value=e.nitrous||'none';
   g('edIntakeSys').value=e.intakeSys||'efi';
   g('edCam').value=e.cam||'stock';g('edEgr').value=e.egr||'none';g('edVVT').value=e.vvt?'yes':'no';g('edCylDeact').value=e.cylDeact?'yes':'no';
@@ -167,6 +169,7 @@ function syncDesignEnable(){
   // a vane ring sets its own throat, so the housing A/R is a fixed-housing choice only (build 168); a custom turboPart sets its own too
   g('edVGT').disabled=!turbo;g('edHousing').disabled=!turbo||turboCustom||g('edVGT').value==='yes';
   g('edAntilag').disabled=!turbo;
+  if(g('edETurbo'))g('edETurbo').disabled=!turbo;
   g('edScType').disabled=intake!=='supercharger';
   // No poppet valvetrain on 2-stroke / rotary.
   g('edSilencer').disabled=g('edExhaust').value.startsWith('part:');   // a designed exhaust carries its own silencer
@@ -330,7 +333,7 @@ function buildEngineCore(prevStoich,quiet){
   buildBoostTable(26);
   engine.nitrousBar=NITROUS_BAR[engine.nitrous]||0;
   state.boostActual=0;state.nitrousActive=false;state.nitrousCharge=1.0;state.wmCharge=1.0;   // fresh tanks
-  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
+  state.engineHealth=1.0;state.blown=false;state.wearCause='';state.latG=0;state.sumpStarve=0;state.turboHealth=1.0;state.turboBlown=false;state.turboWearCause='';state.eTurboW=0;state.pfSootG=0;state.pfRegen=false;state.pfSootRate=0;state.limFrac=1;state.burnFrac=1;   // a fresh (rebuilt) engine
   // Reference brake torque (~peak) used to scale the dyno brake load.
   engine.loadRefTq=(IMEP_K*engine.typeImep*engine.mapMax*0.95*1e5*(engine.displacement_L/1000))/engine.strokeDiv;
   // Rotating inertia, from the parts that spin (build 106). It was 0.04 + 0.06 L^1.5 x stroke/86, a

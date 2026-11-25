@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Electric turbo / MGU-H (build 470)
+
+- **Opt-in `ELECTRIC TURBO` on AIR & BOOST**: defaults to `NONE` (`eTurbo: 'none'`) so existing engines and presets stay unchanged; `E-TURBO (48 V)` (6 kW, 88% eff, +4.5 kg, +$1,600, Garrett E-Turbo ref) and `MGU-H (HV)` (90 kW, 92% eff, +7.0 kg, +$6,500, FIA F1 2014–25 ref). Plan E5 in `plans/engine-systems.md`.
+- **Spool assist & exhaust recovery (`advanceShaft`, `stepBoost`, `stepElectrical`, `stepHybridBench`)**: off-boost under throttle (`rawB < boostTarget`), motor torque capped by $T_{\max} = P_{\max}/(0.35\,\omega_{\max})$ spins up the turbo shaft faster while drawing electrical power (`state.eTurboW < 0`); at full load on boost, surplus turbine power above compressor + bearing demand generates electrical power into the 12 V/48 V bus or hybrid pack (`state.eTurboW > 0`). Added `tests/test292.mjs`.
+
 ### Particulate filter (DPF / GPF) with Darcy back-pressure & regeneration (build 469)
 
 - **Opt-in `PARTICULATE FILTER` on EXHAUST**: defaults to `NONE` (`partFilter: false`) so existing engines and presets are unchanged; fitting `DPF / GPF` adds wall-flow substrate mass (`2.0 + 1.5·Vd` kg) and cost ($800 CI / $450 SI). Plan E10 in `plans/engine-systems.md`.

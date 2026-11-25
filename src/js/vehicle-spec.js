@@ -4,7 +4,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 function engineMass(){
   let m=50+18*engine.displacement_L+7*engine.cylinders;
   if(engine.ci)m*=1.35;                                   // diesels: iron block, strong internals
-  if(engine.intake==='turbo')m+=15+engine.boost_bar*10;
+  if(engine.intake==='turbo'){m+=15+engine.boost_bar*10;if(engine.eTurbo&&E_TURBO[engine.eTurbo])m+=E_TURBO[engine.eTurbo].massKg;}
   else if(engine.intake==='supercharger')m+=25;
   if(engine.layout==='v'||engine.layout==='boxer')m+=10;
   if(engine.intake!=='na'&&engine.waterMeth&&engine.waterMeth!=='none')m+=(WATER_METH[engine.waterMeth]?.massKg||0);

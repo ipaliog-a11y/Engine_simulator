@@ -150,7 +150,7 @@ function stepHybridBench(dt){
     withEngThr(H,()=>{stepBoost(dt);state.map+=(mapTarget()-state.map)*(1-Math.exp(-mapRateK(state.rpm)*dt));});
     const cut=state.rpm>=e.redline||withEngThr(H,overrunFuelCut);
     H.Te=withEngThr(H,()=>brakeTorqueRaw(Math.max(state.rpm,e.idleRpmEff),state.map,cut));
-  }else{H.Te=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
+  }else{H.Te=0;state.eTurboW=0;state.map+=(1-state.map)*(1-Math.exp(-mapRateK(e.idleRpmEff)*dt));}
   const tc=m.cool.tCool,temp=H.mT,w0=Math.max(H.n,1)*Math.PI/30;
   // MG1 (power-split / series): the engine's speed, reaction, and tracked MG1 thermal node
   let P1=0;
@@ -167,12 +167,12 @@ function stepHybridBench(dt){
     P1=Ts!==0&&(H.engOn||H.Tspin)?mg1Res.P1:0;
   }
   // the motor within what the pack can give and take: discharging no more than its limit, charging no more than it
-  // takes, with the 12 V load and MG1's power on the same bus (through the DC-DC boost converter on a power-split)
-  const etaBoost=psBoostEta(hy);
-  const PinMax=lim.Pmax*etaBoost+P1-B.auxW,PinMin=-lim.Pchg/etaBoost+P1-B.auxW;
-  let Tm=H.TmWant==null?hybMotorFor(hy,H.n,P1-B.auxW,temp):H.TmWant;
-  Tm=Math.min(Tm,hybMotorFor(hy,H.n,H.soc>0.02?PinMax:P1-B.auxW,temp));
-  Tm=Math.max(Tm,hybMotorFor(hy,H.n,H.soc<0.98?PinMin:P1-B.auxW,temp)*(H.n>5?1:0));
+  // takes, with the 12 V load, MG1's power, and any E-Turbo/MGU-H power on the same bus
+  const etaBoost=psBoostEta(hy),eTurboW=state.eTurboW||0;
+  const PinMax=lim.Pmax*etaBoost+P1+eTurboW-B.auxW,PinMin=-lim.Pchg/etaBoost+P1+eTurboW-B.auxW;
+  let Tm=H.TmWant==null?hybMotorFor(hy,H.n,P1+eTurboW-B.auxW,temp):H.TmWant;
+  Tm=Math.min(Tm,hybMotorFor(hy,H.n,H.soc>0.02?PinMax:P1+eTurboW-B.auxW,temp));
+  Tm=Math.max(Tm,hybMotorFor(hy,H.n,H.soc<0.98?PinMin:P1+eTurboW-B.auxW,temp)*(H.n>5?1:0));
   const V=hybBusV(hy);
   // a power-split's MG2 cancels the ring's reaction to MG1 spinning or braking the engine (the reaction's kr share of the
   // crank torque), so the shaft feels none of it; a P2's motor reserves cranking torque for the K0 clutch while starting
@@ -189,7 +189,7 @@ function stepHybridBench(dt){
   H.Tc2=!ps&&!run&&H.engOn?Math.max(0,TmAvail-Math.abs(Tm)):0;
   const L=motorLosses(m,Math.abs(Tm)+H.Tc2,Math.max(H.n,1),V,temp);
   const Pm=Tm*w0+H.Tc2*Math.max(w0,state.rpm*Math.PI/30)+(Tm!==0||H.Tc2||H.n>0?L.total:0);
-  const Pbus=Pm-P1+B.auxW,Pbat=Pbus>=0?Pbus/etaBoost:Pbus*etaBoost;
+  const Pbus=Pm-P1-eTurboW+B.auxW,Pbat=Pbus>=0?Pbus/etaBoost:Pbus*etaBoost;
   const d=packDrawClamped(pack,H.soc,Pbat,H.tB.b);
   H.soc=clamp(H.soc-d.I*dt/(pack.Ah*3600),0,1);
   motorHeatStep(m,temp,L,dt);packHeatStep(pack,H.tB,d.heat,dt);
