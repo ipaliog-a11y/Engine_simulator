@@ -11,7 +11,8 @@
 //   · ITBs, a single throttle and mechanical injection breathe the same at full throttle, within 0.1% (no fitted bonus;
 //     their idle speeds differ, which the runner's tuning reads);
 //   · the four carburettor types breathe the same at full throttle (one sizing rule);
-//   · the catalyst's fitted ramp is still there (named, for the audit of fitted parts);
+//   · the catalyst has no fitted ramp either (build 476: retired by the valves' derived pumping work); it costs the
+//     charge only through its back-pressure (residual gas), so less than 3% at 6500 rpm, and never a gain;
 //   · no page errors.
 import { chromium } from './pw.mjs';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -59,7 +60,7 @@ const [lo, , hi] = r.pts;
 if (!(lo.loss < 0.02 && hi.loss > 0.04 && hi.loss < 0.07)) fails.push(`the venturi's loss should grow from under 2% to about 5% at the redline (${f(100 * lo.loss, 2)}% → ${f(100 * hi.loss, 2)}%)`);
 if (Math.max(...r.inj) / Math.min(...r.inj) - 1 > 1e-3) fails.push('ITBs, a single throttle and mechanical injection should breathe the same at full throttle (a fitted bonus is left)');
 if (Math.max(...r.carbs) / Math.min(...r.carbs) - 1 > 1e-3) fails.push('the carburettor types should breathe the same at full throttle');
-if (!(r.cat.stock < r.cat.none * 0.97)) fails.push('the catalyst\'s fitted ramp (named, for the audit) is gone');
+if (!(r.cat.stock <= r.cat.none && r.cat.stock > r.cat.none * 0.97)) fails.push(`the catalyst should cost the charge only through its back-pressure, under 3% (no fitted ramp): ${f(r.cat.none)} → ${f(r.cat.stock)}`);
 if (errors.length) fails.push(...errors.slice(0, 5));
 if (fails.length) { console.log('\nFAIL\n  ' + fails.join('\n  ')); process.exit(1); }
 console.log('\nPASS: a carburettor costs what its venturi drops, and no induction system gets a fitted ramp');

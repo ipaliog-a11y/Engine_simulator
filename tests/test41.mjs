@@ -176,7 +176,14 @@ console.log(`  ${fix.weak.hp} hp factory kei: ${fix.weak.t}s`);
 console.log(`  ${fix.strong.hp} hp factory kei: ${fix.strong.t}s   <- ${(fix.strong.hp / fix.weak.hp).toFixed(1)}x the power buys ${(fix.weak.t - fix.strong.t).toFixed(2)}s`);
 console.log(`  ${fix.strong.hp} hp + LSD: ${fix.lsd.t}s · + sport tyres: ${fix.tyres.t}s · + slicks: ${fix.slicks.t}s · + AWD: ${fix.awd.t}s`);
 // doubling the power on a capped car must do almost nothing...
-if (fix.weak.t - fix.strong.t > 0.5) fails.push('the kei is not actually traction-capped — power still helps it');
+// CAPPED_KNOWN, build 476, added by owner ruling: the strong kei's 2-3 shift now lands at 100.8 km/h instead of 99.2
+// (less torque, less wheelspin at 7000 rpm), so its 0-100 ends before the shift and no longer pays it: 7.51 -> 7.11 s.
+// Its time at the traction limit (gripT) is unchanged, 5.25 s. The cap is the measured gain and may only come down.
+const CAPPED_KNOWN = { cap: 0.8, why: 'build 476: the 2-3 shift lands past 100 km/h' };
+const capGain = Math.max(0.5, CAPPED_KNOWN.cap), gain = fix.weak.t - fix.strong.t;
+if (gain > 0.5 && gain <= capGain) console.log(`  known: power buys ${gain.toFixed(2)} s (${CAPPED_KNOWN.why})`);
+if (gain <= 0.5 && CAPPED_KNOWN.cap > 0.5) console.log('  RESOLVED: power buys under 0.5 s again: remove CAPPED_KNOWN');
+if (gain > capGain) fails.push('the kei is not actually traction-capped — power still helps it');
 // ...while grip must transform it. As a share of the time, not fixed seconds: since build 111 the
 // compound ladder is narrower (eco to slick 1.44x, not 1.72x) and the eco tyre pulls harder in a straight
 // line (the friction ellipse), so every step is worth a little less than the 1 s this once asked for.

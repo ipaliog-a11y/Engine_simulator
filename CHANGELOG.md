@@ -18,6 +18,42 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The valves' pumping work: power turns over before the limiter (build 476)
+
+- **What changed**: the model charged the throttle's vacuum and the mean back-pressure of the pipes and turbine, but
+  not the valves. Pushing the exhaust out through the exhaust valve keeps the cylinder above the manifold's pressure, and
+  drawing the charge in through the intake valve keeps it below the plenum's. Both grow with the square of the gas speed,
+  so with rpm. Now the exhaust stroke is traced from valve opening as a cylinder emptying through a nozzle (filling and
+  emptying, Heywood §14.2; the gas state at EVO from the cycle trace), and the intake stroke's work is taken from the
+  integrated intake stroke (`intakeFill`). Nothing fitted (`exhaustStrokeMEP`, `valvePumpMEP`). LS3 at 6600 rpm:
+  1.35 bar; ~0.2 bar at 3000.
+- **Charged whole**: Heywood's 0.8 × fuel-air efficiency is on gross indicated work, compression and expansion only
+  (§5.8; Problem 5.20), so none of it was already in the model. Check: mechanical efficiency at rated speed now ~77%
+  (MX-5 NA, EK9), against Heywood's "75 percent at maximum rated speed" (§2.5).
+- **A fitted number retired**: the catalyst's VE ramp to the redline (`catRampTop`, up to 5%), which build 322 found
+  stood in for "a loss growing with flow". This is that loss, so the ramp is gone and the register's open entries go
+  4 → 3. (v1-scope item 5 is partly done by this; the brick and silencer stay as `backPressureBar` has them.)
+- **What moved** (fingerprint, 3481 values): peak power −10.8% to +6.2%. LS3 +22 → +14%, LS7 +16 → +9%, Hellcat
+  +8 → +5%, C63 +20 → +16%, Mustang 289 +16 → +3%, Dino +9 → +4%; RS3 +1 → −2%, Coyote +3 → 0%. Small low-revving
+  engines fall most: MX-5 NA +1 → −9%, Golf GTI Mk1 −6 → −16%, GTI Mk7 +2 → −8%. Scoreboard: power mean error 6.5 →
+  7.0% (16 cars over 10%, as before), torque 6.4 → 6.3%, 0–100 9.1 → 8.8%, top speed 5.1 → 4.7%. test60 RMS power
+  9.9 → 9.8%, torque 8.9 → 8.7%.
+- **Known gaps shrunk**: test60's 'limiter' list 32 → 22 (RS3, LS3, Hellcat, BAC Mono, 750S, 370Z, GT-R, F40,
+  Mustang 289, GR86 left it). `RATING_KNOWN` (Dino) and both `AT_LIMITER_KNOWN` lists (tests 44, 46) are empty.
+- **Known gaps added by owner ruling (build 476)**:
+  - test53 `BSFC_KNOWN` (cap 227): the 2.0 turbo diesel burns 226 g/kWh at 2000 rpm (219 before; real 200–215). The
+    intake share includes the runner's damping (`Q_INTAKE`) as work, kept as derived.
+  - test61 `KNOWN`: the Golf GTI Mk7 is 'short' of its 250 km/h governor, its EA888 now −8% on power.
+  - test41 `CAPPED_KNOWN` (cap 0.8 s): the strong kei's 2–3 shift lands at 100.8 km/h instead of 99.2, so its 0–100
+    no longer pays it (7.51 → 7.11 s; time at the traction limit unchanged).
+  - The Hellcat's 'slow-car' entry in test61 is retired.
+- **Left open**: the Coyote still peaks at its 7500 limiter (459 hp, real 460 at 7000), with 21 others. The
+  high-revving engines stay under (EK9 −13%, S2000 −10%, Huracán STO −13%, BAC Mono −13%): the high-rpm gain they miss
+  (scoreboard C3 under) is not found here. Their friction is the suspect: ~2.5 bar at 8200 rpm on the 1980s reference
+  ring pack and oil (friction.js), not checked. The small low-revving engines now under point the same way at their
+  own speeds. No exhaust lift is carried per engine, so the exhaust valve has the intake's L/D, duration and
+  discharge coefficient.
+
 ### Engine braking at the limiter (build 475)
 
 - **What changed**: past the rev limiter in top gear the fuel is cut, and the lap solver, the open-road (eco) solver

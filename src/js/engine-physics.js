@@ -155,7 +155,6 @@ function computeVE(rpm,map){
   }
   // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
   // leaves the charge that much thinner.
-  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
   ve*=Math.max(0.05,1-(filterDp(Q)+carbDp(Q))/101325);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));
@@ -984,8 +983,9 @@ function pumpingMEP(rpm,map,actFrac=1){
   // A diesel's IMEP is gross (fuel-based), so its gas exchange is the whole loop, signed: the piston
   // pushes out against p_exh and is pushed down by p_int. CI diesels are unthrottled (quality-governed),
   // so there is no intake throttle plate vacuum loss (Heywood §13.3).
-  if(engine.ci)return pExh-Math.max(1,map);
-  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map))*actFrac;
+  const valves=valvePumpMEP(rpm,map,pExh);                          // through the valves themselves (build 476)
+  if(engine.ci)return pExh-Math.max(1,map)+valves;
+  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map)+valves)*actFrac;
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac=1){

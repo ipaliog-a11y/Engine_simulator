@@ -120,7 +120,7 @@ const KNOWN = {
   // Build 109: grip from tyre load. 707 hp through two rear tyres is traction-limited off the line, and the
   // width bonus that used to add 7.5% to a 275 tyre is gone; real road tests on street tyres report the
   // same struggle. Its 3.9 s is the maker's figure.
-  'Dodge Challenger SRT Hellcat (2015)': ['slow-car'],
+  // (Hellcat: retired in build 476, when the valves' pumping work took its engine from +8% to +5%.)
   // (750S: from build 148 to 151, on road tyres in the model; build 153's tyre review put it on its factory P Zero
   // Corsas, the Cup 2 class its measured skidpad and stops agree with, and it reads 3.15 s against 2.8.)
   // Build 154: the C8 Z06's reference is the problem, not the car. Its 2.8 s (marked unsure) reads as GM's 0-60
@@ -135,6 +135,9 @@ const KNOWN = {
   // build 101.)
   'Nissan Skyline GT-R V-spec (R34, 1999)': ['short'],
   'Subaru Impreza WRX STI (GD, 2004)': ['short'],
+  // Build 476, added by owner ruling: the valves' pumping work, charged whole, takes the EA888 from +2% to -8% on power
+  // (test60), so the GTI no longer reaches its 250 km/h governor. The same "small engines fall" gap as the MX-5s.
+  'VW Golf GTI (Mk7, 2013)': ['short'],
 };
 const found = {};
 for (const c of cars) {

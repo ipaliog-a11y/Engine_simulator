@@ -50,7 +50,7 @@ const r = await page.evaluate(() => {
   // 7. gas exchange is signed for the diesel: boost above back-pressure is work given back
   const map = wotMapAt(1800); engine.boostNow = map;
   const pExh = 1 + backPressureBar(1800, egtAt(1800, map));
-  out.pump = { pumping: pumpingMEP(1800, map), pExh, map };
+  out.pump = { pumping: pumpingMEP(1800, map), pExh, map, valves: valvePumpMEP(1800, map, pExh) };
   return out;
 });
 
@@ -79,7 +79,14 @@ if (!(r.pts[r.pts.length - 1].lam > r.smoke + 0.01)) fails.push('near the redlin
 // Published: a production common-rail diesel at full load near peak torque runs 200-215 g/kWh.
 const pt2000 = r.pts.find(p => p.n === 2000);
 console.log(`  full-load BSFC at 2000 rpm: ${Math.round(pt2000.bsfc)} g/kWh (real 200-215)`);
-if (!(pt2000.bsfc > 190 && pt2000.bsfc < 225)) fails.push(`full-load BSFC at 2000 rpm ${Math.round(pt2000.bsfc)} g/kWh — real engines run 200-215`);
+// BSFC_KNOWN, build 476, added by owner ruling: with the valves' pumping work (valvePumpMEP) the diesel burns 226 g/kWh
+// here (219 before; real 200-215). The intake share includes the runner's damping (Q_INTAKE) as work, kept as derived;
+// no measured pumping curve to check it against. The cap is the measured value and may only come down.
+const BSFC_KNOWN = { cap: 227, why: 'build 476: the valves\' pumping work on a small turbo diesel' };
+const bsfcHi = Math.max(225, BSFC_KNOWN.cap);
+if (pt2000.bsfc >= 225 && pt2000.bsfc < bsfcHi) console.log(`  known: ${Math.round(pt2000.bsfc)} g/kWh over 225 (${BSFC_KNOWN.why})`);
+if (pt2000.bsfc < 225 && BSFC_KNOWN.cap > 225) console.log('  RESOLVED: under 225 g/kWh again: remove BSFC_KNOWN');
+if (!(pt2000.bsfc > 190 && pt2000.bsfc < bsfcHi)) fails.push(`full-load BSFC at 2000 rpm ${Math.round(pt2000.bsfc)} g/kWh — real engines run 200-215`);
 
 console.log('\n== torque is fuel ==');
 const f = r.fuel;
@@ -88,9 +95,10 @@ if (!(f.tq12 > f.tq16 && f.tq16 > f.tq20)) fails.push('less fuel for the same ai
 if (!(f.bs16 < f.bs12)) fails.push('a leaner diesel burns its fuel more efficiently (fuel-air cycle)');
 
 console.log('\n== gas exchange is signed ==');
-console.log(`  1800 rpm: intake ${r.pump.map.toFixed(2)} bar, exhaust ${r.pump.pExh.toFixed(2)} bar → PMEP ${r.pump.pumping.toFixed(3)} bar`);
-if (Math.abs(r.pump.pumping - (r.pump.pExh - Math.max(1, r.pump.map))) > 1e-6)
-  fails.push('a boosted diesel pumping loop should be p_exh - p_int');
+console.log(`  1800 rpm: intake ${r.pump.map.toFixed(2)} bar, exhaust ${r.pump.pExh.toFixed(2)} bar, valves ${r.pump.valves.toFixed(3)} bar → PMEP ${r.pump.pumping.toFixed(3)} bar`);
+// build 476: plus the valves' own pumping work (valvePumpMEP), which is never negative
+if (!(r.pump.valves >= 0) || Math.abs(r.pump.pumping - (r.pump.pExh - Math.max(1, r.pump.map) + r.pump.valves)) > 1e-6)
+  fails.push('a boosted diesel pumping loop should be p_exh - p_int plus the valves\' work');
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');

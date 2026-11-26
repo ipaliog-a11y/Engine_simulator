@@ -70,7 +70,8 @@ const f = (x, d = 0) => (+x).toFixed(d), pc = (a, b) => (a / b - 1) * 100;
 //   build 234: the Dino's generic STOCK springs floated its valves at 5215 rpm against a 7800 rpm redline, which cut its
 //   top end to 203 hp (rating 195). On its maker's springs it makes 250 hp (+28%): the model's missing top-end fade on
 //   two-valve heads, which the early float had been hiding. Named in the CHANGELOG; no preset is changed to hide it.
-const RATING_KNOWN = { 'Ferrari Dino 246 GT (1969)': 'build 234: two-valve top-end breathing, no longer masked by valve float' };
+// build 476: the Dino (212 / 195 hp at build 474) left it, now 192 hp with the valves' pumping work. Kept empty as the guard.
+const RATING_KNOWN = {};
 const rms = a => Math.sqrt(a.reduce((s, x) => s + x * x, 0) / Math.max(1, a.length));
 console.log(`${'car'.padEnd(44)} conf   hp / rating        0-100 (matched) / real    top / real   taper`);
 const P = [], T = [], V = [];
