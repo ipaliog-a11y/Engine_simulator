@@ -1310,6 +1310,34 @@ function previewSusp(){
   pv('psGuide').innerHTML=lines.map(l=>'<div>'+l+'</div>').join('');
   drawSusp(partsUI.last);
 }
+function applySuspToDesigner(ax,p){
+  if(!p||(ax!=='F'&&ax!=='R'))return;
+  if(partsUI.kind!=='susp'||!partsUI.edit.susp){
+    partsUI.kind='susp';
+    if(vizMode!=='parts')setTab('parts'); else renderParts();
+  }else if(vizMode!=='parts'){
+    const ed=partsUI.edit.susp;
+    partsUI.edit.susp=Object.assign(partFromEditor('susp'),ed&&ed.id?{id:ed.id}:{});
+    setTab('parts');
+  }
+  const L=PART_LIMITS,c=(x,k)=>clamp(x,L[k][0],L[k][1]);
+  const mr=c(+p.mr||1,'mr'),ksW=(+p.k||25)*1000*(+p.mr||1)*(+p.mr||1),kS=ksW/(mr*mr);
+  const coilD=c(+pv('ps_coilD'+ax+'_mm').value||100,'coilD_mm'),coils0=c(+pv('ps_coils'+ax).value||8,'coils');
+  const d=c(Math.pow(8*Math.pow(coilD/1000,3)*coils0*kS/SPRING_G,0.25)*1000,'wireD_mm');
+  const coils=c(springRate(d,coilD,1)/kS,'coils');
+  const damp=c(+p.cb||0,'damp'),rb=p.cb>0?c(+p.cr/+p.cb,'rb'):L.rb[0];
+  pv('ps_wireD'+ax+'_mm').value=+d.toFixed(4);
+  pv('ps_coils'+ax).value=+coils.toFixed(4);
+  pv('ps_mr'+ax).value=+mr.toFixed(2);
+  pv('ps_damp'+ax).value=+damp.toFixed(2);
+  pv('ps_rb'+ax).value=+rb.toFixed(2);
+  const ed=partsUI.edit.susp;
+  partsUI.edit.susp=Object.assign(partFromEditor('susp'),ed&&ed.id?{id:ed.id}:{});
+  previewSusp();
+  if(typeof closeSuspWin==='function')closeSuspWin();
+  pv('psSaveFit').focus();
+  flash(tr('APPLIED TO DESIGNER')+': '+tr(ax==='F'?'FRONT':'REAR'));
+}
 // Each axle's roll stiffness, spring and bar, this part's against the car's now.
 function drawSusp(L){
   const c=pv('psCanvas');if(!c||!L||!L.r)return;
@@ -1416,5 +1444,10 @@ function wireParts(){
   });
   pv('pfSize').addEventListener('click',()=>{const r=filterReport(partFromEditor('filter'));pv('pfArea').value=+(r.Q/FILTER_FACE_V).toFixed(3);previewPart('filter');});
   pv('piMatch').addEventListener('click',()=>{pv('piD').value=+portRunnerD(engine).toFixed(1);previewPart('intake');});
+  if(pv('psCalc'))pv('psCalc').addEventListener('click',()=>{
+    const ed=partsUI.edit.susp;
+    partsUI.edit.susp=Object.assign(partFromEditor('susp'),ed&&ed.id?{id:ed.id}:{});
+    if(typeof openSuspWin==='function')openSuspWin(partsUI.edit.susp);
+  });
   window.addEventListener('resize',()=>{if(vizMode==='parts'){if(typeof markPartPreviewDirty==='function')markPartPreviewDirty();if(partsUI.last)drawPartCurves(partsUI.last.kind,partsUI.last.now,partsUI.last.r);}});
 }

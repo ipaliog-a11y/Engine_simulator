@@ -29,7 +29,7 @@
 const SC_DT=1e-4, SC_T=2.0, SC_KEEP=20;   // s: the time step, the time the step response runs for, a sample kept every 2 ms
 const SC_FMIN=0.3, SC_FMAX=40, SC_NF=240;  // Hz: the frequency response's range and its points, spaced evenly in log f
 const SC_SETTLE=0.05;                       // the body has settled once it stays within 5% of the step
-const sc={open:false,ax:'F',p:null,r:null,rev:-1};   // rev: the car (vehRev) the inputs were taken from
+const sc={open:false,ax:'F',p:null,r:null,rev:-1,part:null};   // rev: the car (vehRev) the inputs were taken from; part: draft suspPart from the designer
 // the inputs: key, label, unit, smallest and largest accepted, step of the field, decimals shown
 const SC_IN=[
   ['ms','SPRUNG MASS (kg)',5,3000,1,0],
@@ -41,9 +41,14 @@ const SC_IN=[
   ['kt','TYRE RATE (N/mm)',10,2000,1,0],
   ['step','STEP IN THE ROAD (mm)',-150,150,1,0]
 ];
-// The car's own corner, at the wheel (motion ratio 1), and a 25 mm step: about a kerb's lip or a raised drain cover.
-function scFromCar(ax){
-  const q=quarterCar(vehicle,ax);
+// The car's own corner (or a draft suspPart from the PARTS designer), and a 25 mm step: about a kerb's lip or a raised drain cover.
+function scFromCar(ax,part){
+  const v=part?Object.assign({},vehicle,{suspPart:part}):vehicle;
+  const q=quarterCar(v,ax),P=part||v.suspPart;
+  if(P){
+    const mr=clamp(+(P['mr'+ax]||1),0.2,1.5),d=+(P['damp'+ax]||0),rb=clamp(+(P['rb'+ax]||1),1,5);
+    if(d>0)return {ms:q.ms,mu:q.mu,k:q.ks/1000/(mr*mr),mr,cb:d,cr:d*rb,kt:q.kt/1000,step:25};
+  }
   return {ms:q.ms,mu:q.mu,k:q.ks/1000,mr:1,cb:q.cs,cr:q.cs,kt:q.kt/1000,step:25};
 }
 // Everything at the wheel, in SI units.
@@ -128,19 +133,21 @@ function scCalc(p){
   }else{r.over=0;r.settle=0;}
   return r;
 }
-function openSuspWin(){
+function openSuspWin(part){
   const w=document.getElementById('susWin');if(!w||!vehicle||!vehicle.mass)return;
+  const draft=part&&part.kind==='susp'?part:null;
   w.hidden=false;sc.open=true;
-  if(!sc.p||sc.rev!==vehRev){sc.p=scFromCar(sc.ax);sc.rev=vehRev;}   // a car changed since: start again from its corner
+  if(draft){sc.part=draft;sc.p=scFromCar(sc.ax,draft);sc.rev=vehRev;}
+  else if(sc.part||!sc.p||sc.rev!==vehRev){sc.part=null;sc.p=scFromCar(sc.ax);sc.rev=vehRev;}   // a car changed since, or coming back from a designer draft: start from its corner
   buildSuspForm();renderSuspWin();
   document.getElementById('susClose').focus();
 }
 function closeSuspWin(){
   const w=document.getElementById('susWin');if(!w||w.hidden)return;
   w.hidden=true;sc.open=false;
-  const b=document.getElementById('btnSusp');if(b)b.focus();
+  const b=document.getElementById(vizMode==='parts'?'psCalc':'btnSusp');if(b)b.focus();
 }
-// The left column: which corner, the inputs, and the button that puts the car's own corner back.
+// The left column: which corner, the inputs, and the buttons to reload from the car or send to the designer.
 function buildSuspForm(){
   const el=id=>document.getElementById(id);
   el('susTitle').textContent=tr('SUSPENSION CALCULATOR');
@@ -150,6 +157,7 @@ function buildSuspForm(){
   el('susForm').innerHTML=SC_IN.map(([k,lab,lo,hi,st,dp])=>
     '<label class="sc-row"><span>'+esc(tr(lab))+'</span><input type="number" id="sc_'+k+'" min="'+lo+'" max="'+hi+'" step="'+st+'" value="'+(+sc.p[k]).toFixed(dp)+'"></label>').join('');
   el('susReset').textContent=tr('FROM THE CAR');
+  el('susApply').textContent=tr('TO DESIGNER');
 }
 function scReadForm(){
   for(const [k,,lo,hi] of SC_IN){const i=document.getElementById('sc_'+k);if(!i)continue;const v=parseFloat(i.value);if(isFinite(v))sc.p[k]=clamp(v,lo,hi);}
@@ -158,7 +166,7 @@ const SC_COL={body:'#00ccff',wheel:'#ffcc00',road:'#667',load:'#ff6b6b'};
 function renderSuspWin(){
   if(!sc.open)return;
   const el=id=>document.getElementById(id),r=sc.r=scCalc(sc.p),w=r.w,f1=x=>x.toFixed(1),f2=x=>x.toFixed(2);
-  el('susSub').textContent=tr(vehicle.chLabel)+' · '+tr(sc.ax==='F'?'front':'rear');
+  el('susSub').textContent=tr(vehicle.chLabel)+' · '+tr(sc.ax==='F'?'front':'rear')+(sc.part?' · '+(sc.part.name||tr('DRAFT')):'');
   const row=(k,v,x)=>'<div class="gg-row">'+esc(tr(k))+' <b>'+v+'</b>'+(x?' <span class="sc-dim">('+esc(tr('shortcut'))+' '+x+')</span>':'')+'</div>';
   let h='';
   h+=row('Body bounce',f2(r.modes.body)+' Hz',f2(r.simple.body)+' Hz');
@@ -232,15 +240,16 @@ function drawSuspStep(){
 }
 function wireSuspWin(){
   const b=document.getElementById('btnSusp'),w=document.getElementById('susWin');if(!b||!w)return;
-  b.addEventListener('click',openSuspWin);
+  b.addEventListener('click',()=>openSuspWin(null));
   document.getElementById('susClose').addEventListener('click',closeSuspWin);
   w.addEventListener('click',e=>{if(e.target===w)closeSuspWin();});
   document.getElementById('susCorner').addEventListener('click',e=>{
     const a=e.target.closest('button[data-ax]');if(!a)return;
-    sc.ax=a.dataset.ax;sc.p=scFromCar(sc.ax);sc.rev=vehRev;buildSuspForm();renderSuspWin();
+    sc.ax=a.dataset.ax;sc.p=scFromCar(sc.ax,sc.part);sc.rev=vehRev;buildSuspForm();renderSuspWin();
   });
   document.getElementById('susForm').addEventListener('input',()=>{scReadForm();renderSuspWin();});
-  document.getElementById('susReset').addEventListener('click',()=>{sc.p=scFromCar(sc.ax);sc.rev=vehRev;buildSuspForm();renderSuspWin();});
+  document.getElementById('susReset').addEventListener('click',()=>{sc.part=null;sc.p=scFromCar(sc.ax);sc.rev=vehRev;buildSuspForm();renderSuspWin();});
+  document.getElementById('susApply').addEventListener('click',()=>{if(typeof applySuspToDesigner==='function')applySuspToDesigner(sc.ax,sc.p);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sc.open)closeSuspWin();});
   window.addEventListener('resize',()=>{if(sc.open){drawSuspFreq();drawSuspStep();}});
 }
