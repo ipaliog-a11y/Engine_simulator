@@ -18,7 +18,7 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
-### Water-to-air intercoolers on the cars whose makers fit them (build 477)
+### Water-to-air intercoolers on the cars whose makers fit them (build 478)
 
 `plans/v1-scope.md` item 4 (`v1-finish` 7). Eight factory engines now carry the water-to-air part of build 429 in place
 of their air-to-air class, each with its source in `ENGINE_W2A` (`engine-options-presets.js`):
@@ -44,6 +44,14 @@ of their air-to-air class, each with its source in `ENGINE_W2A` (`engine-options
 - Left open: no maker publishes the core, pump or radiator sizes, so all eight take the starting part (300 × 200 ×
   100 mm core, 20 L/min, 600 × 300 mm radiator), sized for a 2.3 L four. It cools less at a big engine's rated flow,
   which is why most of the eight lose power at the top. Per-engine sizes would need measured parts.
+- test60: the Hellcat joins the `limiter` list (owner's ruling). Its top is flat, 715 hp at 6100 and 6200 rpm (real
+  707 at 6000), the same missing top-end fade as the others; it was already a step short (752 / 750).
+- The test is test297 (test296 was taken by build 477).
+
+### Two-way link between suspension parts designer and calculator (build 477)
+
+- **Designer → Calculator**: added `CALCULATOR…` (`#psCalc`) in `PARTS` → `SPRINGS, BARS & DAMPERS` to open the Suspension Calculator with the unsaved draft's motion ratio, spring rate, bound damping, and rebound damping for both axles; `FROM THE CAR` (`#susReset`) clears the draft and reloads from the car.
+- **Calculator → Designer**: added `TO DESIGNER` (`#susApply`) in the Suspension Calculator to convert the active corner's spring rate, motion ratio, and bound/rebound damping into coil wire diameter, active coils, motion ratio, bound damping, and rebound/bound ratio on that axle in `PARTS` → `SPRINGS, BARS & DAMPERS`, leaving the anti-roll bar and the other axle unchanged.
 
 ### The valves' pumping work: power turns over before the limiter (build 476)
 
