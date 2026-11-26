@@ -18,6 +18,11 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Two-way link between suspension parts designer and calculator (build 477)
+
+- **Designer → Calculator**: added `CALCULATOR…` (`#psCalc`) in `PARTS` → `SPRINGS, BARS & DAMPERS` to open the Suspension Calculator with the unsaved draft's motion ratio, spring rate, bound damping, and rebound damping for both axles; `FROM THE CAR` (`#susReset`) clears the draft and reloads from the car.
+- **Calculator → Designer**: added `TO DESIGNER` (`#susApply`) in the Suspension Calculator to convert the active corner's spring rate, motion ratio, and bound/rebound damping into coil wire diameter, active coils, motion ratio, bound damping, and rebound/bound ratio on that axle in `PARTS` → `SPRINGS, BARS & DAMPERS`, leaving the anti-roll bar and the other axle unchanged.
+
 ### The valves' pumping work: power turns over before the limiter (build 476)
 
 - **What changed**: the model charged the throttle's vacuum and the mean back-pressure of the pipes and turbine, but
