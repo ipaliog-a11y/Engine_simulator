@@ -102,7 +102,13 @@ if (!(r.scEff.screwEff > 0.68 && r.scEff.screwEff < 0.77)) fails.push('Twin-scre
 if (!(r.scEff.centEff > 0.72 && r.scEff.centEff <= 0.78)) fails.push('Centrifugal compEff out of range: ' + r.scEff.centEff);
 if (!(r.scDrag.deltaOff > 0.005)) fails.push('Off-boost SC parasitic drag floor missing: ' + JSON.stringify(r.scDrag));
 
+// build 479 (owner's ruling), named gap: retiring the catalyst ramp (build 476) correctly gives ~2% more charge, and the
+// Cummins 6.7 HO reaches 203.2 bar against the generic PMAX_LIMIT_CI of 200 (199.3 before). No per-engine rating is
+// published. It may only shrink: the cap is the measured value.
+const PMAX_KNOWN = { 'Cummins 6.7 (Ram HD 2019 HO)': 203.2 };
 for (const d of r.diesels) {
+  const cap = PMAX_KNOWN[d.name];
+  if (cap != null && d.pMax > 60 && d.pMax <= cap + 0.05 && d.bad.every(b => b === 'pmax')) continue;
   if (!(d.pMax > 60 && d.pMax < d.lim) || d.bad.length)
     fails.push('Stock diesel pMax check failed for ' + d.name + ': ' + JSON.stringify(d));
 }

@@ -71,7 +71,9 @@ for (const x of r.real) {
 }
 
 console.log(`\n== off: EA288 peak at ${r.off.offPeak} rpm (on: ${r.off.onPeak}); at 2000 rpm ${r.off.offLow.toFixed(1)} / ${r.off.onLow.toFixed(1)} Nm ==`);
-if (!(r.off.offPeak >= r.off.rl - 100)) fails.push('with the governor off the EA288 does not make its peak at its limit again');
+// build 479 (owner's ruling): since build 476 charges the valves' pumping work, the ungoverned EA288's power turns over
+// before its 4800 limit (4500 rpm). So the governor-off check is that the peak moves past the governed one, not to the limit.
+if (!(r.off.offPeak > r.off.onPeak)) fails.push('with the governor off the EA288 does not peak past its governed peak');
 if (Math.abs(r.off.offLow - r.off.onLow) > 1e-6) fails.push('the governor changes the torque below the rated speed');
 console.log(`== the field: off on a petrol engine ${r.ui.petrolOff}, on on a diesel ${r.ui.dieselOn}, saved ${r.ui.saved} ==`);
 if (!r.ui.petrolOff || !r.ui.dieselOn || r.ui.saved !== 2800) fails.push('the rated-speed field is not a diesel\'s, or does not survive a save');

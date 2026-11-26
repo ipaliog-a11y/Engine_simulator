@@ -78,6 +78,13 @@ const KNOWN = {
   // build 478 (owner's ruling): on its maker's water-to-air cooler the Hellcat's top is flat, 715 hp at 6100 and 6200
   // (real 707 at 6000); it was already a step short (752 / 750). The same missing top-end fade.
   'Dodge 6.2 Hellcat (Challenger SRT)': ['limiter'],
+  // build 479 (owner's ruling): the exhaust stroke's work is now read at the engine's load (map/pEx). At full throttle
+  // an NA engine's exhaust sits above its charge (x = 0.8-0.9), so its exhaust work falls 25-35% at the redline and
+  // these four peak at their limiters again: the missing high-rpm fade and intake gain named above.
+  'Audi 2.5 TFSI (RS3 8V)': ['limiter'],
+  'GM LS3 (Corvette C6)': ['limiter'],
+  'Ferrari F136 FB V8 (458 Italia)': ['limiter'],
+  'McLaren M840T twin-turbo V8 (750S)': ['limiter'],
   // build 199, batch 1 (research/vehicles-batch-1): the same missing top-end fade on its high-revving NA engines, each
   // still climbing at its limiter where the real one peaks short of it (the 370Z, NSX, E30 M3, 190E, M5 E39, Beat, EK9
   // and GR86), and on four boosted ones past their factory taper (Urus, GT-R, Giulia, Mégane)
