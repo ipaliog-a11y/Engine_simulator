@@ -409,8 +409,16 @@ function intakeFill(rpm,adv,L,Tres,Cd){
 // to the inlet's over the lifts that matter. The intake: the work below the plenum on the integrated intake stroke
 // (intakeFill, above), TDC to BDC. Both tabulated per engine at 1 atm; pumpingMEP scales each by its own gas density
 // (exhaust pressure, manifold pressure).
-function exhaustStrokeMEP(e,rpm){
-  const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,1);
+// The exhaust's work depends on the load as well (build 479): the gas at EVO is the trace of the charge actually
+// trapped, so at part throttle it blows down from a lower pressure and less is left to push out (MX-5 NA at 5000 rpm:
+// 0.12 bar at 0.3 bar manifold, 0.44 at full load). Build 476 took the full-load trace at every load, which charged a
+// lap's part-throttle running 2.5-4x the exhaust work. Every pressure in the trace scales together (ideal gas; nozzle
+// flow and trapped mass both in proportion to pressure), so at manifold pressure map and exhaust pressure pEx the work
+// is pEx times the 1-atm trace's at map/pEx: tabulated over that ratio (EX_X) at each speed. Not in it: a diesel's
+// part load is less fuel at the same manifold pressure, which the trace (full fuel) does not lower.
+const EX_X=[0.2,0.4,0.6,0.8,1,1.5,2,3,4];
+function exhaustStrokeMEP(e,rpm,x=1){
+  const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,x);
   const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
   const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
   const dur=e.camDur,evo=360-e.camLSA-dur/2,nEx=Math.max(1,(e.valves||4)-e.ivCount);
@@ -441,7 +449,17 @@ const valvePumpTab=(tb,rpm,k)=>{
 // The valves' pumping MEP (bar) at this speed: the exhaust's at exhaust pressure pEx, the intake's at manifold pressure.
 function valvePumpMEP(rpm,map,pEx){
   const tb=engine.fillTable;if(!tb||!(tb[0].ex>=0))return 0;
-  return valvePumpTab(tb,rpm,'ex')*Math.max(0,pEx)+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
+  const pe=Math.max(0,pEx),ex=t=>exAtX(t.exX,map/Math.max(1e-3,pe));
+  let exR;
+  if(rpm<=tb[0].rpm)exR=ex(tb[0]);else if(rpm>=tb[tb.length-1].rpm)exR=ex(tb[tb.length-1]);
+  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];exR=ex(a)+(ex(b)-ex(a))*(rpm-a.rpm)/(b.rpm-a.rpm);break;}
+  return exR*pe+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
+}
+// The 1-atm exhaust trace's work at the pressure ratio x, linear between the tabulated ratios (clamped at the ends).
+function exAtX(row,x){
+  const n=Math.min(row.length,EX_X.length);if(x<=EX_X[0])return row[0];
+  for(let i=1;i<n;i++)if(x<=EX_X[i])return row[i-1]+(row[i]-row[i-1])*(x-EX_X[i-1])/(EX_X[i]-EX_X[i-1]);
+  return row[n-1];
 }
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
@@ -456,7 +474,8 @@ function buildFillTable(){
     for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
       const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;pin=intakeFill.pmep;}
     }
-    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:Math.max(0,exhaustStrokeMEP(e,r))});
+    const exX=[];for(const x of EX_X)if(x<=(e.intake==='na'?1.5:EX_X[EX_X.length-1]))exX.push(Math.max(0,exhaustStrokeMEP(e,r,x)));   // NA: map/pEx stays near 1
+    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}

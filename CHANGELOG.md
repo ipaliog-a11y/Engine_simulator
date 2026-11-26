@@ -18,6 +18,38 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The exhaust's pumping work read at the engine's load, and an untouched VE cell kept exact (build 479)
+
+- **What changed**: build 476 traced the exhaust stroke's work from the full-load cycle and charged it at every
+  throttle. At part load the gas blows down from a lower pressure, so far less is left to push out (MX-5 NA at
+  5000 rpm: 0.12 bar at 0.3 bar manifold, 0.44 at full load). Every pressure in the trace scales together, so the
+  work at manifold pressure `map` and exhaust pressure `pEx` is `pEx` times the 1-atm trace's at `map/pEx`. That is
+  now tabulated per speed over 9 ratios (`EX_X`, `exhaustStrokeMEP`, `valvePumpMEP`). Nothing fitted.
+- **Why**: the lap-average BSFC rose 6–13% at build 476 (MX-5 326 → 367 g/kWh, past test78's 360). It also
+  broke the Prius lap's engine stops (test181) and the small-turbo-frame penalty (test40). All three pass again.
+- **At full throttle too**: an NA engine's exhaust sits above its 1-bar charge (x = 0.8–0.9 at the redline), so its
+  exhaust work falls 25–35% there (LS3 at 6600 rpm: 1.04 → 0.71 bar). A supercharged engine's rises (x > 1).
+  Fingerprint: peak power −4.3% (Hellcat) to +6.9% (GTI Mk7). Scoreboard: power mean error 7.2 → 6.9% (over 10%:
+  19 → 17), torque 6.2 → 6.1%, 0–100 8.9 → 9.0%, top speed 4.7 → 4.8%. MX-5 NA −9 → −4%, GTI Mk7 −8 → −2%,
+  GTI Mk1 −15 → −12%, LS3 +14 → +17%.
+- **VE table**: editing a cell snapped the derived VE to a whole percent, so an untouched breakpoint burned
+  AFR 12.64 for 12.60 (test187). A cell now moves by exactly the points asked.
+- **Left open, for the owner's ruling** (tests unchanged):
+  - test60: the RS3, LS3, 458 and 750S peak at their limiter again, because their full-throttle exhaust work fell.
+    The 'limiter' list may not grow.
+  - test263/268: with the catalyst ramp gone (build 476) the charge is ~2% larger, so the RS3 reaches 142.9 bar
+    (limit 140) and the Cummins 6.7 HO reaches 203.2 (limit 200). Both sat within 0.7 bar of their limit before. The
+    limits are generic handbook values.
+  - test93: with its governor off the EA288 now peaks at 4400 rpm, not its 4800 limit. That is the valves' pumping
+    work turning power over, which build 476 intended.
+  - test103: the Ioniq on ECO runs 0–60 mph in 9.28 s (MotorWeek 9.6, −3.3%) but 0–100 km/h in 9.79 s (Hyundai's
+    10.8, −9.4%). The two references disagree by ~0.7 s.
+  - test143, open since builds 441 and 451: the fixed 25 m/s piston-speed wear limit sits below the Huracán's
+    (26.2 m/s at its 8500 rpm redline), the Murciélago's (25.2) and the BAC Mono's (25.1). Fixed timing at 40° wears
+    the engine by OVER-PRESSURE, which outranks DETONATION as the one cause shown.
+  - A diesel's part load is less fuel at the same manifold pressure. The full-fuel trace does not lower its exhaust
+    work for that.
+
 ### Water-to-air intercoolers on the cars whose makers fit them (build 478)
 
 `plans/v1-scope.md` item 4 (`v1-finish` 7). Eight factory engines now carry the water-to-air part of build 429 in place

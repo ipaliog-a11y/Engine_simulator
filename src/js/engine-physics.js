@@ -879,7 +879,9 @@ function selectVeCell(c,r){veSel={c:clamp(c,0,FM_COLS-1),r:clamp(r,0,FM_ROWS-1)}
 function adjustVeCell(delta){   // delta in points of VE (%)
   if(!veSel)return;
   if(!veMapCustom||!veMap){veMap=generateVeMap();veMapCustom=true;}
-  veMap[veSel.r][veSel.c]=clamp(Math.round(veMap[veSel.r][veSel.c]*100+delta)/100,VE_TMIN,VE_TMAX);
+  // By exactly delta points: snapping the derived value to a whole percent moved an untouched cell's mixture by up to
+  // 0.5% (build 479; VE 1.003 read as 1.00 burned AFR 12.64 for 12.60). The table shows whole points either way.
+  veMap[veSel.r][veSel.c]=clamp(+(veMap[veSel.r][veSel.c]+delta/100).toFixed(3),VE_TMIN,VE_TMAX);
   dynoCache=null;renderVeMap();
 }
 function resetVeMap(){veMap=null;veMapCustom=false;veSel=null;dynoCache=null;renderVeMap();flash(tr('VE TABLE RESET TO DERIVED'));}

@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 478</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 479</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -1869,7 +1869,7 @@ You see friction as the gap between what the cylinders make and what the crank d
 <div class="guide-body" data-gk="frictionPhys">
 The mean effective pressures are added up and taken off the gross work:
 <span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (crank + reciprocating + rings under gas load + valvetrain + pumps) · k<sub>oil</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) + PMEP<sub>valves</sub>(N) &nbsp; [bar]</span>
-FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. The valves' own share (build 476) is the gas pushed out through the exhaust valve above the manifold's pressure and drawn in through the intake valve below the plenum's, from the exhaust stroke traced from valve opening (filling and emptying, Heywood §14.2) and the integrated intake stroke. It grows with the square of the gas speed, so with rpm, and is what turns power over short of the limiter. It is charged whole: the gross work's 0.8 of the fuel-air cycle is Heywood's on the compression and expansion strokes only. It replaced a fitted 5% ramp on the catalyst that had stood in for it. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
+FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. The valves' own share (build 476) is the gas pushed out through the exhaust valve above the manifold's pressure and drawn in through the intake valve below the plenum's, from the exhaust stroke traced from valve opening (filling and emptying, Heywood §14.2) and the integrated intake stroke. It grows with the square of the gas speed, so with rpm, and is what turns power over short of the limiter. The exhaust's share is traced at the charge actually trapped, so at part throttle, where the gas blows down from a lower pressure, it is a third to a half of its full-load value (build 479). It is charged whole: the gross work's 0.8 of the fuel-air cycle is Heywood's on the compression and expansion strokes only. It replaced a fitted 5% ramp on the catalyst that had stood in for it. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
 </div>
 <div class="guide-limit" data-gk="frictionLimit">
 Limit: oil viscosity, ring tension and liner roughness are held at the model's 1980s reference engine (10W-30 at 90 °C), so a modern low-tension ring pack is charged a little too much; warm-up still uses the older oil-temperature factor. Rotaries and two-strokes keep the old fitted curve.
@@ -5405,8 +5405,16 @@ function intakeFill(rpm,adv,L,Tres,Cd){
 // to the inlet's over the lifts that matter. The intake: the work below the plenum on the integrated intake stroke
 // (intakeFill, above), TDC to BDC. Both tabulated per engine at 1 atm; pumpingMEP scales each by its own gas density
 // (exhaust pressure, manifold pressure).
-function exhaustStrokeMEP(e,rpm){
-  const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,1);
+// The exhaust's work depends on the load as well (build 479): the gas at EVO is the trace of the charge actually
+// trapped, so at part throttle it blows down from a lower pressure and less is left to push out (MX-5 NA at 5000 rpm:
+// 0.12 bar at 0.3 bar manifold, 0.44 at full load). Build 476 took the full-load trace at every load, which charged a
+// lap's part-throttle running 2.5-4x the exhaust work. Every pressure in the trace scales together (ideal gas; nozzle
+// flow and trapped mass both in proportion to pressure), so at manifold pressure map and exhaust pressure pEx the work
+// is pEx times the 1-atm trace's at map/pEx: tabulated over that ratio (EX_X) at each speed. Not in it: a diesel's
+// part load is less fuel at the same manifold pressure, which the trace (full fuel) does not lower.
+const EX_X=[0.2,0.4,0.6,0.8,1,1.5,2,3,4];
+function exhaustStrokeMEP(e,rpm,x=1){
+  const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,x);
   const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
   const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
   const dur=e.camDur,evo=360-e.camLSA-dur/2,nEx=Math.max(1,(e.valves||4)-e.ivCount);
@@ -5437,7 +5445,17 @@ const valvePumpTab=(tb,rpm,k)=>{
 // The valves' pumping MEP (bar) at this speed: the exhaust's at exhaust pressure pEx, the intake's at manifold pressure.
 function valvePumpMEP(rpm,map,pEx){
   const tb=engine.fillTable;if(!tb||!(tb[0].ex>=0))return 0;
-  return valvePumpTab(tb,rpm,'ex')*Math.max(0,pEx)+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
+  const pe=Math.max(0,pEx),ex=t=>exAtX(t.exX,map/Math.max(1e-3,pe));
+  let exR;
+  if(rpm<=tb[0].rpm)exR=ex(tb[0]);else if(rpm>=tb[tb.length-1].rpm)exR=ex(tb[tb.length-1]);
+  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];exR=ex(a)+(ex(b)-ex(a))*(rpm-a.rpm)/(b.rpm-a.rpm);break;}
+  return exR*pe+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
+}
+// The 1-atm exhaust trace's work at the pressure ratio x, linear between the tabulated ratios (clamped at the ends).
+function exAtX(row,x){
+  const n=Math.min(row.length,EX_X.length);if(x<=EX_X[0])return row[0];
+  for(let i=1;i<n;i++)if(x<=EX_X[i])return row[i-1]+(row[i]-row[i-1])*(x-EX_X[i-1])/(EX_X[i]-EX_X[i-1]);
+  return row[n-1];
 }
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
@@ -5452,7 +5470,8 @@ function buildFillTable(){
     for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
       const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;pin=intakeFill.pmep;}
     }
-    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:Math.max(0,exhaustStrokeMEP(e,r))});
+    const exX=[];for(const x of EX_X)if(x<=(e.intake==='na'?1.5:EX_X[EX_X.length-1]))exX.push(Math.max(0,exhaustStrokeMEP(e,r,x)));   // NA: map/pEx stays near 1
+    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
@@ -12193,7 +12212,9 @@ function selectVeCell(c,r){veSel={c:clamp(c,0,FM_COLS-1),r:clamp(r,0,FM_ROWS-1)}
 function adjustVeCell(delta){   // delta in points of VE (%)
   if(!veSel)return;
   if(!veMapCustom||!veMap){veMap=generateVeMap();veMapCustom=true;}
-  veMap[veSel.r][veSel.c]=clamp(Math.round(veMap[veSel.r][veSel.c]*100+delta)/100,VE_TMIN,VE_TMAX);
+  // By exactly delta points: snapping the derived value to a whole percent moved an untouched cell's mixture by up to
+  // 0.5% (build 479; VE 1.003 read as 1.00 burned AFR 12.64 for 12.60). The table shows whole points either way.
+  veMap[veSel.r][veSel.c]=clamp(+(veMap[veSel.r][veSel.c]+delta/100).toFixed(3),VE_TMIN,VE_TMAX);
   dynoCache=null;renderVeMap();
 }
 function resetVeMap(){veMap=null;veMapCustom=false;veSel=null;dynoCache=null;renderVeMap();flash(tr('VE TABLE RESET TO DERIVED'));}
