@@ -40,6 +40,13 @@ they are accurate about *what* shipped but not about the day it shipped.
   9.9 → 9.8%, torque 8.9 → 8.7%.
 - **Known gaps shrunk**: test60's 'limiter' list 32 → 22 (RS3, LS3, Hellcat, BAC Mono, 750S, 370Z, GT-R, F40,
   Mustang 289, GR86 left it). `RATING_KNOWN` (Dino) and both `AT_LIMITER_KNOWN` lists (tests 44, 46) are empty.
+- **Known gaps added by owner ruling (build 476)**:
+  - test53 `BSFC_KNOWN` (cap 227): the 2.0 turbo diesel burns 226 g/kWh at 2000 rpm (219 before; real 200–215). The
+    intake share includes the runner's damping (`Q_INTAKE`) as work, kept as derived.
+  - test61 `KNOWN`: the Golf GTI Mk7 is 'short' of its 250 km/h governor, its EA888 now −8% on power.
+  - test41 `CAPPED_KNOWN` (cap 0.8 s): the strong kei's 2–3 shift lands at 100.8 km/h instead of 99.2, so its 0–100
+    no longer pays it (7.51 → 7.11 s; time at the traction limit unchanged).
+  - The Hellcat's 'slow-car' entry in test61 is retired.
 - **Left open**: the Coyote still peaks at its 7500 limiter (459 hp, real 460 at 7000), with 21 others. The
   high-revving engines stay under (EK9 −13%, S2000 −10%, Huracán STO −13%, BAC Mono −13%): the high-rpm gain they miss
   (scoreboard C3 under) is not found here. Their friction is the suspect: ~2.5 bar at 8200 rpm on the 1980s reference
