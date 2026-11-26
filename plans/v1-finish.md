@@ -58,6 +58,9 @@ recorded numbers reports its range and the mean error against the real cars.
    mean effective pressure against piston speed, e.g. Chen–Flynn / Patton–Nitschke–Heywood; valve-train and breathing
    limits: port Mach index, valve float), no fitting. Report every engine's peak-power move; the KNOWN 'limiter'
    entries should shrink.
+   *Build 476:* the valves' own pumping work (exhaust stroke by filling and emptying, intake stroke from `intakeFill`),
+   charged from each engine's efficiency anchor. test60 'limiter' 32 → 16; RATING_KNOWN and both AT_LIMITER_KNOWN empty.
+   Power mean error 6.5 → 7.2%: the high-revving engines already under fall further (the missing high-rpm ram gain, C3 under).
 6. **Water-to-air intercoolers, the model** (decision 22; register B4). The charge-air cooler as a coolant loop: the
    core's effectiveness from its NTU (Kays & London), the pump's flow, the front low-temperature radiator, and the
    loop's heat soak in time on a lap. Effectiveness and pressure drop beside the air-to-air part (builds 255–256).

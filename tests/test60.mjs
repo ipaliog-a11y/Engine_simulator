@@ -45,14 +45,13 @@ const rows = await page.evaluate(() => PRESETS.filter(p => p.real).map(pr => {
 
 // What real engines show today, and why. Each entry is a model limit, not a preset to fix by tuning.
 const KNOWN = {
+  // build 476 (G1): the valves' own pumping work (exhaust and intake strokes, valvePumpMEP) took 16 engines off their
+  // limiters (RS3, LS3, Coyote, Hellcat, BAC Mono, Carrera GT, 720S, 750S, Z06 C8, 370Z, GT-R, F40, Mustang 289, Carrera RS,
+  // EK9, GR86). The comments below that name them are history. Those left still peak there.
   // build 425 (owner's ruling, valves batch 2): with their sourced valves these two peak at their limiters (RS3 397 hp at
   // 7000, real 394 at 5850; BAC Mono 263 at 8000, real 280 at 7700): the model's missing top-end fade, as the Hellcat and LS7.
-  'Audi 2.5 TFSI (RS3 8V)': ['limiter'],
   // build 427 (owner's ruling, the four V8s): on their sourced valves and, for the LS3, its GM cam card, these two peak at
   // their limiters (LS3 525 hp at 6600, real 430 at 5900; Coyote 477 at 7500, real 460 at 7000): no top-end fade in the model.
-  'GM LS3 (Corvette C6)': ['limiter'],
-  'Ford Coyote 5.0 (Mustang GT 2018)': ['limiter'],
-  'Ford Duratec 2.3 Cosworth (BAC Mono)': ['limiter'],
   // build 133: on the maker's 58 mm wheel the FK8's compressor reaches its inducer's choke flow over the top and
   // holds 1.31 of its 1.6 bar at the limiter (305 hp, real 316). The wheel size is from tuners' listings and the
   // boost pressure is unsure, so either input may be what is off; the choke flow is derived, not fitted.
@@ -71,40 +70,28 @@ const KNOWN = {
   'Lamborghini 5.7 V12 (Diablo VT)': ['limiter'],
   'BMW S70/2 V12 (McLaren F1)': ['limiter'],
   'Ferrari F140B V12 (Enzo)': ['limiter'],
-  'Porsche 5.7 V10 (Carrera GT)': ['limiter'],
-  'McLaren M840T twin-turbo V8 (720S)': ['limiter'],
   'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)': ['limiter'],
-  'GM LT6 flat-plane V8 (Corvette Z06 C8)': ['limiter'],
-  'McLaren M840T twin-turbo V8 (750S)': ['limiter'],
   // build 199, batch 1 (research/vehicles-batch-1): the same missing top-end fade on its high-revving NA engines, each
   // still climbing at its limiter where the real one peaks short of it (the 370Z, NSX, E30 M3, 190E, M5 E39, Beat, EK9
   // and GR86), and on four boosted ones past their factory taper (Urus, GT-R, Giulia, Mégane)
   'Lamborghini 4.0 TT V8 (Urus)': ['limiter'],
-  'Nissan VQ37VHR (370Z)': ['limiter'],
   'Honda C30A V6 (NSX NA1)': ['limiter'],
-  'Nissan VR38DETT (GT-R R35 2017)': ['limiter'],
   'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)': ['limiter'],
   'BMW S14B23 (M3 E30)': ['limiter'],
   'Mercedes M102 2.3-16 (190E)': ['limiter'],
   // build 419 (owner's ruling): the same missing top-end fade; with its sourced valves (Dodge Garage, 2.14 / 1.65 in) the
   // Hellcat peaks at 6200 rpm against the published 6000 (717 hp vs 707)
-  'Dodge 6.2 Hellcat (Challenger SRT)': ['limiter'],
   'BMW S62 4.9 V8 (M5 E39)': ['limiter'],
   'Honda E07A MTREC (Beat)': ['limiter'],
   'Renault M5Pt 1.8 turbo (Mégane R.S. Trophy)': ['limiter'],
-  'Honda B16B (Civic Type R EK9)': ['limiter'],
-  'Toyota FA24D 2.4 boxer (GR86)': ['limiter'],
   // build 243: the derived friction (Sandoval–Heywood) rises more nearly with rpm than the old fitted N² curve, so it
   // no longer holds the F40's peak below its limiter: 466 hp at 7600 against the 7700 limiter (real 478 at 7000). The
   // same missing top-end fade as the engines above. The same build cleared the Aygo's 'limiter' and the Cummins's
   // 'boost-falls', so the list is one shorter.
-  'Ferrari F120A V8 TT (F40)': ['limiter'],
   // build 234: four two-valve engines whose generic STOCK springs had them floating far below the redline (the Dino at
   // 5215 rpm against 7800) now have their makers' springs, and show the same missing top-end fade: power still climbing
   // at the limiter where the real one peaks short of it. The float had been hiding it; named in the CHANGELOG.
   'Ferrari Dino 135 CS 2.4 V6 (246 GT)': ['limiter'],
-  'Ford Windsor 289 4-bbl (Mustang 1965)': ['limiter'],
-  'Porsche 911/83 2.7 flat-six (Carrera RS)': ['limiter'],
   'Lamborghini 3.9 V12 (Countach LP400)': ['limiter'],
   // (Coyote, F140 and 4A-GE showed 'flat-low-end', torque peaks at 1000-1400 rpm, until build 98 put
   // the walls' extra heat at low speed into the work: peaks now 4700, 4900 and 5600 rpm.)

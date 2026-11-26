@@ -252,8 +252,10 @@ lim.forEach(x => console.log(`  ${x.n.padEnd(28)} peak power at ${(x.frac * 100)
 // it leaves power flat over the last 400 rpm (150 -> 151 hp at the 7200 limiter): a plateau, not a climb.
 // A real engine's torque falls faster over its last 10% than the model's does; the missing fade is named
 // in test60 for the 4A-GE, the F140 and the diesels. It is not tuned away here.
-const AT_LIMITER_BUDGET = 3;
-const AT_LIMITER_KNOWN = /^(2\.0 Turbo Hot-Hatch I4|2\.0 Turbo Diesel I4|1\.6 Sport NA I4)$/;
+// build 476: 0, the list empty. With the valves' pumping work (valvePumpMEP) no counted preset peaks at the limiter
+// (the two boosted ones printed there hold full boost by calibration, untapered, and are not counted).
+const AT_LIMITER_BUDGET = 0;
+const AT_LIMITER_KNOWN = /^$/;
 if (atLimit.some(x => !AT_LIMITER_KNOWN.test(x.n)))
   fails.push(`a preset not on the known list peaks at the limiter: ${atLimit.filter(x => !AT_LIMITER_KNOWN.test(x.n)).map(x => x.n).join(', ')}`);
 if (atLimit.length && !atLimit.every(x => /Turbo|Supercharged/.test(x.n) || AT_LIMITER_KNOWN.test(x.n)))

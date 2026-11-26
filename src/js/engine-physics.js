@@ -984,8 +984,9 @@ function pumpingMEP(rpm,map,actFrac=1){
   // A diesel's IMEP is gross (fuel-based), so its gas exchange is the whole loop, signed: the piston
   // pushes out against p_exh and is pushed down by p_int. CI diesels are unthrottled (quality-governed),
   // so there is no intake throttle plate vacuum loss (Heywood §13.3).
-  if(engine.ci)return pExh-Math.max(1,map);
-  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map))*actFrac;
+  const valves=valvePumpMEP(rpm,map,pExh);                          // through the valves themselves (build 476)
+  if(engine.ci)return pExh-Math.max(1,map)+valves;
+  return (Math.max(0,pExh-1)+PUMP_K*Math.max(0,1.0-map)+valves)*actFrac;
 }
 // Friction + pumping mean effective pressure.
 function pumpFrictionMEP(rpm,map,oilFrictionMult,actFrac=1){

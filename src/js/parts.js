@@ -47,8 +47,8 @@
 // A factory head written as a part is the engine's own: its valve, 0.85, and the springs it is fitted with, as sized.
 // Not in it: whether the valves physically fit the bore (a designed valve may pass the factory packing; the preview
 // says so), the spring's travel to coil bind, and the springs' load on the cam's friction (the friction model, Patton
-// and Sandoval, has no spring-load term), and the exhaust valve's own flow: the blowdown and the pumping loop do not
-// read its size. A factory head still takes 0.85, 0.83 and the packing ratio (plans/fitted-register.json) until each
+// and Sandoval, has no spring-load term), and the exhaust valve's lift (its pumping work, valvePumpMEP since build 476, reads its size
+// at the intake's L/D). A factory head still takes 0.85, 0.83 and the packing ratio (plans/fitted-register.json) until each
 // real car's own valve sizes are sourced.
 // The TURBOCHARGER (build 288) is the wheels and the housing the shaft model reads (deriveGasDynamics, steadyBoost,
 // advanceShaft): the compressor's exducer (its choke flow, map, top speed and the shaft's inertia), the turbine wheel

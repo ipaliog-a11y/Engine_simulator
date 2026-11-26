@@ -18,6 +18,31 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The valves' pumping work: power turns over before the limiter (build 476)
+
+- **What changed**: the model charged the throttle's vacuum and the mean back-pressure of the pipes and turbine, but
+  not the valves. Pushing the exhaust out through the exhaust valve keeps the cylinder above the manifold's pressure, and
+  drawing the charge in through the intake valve keeps it below the plenum's. Both grow with the square of the gas speed,
+  so with rpm (Heywood §13.3). Now the exhaust stroke is traced from valve opening as a cylinder emptying through a
+  nozzle (filling and emptying, Heywood §14.2; the gas state at EVO from the cycle trace), and the intake stroke's work
+  is taken from the integrated intake stroke (`intakeFill`). Nothing fitted. `exhaustStrokeMEP`, `valvePumpMEP`.
+- **Charged from the anchor**: charged whole, it took 5–15% off every engine, diesels at 2800 rpm included. The 0.8 ×
+  fuel-air efficiency was read off real engines' output, which already carries this work at that speed. So, as for the
+  wall heat since build 101, only the change from each engine's anchor speed is charged: a small gain below it, the
+  loss that grows to the limiter above it.
+- **What moved** (fingerprint, 3381 values): peak power −9.5% to +4.4%. LS3 +22 → +11% (peak 6500 rpm, real 5900),
+  LS7 +16 → +5%, Hellcat +8 → +2%, C63 +20 → +13%, Dino +9 → −2%; RS3 +1 → −4%, Coyote +3 → −3%, BAC Mono −7 → −11%,
+  EK9 −14 → −18%. Scoreboard: power mean error 6.5 → 7.2% (16 → 21 cars over 10%), torque 6.4 → 6.7%, 0–100 9.1 →
+  9.3%, top speed 5.1 → 4.8%, boosted low-rpm torque 16.5 → 16.3%. test60 power RMS 9.9 → 10.3%.
+- **Known gaps shrunk**: test60's 'limiter' list 32 → 16 (RS3, LS3, Coyote, Hellcat, BAC Mono, Carrera GT, 720S,
+  750S, Z06 C8, 370Z, GT-R, F40, Mustang 289, Carrera RS, EK9, GR86 left it). `RATING_KNOWN` (Dino) and both
+  `AT_LIMITER_KNOWN` lists (tests 44, 46) are empty.
+- **Left open**: the Dino still peaks at its 7800 limiter (real 7600), with 15 others (4A-GE, F140, Diablo, F1, Enzo,
+  992 Turbo S, Urus, NSX, Giulia, E30 M3, 190E, M5 E39, Beat, Mégane, Countach). The high-revving engines that were
+  already under (EK9, Atom, S2000, Huracán, 458) fall further: the high-rpm ram or resonance gain the model misses
+  (scoreboard C3 under) is now the larger error, and is the next thing to measure. No exhaust lift or duration is carried
+  per engine, so the exhaust valve takes the intake's L/D and cam; its discharge coefficient is the intake's.
+
 ### Engine braking at the limiter (build 475)
 
 - **What changed**: past the rev limiter in top gear the fuel is cut, and the lap solver, the open-road (eco) solver

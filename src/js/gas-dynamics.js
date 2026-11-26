@@ -224,7 +224,7 @@ function wallTrace(e,rpm,map,egr=0){
     const p=Math.max(1,pE+(pX-pE)*s), T=Math.max(50,TE+(TX-TE)*s);
     den+=hW(p,T,6.18*Sp)*area(Vt(th))*(T-T_WALL)*dt;
   }
-  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5};
+  return {k:den>0?num/den:0, share:den/(m*q), Tres:TX, pMax:pMax/1e5, pE, TE};
 }
 const WOSCHNI_C=3.26, T_WALL=450, SI_ROOF_DEG=22.5;
 // Cylinder wall temperature coupled to coolant (Heywood §12.4: gas-side liner/head sits ~90 K above
@@ -376,7 +376,7 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   const disc=Math.PI/4*B*B,ends=disc*(e.ci?2+4*0.55*0.17:1+1/Math.cos(SI_ROOF_DEG*Math.PI/180));
   const cR=2*Math.PI*helmholtzHz(Ar,L,e.vEffCyl,T0)*rho0*L/Q_INTAKE, a=rho0*L/dt+cR;
   const Tr=Tres>0?Tres:T0;
-  let T=Tr,m=p0*V(th0)/(R*Tr),u=0;const m0=m;
+  let T=Tr,m=p0*V(th0)/(R*Tr),u=0,W=0;const m0=m;
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
     const Vc=V(th),pc=Math.max(1,m*R*T/Vc),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
@@ -386,9 +386,62 @@ function intakeFill(rpm,adv,L,Tres,Cd){
     const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,pc/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,6.18*Sp),0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;
     const U=cv*m*T+cp*(u>0?T0:T)*dm-pc*dV+Q;
+    if(th<180)W+=(p0-pc)*dV;   // the intake stroke's pumping work, below the plenum (build 476)
     m=Math.max(1e-9,m+dm);T=Math.max(50,U/(cv*m));
   }
+  intakeFill.pmep=W/Vd/1e5;
   return (m-m0)/(rho0*Vd);
+}
+// ---- the gas exchange's own pumping work through the valves (build 476, G1: the top-end fade) ----
+// Pumping MEP is the intake and exhaust strokes' work, TDC to BDC and back (Heywood §5.4: gross IMEP is compression
+// and expansion only). This model charged the throttle's vacuum and the mean back-pressure of the pipes and the turbine
+// (pumpingMEP), but not the valves: the cylinder sits above the manifold while the piston pushes the gas out through
+// the exhaust valve, and below the plenum while it draws the charge in. Both grow with the square of the gas speed
+// through the valve, so with rpm, and that is what turns a real engine's power over short of its limiter (Heywood
+// §13.3, fig. 13-11: pumping MEP at wide-open throttle rising with speed). Without them 32 real engines in test60 were
+// still climbing at the limiter.
+// The exhaust: a filling-and-emptying model of the cylinder (Heywood §14.2.2) from exhaust-valve opening to TDC. The gas
+// starts at the cycle trace's state at EVO (wallTrace, full load), expands isentropically as it leaves (gamma 1.3, as
+// the trace) through the exhaust valves' curtain-or-throat area, sin² lift over the cam's duration, as compressible
+// flow through a nozzle (Heywood eq. C.8-C.9, choked below the critical ratio) into a manifold at 1 atm. Its work against
+// the manifold from BDC to TDC is the loss. Exhaust lift is not carried per engine, so it has the intake's L/D; the
+// discharge coefficient is the intake's (intakeCd, Taylor's Ci): Heywood §6.3.2 gives exhaust-valve coefficients close
+// to the inlet's over the lifts that matter. The intake: the work below the plenum on the integrated intake stroke
+// (intakeFill, above), TDC to BDC. Both tabulated per engine at 1 atm; pumpingMEP scales each by its own gas density
+// (exhaust pressure, manifold pressure).
+function exhaustStrokeMEP(e,rpm){
+  const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,1);
+  const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
+  const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
+  const dur=e.camDur,evo=360-e.camLSA-dur/2,nEx=Math.max(1,(e.valves||4)-e.ivCount);
+  const D=e.evDia_mm,lift=e.ivLift_mm*D/e.ivDia_mm,Cd=e.intakeCd||intakeCd();
+  const crit=Math.pow(2/(g+1),g/(g-1)),dth=0.25,dt=dth*Math.PI/180/(rpm*2*Math.PI/60);
+  let Vc=V(evo),p=tr.pE,T=tr.TE,m=p*Vc/(R*T),W=0;
+  for(let th=evo;th<360;th+=dth){
+    const A=Cd*nEx*valveFlowArea(D,lift*Math.pow(Math.sin(Math.PI*(th-evo)/dur),2),e.throatRatio)*1e-6;
+    const r=Math.max(px/p,crit);
+    const mdot=p>px?A*p/Math.sqrt(R*T)*Math.sqrt(2*g/(g-1)*(Math.pow(r,2/g)-Math.pow(r,(g+1)/g))):0;
+    const Vn=V(th+dth),dV=Vn-Vc,dm=Math.min(mdot*dt,0.5*m);
+    if(th>=180)W+=(p-px)*dV;
+    const U=cv*m*T-cp*T*dm-p*dV;
+    m-=dm;T=Math.max(300,U/(cv*m));Vc=Vn;p=m*R*T/Vc;
+  }
+  return -W/Vd/1e5;
+}
+// What is charged is the CHANGE from the engine's efficiency anchor (wallRefRpm), as for the wall heat (wallHeatExtra):
+// the 0.8 x fuel-air efficiency (REAL_TO_FUELAIR) was read off real engines' output, which already carries their valve
+// pumping at that speed. Charging it whole took 5-15% off every engine, diesels at 2800 rpm included (build 476's
+// first measurement). So below the anchor it is a small gain, above it the loss that grows to the limiter.
+const valvePumpTab=(tb,rpm,k)=>{
+  if(rpm<=tb[0].rpm)return tb[0][k];
+  for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a[k]+(b[k]-a[k])*(rpm-a.rpm)/(b.rpm-a.rpm);}
+  return tb[tb.length-1][k];
+};
+// The valves' pumping MEP (bar) at this speed: the exhaust's at exhaust pressure pEx, the intake's at manifold pressure.
+function valvePumpMEP(rpm,map,pEx){
+  const e=engine,tb=e.fillTable;if(!tb||!(tb[0].ex>=0)||!(e.wallRefRpm>0))return 0;
+  const n0=e.wallRefRpm;
+  return (valvePumpTab(tb,rpm,'ex')-valvePumpTab(tb,n0,'ex'))*Math.max(0,pEx)+(valvePumpTab(tb,rpm,'pin')-valvePumpTab(tb,n0,'pin'))*Math.max(0,map);
 }
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
@@ -397,13 +450,13 @@ function buildFillTable(){
   const Cd=intakeCd();e.intakeCd=Cd;
   const tb=[],lo=800,hi=e.redline+500,lens=e.runnerVariable?[e.runnerL,e.runnerLShort]:[e.runnerL];
   for(let r=lo;r<=hi;r+=250){
-    let f=0,best=0,bestL=lens[0];
+    let f=0,best=0,bestL=lens[0],pin=0;
     const Tres=wallTrace(e,r,1).Tres;
     const auth=e.vvt?(camSpec(e).vvtMax??VVT_AUTHORITY):0;   // an Atkinson cam's phaser is shorter (build 188)
     for(const L of lens)for(let adv=0;adv<=auth;adv+=5){
-      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;}
+      const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;pin=intakeFill.pmep;}
     }
-    tb.push({rpm:r,f,adv:best,L:bestL});
+    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:Math.max(0,exhaustStrokeMEP(e,r))});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}

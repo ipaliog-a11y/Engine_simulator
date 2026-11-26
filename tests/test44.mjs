@@ -131,8 +131,9 @@ console.log(`  ${atLimiter.length} preset(s) still peak at the limiter: ${atLimi
 // build 122: 3, the 1.6 Sport NA I4 on the same list and for the same reason as test46: with the intake stroke
 // integrated its power is a plateau over the last few hundred rpm; the top-end fade real engines show is missing.
 // build 211: 1, the 1.6 Sport NA I4 alone; the 2.0 Turbo Hot-Hatch and the 2.0 Turbo Diesel no longer peak there.
-const AT_LIMITER_BUDGET = 1;
-const AT_LIMITER_KNOWN = /^(1\.6 Sport NA I4)$/;
+// build 476: 0. The valves' pumping work (valvePumpMEP) turns the 1.6 Sport NA I4 over at 97% of its redline.
+const AT_LIMITER_BUDGET = 0;
+const AT_LIMITER_KNOWN = /^$/;
 if (atLimiter.some(p => !AT_LIMITER_KNOWN.test(p.name)))
   fails.push(`not on the known list, at the limiter: ${atLimiter.filter(p => !AT_LIMITER_KNOWN.test(p.name)).map(p => p.name).join(', ')}`);
 if (atLimiter.length > AT_LIMITER_BUDGET)
