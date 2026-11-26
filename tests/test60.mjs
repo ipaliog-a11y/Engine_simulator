@@ -75,6 +75,9 @@ const KNOWN = {
   'McLaren M840T twin-turbo V8 (720S)': ['limiter'],
   'Porsche 3.7 twin-turbo flat-six (911 Turbo S 992)': ['limiter'],
   'GM LT6 flat-plane V8 (Corvette Z06 C8)': ['limiter'],
+  // build 478 (owner's ruling): on its maker's water-to-air cooler the Hellcat's top is flat, 715 hp at 6100 and 6200
+  // (real 707 at 6000); it was already a step short (752 / 750). The same missing top-end fade.
+  'Dodge 6.2 Hellcat (Challenger SRT)': ['limiter'],
   // build 199, batch 1 (research/vehicles-batch-1): the same missing top-end fade on its high-revving NA engines, each
   // still climbing at its limiter where the real one peaks short of it (the 370Z, NSX, E30 M3, 190E, M5 E39, Beat, EK9
   // and GR86), and on four boosted ones past their factory taper (Urus, GT-R, Giulia, Mégane)
