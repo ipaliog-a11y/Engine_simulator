@@ -50,7 +50,7 @@ const r = await page.evaluate(() => {
   // 7. gas exchange is signed for the diesel: boost above back-pressure is work given back
   const map = wotMapAt(1800); engine.boostNow = map;
   const pExh = 1 + backPressureBar(1800, egtAt(1800, map));
-  out.pump = { pumping: pumpingMEP(1800, map), pExh, map };
+  out.pump = { pumping: pumpingMEP(1800, map), pExh, map, valves: valvePumpMEP(1800, map, pExh) };
   return out;
 });
 
@@ -88,9 +88,10 @@ if (!(f.tq12 > f.tq16 && f.tq16 > f.tq20)) fails.push('less fuel for the same ai
 if (!(f.bs16 < f.bs12)) fails.push('a leaner diesel burns its fuel more efficiently (fuel-air cycle)');
 
 console.log('\n== gas exchange is signed ==');
-console.log(`  1800 rpm: intake ${r.pump.map.toFixed(2)} bar, exhaust ${r.pump.pExh.toFixed(2)} bar → PMEP ${r.pump.pumping.toFixed(3)} bar`);
-if (Math.abs(r.pump.pumping - (r.pump.pExh - Math.max(1, r.pump.map))) > 1e-6)
-  fails.push('a boosted diesel pumping loop should be p_exh - p_int');
+console.log(`  1800 rpm: intake ${r.pump.map.toFixed(2)} bar, exhaust ${r.pump.pExh.toFixed(2)} bar, valves ${r.pump.valves.toFixed(3)} bar → PMEP ${r.pump.pumping.toFixed(3)} bar`);
+// build 476: plus the valves' own pumping work (valvePumpMEP), which is never negative
+if (!(r.pump.valves >= 0) || Math.abs(r.pump.pumping - (r.pump.pExh - Math.max(1, r.pump.map) + r.pump.valves)) > 1e-6)
+  fails.push('a boosted diesel pumping loop should be p_exh - p_int plus the valves\' work');
 
 if (errors.length) fails.push(...errors);
 console.log(fails.length ? '\nFAIL:\n  ' + fails.join('\n  ') : '\nPASS');
