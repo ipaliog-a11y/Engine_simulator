@@ -18,6 +18,36 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### Water-to-air intercoolers on the cars whose makers fit them (build 478)
+
+`plans/v1-scope.md` item 4 (`v1-finish` 7). Eight factory engines now carry the water-to-air part of build 429 in place
+of their air-to-air class, each with its source in `ENGINE_W2A` (`engine-options-presets.js`):
+
+- Maker's own: GM LT4 (Camaro ZL1), Dodge Hellcat, Ford GT 5.4, BMW S63 (X5 M F85), VW EA288 2.0 TDI (Golf 150).
+- Probable (`unsure`): BMW S55 (M2 Competition) and B48 (330e) from parts listings, Alfa 690T (Giulia QV) from Wikipedia.
+- Left out: the Nissan KR15DDT (Qashqai e-POWER); only an enthusiast page says its cooler is water-to-air.
+- Against the published figures (`v1-scoreboard.md` method), before → after:
+
+  | Car | Power | Torque | Low-rpm torque | 0–100 |
+  |---|---|---|---|---|
+  | Hellcat | +5% → −1% | +18% → +10% | +20% → +12% | +17% → +17% |
+  | Ford GT | +9% → +14% | +5% → +9% | +6% → +9% | 0% → 0% |
+  | Golf TDI 150 | −2% → −3% | +2% → +2% | −2% → −1% | +4% → +4% |
+  | X5 M | −5% → −10% | −1% → −2% | −33% → −31% | +2% → +5% |
+  | Giulia QV | −3% → −7% | −1% → −2% | −46% → −45% | +18% → +19% |
+  | M2 Competition | −4% → −8% | −2% → +1% | −44% → −43% | +18% → +19% |
+  | Camaro ZL1 | −8% → −11% | +10% → +4% | +12% → +6% | +30% → +30% |
+  | 330e | −9% → −10% | −12% → −13% | −22% → −21% | −2% → −2% |
+
+  The eight's mean error: power 5.6 → 8.0%, torque 6.3 → 5.3%, low-rpm torque 23.2 → 21.1%, 0–100 11.4 → 12.2%. All
+  cars: power 6.7 → 6.9%, torque 6.3 → 6.2%. Laps move under 1%.
+- Left open: no maker publishes the core, pump or radiator sizes, so all eight take the starting part (300 × 200 ×
+  100 mm core, 20 L/min, 600 × 300 mm radiator), sized for a 2.3 L four. It cools less at a big engine's rated flow,
+  which is why most of the eight lose power at the top. Per-engine sizes would need measured parts.
+- test60: the Hellcat joins the `limiter` list (owner's ruling). Its top is flat, 715 hp at 6100 and 6200 rpm (real
+  707 at 6000), the same missing top-end fade as the others; it was already a step short (752 / 750).
+- The test is test297 (test296 was taken by build 477).
+
 ### Two-way link between suspension parts designer and calculator (build 477)
 
 - **Designer → Calculator**: added `CALCULATOR…` (`#psCalc`) in `PARTS` → `SPRINGS, BARS & DAMPERS` to open the Suspension Calculator with the unsaved draft's motion ratio, spring rate, bound damping, and rebound damping for both axles; `FROM THE CAR` (`#susReset`) clears the draft and reloads from the car.

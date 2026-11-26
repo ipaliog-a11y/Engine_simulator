@@ -324,6 +324,19 @@ const ENGINE_VALVES={
   'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
   'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
 };
+// A real engine whose maker cools its charge with a coolant loop (build 478, plans/v1-finish.md item 7): it takes the
+// water-to-air part (build 429, parts.js W2A_START) in place of its air-to-air class. No maker publishes the core, pump
+// or radiator sizes, so each takes the starting part's. unsure: true marks a source that is not the maker's own.
+const ENGINE_W2A={
+  'GM LT4 6.2 supercharged (Camaro ZL1)':{src:'GM, LT4 press release (2014): Eaton R1740 supercharger with an integrated air-to-liquid intercooler'},
+  'Dodge 6.2 Hellcat (Challenger SRT)':{src:'FCA, Challenger SRT Hellcat press kit (2014): IHI 2.38 L supercharger with two integrated charge-air coolers on a dedicated low-temperature circuit'},
+  'Ford 5.4 supercharged V8 (Ford GT)':{src:'Ford, Ford GT press kit (2004): Lysholm screw supercharger with an air-to-water intercooler'},
+  'BMW S63B44 4.4 TT V8 (X5 M F85)':{src:'BMW, X5 M / X6 M press kit (2014) and ST1504 F85/F86 training manual: indirect (liquid-to-air) charge-air cooling'},
+  'VW EA288 2.0 TDI (Golf 150)':{src:'VW of America SSP 820433, EA288: intake manifold with water-cooled charge air cooler'},
+  'BMW S55 3.0 TT I6 (M2 Competition)':{unsure:true,src:'Mishimoto and Vivid Racing S55 parts pages: indirect charge-air circuit, cooler in the plenum, front heat exchanger'},
+  'BMW B48 2.0 turbo + P2 plug-in (330e)':{unsure:true,src:'BMW part 17118666811, the charge-air cooler\'s front heat exchanger, listed for the G20 330e (BimmerWorld)'},
+  'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)':{unsure:true,src:'Wikipedia, Alfa Romeo 690T: two air-to-liquid charge-air coolers, one per bank, on a low-temperature circuit with an electric pump'}
+};
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
 // A real engine's own cam card (build 427, plans/v1-finish.md item 5), in place of its factory class's duration, separation
