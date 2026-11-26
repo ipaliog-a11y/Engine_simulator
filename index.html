@@ -6686,7 +6686,7 @@ const ENGINE_VALVES={
   'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
   'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
 };
-// A real engine whose maker cools its charge with a coolant loop (build 477, plans/v1-finish.md item 7): it takes the
+// A real engine whose maker cools its charge with a coolant loop (build 478, plans/v1-finish.md item 7): it takes the
 // water-to-air part (build 429, parts.js W2A_START) in place of its air-to-air class. No maker publishes the core, pump
 // or radiator sizes, so each takes the starting part's. unsure: true marks a source that is not the maker's own.
 const ENGINE_W2A={
@@ -39555,7 +39555,7 @@ for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.spri
 for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 // And its cam, where a full card is found (build 427: ENGINE_CAMS).
 for(const p of FACTORY_ENGINES){const c=ENGINE_CAMS[p.name];if(c&&p.engine.camDur_deg==null){p.engine.camDur_deg=+camCardDur(c).toFixed(1);p.engine.camLsa_deg=c.lsa;p.engine.camLift_mm=+(c.lift*25.4).toFixed(2);}}
-// And its water-to-air charge cooler, where the maker fits one (build 477: ENGINE_W2A).
+// And its water-to-air charge cooler, where the maker fits one (build 478: ENGINE_W2A).
 for(const p of FACTORY_ENGINES)if(ENGINE_W2A[p.name]&&!p.engine.icPart)p.engine.icPart=normPart({id:'w2a',kind:'intercooler',type:'water',name:'WATER-TO-AIR',...W2A_START});
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 // ====== DESIGN CARDS: a design form as cards with sliders, real-world ticks, help and a live preview (builds 238-239) ======

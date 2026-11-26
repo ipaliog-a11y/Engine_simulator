@@ -164,7 +164,7 @@ camshaft (build 249): duration, lift, lobe separation, lobe profile and the VVT 
 intercooler (build 255): core face, depth, cooling fins and charge pipe. Since build 256 every core's effectiveness
 comes from its fins and its pressure drop is made up by the compressor. A core can be water-to-air (build 429): a coolant
 loop with a pump and a front radiator, whose temperature a lap walks in time (heat soak). The eight factory engines
-whose maker fits one carry it (build 477).
+whose maker fits one carry it (build 478).
 The sixth is the cylinder head (build 283): the intake valve's size, the port's throat, and the springs' seat load
 and rate.
 The seventh is the turbocharger (build 288): the compressor and turbine wheels and the housing's A/R.

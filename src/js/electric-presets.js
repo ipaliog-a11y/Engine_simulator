@@ -135,6 +135,6 @@ for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.spri
 for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 // And its cam, where a full card is found (build 427: ENGINE_CAMS).
 for(const p of FACTORY_ENGINES){const c=ENGINE_CAMS[p.name];if(c&&p.engine.camDur_deg==null){p.engine.camDur_deg=+camCardDur(c).toFixed(1);p.engine.camLsa_deg=c.lsa;p.engine.camLift_mm=+(c.lift*25.4).toFixed(2);}}
-// And its water-to-air charge cooler, where the maker fits one (build 477: ENGINE_W2A).
+// And its water-to-air charge cooler, where the maker fits one (build 478: ENGINE_W2A).
 for(const p of FACTORY_ENGINES)if(ENGINE_W2A[p.name]&&!p.engine.icPart)p.engine.icPart=normPart({id:'w2a',kind:'intercooler',type:'water',name:'WATER-TO-AIR',...W2A_START});
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);

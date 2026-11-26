@@ -324,7 +324,7 @@ const ENGINE_VALVES={
   'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
   'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
 };
-// A real engine whose maker cools its charge with a coolant loop (build 477, plans/v1-finish.md item 7): it takes the
+// A real engine whose maker cools its charge with a coolant loop (build 478, plans/v1-finish.md item 7): it takes the
 // water-to-air part (build 429, parts.js W2A_START) in place of its air-to-air class. No maker publishes the core, pump
 // or radiator sizes, so each takes the starting part's. unsure: true marks a source that is not the maker's own.
 const ENGINE_W2A={
