@@ -672,7 +672,7 @@ function exhaustSound(e){
   const turbo=e.intake==='turbo';
   // A cat's honeycomb is thousands of narrow channels: it absorbs the top end in proportion to how
   // restrictive it is. A turbine is the best silencer on the car: the pulse spends itself on the wheel.
-  const cut=(1-6*cat.restrict)*(turbo?0.55:1);
+  const cut=(1-cat.muffle)*(turbo?0.55:1);
   // Gas cools on its way down the system, to roughly 0.65 of its port temperature at the tailpipe.
   const primL=e.primL>0?e.primL:0.55, sysL=e.sysL>0?e.sysL:3.0;
   return {
@@ -685,7 +685,7 @@ function exhaustSound(e){
     // an anti-lag bang goes off in the manifold, before the cat, with far more fuel than a crackle: the cat
     // takes less of the edge off it
     bangGain:1-0.3*cat.conv,
-    gain:sil.gain*(1-2*cat.restrict)*(turbo?0.75:1)
+    gain:sil.gain*(1-cat.muffle/3)*(turbo?0.75:1)
   };
 }
 // Compressor whine. A turbo wheel's tone is its full blades passing (splitters are shorter and

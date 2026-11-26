@@ -625,8 +625,30 @@ function partFilterDpPa(m3sTotal,T_K,e){
   const rSoot=sootGL/(80*1200*1200*0.8e-14);              // soot cake resistance, ~1.09e6 * sootGL m^-2
   return mu*(m3sTotal/vPfM3)*(rWall+rSoot);
 }
+// The catalyst brick's back pressure (build 480), from its substrate (CAT): laminar flow down square channels, as the
+// DPF's wall above. The brick holds CAT_VOL_PER_VD of the displacement per exhaust pipe, as long as it is wide. Cell
+// pitch p = 25.4 mm / sqrt(cpsi), channel a = p - wall, open frontal area sigma = (a/p)^2. In the channels (Re ~ 100-
+// 600, laminar) the fully developed loss is fRe = 14.227 (Fanning) for a square duct, so dp = 2*14.227*mu*L*u/a^2,
+// plus the developing-flow increment K(inf) = 1.43 velocity heads (Shah & London, Laminar Flow Forced Convection in
+// Ducts, 1978); the channel entry a sharp contraction 0.5*(1-sigma) and the exit an abrupt expansion (1-sigma)^2
+// (Kays & London, Compact Heat Exchangers). The inlet cone is taken as an abrupt expansion from the pipe to the brick
+// face, (1-Ap/Af)^2 of the pipe's velocity head: a cat's cone is short and wide, past the ~30 degree half-angle where
+// a diffuser loses about as much as a step (Idelchik, Handbook of Hydraulic Resistance, diagram 5-2). The outlet
+// cone, a gradual contraction, loses under 0.05 heads and is left out.
+function catBrickDpPa(Q,T_K,rho,e){
+  const c=CAT[e&&e.cat];
+  if(!c||!(c.cpsi>0)||!(Q>0))return 0;
+  const V=CAT_VOL_PER_VD*(e.displacement_L||1.6)*1e-3/(e.sysPipes||1);
+  const D=Math.cbrt(4*V/Math.PI),Af=Math.PI/4*D*D;
+  const p=0.0254/Math.sqrt(c.cpsi),a=p-c.wall_mm/1000,sig=(a/p)*(a/p);
+  const mu=1.82e-5*Math.pow(Math.max(250,T_K)/293,0.7);   // exhaust dynamic viscosity, Pa*s (Heywood §4.7)
+  const u=Q/(Af*sig),Ap=Math.PI/4*e.sysD*e.sysD,vS=Q/Ap;
+  return 2*14.227*mu*D*u/(a*a)
+        +(1.43+0.5*(1-sig)+(1-sig)*(1-sig))*0.5*rho*u*u
+        +Math.pow(Math.max(0,1-Ap/Af),2)*0.5*rho*vS*vS;
+}
 // Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
-// after the collector, plus the cat as a porous plug, the silencer's chamber/baffle restriction,
+// after the collector, plus the catalyst's brick (catBrickDpPa), the silencer's chamber/baffle restriction,
 // and any wall-flow particulate filter (DPF/GPF).
 // Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
 function backPressureBar(rpm,T){
@@ -640,7 +662,7 @@ function backPressureBar(rpm,T){
   const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
              +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
-             +e.catRestrict*0.5*rho*vS*vS*350
+             +catBrickDpPa(m3s,Math.max(300,T),rho,e)
              +silPa+pfPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
   // sits upstream of all of it and restricts far harder, so manifold pressure is set there and the

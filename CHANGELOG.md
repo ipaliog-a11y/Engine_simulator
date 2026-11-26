@@ -18,6 +18,21 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The catalyst's back pressure derived from its brick, not fitted (build 480)
+
+- **What changed**: the cat's back pressure was a fitted `restrict` (0.05 stock, 0.02 sport) times 350 velocity
+  heads of the tail pipe. It is now `catBrickDpPa`, from the substrate: laminar flow down square channels (Shah &
+  London, fRe 14.227, plus the developing-flow 1.43 heads), the channels' entry and exit (Kays & London) and the
+  inlet cone as an abrupt expansion (Idelchik). Stock: 600 cpsi cordierite, 0.102 mm walls; sport: 200 cpsi metal
+  foil, 0.05 mm; the brick as big as the displacement per pipe, as long as it is wide. All four inputs are marked
+  probable in `CAT`. The 350 is gone. This closes item 5 of `plans/v1-scope.md` (`catRampTop`).
+- **Numbers**: at 90% of the redline a stock brick now loses 5–15 kPa (was 8–31 kPa); the fitted one was highest on
+  the small systems sized for 105 m/s. Peak power moves −1.4% (S2000) to +4.6% (AE86); most cars +0–2%.
+  Comparison with the real cars' figures was not run (AGENTS.md §0.3).
+- **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
+  face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
+  guide's Greek for the back-pressure page is not updated (§0.1).
+
 ### The exhaust's pumping work read at the engine's load, and an untouched VE cell kept exact (build 479)
 
 - **What changed**: build 476 traced the exhaust stroke's work from the full-load cycle and charged it at every
