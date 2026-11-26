@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 476</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 477</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -6685,6 +6685,19 @@ const ENGINE_VALVES={
   'Honda S07A turbo (S660)':{iv:24.5,ev:20.5,src:'Honda, S07B technical page: intake 24.0 mm against the S07A\'s 24.5; exhaust 20.0 mm, 0.5 mm less than the S07A\'s'},
   'Radical RPE 1500 Suzuki-based I4 (SR3 RSX)':{iv:33,ev:27.5,unsure:true,src:'Kibblewhite 60-60008H / 60-60010H stock-size Hayabusa valves: 33 / 27.5 mm (std); the RPE head taken as the Hayabusa\'s'},
   'Ferrari F129B V8 (F355)':{iv:26.5,ev:28.5,unsure:true,src:'Supertech FEIVN-2500 / FEEVN-2500 stock-size 355 valves: three intakes 26.5 mm, two exhausts 28.5 mm (std); a FerrariChat post swaps them'}
+};
+// A real engine whose maker cools its charge with a coolant loop (build 477, plans/v1-finish.md item 7): it takes the
+// water-to-air part (build 429, parts.js W2A_START) in place of its air-to-air class. No maker publishes the core, pump
+// or radiator sizes, so each takes the starting part's. unsure: true marks a source that is not the maker's own.
+const ENGINE_W2A={
+  'GM LT4 6.2 supercharged (Camaro ZL1)':{src:'GM, LT4 press release (2014): Eaton R1740 supercharger with an integrated air-to-liquid intercooler'},
+  'Dodge 6.2 Hellcat (Challenger SRT)':{src:'FCA, Challenger SRT Hellcat press kit (2014): IHI 2.38 L supercharger with two integrated charge-air coolers on a dedicated low-temperature circuit'},
+  'Ford 5.4 supercharged V8 (Ford GT)':{src:'Ford, Ford GT press kit (2004): Lysholm screw supercharger with an air-to-water intercooler'},
+  'BMW S63B44 4.4 TT V8 (X5 M F85)':{src:'BMW, X5 M / X6 M press kit (2014) and ST1504 F85/F86 training manual: indirect (liquid-to-air) charge-air cooling'},
+  'VW EA288 2.0 TDI (Golf 150)':{src:'VW of America SSP 820433, EA288: intake manifold with water-cooled charge air cooler'},
+  'BMW S55 3.0 TT I6 (M2 Competition)':{unsure:true,src:'Mishimoto and Vivid Racing S55 parts pages: indirect charge-air circuit, cooler in the plenum, front heat exchanger'},
+  'BMW B48 2.0 turbo + P2 plug-in (330e)':{unsure:true,src:'BMW part 17118666811, the charge-air cooler\'s front heat exchanger, listed for the G20 330e (BimmerWorld)'},
+  'Alfa Romeo 690T 2.9 V6 (Giulia Quadrifoglio)':{unsure:true,src:'Wikipedia, Alfa Romeo 690T: two air-to-liquid charge-air coolers, one per bank, on a low-temperature circuit with an electric pump'}
 };
 // Category order for the preset list (the dropdown groups by it; the UI pass will build on this).
 const PRESET_CATS=['Archetypes','Kei & City','Compact Turbo','NA Sports','Turbo Performance','American V8','Supercar','Performance SUV','Track','Rotary','Diesel','Pickup','Two-Stroke'];
@@ -39500,6 +39513,8 @@ for(const p of FACTORY_ENGINES)if(p.real&&p.engine.springRpm==null)p.engine.spri
 for(const p of FACTORY_ENGINES){const v=ENGINE_VALVES[p.name];if(v&&p.engine.ivValve_mm==null){p.engine.ivValve_mm=v.iv;p.engine.evValve_mm=v.ev;}}
 // And its cam, where a full card is found (build 427: ENGINE_CAMS).
 for(const p of FACTORY_ENGINES){const c=ENGINE_CAMS[p.name];if(c&&p.engine.camDur_deg==null){p.engine.camDur_deg=+camCardDur(c).toFixed(1);p.engine.camLsa_deg=c.lsa;p.engine.camLift_mm=+(c.lift*25.4).toFixed(2);}}
+// And its water-to-air charge cooler, where the maker fits one (build 477: ENGINE_W2A).
+for(const p of FACTORY_ENGINES)if(ENGINE_W2A[p.name]&&!p.engine.icPart)p.engine.icPart=normPart({id:'w2a',kind:'intercooler',type:'water',name:'WATER-TO-AIR',...W2A_START});
 const FACTORY_ENGINE_CATS=PRESET_CATS.concat(['Electric','Hybrid']), FACTORY_CAR_CATS=VEHICLE_CATS.concat(['Electric','Hybrid']);
 // ====== DESIGN CARDS: a design form as cards with sliders, real-world ticks, help and a live preview (builds 238-239) ======
 // Built for the electric drive (build 238), shared since build 239 by the combustion engine. A form's fields stay in
