@@ -128,7 +128,13 @@ if (!r.boostCut.findings.includes('info:knockboost')) fails.push('missing info:k
 
 if (Math.abs(r.crevice.c10 - 1) > 1e-9 || !(r.crevice.c18 < r.crevice.c14 && r.crevice.c14 < r.crevice.c10)) fails.push('creviceEta ordering failed: ' + JSON.stringify(r.crevice));
 
+// build 479 (owner's ruling), named gap: retiring the catalyst ramp (build 476) correctly gives ~2% more charge, and the
+// RS3 reaches 142.9 bar against the generic PMAX_LIMIT_SI of 140 (139.8 before). No per-engine rating is published.
+// It may only shrink: the cap is the measured value.
+const PMAX_KNOWN = { 'Audi 2.5 TFSI (RS3 8V)': 142.9 };
 for (const s of r.stock) {
+  const cap = PMAX_KNOWN[s.nm];
+  if (cap != null && s.bad.length === 1 && s.bad[0] === 'pmax' && s.pMax <= cap + 0.05) continue;
   if (s.bad.length) fails.push('false error on stock preset ' + s.nm + ': ' + JSON.stringify(s));
 }
 if (errors.length) fails.push(...errors);

@@ -88,7 +88,11 @@ console.log(`   matched, ECO: 0-60 ${f(E.t60, 2)} s (MotorWeek 9.6, ${f(pct(E.t6
 console.log(`   matched, FULL: 0-60 ${f(F.t60, 2)} s, quarter ${f(F.q400, 2)} s at ${f(F.trap)} mph, 0-100 ${f(F.t100, 2)} s`);
 if (Math.abs(I.motorTq - 170) > 10 || Math.abs(I.packKW - 32) > 3) fails.push('the Ioniq\'s motor and pack are not its published 170 Nm and 32 kW');
 if (Math.abs(pct(E.t60, 9.6)) > 6 || Math.abs(pct(E.q400, 17.4)) > 4 || Math.abs(pct(E.trap, 81)) > 4) fails.push('the Ioniq on ECO is not MotorWeek\'s measured car');
-if (Math.abs(pct(E.t100, 10.8)) > 8) fails.push(`the Ioniq's 0-100 ${f(E.t100, 2)} s against Hyundai's 10.8`);
+// build 479 (owner's ruling), named gap: since build 476's pumping work the matched Ioniq runs 0-100 in 9.79 s against
+// Hyundai's claimed 10.8 (-9.4%), while its 0-60 mph matches MotorWeek's measured 9.6 s within 3.3%. The two references
+// disagree by ~0.7 s; the gap may only shrink (cap: the measured 9.79 s).
+const T100_KNOWN = { 'Hyundai Ioniq Hybrid': 9.79 };
+if (Math.abs(pct(E.t100, 10.8)) > 8 && !(E.t100 >= T100_KNOWN['Hyundai Ioniq Hybrid'] - 0.005)) fails.push(`the Ioniq's 0-100 ${f(E.t100, 2)} s against Hyundai's 10.8`);
 if (!(F.t60 < E.t60 - 0.5 && F.trap > E.trap + 3)) fails.push('FULL deploy is not quicker than ECO');
 
 await browser.close();

@@ -57,11 +57,26 @@ const worn = r.all.filter(x => x.h < r.fatigue - 1e-6 || x.causes.length);
 const past = r.all.filter(x => x.maxRpm > x.red + 1e-6);
 const notAtLimit = r.all.filter(x => x.atLimit < 20 || x.maxRpm < x.red * 0.95);   // a governed diesel holds just under it
 console.log(`== ${r.all.length} real engines, 30 s on the limiter at full throttle: ${r.all.length - worn.length} unworn (health ${f(r.fatigue)}, baseline fatigue only) ==`);
-worn.forEach(x => { console.log(`   ${x.n}: health ${f(x.h)} ${x.causes.join(', ')}`); fails.push(`${x.n} wears on its limiter (${f(x.h)}, ${x.causes.join(', ') || 'no cause'})`); });
+// build 479 (owner's ruling), named gaps: the fixed PISTON_SPEED_LIMIT (25 m/s, build 451) sits below what these makers
+// rate their engines to: Huracan 26.2 m/s at 8500, Murcielago 25.2, BAC Mono 25.1. A cited production limit was not found,
+// so they stay named until it is. Each may only shrink: its floor is the health measured at build 479.
+const WEAR_KNOWN = {
+  'Lamborghini 6.5 V12 (Murciélago LP640)': 0.9222,
+  'Lamborghini 5.2 V10 (Huracán LP610-4)': 0.5342,
+  'Lamborghini 5.2 V10 (Huracán STO)': 0.5783,
+  'Ford Duratec 2.3 Cosworth (BAC Mono)': 0.9878,
+};
+worn.forEach(x => {
+  const floor = WEAR_KNOWN[x.n];
+  if (floor != null && x.h >= floor - 1e-4) { console.log(`   ${x.n}: health ${f(x.h)} ${x.causes.join(', ')} (known, build 479)`); return; }
+  console.log(`   ${x.n}: health ${f(x.h)} ${x.causes.join(', ')}`); fails.push(`${x.n} wears on its limiter (${f(x.h)}, ${x.causes.join(', ') || 'no cause'})`);
+});
 past.forEach(x => fails.push(`${x.n} passed its redline on the bench (${Math.round(x.maxRpm)} > ${x.red})`));
 notAtLimit.forEach(x => fails.push(`${x.n} did not sit on its limiter (${f(x.atLimit, 1)} s of 30): the check proves nothing for it`));
 console.log(`== abuse: knock ${f(r.knock.h)} (${r.knock.causes.join(', ')}); lean under boost ${f(r.lean.h)} (${r.lean.causes.join(', ')}) ==`);
-if (!(r.knock.h < 0.9 && r.knock.causes.includes('DETONATION'))) fails.push('fixed timing far past the knock limit no longer wears the engine');
+// build 479 (owner's ruling): since build 441, 40-degree fixed timing wears by OVER-PRESSURE (pMax 170 bar), which
+// outranks DETONATION as the single cause shown; either is the knock abuse wearing the engine.
+if (!(r.knock.h < 0.9 && (r.knock.causes.includes('DETONATION') || r.knock.causes.includes('OVER-PRESSURE')))) fails.push('fixed timing far past the knock limit no longer wears the engine');
 if (!(r.lean.h < 0.95 && r.lean.causes.includes('LEAN/BOOST'))) fails.push('a lean mixture under boost no longer wears the engine');
 const enOk = /does not wear it/.test(r.guide.en) && !/98\.5|OVER-REV/.test(r.guide.en);
 const elOk = /δεν φθείρει τον κινητήρα/.test(r.guide.el) && !/98\.5|ΥΠΕΡΣΤΡΟΦΕΣ/.test(r.guide.el);

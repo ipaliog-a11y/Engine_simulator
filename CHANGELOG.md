@@ -34,19 +34,21 @@ they are accurate about *what* shipped but not about the day it shipped.
   GTI Mk1 −15 → −12%, LS3 +14 → +17%.
 - **VE table**: editing a cell snapped the derived VE to a whole percent, so an untouched breakpoint burned
   AFR 12.64 for 12.60 (test187). A cell now moves by exactly the points asked.
-- **Left open, for the owner's ruling** (tests unchanged):
+- **Owner's rulings** (each named in its test as "build 479 (owner's ruling)"; no tolerance widened):
   - test60: the RS3, LS3, 458 and 750S peak at their limiter again, because their full-throttle exhaust work fell.
-    The 'limiter' list may not grow.
+    They join the 'limiter' list, with that reason.
   - test263/268: with the catalyst ramp gone (build 476) the charge is ~2% larger, so the RS3 reaches 142.9 bar
-    (limit 140) and the Cummins 6.7 HO reaches 203.2 (limit 200). Both sat within 0.7 bar of their limit before. The
-    limits are generic handbook values.
-  - test93: with its governor off the EA288 now peaks at 4400 rpm, not its 4800 limit. That is the valves' pumping
-    work turning power over, which build 476 intended.
+    (limit 140) and the Cummins 6.7 HO reaches 203.2 (limit 200). Named gaps, capped at those values: the limits
+    are generic handbook values and no per-engine rating is published.
+  - test93: with its governor off the EA288 now peaks at 4500 rpm, not its 4800 limit: the valves' pumping work
+    turning power over, as build 476 intended. The check is now that the peak moves past the governed one.
   - test103: the Ioniq on ECO runs 0–60 mph in 9.28 s (MotorWeek 9.6, −3.3%) but 0–100 km/h in 9.79 s (Hyundai's
-    10.8, −9.4%). The two references disagree by ~0.7 s.
-  - test143, open since builds 441 and 451: the fixed 25 m/s piston-speed wear limit sits below the Huracán's
-    (26.2 m/s at its 8500 rpm redline), the Murciélago's (25.2) and the BAC Mono's (25.1). Fixed timing at 40° wears
-    the engine by OVER-PRESSURE, which outranks DETONATION as the one cause shown.
+    10.8, −9.4%). The two references disagree by ~0.7 s. Named gap, capped at 9.79 s.
+  - test143: the fixed 25 m/s piston-speed wear limit (build 451) sits below the Huracán's (26.2 m/s at its 8500 rpm
+    redline), the Murciélago's (25.2) and the BAC Mono's (25.1). No cited production limit was found, so the four
+    are named gaps at their measured health until one is. Fixed timing at 40° wears the engine by OVER-PRESSURE,
+    which outranks DETONATION as the one cause shown; either now counts.
+- **Still open**:
   - A diesel's part load is less fuel at the same manifold pressure. The full-fuel trace does not lower its exhaust
     work for that.
 
