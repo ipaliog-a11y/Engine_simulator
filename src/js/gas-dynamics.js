@@ -635,12 +635,14 @@ function partFilterDpPa(m3sTotal,T_K,e){
 // face, (1-Ap/Af)^2 of the pipe's velocity head: a cat's cone is short and wide, past the ~30 degree half-angle where
 // a diffuser loses about as much as a step (Idelchik, Handbook of Hydraulic Resistance, diagram 5-2). The outlet
 // cone, a gradual contraction, loses under 0.05 heads and is left out.
+// The washcoat lines each channel: CAT_WASHCOAT of the brick's volume, taken off the open area, the channel taken as
+// the square of the area left (its fillets round the corners, which a square's fRe slightly understates).
 function catBrickDpPa(Q,T_K,rho,e){
   const c=CAT[e&&e.cat];
   if(!c||!(c.cpsi>0)||!(Q>0))return 0;
   const V=CAT_VOL_PER_VD*(e.displacement_L||1.6)*1e-3/(e.sysPipes||1);
   const D=Math.cbrt(4*V/Math.PI),Af=Math.PI/4*D*D;
-  const p=0.0254/Math.sqrt(c.cpsi),a=p-c.wall_mm/1000,sig=(a/p)*(a/p);
+  const p=0.0254/Math.sqrt(c.cpsi),sig=Math.pow(1-c.wall_mm/1000/p,2)-CAT_WASHCOAT,a=p*Math.sqrt(sig);
   const mu=1.82e-5*Math.pow(Math.max(250,T_K)/293,0.7);   // exhaust dynamic viscosity, Pa*s (Heywood §4.7)
   const u=Q/(Af*sig),Ap=Math.PI/4*e.sysD*e.sysD,vS=Q/Ap;
   return 2*14.227*mu*D*u/(a*a)

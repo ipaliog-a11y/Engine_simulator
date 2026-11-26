@@ -342,6 +342,8 @@ const INTERCOOLER={
 // the 0.30 and 0.12 it has used since the sound model was built.
 const CAT_VOL_PER_VD=1.0;   // brick volume over displacement, L/D 1 (Heck, Farrauto & Gulati, Catalytic Air Pollution
                             // Control: monoliths about 0.5-1.5 x swept volume; probable)
+const CAT_WASHCOAT=160/1400;   // washcoat's share of the brick: ~160 g/L of alumina-ceria at ~1.4 g/cm3 apparent density
+                               // (Heck, Farrauto & Gulati: 100-200 g/L; density of a porous gamma-alumina coat; probable)
 const CAT={
   none: {label:'NONE (DECAT)',conv:0.00,cpsi:0,  wall_mm:0,    muffle:0.00},
   sport:{label:'SPORT CAT',   conv:0.85,cpsi:200,wall_mm:0.05, muffle:0.12},
