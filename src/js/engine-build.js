@@ -316,16 +316,12 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
-  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
-  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
-  // elsewhere. Build 322 found it: without the ramp torque lands (-2.1 -> +0.5% mean) and only the top end runs high,
-  // so it stands in for a loss growing with flow; ~14 kPa more back-pressure at the peak puts it back (signed power
-  // -1.4 -> +0.9%). The silencer's back-pressure is not modelled (parts.js), so the ramp goes with the cat part and
-  // the silencer's loss together, in one build.
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
+  // build 476 it was also taken off the charge as a fitted ramp to the redline (catRampTop, up to 5% for a stock cat),
+  // which build 322 found stood in for a loss growing with flow. That loss is now derived: the valves' own pumping work
+  // (valvePumpMEP, gas-dynamics.js), so the ramp is gone.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.catRampTop=catp.restrict;
   // The lambda sensor ahead of the catalyst (build 337): an engine with a catalyst and an ECU has one. An engine that
   // runs lean of stoichiometric needs a wideband one: a diesel, and a direct-injection petrol (probable: stratified
   // lean running is what DI was introduced for, and DI engines carry wideband sensors). Port injection holds lambda 1

@@ -1868,8 +1868,8 @@ You see friction as the gap between what the cylinders make and what the crank d
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="frictionPhys">
 The mean effective pressures are added up and taken off the gross work:
-<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (crank + reciprocating + rings under gas load + valvetrain + pumps) · k<sub>oil</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) + PMEP<sub>valves</sub>(N) − PMEP<sub>valves</sub>(N<sub>anchor</sub>) &nbsp; [bar]</span>
-FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. The valves' own share (build 476) is the gas pushed out through the exhaust valve above the manifold's pressure and drawn in through the intake valve below the plenum's, from the exhaust stroke traced from valve opening (filling and emptying, Heywood §14.2) and the integrated intake stroke. It grows with the square of the gas speed, so with rpm, and is what turns power over short of the limiter. Only its change from the speed the engine's efficiency anchor was read at is charged, as for the wall heat: real engines' output already carries it there. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
+<span class="geq">BMEP = IMEP<sub>gross</sub> − FMEP − PMEP<br>FMEP = (crank + reciprocating + rings under gas load + valvetrain + pumps) · k<sub>oil</sub> + alternator + blower drive<br>PMEP = (p<sub>exhaust</sub> − 1) + 0.9 · (1 − p<sub>manifold</sub>) + PMEP<sub>valves</sub>(N) &nbsp; [bar]</span>
+FMEP is the Patton–Nitschke–Heywood model as revised by Sandoval and Heywood (SAE 2003-01-0725): each part in its lubrication regime, a constant where it rubs dry (seals, flat followers), ∝ N where an oil film shears (bearings, skirt), ∝ N² where oil is pumped through the bearings. It reads the bore B, stroke S, cylinders, valves and lift, compression (the rings' gas load), intake pressure and the valvetrain's constants (Table 4.2: a flat bucket 133, a flat rocker 400, a roller 0.005 to 0.023). Bearing sizes are 0.65 and 0.56 of the bore. At 3000 rpm it gives about 1.1 bar for a 2.3 litre four, against 0.7 bar from the old fitted curve.<br>The exhaust half is derived from the back-pressure the pipes and turbine actually make (see <a data-gp="backpressure">Back-pressure &amp; residuals</a>); the intake half is the throttling. The valves' own share (build 476) is the gas pushed out through the exhaust valve above the manifold's pressure and drawn in through the intake valve below the plenum's, from the exhaust stroke traced from valve opening (filling and emptying, Heywood §14.2) and the integrated intake stroke. It grows with the square of the gas speed, so with rpm, and is what turns power over short of the limiter. It is charged whole: the gross work's 0.8 of the fuel-air cycle is Heywood's on the compression and expansion strokes only. It replaced a fitted 5% ramp on the catalyst that had stood in for it. A diesel's loop is charged with its sign, so a turbo that makes more boost than back-pressure gives work back. The alternator's drag is the electrical power it is making divided by 0.55 efficiency, over crank speed: large at idle, negligible at the top.
 </div>
 <div class="guide-limit" data-gk="frictionLimit">
 Limit: oil viscosity, ring tension and liner roughness are held at the model's 1980s reference engine (10W-30 at 90 °C), so a modern low-tension ring pack is charged a little too much; warm-up still uses the older oil-temperature factor. Rotaries and two-strokes keep the old fitted curve.
@@ -5424,10 +5424,11 @@ function exhaustStrokeMEP(e,rpm){
   }
   return -W/Vd/1e5;
 }
-// What is charged is the CHANGE from the engine's efficiency anchor (wallRefRpm), as for the wall heat (wallHeatExtra):
-// the 0.8 x fuel-air efficiency (REAL_TO_FUELAIR) was read off real engines' output, which already carries their valve
-// pumping at that speed. Charging it whole took 5-15% off every engine, diesels at 2800 rpm included (build 476's
-// first measurement). So below the anchor it is a small gain, above it the loss that grows to the limiter.
+// Charged whole: the 0.8 x fuel-air efficiency (REAL_TO_FUELAIR) is Heywood's on GROSS indicated work, compression
+// and expansion only (§5.8, and Problem 5.20: "gross indicated values ... 0.8 times the fuel-air cycle values"), so no
+// part of this is in it. It replaces the catalyst's fitted VE ramp (catRampTop), which stood in for it (build 322).
+// Check: with the friction, mechanical efficiency at rated speed comes out ~77% (MX-5 NA 6500, EK9 8200), against
+// Heywood's "decreasing to 75 percent at maximum rated speed" (§2.5).
 const valvePumpTab=(tb,rpm,k)=>{
   if(rpm<=tb[0].rpm)return tb[0][k];
   for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a[k]+(b[k]-a[k])*(rpm-a.rpm)/(b.rpm-a.rpm);}
@@ -5435,9 +5436,8 @@ const valvePumpTab=(tb,rpm,k)=>{
 };
 // The valves' pumping MEP (bar) at this speed: the exhaust's at exhaust pressure pEx, the intake's at manifold pressure.
 function valvePumpMEP(rpm,map,pEx){
-  const e=engine,tb=e.fillTable;if(!tb||!(tb[0].ex>=0)||!(e.wallRefRpm>0))return 0;
-  const n0=e.wallRefRpm;
-  return (valvePumpTab(tb,rpm,'ex')-valvePumpTab(tb,n0,'ex'))*Math.max(0,pEx)+(valvePumpTab(tb,rpm,'pin')-valvePumpTab(tb,n0,'pin'))*Math.max(0,map);
+  const tb=engine.fillTable;if(!tb||!(tb[0].ex>=0))return 0;
+  return valvePumpTab(tb,rpm,'ex')*Math.max(0,pEx)+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
 }
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
@@ -10888,16 +10888,12 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). It is
-  // ALSO still taken off the charge as a fitted ramp to the redline (up to 5% for a stock cat), which counts it twice.
-  // Taking that out (build 244 tried) lifts nearly every factory engine 5-6%, so it has been holding down an error
-  // elsewhere. Build 322 found it: without the ramp torque lands (-2.1 -> +0.5% mean) and only the top end runs high,
-  // so it stands in for a loss growing with flow; ~14 kPa more back-pressure at the peak puts it back (signed power
-  // -1.4 -> +0.9%). The silencer's back-pressure is not modelled (parts.js), so the ramp goes with the cat part and
-  // the silencer's loss together, in one build.
+  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
+  // build 476 it was also taken off the charge as a fitted ramp to the redline (catRampTop, up to 5% for a stock cat),
+  // which build 322 found stood in for a loss growing with flow. That loss is now derived: the valves' own pumping work
+  // (valvePumpMEP, gas-dynamics.js), so the ramp is gone.
   const catp=CAT[engine.cat]||CAT.stock;
   engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
-  engine.catRampTop=catp.restrict;
   // The lambda sensor ahead of the catalyst (build 337): an engine with a catalyst and an ECU has one. An engine that
   // runs lean of stoichiometric needs a wideband one: a diesel, and a direct-injection petrol (probable: stratified
   // lean running is what DI was introduced for, and DI engines carry wideband sensors). Port injection holds lambda 1
@@ -11460,7 +11456,6 @@ function computeVE(rpm,map){
   }
   // The air filter (build 210) and a carburettor's venturi (build 244): the pressure each drops at the flow it passes
   // leaves the charge that much thinner.
-  ve*=1-engine.catRampTop*clamp(rpm/engine.redline,0,1);   // the catalyst, fitted and counted twice (see buildEngineCore)
   const Q=airFlowM3s(rpm,map,ve);
   ve*=Math.max(0.05,1-(filterDp(Q)+carbDp(Q))/101325);
   ve*=(0.97+0.03*clamp(map/engine.mapMax,0,1.2));

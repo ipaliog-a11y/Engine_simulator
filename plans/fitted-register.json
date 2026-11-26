@@ -83,15 +83,6 @@
    "state": "rule"
   },
   {
-   "id": "catRampTop",
-   "file": "engine-physics.js",
-   "match": "engine.catRampTop",
-   "standsFor": "a catalyst's VE loss ramped to the redline, on top of its back-pressure (counted twice)",
-   "retiredBy": "the catalytic converter part (cells, brick: laminar channel flow) together with the silencer's back-pressure, which build 322 found the ramp stands in for; neither alone. Build 323: derived from textbook losses they read too low (stock system 0.20 bar vs the measured 0.28-0.55 in test46); needs measured factory silencer back-pressure",
-   "phase": "B6",
-   "state": "open"
-  },
-  {
    "id": "veBell",
    "file": "engine-physics.js",
    "match": "engine.veBell",

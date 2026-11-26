@@ -428,10 +428,11 @@ function exhaustStrokeMEP(e,rpm){
   }
   return -W/Vd/1e5;
 }
-// What is charged is the CHANGE from the engine's efficiency anchor (wallRefRpm), as for the wall heat (wallHeatExtra):
-// the 0.8 x fuel-air efficiency (REAL_TO_FUELAIR) was read off real engines' output, which already carries their valve
-// pumping at that speed. Charging it whole took 5-15% off every engine, diesels at 2800 rpm included (build 476's
-// first measurement). So below the anchor it is a small gain, above it the loss that grows to the limiter.
+// Charged whole: the 0.8 x fuel-air efficiency (REAL_TO_FUELAIR) is Heywood's on GROSS indicated work, compression
+// and expansion only (§5.8, and Problem 5.20: "gross indicated values ... 0.8 times the fuel-air cycle values"), so no
+// part of this is in it. It replaces the catalyst's fitted VE ramp (catRampTop), which stood in for it (build 322).
+// Check: with the friction, mechanical efficiency at rated speed comes out ~77% (MX-5 NA 6500, EK9 8200), against
+// Heywood's "decreasing to 75 percent at maximum rated speed" (§2.5).
 const valvePumpTab=(tb,rpm,k)=>{
   if(rpm<=tb[0].rpm)return tb[0][k];
   for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){const a=tb[i-1],b=tb[i];return a[k]+(b[k]-a[k])*(rpm-a.rpm)/(b.rpm-a.rpm);}
@@ -439,9 +440,8 @@ const valvePumpTab=(tb,rpm,k)=>{
 };
 // The valves' pumping MEP (bar) at this speed: the exhaust's at exhaust pressure pEx, the intake's at manifold pressure.
 function valvePumpMEP(rpm,map,pEx){
-  const e=engine,tb=e.fillTable;if(!tb||!(tb[0].ex>=0)||!(e.wallRefRpm>0))return 0;
-  const n0=e.wallRefRpm;
-  return (valvePumpTab(tb,rpm,'ex')-valvePumpTab(tb,n0,'ex'))*Math.max(0,pEx)+(valvePumpTab(tb,rpm,'pin')-valvePumpTab(tb,n0,'pin'))*Math.max(0,map);
+  const tb=engine.fillTable;if(!tb||!(tb[0].ex>=0))return 0;
+  return valvePumpTab(tb,rpm,'ex')*Math.max(0,pEx)+valvePumpTab(tb,rpm,'pin')*Math.max(0,map);
 }
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
