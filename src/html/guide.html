@@ -811,8 +811,10 @@ a restrictive one is worth less than the back-pressure number alone suggests.
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="backpressurePhys">
-Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the catalyst as a porous plug:
+Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the system's bends (about four right-angle turns, a quarter of a velocity head each) and the velocity head the gas carries out of the tailpipe, plus the catalyst's brick. The gas is the burnt charge, not the air: the fuel adds 7% to its mass and 6% to its volume. And it comes in pulses, so the losses that go with the square of its speed are charged on the pulse, not the average: each engine's own exhaust trace gives the factor, 4–10 for one cylinder's pipe, 1–4.5 where several merge.
 <span class="geq">Δp = f · (L/D) · ½ρv²</span>
+The brick is derived from its substrate (build 480): a stock cat is 600 cells per square inch of cordierite with 0.1 mm walls, a sport cat 200 cells of 0.05 mm metal foil, as big as the engine's displacement. The gas runs laminar down each square channel, so its loss grows with the gas speed and viscosity rather than its square (Shah &amp; London, fRe = 14.2), plus the entry and exit of the channels and the cone that widens the pipe to the brick:
+<span class="geq">Δp<sub>cat</sub> = 28.5 μ L u / a² + (1.43 + K<sub>in</sub> + K<sub>out</sub>) ½ρu² + (1 − A<sub>pipe</sub>/A<sub>brick</sub>)² ½ρv²</span>
 The burnt gas left behind depends on exhaust pressure against <i>intake</i> pressure, which matters enormously on a turbo engine:
 <span class="geq">f<sub>res</sub> = 1/(r<sub>c</sub> − 1) · (p<sub>exh</sub> / p<sub>int</sub>)<sup>1/γ</sup></span>
 The VE loss is the excess over the balanced case <i>p<sub>exh</sub> = p<sub>int</sub></i>. The residual is also hot, about 1000 K at full load, so it warms the fresh charge and moves it toward knock.

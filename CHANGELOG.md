@@ -18,6 +18,49 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The catalyst's back pressure derived from its brick, not fitted (build 480)
+
+- **What changed**: the cat's back pressure was a fitted `restrict` (0.05 stock, 0.02 sport) times 350 velocity
+  heads of the tail pipe. It is now `catBrickDpPa`, from the substrate: laminar flow down square channels (Shah &
+  London, fRe 14.227, plus the developing-flow 1.43 heads), the channels' entry and exit (Kays & London) and the
+  inlet cone as an abrupt expansion (Idelchik). Stock: 600 cpsi cordierite, 0.102 mm walls; sport: 200 cpsi metal
+  foil, 0.05 mm; a washcoat of 160 g/L at 1.4 g/cm³ off the open area; the brick as big as the displacement per
+  pipe, as long as it is wide. All these inputs are marked
+  probable in `CAT`. The 350 is gone. This closes item 5 of `plans/v1-scope.md` (`catRampTop`).
+- **Numbers**: at 90% of the redline a stock brick now loses 7–20 kPa (was 8–31 kPa), a sport one 5 kPa (was 7);
+  the fitted one was highest on the small systems sized for 105 m/s. Before the washcoat was added, peak power moved
+  −1.4% (S2000) to +4.6% (AE86). Comparison with the real cars' figures was not run (AGENTS.md §0.3).
+- **The rest of the exhaust (owner's option 1)**: the gas is the burnt charge (mass ×1.068, volume ×1.058 at
+  stoichiometric petrol), the tailpipe exit dumps one velocity head (Idelchik), and a road system's ~4 right-angle
+  bends lose 0.25 heads each (Crane TP-410; the count probable). The 1.6 Sport NA's stock system: 0.20 → 0.254 bar,
+  inside test46's band (0.28–0.55 measured, floor 0.25); sport 0.161, race 0.120.
+- **Open gap, for the owner's ruling**: the derived brick is laminar, so its loss grows with the flow where the fit's
+  grew with its square. It now takes more at low speed and less at the top, and high-revving NA engines peak at the
+  limiter: test46 (1.6 Sport NA), test60 (S2000, M3 E46, F355, Integra R, Cayman GT4, Atom 3.5). The Cummins 6.7's
+  peak pressure is 203.3 against test268's 200. This is G1 (`v1-scope` item 3, top-end fade): the fit stood in for
+  a high-rpm loss still missing. Tests 44, 58, 143 and 263 pass again. The channels as developing flow (Shah's
+  apparent friction factor; channel Re 130–786 at 90% of the redline, laminar on every preset) did not close it: power
+  still climbs 0.3–1.8% over the last 300 rpm on those seven engines (on main it falls 0.1–1.2%).
+- **The exhaust's pulsation (owner's option 4)**: turbulent losses are charged on the mean of u², Φ = ⟨u²⟩/⟨u⟩² from
+  each engine's own exhaust trace (Benson vol. 1; Winterbone & Pearson): one cylinder for a primary (3.5–9.6, in
+  place of the old flat 3² = 9), the cylinders feeding a system pipe for the rest (1.04–4.44). Φ falls with speed
+  (S2000 system pipe 3.0 at 800 rpm, 1.17 at the redline), so it adds loss low and mid, not at the top; the same
+  three tests fail by the same margins. Ported engines (rotaries, two-strokes) have no trace and keep Φ 1.
+- **Where the top end comes from**: the S2000's back pressure is ~2x main's at every speed (202 vs 118 mbar at 8600)
+  and grows by the same 9 mbar to 8900 rpm, yet its power rises there where main's falls. The shape follows the
+  overlap scavenging (exhaust wave minus back pressure, through a square root that is steep near zero), not the
+  back pressure's growth: G1's ground.
+- **The overlap's scavenging integrated (owner's option 4)**: `scavengeGain` now sums compressible orifice flow
+  (Heywood §6.3.2, C.8–C.9) at 24 instants across the window, each at that instant's exhaust pressure (the parts of
+  `backPressureBar` on the traced flow's shape) and curtain area; with a steady difference it gives the old result.
+  It is smooth through zero, as it should be, which removes the drop that turned main's NA engines over (S2000:
+  +1.38% at 8600 rpm, −0.22% at 8900 on main; −1.41%, −1.50% now). Their power still climbs to the limiter. Peak
+  power moves −2.3% (S2000) to +5.9% (RX-8) against main, median +0.2%. Tests 42 (fails on main too), 44, 46, 48
+  (S2000 −15% against its published power), 60, 71, 159, 263 and 268 fail.
+- **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
+  face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
+  guide's Greek for the back-pressure page is not updated (§0.1).
+
 ### The exhaust's pumping work read at the engine's load, and an untouched VE cell kept exact (build 479)
 
 - **What changed**: build 476 traced the exhaust stroke's work from the full-load cycle and charged it at every

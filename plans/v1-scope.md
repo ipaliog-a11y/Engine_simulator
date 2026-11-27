@@ -14,7 +14,8 @@ after v1.0, so the finish line is a short, closed list again. **Every "proposed"
 - **Builds 441–473 moved lap, acceleration and engine numbers** (downforce in rolling resistance, ISA anchoring, knock and
   limit models, ring blow-by, crank limits). The last scoreboard figures in `v1-finish.md` and `engine-systems-remaining.md`
   (RS3 ~46% / 1.0 EcoBoost ~44% low-rpm torque short, the V8s' errors, the known-gap lists) are stale.
-- **The register:** 37 entries, 4 still open: `EV_RATIO`, `catRampTop`, `AERO_FRONT/REAR`, `AERO_FLOOR`.
+- **The register:** 37 entries, 4 still open: `EV_RATIO`, `catRampTop`, `AERO_FRONT/REAR`, `AERO_FLOOR`. (Since: `catRampTop`
+  retired at build 476; the catalyst's fitted brick back pressure, which was never listed, derived at build 480.)
 - **Build numbers drifted from PR titles.** Two PRs on `main` are titled "Build 462" (#415, #416); since then each PR
   title is one below its CHANGELOG heading (PR "Build 472" is CHANGELOG build 473). The stamp itself is consistent
   (`stamp.mjs --check`: 473). Titles only; the CHANGELOG is the record.
@@ -44,7 +45,8 @@ owner at build 417.
    Coyote).
 4. **Water-to-air intercoolers per car** (`v1-finish` 7; decisions 17, 22 put it before v1.0). Presets whose maker
    publishes a water-to-air charge cooler move to the part built in build 429.
-5. **`catRampTop` closed** (`v1-finish` 8; decision 5; owner: before v1.0). A measured brick + silencer back pressure
+5. **`catRampTop` closed** (`v1-finish` 8; decision 5; owner: before v1.0). **Done**: the VE ramp retired at build 476
+   (valves' pumping work), the brick's fitted `restrict × 350` replaced at build 480 by `catBrickDpPa` (substrate). A measured brick + silencer back pressure
    if one is found; if not, derive the brick's loss from its substrate (laminar flow in square channels from cell
    density and wall thickness, as the DPF's Darcy model in build 469) and the silencer's from build 454's model.
 6. **G2 · turbine A/R matching** (owner: before v1.0). After build 1's baseline: residual-gas knock if missing, then

@@ -1,4 +1,4 @@
-# PIXEL POWERTRAIN v0.8 build 479
+# PIXEL POWERTRAIN v0.8 build 480
 
 **A lightweight, 8-bit style internal combustion engine *designer* & simulator** inspired by *Automation*.
 
@@ -697,7 +697,8 @@ Curve** tab remains a wide-open-throttle steady-state sweep for reading the full
   and cold running; NOx peaks slightly lean (~λ1.08) and scales with combustion temperature.
   Rates are g/s from the live fuel mass. A three-way cat needs excess O₂ to oxidise CO/HC but
   an O₂-free exhaust to reduce NOx, so only stoich cleans all three — the rating rewards a cat
-  + precise stoich metering. The cat also adds a little exhaust back-pressure (a small VE loss).
+  + precise stoich metering. The cat also adds exhaust back-pressure, derived from its brick: laminar flow down
+  its cells (600 cpsi cordierite stock, 200 cpsi metal sport) plus its cones.
 - Fuel type sets energy density, stoichiometric AFR (the mixture control works in lambda,
   so the AFR slider rescales per fuel), knock rating and evaporative charge cooling. E85 and
   methanol resist knock and cool the intake charge (more power) but need much more fuel

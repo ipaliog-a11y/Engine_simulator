@@ -316,12 +316,12 @@ function buildEngineCore(prevStoich,quiet){
   if(!sys.di)engine.injector='port';          // carbs / mechanical injection: no DI
   engine.canAutoAFR=(engine.intakeSys==='efi'||engine.intakeSys==='itb');   // only EFI has an ECU fuel map
   if(!engine.canAutoAFR)engine.afrMode='fixed';   // carbs / mechanical injection: mixture is mechanical
-  // Catalytic converter: conversion efficiency, and its brick as a porous plug in the exhaust (backPressureBar). Until
+  // Catalytic converter: conversion efficiency, and its brick's back pressure (catBrickDpPa, build 480). Until
   // build 476 it was also taken off the charge as a fitted ramp to the redline (catRampTop, up to 5% for a stock cat),
   // which build 322 found stood in for a loss growing with flow. That loss is now derived: the valves' own pumping work
   // (valvePumpMEP, gas-dynamics.js), so the ramp is gone.
   const catp=CAT[engine.cat]||CAT.stock;
-  engine.catConv=catp.conv;engine.catRestrict=catp.restrict;
+  engine.catConv=catp.conv;
   // The lambda sensor ahead of the catalyst (build 337): an engine with a catalyst and an ECU has one. An engine that
   // runs lean of stoichiometric needs a wideband one: a diesel, and a direct-injection petrol (probable: stratified
   // lean running is what DI was introduced for, and DI engines carry wideband sensors). Port injection holds lambda 1
@@ -333,7 +333,7 @@ function buildEngineCore(prevStoich,quiet){
   engine.throttlePerCyl=!!sys.perCyl;         // what the manifold's volume is (mapRateK)
   engine.crFactor=otto(engine.compression)/otto(10.5);   // 1.0 at CR 10.5
   buildBurnTable();         // diesel burn phasing vs rpm; exhaustGasT reads it from here on
-  deriveGasDynamics();      // runner + header geometry; needs crFactor, catRestrict and idleRpmEff
+  deriveGasDynamics();      // runner + header geometry; needs crFactor and idleRpmEff
   updateGasLabels();
   deriveBalance();          // primary/secondary shaking forces, rocking couples & NVH smoothness (E11)
   deriveTorsional();        // crank first torsional natural frequency & critical resonance check (E12)

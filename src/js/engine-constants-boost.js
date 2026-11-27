@@ -330,13 +330,23 @@ const INTERCOOLER={
   small:{label:'SMALL CORE',pipe:1.5,core:1.2,w:250,h:150,d:80,fpi:14},
   large:{label:'LARGE CORE',pipe:3.0,core:4.5,w:600,h:250,d:75,fpi:14}
 };
-// Catalytic converter: a three-way cat only cleans efficiently in a narrow window around
-// stoich. conv = peak conversion efficiency; restrict = exhaust back-pressure (a small
-// top-end VE loss, like an extra air filter). A modern engine uses a stock (high-flow-
-// enough, high-conversion) cat; race builds delete it for flow at the cost of emissions.
+// Catalytic converter: a three-way cat only cleans efficiently in a narrow window around stoich. conv = peak
+// conversion efficiency. Its back pressure (build 480) is derived from the brick's substrate (catBrickDpPa,
+// gas-dynamics.js): cpsi the cell density in cells per square inch, wall_mm the cell wall. Until build 480 it was a
+// fitted 'restrict' (0.05 stock, 0.02 sport) times 350 velocity heads of the tail pipe.
+//   stock  600/4 cordierite: 600 cpsi, 4 mil (0.102 mm) walls, Corning Celcor's thin-wall grade (probable: what a
+//          modern close-coupled cat carries; older cars carry 400/6.5, which loses about as much).
+//   sport  200 cpsi metal foil, 0.05 mm: the "high-flow" metallic substrate the sport-cat makers sell (Emitec /
+//          Vitesco Metalit 100 to 200 cpsi in 50 um foil; probable).
+// muffle is the share of the exhaust's pulse the brick soaks up in the sound model (sound.js), a sound rule only:
+// the 0.30 and 0.12 it has used since the sound model was built.
+const CAT_VOL_PER_VD=1.0;   // brick volume over displacement, L/D 1 (Heck, Farrauto & Gulati, Catalytic Air Pollution
+                            // Control: monoliths about 0.5-1.5 x swept volume; probable)
+const CAT_WASHCOAT=160/1400;   // washcoat's share of the brick: ~160 g/L of alumina-ceria at ~1.4 g/cm3 apparent density
+                               // (Heck, Farrauto & Gulati: 100-200 g/L; density of a porous gamma-alumina coat; probable)
 const CAT={
-  none: {label:'NONE (DECAT)',conv:0.00,restrict:0.00},
-  sport:{label:'SPORT CAT',   conv:0.85,restrict:0.02},
-  stock:{label:'STOCK CAT',   conv:0.97,restrict:0.05}
+  none: {label:'NONE (DECAT)',conv:0.00,cpsi:0,  wall_mm:0,    muffle:0.00},
+  sport:{label:'SPORT CAT',   conv:0.85,cpsi:200,wall_mm:0.05, muffle:0.12},
+  stock:{label:'STOCK CAT',   conv:0.97,cpsi:600,wall_mm:0.102,muffle:0.30}
 };
 
