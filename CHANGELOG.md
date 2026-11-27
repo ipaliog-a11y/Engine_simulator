@@ -50,6 +50,13 @@ they are accurate about *what* shipped but not about the day it shipped.
   and grows by the same 9 mbar to 8900 rpm, yet its power rises there where main's falls. The shape follows the
   overlap scavenging (exhaust wave minus back pressure, through a square root that is steep near zero), not the
   back pressure's growth: G1's ground.
+- **The overlap's scavenging integrated (owner's option 4)**: `scavengeGain` now sums compressible orifice flow
+  (Heywood §6.3.2, C.8–C.9) at 24 instants across the window, each at that instant's exhaust pressure (the parts of
+  `backPressureBar` on the traced flow's shape) and curtain area; with a steady difference it gives the old result.
+  It is smooth through zero, as it should be, which removes the drop that turned main's NA engines over (S2000:
+  +1.38% at 8600 rpm, −0.22% at 8900 on main; −1.41%, −1.50% now). Their power still climbs to the limiter. Peak
+  power moves −2.3% (S2000) to +5.9% (RX-8) against main, median +0.2%. Tests 42 (fails on main too), 44, 46, 48
+  (S2000 −15% against its published power), 60, 71, 159, 263 and 268 fail.
 - **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
   face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
   guide's Greek for the back-pressure page is not updated (§0.1).
