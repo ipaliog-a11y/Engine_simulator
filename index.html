@@ -2009,7 +2009,7 @@ a restrictive one is worth less than the back-pressure number alone suggests.
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="backpressurePhys">
-Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the catalyst's brick:
+Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the system's bends (about four right-angle turns, a quarter of a velocity head each) and the velocity head the gas carries out of the tailpipe, plus the catalyst's brick. The gas is the burnt charge, not the air: the fuel adds 7% to its mass and 6% to its volume.
 <span class="geq">Δp = f · (L/D) · ½ρv²</span>
 The brick is derived from its substrate (build 480): a stock cat is 600 cells per square inch of cordierite with 0.1 mm walls, a sport cat 200 cells of 0.05 mm metal foil, as big as the engine's displacement. The gas runs laminar down each square channel, so its loss grows with the gas speed and viscosity rather than its square (Shah &amp; London, fRe = 14.2), plus the entry and exit of the channels and the cone that widens the pipe to the brick:
 <span class="geq">Δp<sub>cat</sub> = 28.5 μ L u / a² + (1.43 + K<sub>in</sub> + K<sub>out</sub>) ½ρu² + (1 − A<sub>pipe</sub>/A<sub>brick</sub>)² ½ρv²</span>
@@ -5651,17 +5651,24 @@ function catBrickDpPa(Q,T_K,rho,e){
 // after the collector, plus the catalyst's brick (catBrickDpPa), the silencer's chamber/baffle restriction,
 // and any wall-flow particulate filter (DPF/GPF).
 // Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
+// The burnt gas is not the air drawn in (build 480): the fuel adds its mass (1 + 1/14.7 = 1.068 at stoichiometric
+// petrol) and its moles (C8H18 + 12.5 O2 + 47 N2 -> 8 CO2 + 9 H2O + 47 N2: 64 moles from 60.5, 1.058), so the gas runs
+// 1.058 times the volume at 1.068/1.058 times the density. Past the pipes' own friction the system loses at its bends
+// and at the tailpipe: the exit dumps one velocity head (Idelchik, diagram 11-1), and a road system turns about four
+// 90-degree equivalents getting from the manifold under the floor and over the axle (probable: the down-pipe's turn,
+// the kick-ups, the tail), each 14 f_T ~ 0.25 heads at a bend radius of 1.5 diameters (Crane TP-410, A-29).
+const EXH_MOLES=64/60.5,EXH_MASS=1+1/14.7,EXH_BENDS_K=4*0.25,EXH_EXIT_K=1;
 function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
-  const rho=101325/(287*Math.max(300,T));
-  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
-  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
+  const rho=101325/(287*Math.max(300,T))*EXH_MASS/EXH_MOLES;
+  const vP=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
+  const m3s=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
   const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
-             +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
+             +(0.02*(e.sysL/e.sysD)+EXH_BENDS_K+EXH_EXIT_K)*0.5*rho*vS*vS
              +catBrickDpPa(m3s,Math.max(300,T),rho,e)
              +silPa+pfPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It

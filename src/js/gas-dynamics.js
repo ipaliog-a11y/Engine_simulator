@@ -653,17 +653,24 @@ function catBrickDpPa(Q,T_K,rho,e){
 // after the collector, plus the catalyst's brick (catBrickDpPa), the silencer's chamber/baffle restriction,
 // and any wall-flow particulate filter (DPF/GPF).
 // Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
+// The burnt gas is not the air drawn in (build 480): the fuel adds its mass (1 + 1/14.7 = 1.068 at stoichiometric
+// petrol) and its moles (C8H18 + 12.5 O2 + 47 N2 -> 8 CO2 + 9 H2O + 47 N2: 64 moles from 60.5, 1.058), so the gas runs
+// 1.058 times the volume at 1.068/1.058 times the density. Past the pipes' own friction the system loses at its bends
+// and at the tailpipe: the exit dumps one velocity head (Idelchik, diagram 11-1), and a road system turns about four
+// 90-degree equivalents getting from the manifold under the floor and over the axle (probable: the down-pipe's turn,
+// the kick-ups, the tail), each 14 f_T ~ 0.25 heads at a bend radius of 1.5 diameters (Crane TP-410, A-29).
+const EXH_MOLES=64/60.5,EXH_MASS=1+1/14.7,EXH_BENDS_K=4*0.25,EXH_EXIT_K=1;
 function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
-  const rho=101325/(287*Math.max(300,T));
-  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
-  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
+  const rho=101325/(287*Math.max(300,T))*EXH_MASS/EXH_MOLES;
+  const vP=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
+  const m3s=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
   const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
   const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
-             +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
+             +(0.02*(e.sysL/e.sysD)+EXH_BENDS_K+EXH_EXIT_K)*0.5*rho*vS*vS
              +catBrickDpPa(m3s,Math.max(300,T),rho,e)
              +silPa+pfPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
