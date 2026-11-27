@@ -1,20 +1,21 @@
 # VW Golf R (Mk7, 2015)
 
-Queued in batch-2 **wave 1** (`research/vehicles-batch-2/queue.json`).
+Queued in batch-2 **wave 1**. Research filled in `vehicle.json`.
 
-## Status
+## Sources
 
-Research not started. Do not invent numbers. Follow `.cursor/skills/import-vehicle/SKILL.md`.
+- **Engine / performance:** VW UK Golf R press pack — 300 PS / 380 Nm, 0–62 mph 5.1 s (manual), 250 km/h limited.
+- **Body / aero / brakes / gears:** VW US 2015 Golf R technical specifications PDF — Cd 0.32, dims, 225/40 R18, dual-final MQ350 ratios. UK kerbweight 1476 kg (3-door manual).
+- **fWt:** Motor Trend Euro-spec instrumented car ~59/41 (secondary).
 
-## Intended slot
+## Chassis
 
-- **cat:** Compact Turbo
-- **chassis:** rally
-- **path:** combustion
-- **expected confidence:** high
+`rally` + `drive: awd` — same pattern as Ford Focus RS (Mk3, 2016).
 
-## Next
+## Engine
 
-1. Fill `vehicle.json` from maker press / Autodata-class sources.
-2. `node .cursor/skills/import-vehicle/scripts/validate-research.mjs research/vehicles/vw-golf-r-mk7-2015/vehicle.json`
-3. Only then implement presets (separate PR).
+New preset `VW EA888 2.0 TSI (Golf R Mk7)` — do not overwrite the existing GTI EA888 (220 hp / 350 Nm).
+
+## Confidence
+
+**high** for power, torque plateau, gears, Cd, 0–100, limiter. `kg` left unsure until DIN-with-driver is confirmed or rejected.

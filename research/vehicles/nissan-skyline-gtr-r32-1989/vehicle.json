@@ -1,0 +1,98 @@
+{
+  "id": "nissan-skyline-gtr-r32-1989",
+  "name": "Nissan Skyline GT-R (R32, 1989)",
+  "cat": "Turbo Performance",
+  "era": "1980s",
+  "role": "AWD twin-turbo legend",
+  "confidence": "high",
+  "chassis": "coupe",
+  "chassisFit": "good",
+  "chassisNote": "Same coupe archetype as the R34 already in the game; ATTESA E-TS AWD via fit.drive awd.",
+  "engineStatus": "new",
+  "engine": "Nissan RB26DETT (Skyline GT-R R32)",
+  "body": {
+    "kg": 1430,
+    "cd": 0.4,
+    "area": 1.91,
+    "wb": 2.615,
+    "fWt": 0.55,
+    "tf": 1.48,
+    "tr": 1.48,
+    "h": 1.34
+  },
+  "fit": {
+    "drive": "awd",
+    "tire": "sport",
+    "tw": 225,
+    "ta": 50,
+    "wheel": 16,
+    "brake": "big",
+    "rotor": 296,
+    "susp": "sport",
+    "gears": 5,
+    "gearbox": "manual",
+    "diff": "clsd",
+    "tc": false,
+    "aF": "none",
+    "aR": "none",
+    "aFl": "none",
+    "geoF": "multilink",
+    "geoR": "multilink"
+  },
+  "real": {
+    "t100": 5.2,
+    "top": 250,
+    "limited": true,
+    "unit": "PS"
+  },
+  "gearset": {
+    "r": [3.214, 1.925, 1.302, 1.0, 0.752],
+    "fd": 4.111,
+    "src": "FS5R30A factory ratios and 4.111 final (R32/R33 GT-R); commonly tabulated from Nissan service data / GTRUSA gear-ratio sheets."
+  },
+  "enginePreset": {
+    "cat": "Turbo Performance",
+    "era": "1980s",
+    "name": "Nissan RB26DETT (Skyline GT-R R32)",
+    "displacement_cc": 2568,
+    "real": {
+      "hp": 276,
+      "hpRpm": 6800,
+      "tq": 353,
+      "tqRpm": 4400
+    },
+    "unsure": ["boost_bar"],
+    "note": "Nissan Heritage quotes 280 PS (206 kW) / 353 Nm. hp field is 276 (280 PS as SAE hp), same convention as the R34 RB26 preset. Torque is the R32 sheet's 353 Nm. Gentlemen's agreement; real cars made more — do not raise the rating to fit tests.",
+    "engine": {
+      "cylinders": 6,
+      "bore_mm": 86.0,
+      "stroke_mm": 73.7,
+      "compression": 8.5,
+      "redline": 8000,
+      "intake": "turbo",
+      "boost_bar": 0.78,
+      "turboSize": "small",
+      "turboConfig": "twin",
+      "cam": "sport",
+      "vvt": false,
+      "injector": "port",
+      "intakeSys": "itb",
+      "intercooler": "large",
+      "exhaust": "sport",
+      "airFilter": "perf",
+      "runner": "short",
+      "octane": 98,
+      "taperRpm": 4400,
+      "taperPct": 20
+    }
+  },
+  "sources": {
+    "engine": "https://www.nissan-global.com/EN/HERITAGE_COLLECTION/skyline_gt-r_1989.html",
+    "body": "https://www.nissan-global.com/EN/HERITAGE_COLLECTION/skyline_gt-r_1989.html",
+    "performance": "https://gtrmarket.com/docs/chassis/BNR32",
+    "gearset": "https://www.gtrusablog.com/2014/03/nissan-skyline-gt-r-transmissions-and.html",
+    "fit": "https://www.nissan-global.com/EN/HERITAGE_COLLECTION/skyline_gt-r_1989.html"
+  },
+  "unsure": ["area", "fWt", "t100", "top", "rotor", "boost_bar", "cd"],
+  "note": "Curb 1430 kg and 280 PS / 353 Nm from Nissan Heritage Collection (BNR32). Cd 0.40 from secondary GT-R chassis tables (listed unsure). Frontal area = 1.755 × 1.340 × 0.81 ≈ 1.91 m² (estimate). fWt 0.55 layout estimate for AWD coupe. Top speed often quoted ~250 km/h limited; 0–100 ~5.0–5.3 s from period tests (5.2 stored, unsure). Boost 0.78 bar (~0.78 kg/cm²) typical for stock ceramic twins (unsure). Front rotor ~296 mm common figure for early R32 (unsure). Separate engine preset from the R34 RB26 entry so the R32's 353 Nm sheet is not overwritten."
+}
