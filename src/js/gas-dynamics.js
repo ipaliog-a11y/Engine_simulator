@@ -628,9 +628,8 @@ function partFilterDpPa(m3sTotal,T_K,e){
 // The catalyst brick's back pressure (build 480), from its substrate (CAT): laminar flow down square channels, as the
 // DPF's wall above. The brick holds CAT_VOL_PER_VD of the displacement per exhaust pipe, as long as it is wide. Cell
 // pitch p = 25.4 mm / sqrt(cpsi), channel a = p - wall, open frontal area sigma = (a/p)^2. In the channels (Re ~ 100-
-// 600, laminar) the fully developed loss is fRe = 14.227 (Fanning) for a square duct, so dp = 2*14.227*mu*L*u/a^2,
-// plus the developing-flow increment K(inf) = 1.43 velocity heads (Shah & London, Laminar Flow Forced Convection in
-// Ducts, 1978); the channel entry a sharp contraction 0.5*(1-sigma) and the exit an abrupt expansion (1-sigma)^2
+// 600, laminar) the loss is Shah's apparent friction factor for developing flow in a square duct (Shah & London,
+// Laminar Flow Forced Convection in Ducts, 1978), below; the channel entry a sharp contraction 0.5*(1-sigma) and the exit an abrupt expansion (1-sigma)^2
 // (Kays & London, Compact Heat Exchangers). The inlet cone is taken as an abrupt expansion from the pipe to the brick
 // face, (1-Ap/Af)^2 of the pipe's velocity head: a cat's cone is short and wide, past the ~30 degree half-angle where
 // a diffuser loses about as much as a step (Idelchik, Handbook of Hydraulic Resistance, diagram 5-2). The outlet
@@ -645,8 +644,13 @@ function catBrickDpPa(Q,T_K,rho,e){
   const p=0.0254/Math.sqrt(c.cpsi),sig=Math.pow(1-c.wall_mm/1000/p,2)-CAT_WASHCOAT,a=p*Math.sqrt(sig);
   const mu=1.82e-5*Math.pow(Math.max(250,T_K)/293,0.7);   // exhaust dynamic viscosity, Pa*s (Heywood §4.7)
   const u=Q/(Af*sig),Ap=Math.PI/4*e.sysD*e.sysD,vS=Q/Ap;
-  return 2*14.227*mu*D*u/(a*a)
-        +(1.43+0.5*(1-sig)+(1-sig)*(1-sig))*0.5*rho*u*u
+  // Developing flow along the whole channel: Shah's apparent friction factor for a square duct (Shah & London 1978,
+  // eq. 333; fRe 14.227, K(inf) 1.43, C 0.00029), at x+ = L/(Dh*Re). Long channels tend to fRe + K(inf)/(4x+); short or
+  // fast ones to 3.44/sqrt(x+), a loss growing as the flow's 1.5 power.
+  const Re=rho*u*a/mu,xp=D/(a*Re),rx=3.44/Math.sqrt(xp);
+  const fAppRe=rx+(14.227+1.43/(4*xp)-rx)/(1+0.00029/(xp*xp));
+  return 4*(fAppRe/Re)*(D/a)*0.5*rho*u*u
+        +(0.5*(1-sig)+(1-sig)*(1-sig))*0.5*rho*u*u
         +Math.pow(Math.max(0,1-Ap/Af),2)*0.5*rho*vS*vS;
 }
 // Back-pressure: Darcy-Weisbach down the primary at the velocity actually flowing, plus everything
