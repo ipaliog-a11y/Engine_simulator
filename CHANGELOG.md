@@ -38,7 +38,9 @@ they are accurate about *what* shipped but not about the day it shipped.
   grew with its square. It now takes more at low speed and less at the top, and high-revving NA engines peak at the
   limiter: test46 (1.6 Sport NA), test60 (S2000, M3 E46, F355, Integra R, Cayman GT4, Atom 3.5). The Cummins 6.7's
   peak pressure is 203.3 against test268's 200. This is G1 (`v1-scope` item 3, top-end fade): the fit stood in for
-  a high-rpm loss still missing. Tests 44, 58, 143 and 263 pass again.
+  a high-rpm loss still missing. Tests 44, 58, 143 and 263 pass again. The channels as developing flow (Shah's
+  apparent friction factor; channel Re 130–786 at 90% of the redline, laminar on every preset) did not close it: power
+  still climbs 0.3–1.8% over the last 300 rpm on those seven engines (on main it falls 0.1–1.2%).
 - **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
   face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
   guide's Greek for the back-pressure page is not updated (§0.1).
