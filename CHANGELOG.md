@@ -30,9 +30,15 @@ they are accurate about *what* shipped but not about the day it shipped.
 - **Numbers**: at 90% of the redline a stock brick now loses 7–20 kPa (was 8–31 kPa), a sport one 5 kPa (was 7);
   the fitted one was highest on the small systems sized for 105 m/s. Before the washcoat was added, peak power moved
   −1.4% (S2000) to +4.6% (AE86). Comparison with the real cars' figures was not run (AGENTS.md §0.3).
-- **Open gap, for the owner's ruling**: the fitted 350 had held the whole stock system inside test46's measured
-  0.28–0.55 bar. Derived, the 1.6 Sport NA's system reads 0.20 bar, and tests 44, 46, 58, 60, 143, 263 and 268
-  fail (NA presets peak at the limiter, peak pressures over their limits). All pass on main.
+- **The rest of the exhaust (owner's option 1)**: the gas is the burnt charge (mass ×1.068, volume ×1.058 at
+  stoichiometric petrol), the tailpipe exit dumps one velocity head (Idelchik), and a road system's ~4 right-angle
+  bends lose 0.25 heads each (Crane TP-410; the count probable). The 1.6 Sport NA's stock system: 0.20 → 0.254 bar,
+  inside test46's band (0.28–0.55 measured, floor 0.25); sport 0.161, race 0.120.
+- **Open gap, for the owner's ruling**: the derived brick is laminar, so its loss grows with the flow where the fit's
+  grew with its square. It now takes more at low speed and less at the top, and high-revving NA engines peak at the
+  limiter: test46 (1.6 Sport NA), test60 (S2000, M3 E46, F355, Integra R, Cayman GT4, Atom 3.5). The Cummins 6.7's
+  peak pressure is 203.3 against test268's 200. This is G1 (`v1-scope` item 3, top-end fade): the fit stood in for
+  a high-rpm loss still missing. Tests 44, 58, 143 and 263 pass again.
 - **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
   face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
   guide's Greek for the back-pressure page is not updated (§0.1).
