@@ -41,6 +41,15 @@ they are accurate about *what* shipped but not about the day it shipped.
   a high-rpm loss still missing. Tests 44, 58, 143 and 263 pass again. The channels as developing flow (Shah's
   apparent friction factor; channel Re 130–786 at 90% of the redline, laminar on every preset) did not close it: power
   still climbs 0.3–1.8% over the last 300 rpm on those seven engines (on main it falls 0.1–1.2%).
+- **The exhaust's pulsation (owner's option 4)**: turbulent losses are charged on the mean of u², Φ = ⟨u²⟩/⟨u⟩² from
+  each engine's own exhaust trace (Benson vol. 1; Winterbone & Pearson): one cylinder for a primary (3.5–9.6, in
+  place of the old flat 3² = 9), the cylinders feeding a system pipe for the rest (1.04–4.44). Φ falls with speed
+  (S2000 system pipe 3.0 at 800 rpm, 1.17 at the redline), so it adds loss low and mid, not at the top; the same
+  three tests fail by the same margins. Ported engines (rotaries, two-strokes) have no trace and keep Φ 1.
+- **Where the top end comes from**: the S2000's back pressure is ~2x main's at every speed (202 vs 118 mbar at 8600)
+  and grows by the same 9 mbar to 8900 rpm, yet its power rises there where main's falls. The shape follows the
+  overlap scavenging (exhaust wave minus back pressure, through a square root that is steep near zero), not the
+  back pressure's growth: G1's ground.
 - **Left open**: brick size is a rule of thumb, not each car's; the outlet cone and flow maldistribution across the
   face are left out. The sound model's cat damping (`muffle`, same values as before) is still a sound rule. The
   guide's Greek for the back-pressure page is not updated (§0.1).
