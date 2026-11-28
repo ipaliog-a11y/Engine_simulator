@@ -365,6 +365,18 @@ function intakeCd(){
 // (C1 6.18). A warmer charge holds less mass at the same pressure, and the hot residual's volume is space the
 // fresh air does not get. Until build 122 the cylinder filled adiabatically with plenum-temperature air, and a
 // flat 0.95 ceiling (veAmp) with a fitted cam bonus (CAM.ampMul, +4% sport, +8% race) stood in for all of it.
+// Build 482 (G1, the top-end fade): the valve's flow is compressible. The Borda term above is the incompressible
+// jet, rho0 (u A_r/A_v)^2 / 2 for the pressure across the valve; a real valve passes the nozzle's flow (Heywood eq.
+// C.8-C.9, §6.3.2: the relation the exhaust stroke and the overlap already use), less by the expansion factor
+// Y = psi(r) / sqrt(2 (1 - r)) at the pressure ratio r across it, and choked below the critical ratio (0.528). At low
+// speed r stays near 1 and Y near 1 (0.97 at r 0.9); at the S2000's 8900 rpm the cylinder falls to 0.54 of the plenum
+// mid-stroke, where the incompressible jet passed ~40% more than a nozzle can. The density is the column's (rho0),
+// as in the Borda term; the discharge coefficient stays Taylor's (intakeCd), a low-pressure-drop flow-bench figure.
+const nozzleY=r=>{
+  if(!(r<0.9999))return 1;
+  const g=GAMMA_AIR,q=Math.max(r,Math.pow(2/(g+1),g/(g-1)));
+  return Math.sqrt(2*g/(g-1)*(Math.pow(q,2/g)-Math.pow(q,(g+1)/g)))/Math.sqrt(2*(1-r));
+};
 function intakeFill(rpm,adv,L,Tres,Cd){
   const e=engine,dur=e.camDur,abd=ivcAbdc(dur,e.camLSA,adv);
   Cd=Cd||intakeCd();
@@ -380,8 +392,12 @@ function intakeFill(rpm,adv,L,Tres,Cd){
   for(let th=th0;th<th1;th+=dth){
     const Av=Cd*e.ivCount*valveFlowArea(e.ivDia_mm,e.ivLift_mm*Math.pow(Math.sin(Math.PI*(th-thO)/dur),2),e.throatRatio)*1e-6;
     const Vc=V(th),pc=Math.max(1,m*R*T/Vc),k=0.5*rho0*Math.pow(Ar/Math.max(1e-9,Av),2);
-    const rhs=p0-pc+rho0*L/dt*u;   // implicit in u: k u|u| + a u = rhs
-    u=rhs>=0?(-a+Math.sqrt(a*a+4*k*rhs))/(2*k):(a-Math.sqrt(a*a-4*k*rhs))/(2*k);
+    const rhs=p0-pc+rho0*L/dt*u,b=rho0*L/dt*u;   // implicit in u: (k/Y^2) u|u| + a u = rhs
+    let ke=k;   // compressible through the valve (build 482): Y from the port's pressure p0 + b - a u, re-solved
+    for(let it=0;it<8;it++){
+      u=rhs>=0?(-a+Math.sqrt(a*a+4*ke*rhs))/(2*ke):(a-Math.sqrt(a*a-4*ke*rhs))/(2*ke);
+      const pp=Math.max(1,p0+b-a*u),Y=nozzleY(u>=0?pc/pp:pp/pc);ke=k/(Y*Y);
+    }
     const dm=(u>0?rho0:m/Vc)*Ar*u*dt, dV=V(th+dth)-Vc;
     const h=WOSCHNI_C*Math.pow(B,-0.2)*Math.pow(Math.max(1e-3,pc/1000),0.8)*Math.pow(Math.max(1,T),-0.55)*Math.pow(Math.max(1e-3,6.18*Sp),0.8);
     const Q=h*(ends+4*Vc/B)*(T_WALL-T)*dt;

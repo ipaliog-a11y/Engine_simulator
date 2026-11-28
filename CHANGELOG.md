@@ -18,6 +18,20 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The intake valve's flow made compressible (build 482)
+
+- **What changed**: the integrated intake stroke (`intakeFill`) passed the valve as an incompressible jet. It now
+  passes nozzle flow (Heywood eq. C.8-C.9, §6.3.2, the relation the exhaust stroke and the overlap already use): the
+  old Borda term divided by the expansion factor Y², choked below 0.528. Y is ~0.97 at a pressure ratio of 0.9, so
+  low speed barely moves; at the S2000's 8900 rpm the cylinder falls to 0.54 of the plenum, where the old jet passed
+  ~40% more than a nozzle can. Nothing fitted. Needs builds 480 (#436) and 481 (#437).
+- **Numbers**: against build 481, 3083 of 5319 values move; car power −3.8% (Elise S1) to +1.3% (Ram Cummins),
+  median −1.3%. S2000 213 → 211 hp, F355 382 → 373, Cayman GT4 452 → 442.
+- **Open, for the owner (G1 is not closed)**: the S2000, M3 E46, F355, Integra R, Cayman GT4 and Atom 3.5 still
+  peak at their limiters. What the S2000 shows at 8900 rpm: Taylor's Mach index Z 0.50 (the knee), float 9345 rpm,
+  residual at TDC 1.00 bar, the integrated fill still rising (peak ~9000 rpm on the generic 233 mm runner, not a
+  sourced one), and the burn a fixed 50° at every speed. Options are in the pull request.
+
 ### The valve overlap's scavenging integrated at each instant's pressures (build 481)
 
 - **What changed**: `scavengeGain` drove the overlap's flow by the window's mean pressure difference through a square
