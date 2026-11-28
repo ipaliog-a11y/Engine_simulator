@@ -477,8 +477,18 @@ function exhaustPulsation(e,rpm){
   for(let i=0;i<prof.length&&i<cyc;i++)one[i]=prof[i];
   for(let c=0;c<k;c++){const off=Math.round(c*cyc/k);for(let i=0;i<cyc;i++)sum[(i+off)%cyc]+=one[i];}
   const phi=a=>{let m=0,q=0;for(const v of a){m+=v;q+=v*v;}return m>0?q*a.length/(m*m):1;};
-  return {phiP:phi(one),phiS:phi(sum)};
+  // The flow's shape across the valve overlap (OV_N points, symmetric about TDC = 360 in the trace's frame, which
+  // starts at EVO): u/<u> and u^2/<u^2> for the system pipe, u^2/<u^2> for this cylinder's own primary (build 481).
+  const mean=a=>{let m=0;for(const v of a)m+=v;return m/a.length;},msq=a=>{let q=0;for(const v of a)q+=v*v;return q/a.length;};
+  const mS=mean(sum),qS=msq(sum),qP=msq(one),ov=Math.max(0,e.overlap||0),evo=360-e.camLSA-e.camDur/2;
+  const s1=[],s2=[],p2=[];
+  for(let j=0;j<OV_N;j++){
+    const th=360-ov/2+(j+0.5)/OV_N*ov,i=((Math.round((th-evo)/dth)%cyc)+cyc)%cyc;
+    s1.push(mS>0?sum[i]/mS:1);s2.push(qS>0?sum[i]*sum[i]/qS:1);p2.push(qP>0?one[i]*one[i]/qP:1);
+  }
+  return {phiP:phi(one),phiS:phi(sum),ovS1:s1,ovS2:s2,ovP2:p2};
 }
+const OV_N=24;
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
   const e=engine;e.fillTable=null;
@@ -494,7 +504,7 @@ function buildFillTable(){
     }
     const exX=[];for(const x of EX_X)if(x<=(e.intake==='na'?1.5:EX_X[EX_X.length-1]))exX.push(Math.max(0,exhaustStrokeMEP(e,r,x)));   // NA: map/pEx stays near 1
     const pu=exhaustPulsation(e,r);
-    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX,phiP:pu.phiP,phiS:pu.phiS});
+    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX,phiP:pu.phiP,phiS:pu.phiS,ovS1:pu.ovS1,ovS2:pu.ovS2,ovP2:pu.ovP2});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
@@ -595,21 +605,38 @@ function scavengeGain(rpm,T){
   // Until build 116 that side was left out, so a turbo engine at 1.3 bar of boost, its turbine holding
   // a similar pressure in the exhaust manifold, read as 1.3 bar of reverse flow across the overlap and
   // lost a quarter of its charge (an Evo IX made 242 hp of its 286).
-  const dp=Math.max(0,(e.boostNow||1)-1)+exhaustWaveP(rpm,T)-backPressureBar(rpm,T);
-  if(!dp)return 0;
-  const u=Math.sign(dp)*Math.sqrt(2*Math.abs(dp)*101325/1.15);
-  // The gap the gas crosses: through the overlap window the intake valve is opening and the exhaust
-  // closing, and flow is held to the smaller curtain of the two. With each valve's lift ~ Lmax sin^2
-  // over its duration (Lmax = D/4), its mean over the window is overlapLiftShare x Lmax, set by the cam
-  // alone; a discharge coefficient of 0.6 is a curtain's at low lift (Heywood). Build 116: this was
-  // OVERLAP_LIFT, a fixed 15% of full lift held across the whole window on every cam, which is about
-  // a 72-degree race cam's lift AT TDC: four times a 32-degree road cam's, and it never averaged down.
-  const lift=overlapLiftShare(e.overlap,e.camDur)*0.25*e.ivDia_mm;
-  const A=OVERLAP_CD*e.ivCount*Math.PI*(e.ivDia_mm/1000)*(lift/1000);
-  // What crosses with the pressure behind it can do no more than sweep the residual out of the
-  // clearance volume and fill it with fresh charge: Vc/Vd = 1/(CR-1). Anything more blows straight
-  // through to the exhaust and is not trapped. (It was a flat +25% cap.)
-  return clamp(A*u*(e.overlap/(6*Math.max(500,rpm)))/(e.dispCyl_L/1000),-0.25,1/Math.max(2,e.compression-1));
+  // Build 481: the flow is integrated across the window at the pressures of each instant, not driven by their mean
+  // through a square root (steep at zero, so a mean difference crossing zero swung the charge by a few percent within
+  // a few hundred rpm). At each of OV_N points the exhaust port holds the wave (its window average, as before) and
+  // the back pressure of the flow passing at that instant: each part of backPressureBar scaled by its flow's shape
+  // there (exhaustPulsation: the system's u^2, the filter's u, the cylinder's own u^2 in its primary; the turbine's
+  // held). The gas crosses as compressible flow through an orifice (Heywood eq. C.8-C.9, §6.3.2), from whichever side
+  // is higher, at that side's state (intake 313 K, gamma 1.4; exhaust at T, gamma 1.3), through the curtain both
+  // valves leave open at that instant (OVERLAP_CD). With a steady difference it gives the earlier result.
+  const bp=backPressureBar(rpm,T),pts=e.bpParts||{prim:0,sysT:bp,lin:0,rest:0};
+  const pIn=Math.max(0.3,e.boostNow||1),pW=exhaustWaveP(rpm,T),tb=e.fillTable;
+  const row=tb&&tb[0]&&tb[0].ovS1?ovRow(tb,rpm):null;
+  const D=e.ivDia_mm/1000,ov=e.overlap,dur=e.camDur,dt=ov/(6*Math.max(500,rpm))/OV_N;
+  const flow=(p0,pd,T0,g)=>{const r=Math.max(pd/p0,Math.pow(2/(g+1),g/(g-1)));
+    return p0/Math.sqrt(287*T0)*Math.sqrt(2*g/(g-1)*Math.max(0,Math.pow(r,2/g)-Math.pow(r,(g+1)/g)));};
+  let m=0;
+  for(let j=0;j<OV_N;j++){
+    const ph=(j+0.5)/OV_N*ov,lift=Math.min(Math.pow(Math.sin(Math.PI*ph/dur),2),Math.pow(Math.sin(Math.PI*(ov-ph)/dur),2))*0.25*e.ivDia_mm;
+    const A=OVERLAP_CD*e.ivCount*Math.PI*D*(lift/1000);
+    const pEx=1-pW+(row?pts.prim*row.p2[j]+pts.sysT*row.s2[j]+pts.lin*row.s1[j]:pts.prim+pts.sysT+pts.lin)+pts.rest;
+    const a=pIn*101325,b=pEx*101325;
+    m+=(a>=b?A*flow(a,b,313,1.4):-A*flow(b,a,Math.max(300,T),1.3))*dt;
+  }
+  const rhoIn=pIn*101325/(287*313);
+  return clamp(m/(rhoIn*e.dispCyl_L/1000),-0.25,1/Math.max(2,e.compression-1));
+}
+// The overlap-window shapes (exhaustPulsation) at this speed, linear between the fill table's rows.
+function ovRow(tb,rpm){
+  let a=tb[0],b=tb[0],w=0;
+  if(rpm>=tb[tb.length-1].rpm)a=b=tb[tb.length-1];
+  else for(let i=1;i<tb.length;i++)if(rpm<=tb[i].rpm){a=tb[i-1];b=tb[i];w=(rpm-a.rpm)/(b.rpm-a.rpm);break;}
+  const mix=k=>a[k].map((v,j)=>v+(b[k][j]-v)*w);
+  return {s1:mix('ovS1'),s2:mix('ovS2'),p2:mix('ovP2')};
 }
 // 2-stroke exhaust expansion-chamber resonant stuffing wave (Blair, Design and Simulation of Two-Stroke Engines,
 // SAE R-161, ch. 4): a tuned expansion chamber of effective length L_pipe (piston face to baffle-cone reflection
@@ -669,10 +696,12 @@ function backPressureBar(rpm,T){
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
   const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
-  const pipe=(phiP*0.02*(e.primL/e.primD)*0.5*rho*vP*vP
-             +phiS*(0.02*(e.sysL/e.sysD)+EXH_BENDS_K+EXH_EXIT_K)*0.5*rho*vS*vS
-             +e.catRestrict*0.5*rho*vS*vS*350
-             +phiS*silPa+pfPa)/1e5;
+  const bpP=phiP*0.02*(e.primL/e.primD)*0.5*rho*vP*vP,
+        bpS=phiS*(0.02*(e.sysL/e.sysD)+EXH_BENDS_K+EXH_EXIT_K)*0.5*rho*vS*vS+e.catRestrict*0.5*rho*vS*vS*350+phiS*silPa;
+  const pipe=(bpP+bpS+pfPa)/1e5;
+  // its parts, for the overlap's instantaneous exhaust pressure (scavengeGain, build 481): the primary's own, the
+  // system's (with u^2; the catalyst's fitted term counted there), the filter's laminar (with u), and the turbine's
+  e.bpParts={prim:bpP/1e5,sysT:bpS/1e5,lin:pfPa/1e5,rest:0};
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
   // sits upstream of all of it and restricts far harder, so manifold pressure is set there and the
   // pipe is a small addition downstream of it. Modelling only the pipe left every turbo engine in
@@ -689,7 +718,9 @@ function backPressureBar(rpm,T){
     // and the presets' open rings still have power to spare from mid-range, so the surplus is still
     // dumped exactly as a fixed frame's is. A real VGT needs no gate because its ring, sized for the
     // engine, swallows the lot: these rings are the size class's, not the maker's.
-    return pipe+(manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff,compFlowFrac(rpm,mAir))-1);
+    const rest=manifoldPR(mA,mEx,map,T,turbineThroatAt(rpm,map,T),e.compEff,compFlowFrac(rpm,mAir))-1;
+    e.bpParts.rest=rest;
+    return pipe+rest;
   }
   return pipe;
 }
