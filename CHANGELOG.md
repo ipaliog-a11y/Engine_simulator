@@ -18,6 +18,51 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The intake valve's flow made compressible (build 482)
+
+- **What changed**: the integrated intake stroke (`intakeFill`) passed the valve as an incompressible jet. It now
+  passes nozzle flow (Heywood eq. C.8-C.9, §6.3.2, the relation the exhaust stroke and the overlap already use): the
+  old Borda term divided by the expansion factor Y², choked below 0.528. Y is ~0.97 at a pressure ratio of 0.9, so
+  low speed barely moves; at the S2000's 8900 rpm the cylinder falls to 0.54 of the plenum, where the old jet passed
+  ~40% more than a nozzle can. Nothing fitted. Needs builds 480 (#436) and 481 (#437).
+- **Numbers**: against build 481, 3083 of 5319 values move; car power −3.8% (Elise S1) to +1.3% (Ram Cummins),
+  median −1.3%. S2000 213 → 211 hp, F355 382 → 373, Cayman GT4 452 → 442.
+- **Open, for the owner (G1 is not closed)**: the S2000, M3 E46, F355, Integra R, Cayman GT4 and Atom 3.5 still
+  peak at their limiters. What the S2000 shows at 8900 rpm: Taylor's Mach index Z 0.50 (the knee), float 9345 rpm,
+  residual at TDC 1.00 bar, the integrated fill still rising (peak ~9000 rpm on the generic 233 mm runner, not a
+  sourced one), and the burn a fixed 50° at every speed. Options are in the pull request.
+
+### The valve overlap's scavenging integrated at each instant's pressures (build 481)
+
+- **What changed**: `scavengeGain` drove the overlap's flow by the window's mean pressure difference through a square
+  root, steep at zero: where the mean crossed zero the charge swung by a few percent within a few hundred rpm, and
+  that is what turned several NA engines over at the top (S2000 on main: +1.38% at 8600 rpm, −0.22% at 8900). It now
+  sums compressible orifice flow (Heywood §6.3.2, C.8–C.9) at 24 instants across the window, each at that instant's
+  exhaust pressure (the parts of `backPressureBar` on the traced flow's shape, build 480) and the curtain both valves
+  leave open; with a steady difference it gives the old result. Needs build 480 (#436).
+- **Numbers**: against build 480, 2282 of 5331 values move; peak power −1.1% (F40) to +4.8% (NSX), median 0.
+- **Open, for the owner**: smooth through zero, it no longer turns those engines over, and a real high-rpm loss is
+  still missing (G1). Tests 44, 46 (6.5 V12 NA Supercar), 60 (S2000, M3 E46, F355, Integra R, Cayman GT4, Atom 3.5
+  at the limiter), 143 (Huracán STO on its limiter, 0.578 piston-speed wear), 159 (Golf GTI Mk7 race: not the factory
+  cam) and 263 (false pMax error, RS3 143.3) fail. Test 71 passes again.
+
+### The exhaust's bends, tailpipe exit, burnt gas and pulsation derived (build 480)
+
+- **What changed**: `backPressureBar` gains the losses it lacked. The gas is the burnt charge (mass ×1.068, volume
+  ×1.058 at stoichiometric petrol); the tailpipe exit dumps one velocity head (Idelchik); a road system's ~4
+  right-angle bends lose 0.25 heads each (Crane TP-410; the count probable). Turbulent losses are charged on the
+  pulse, Φ = ⟨u²⟩/⟨u⟩² from each engine's own exhaust trace (`exhaustPulsation`; Benson vol. 1, Winterbone &
+  Pearson): one cylinder for a primary (3.5–9.6, in place of the old flat ×3 on its speed, i.e. 9 heads), the
+  cylinders feeding a system pipe for the rest (1.04–4.44). Φ falls with speed as the pulses overlap. Ported engines
+  (rotaries, two-strokes) have no trace and keep Φ 1.
+- **Kept**: the catalyst's fitted `restrict × 350` (owner's split of #435: the derived brick waits for G1). It
+  grows ~13% with the burnt gas's flow and is not given Φ.
+- **Numbers**: fingerprint 3409 of 5331 values move; peak power −2.9% (Aygo) to +3.3% (Trabant), median −0.5%.
+- **Open, for the owner**: tests 44 and 46 (6.5 V12 NA Supercar at the limiter), 60 (M3 E46, F355, Integra R,
+  Atom 3.5 at the limiter) and 71 (two identical Civics swap places once with no driver variation) fail. The limiter
+  cases follow the overlap scavenging's square root, which turned those engines over where its mean pressure
+  difference crossed zero; more back pressure moves that crossing. The next build integrates that term.
+
 ### The exhaust's pumping work read at the engine's load, and an untouched VE cell kept exact (build 479)
 
 - **What changed**: build 476 traced the exhaust stroke's work from the full-load cycle and charged it at every
