@@ -18,6 +18,23 @@ they are accurate about *what* shipped but not about the day it shipped.
 
 ## [Unreleased]
 
+### The exhaust's bends, tailpipe exit, burnt gas and pulsation derived (build 480)
+
+- **What changed**: `backPressureBar` gains the losses it lacked. The gas is the burnt charge (mass ×1.068, volume
+  ×1.058 at stoichiometric petrol); the tailpipe exit dumps one velocity head (Idelchik); a road system's ~4
+  right-angle bends lose 0.25 heads each (Crane TP-410; the count probable). Turbulent losses are charged on the
+  pulse, Φ = ⟨u²⟩/⟨u⟩² from each engine's own exhaust trace (`exhaustPulsation`; Benson vol. 1, Winterbone &
+  Pearson): one cylinder for a primary (3.5–9.6, in place of the old flat ×3 on its speed, i.e. 9 heads), the
+  cylinders feeding a system pipe for the rest (1.04–4.44). Φ falls with speed as the pulses overlap. Ported engines
+  (rotaries, two-strokes) have no trace and keep Φ 1.
+- **Kept**: the catalyst's fitted `restrict × 350` (owner's split of #435: the derived brick waits for G1). It
+  grows ~13% with the burnt gas's flow and is not given Φ.
+- **Numbers**: fingerprint 3409 of 5331 values move; peak power −2.9% (Aygo) to +3.3% (Trabant), median −0.5%.
+- **Open, for the owner**: tests 44 and 46 (6.5 V12 NA Supercar at the limiter), 60 (M3 E46, F355, Integra R,
+  Atom 3.5 at the limiter) and 71 (two identical Civics swap places once with no driver variation) fail. The limiter
+  cases follow the overlap scavenging's square root, which turned those engines over where its mean pressure
+  difference crossed zero; more back pressure moves that crossing. The next build integrates that term.
+
 ### The exhaust's pumping work read at the engine's load, and an untouched VE cell kept exact (build 479)
 
 - **What changed**: build 476 traced the exhaust stroke's work from the full-load cycle and charged it at every
