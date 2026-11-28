@@ -896,7 +896,7 @@ body.guided-open{overflow:hidden}
 </div>
 <div class="container">
 <header>
-<h1>PIXEL POWERTRAIN v0.8 build 479</h1>
+<h1>PIXEL POWERTRAIN v0.8 build 480</h1>
 <div class="subtitle" id="subtitle">ENGINE DESIGNER • BUILD IT, THEN DRIVE IT</div>
 </header>
 <div class="build-strip" id="buildStrip">
@@ -2009,7 +2009,7 @@ a restrictive one is worth less than the back-pressure number alone suggests.
 </div>
 <div class="gtier gt-phys"><div class="gtier-h">LV3 · THE PHYSICS</div>
 <div class="guide-body" data-gk="backpressurePhys">
-Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the catalyst as a porous plug:
+Back-pressure is Darcy-Weisbach friction down the primary at the velocity actually flowing, plus everything after the collector (a system sized for the engine's own flow: about 105 m/s mean gas speed for a stock system, 78 sport, 58 race), plus the system's bends (about four right-angle turns, a quarter of a velocity head each) and the velocity head the gas carries out of the tailpipe, plus the catalyst as a porous plug. The gas is the burnt charge, not the air: the fuel adds 7% to its mass and 6% to its volume. And it comes in pulses, so the losses that go with the square of its speed are charged on the pulse, not the average: each engine's own exhaust trace gives the factor, 4–10 for one cylinder's pipe, 1–4.5 where several merge:
 <span class="geq">Δp = f · (L/D) · ½ρv²</span>
 The burnt gas left behind depends on exhaust pressure against <i>intake</i> pressure, which matters enormously on a turbo engine:
 <span class="geq">f<sub>res</sub> = 1/(r<sub>c</sub> − 1) · (p<sub>exh</sub> / p<sub>int</sub>)<sup>1/γ</sup></span>
@@ -5413,7 +5413,7 @@ function intakeFill(rpm,adv,L,Tres,Cd){
 // is pEx times the 1-atm trace's at map/pEx: tabulated over that ratio (EX_X) at each speed. Not in it: a diesel's
 // part load is less fuel at the same manifold pressure, which the trace (full fuel) does not lower.
 const EX_X=[0.2,0.4,0.6,0.8,1,1.5,2,3,4];
-function exhaustStrokeMEP(e,rpm,x=1){
+function exhaustStrokeMEP(e,rpm,x=1,prof=null){
   const g=1.30,R=287,cv=R/(g-1),cp=cv+R,px=101325,tr=wallTrace(e,rpm,x);
   const B=e.bore_mm/1000,Vd=Math.PI/4*B*B*e.stroke_mm/1000,vc=2/Math.max(1.5,e.compression-1);
   const V=th=>Vd*(pistonX(th,1,ROD_STROKE*2)+vc)/2;
@@ -5426,6 +5426,7 @@ function exhaustStrokeMEP(e,rpm,x=1){
     const r=Math.max(px/p,crit);
     const mdot=p>px?A*p/Math.sqrt(R*T)*Math.sqrt(2*g/(g-1)*(Math.pow(r,2/g)-Math.pow(r,(g+1)/g))):0;
     const Vn=V(th+dth),dV=Vn-Vc,dm=Math.min(mdot*dt,0.5*m);
+    if(prof)prof.push(dm);
     if(th>=180)W+=(p-px)*dV;
     const U=cv*m*T-cp*T*dm-p*dV;
     m-=dm;T=Math.max(300,U/(cv*m));Vc=Vn;p=m*R*T/Vc;
@@ -5457,6 +5458,23 @@ function exAtX(row,x){
   for(let i=1;i<n;i++)if(x<=EX_X[i])return row[i-1]+(row[i]-row[i-1])*(x-EX_X[i-1])/(EX_X[i]-EX_X[i-1]);
   return row[n-1];
 }
+// The exhaust's pulsation (build 480). A pipe's turbulent losses go with the square of the gas speed, so over a cycle
+// they are charged on the mean of u^2, not on the square of the mean flow: Phi = <u^2>/<u>^2 times the steady loss
+// (quasi-steady pulsating flow: Benson, The Thermodynamics and Gas Dynamics of Internal Combustion Engines, vol. 1,
+// ch. 7; Winterbone & Pearson, Theory of Engine Manifold Design, ch. 2). The flow is each cylinder's own, from the
+// exhaust trace above (EVO to TDC at full load, mass per step, the gas's density taken as constant over the pulse).
+// A primary carries one cylinder; a system pipe the cylinders that feed it (cylinders / pipes), fired evenly over the
+// cycle (720 degrees, or 360 for a two-stroke) - a cross-plane V8's bank fires unevenly, which this leaves out.
+function exhaustPulsation(e,rpm){
+  const prof=[];exhaustStrokeMEP(e,rpm,1,prof);
+  const dth=0.25,cyc=Math.round((e.chargesPerRev>0.75?360:720)/dth);
+  const k=Math.max(1,Math.round(e.cylinders/(e.sysPipes||1)));
+  const one=new Float64Array(cyc),sum=new Float64Array(cyc);
+  for(let i=0;i<prof.length&&i<cyc;i++)one[i]=prof[i];
+  for(let c=0;c<k;c++){const off=Math.round(c*cyc/k);for(let i=0;i<cyc;i++)sum[(i+off)%cyc]+=one[i];}
+  const phi=a=>{let m=0,q=0;for(const v of a){m+=v;q+=v*v;}return m>0?q*a.length/(m*m):1;};
+  return {phiP:phi(one),phiS:phi(sum)};
+}
 // Tabulated per engine: the best of the cam phaser's range and of a variable runner's two lengths.
 function buildFillTable(){
   const e=engine;e.fillTable=null;
@@ -5471,7 +5489,8 @@ function buildFillTable(){
       const x=intakeFill(r,adv,L,Tres,Cd);if(x>f){f=x;best=adv;bestL=L;pin=intakeFill.pmep;}
     }
     const exX=[];for(const x of EX_X)if(x<=(e.intake==='na'?1.5:EX_X[EX_X.length-1]))exX.push(Math.max(0,exhaustStrokeMEP(e,r,x)));   // NA: map/pEx stays near 1
-    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX});
+    const pu=exhaustPulsation(e,r);
+    tb.push({rpm:r,f,adv:best,L:bestL,pin,ex:exX[EX_X.indexOf(1)],exX,phiP:pu.phiP,phiS:pu.phiS});
   }
   e.fillTable=tb;
   let s=0,k=0;for(const t of tb)if(t.rpm>=1000&&t.rpm<=e.redline){s+=t.f;k++;}
@@ -5625,19 +5644,31 @@ function partFilterDpPa(m3sTotal,T_K,e){
 // after the collector, plus the cat as a porous plug, the silencer's chamber/baffle restriction,
 // and any wall-flow particulate filter (DPF/GPF).
 // Raises the pressure the piston works against AND leaves more residual in the cylinder, both of which cost VE.
+// The burnt gas is not the air drawn in (build 480): the fuel adds its mass (1 + 1/14.7 = 1.068 at stoichiometric
+// petrol) and its moles (C8H18 + 12.5 O2 + 47 N2 -> 8 CO2 + 9 H2O + 47 N2: 64 moles from 60.5, 1.058), so the gas runs
+// 1.058 times the volume at 1.068/1.058 times the density. Past the pipes' own friction the system loses at its bends
+// and at the tailpipe: the exit dumps one velocity head (Idelchik, diagram 11-1), and a road system turns about four
+// 90-degree equivalents getting from the manifold under the floor and over the axle (probable: the down-pipe's turn,
+// the kick-ups, the tail), each 14 f_T ~ 0.25 heads at a bend radius of 1.5 diameters (Crane TP-410, A-29).
+const EXH_MOLES=64/60.5,EXH_MASS=1+1/14.7,EXH_BENDS_K=4*0.25,EXH_EXIT_K=1;
 function backPressureBar(rpm,T){
   const e=engine;
   if(!e.primL)return 0;
-  const rho=101325/(287*Math.max(300,T));
-  const vP=(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD)*3;
-  const m3s=(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
+  const rho=101325/(287*Math.max(300,T))*EXH_MASS/EXH_MOLES;
+  // The pulse (exhaustPulsation): until build 480 the primary's loss took 3x its mean speed, (3u)^2 = 9 heads; it
+  // now takes the traced Phi of one cylinder, and the system the Phi of the cylinders feeding it. An engine with no
+  // trace (no fill table: ported engines) keeps the steady flow, Phi 1. The catalyst's fitted term is left as it was.
+  const tb=e.fillTable,hasPhi=tb&&tb[0]&&tb[0].phiP>0;
+  const phiP=hasPhi?valvePumpTab(tb,rpm,'phiP'):1,phiS=hasPhi?valvePumpTab(tb,rpm,'phiS'):1;
+  const vP=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*(rpm/60*(e.chargesPerRev||0.5))/(Math.PI/4*e.primD*e.primD);
+  const m3s=EXH_MOLES*(e.dispCyl_L/1000)*(T/320)*e.cylinders*(rpm/60*(e.chargesPerRev||0.5))/(e.sysPipes||1);
   const vS=m3s/(Math.PI/4*e.sysD*e.sysD);
   const silPa=typeof silencerDp==='function'?silencerDp(m3s,e.exhaustPart||factorySilencer(e),rho):0;
   const pfPa=partFilterDpPa(m3s*(e.sysPipes||1),Math.max(300,T),e);
-  const pipe=(0.02*(e.primL/e.primD)*0.5*rho*vP*vP
-             +0.02*(e.sysL/e.sysD)*0.5*rho*vS*vS
+  const pipe=(phiP*0.02*(e.primL/e.primD)*0.5*rho*vP*vP
+             +phiS*(0.02*(e.sysL/e.sysD)+EXH_BENDS_K+EXH_EXIT_K)*0.5*rho*vS*vS
              +e.catRestrict*0.5*rho*vS*vS*350
-             +silPa+pfPa)/1e5;
+             +phiS*silPa+pfPa)/1e5;
   // On a boosted engine the pipe is not what the piston is pushing against — the TURBINE is. It
   // sits upstream of all of it and restricts far harder, so manifold pressure is set there and the
   // pipe is a small addition downstream of it. Modelling only the pipe left every turbo engine in
